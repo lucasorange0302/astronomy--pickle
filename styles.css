@@ -2021,3 +2021,50 @@ body.red .ver-now { color: #1a0402; }
 
 /* 인쇄에서 판 전환 UI는 숨김 */
 @media print { .footer-version, .ver-btn, .more-version { display: none !important; } }
+
+/* ---------------------------------------------- 라이브 하늘 센서 조작 UI */
+.live-sens {
+  display: flex; gap: 4px; padding: 3px; border-radius: 99px;
+  background: rgba(255, 255, 255, .05); border: 1px solid var(--border);
+}
+.sens-btn {
+  flex: 1 1 0; min-height: 26px; padding: 3px 8px; border-radius: 99px;
+  border: 0; background: none; color: var(--muted); cursor: pointer;
+  font: 700 .68rem var(--font); white-space: nowrap; transition: all .16s;
+}
+.sens-btn:hover { color: var(--text); }
+.sens-btn.is-on { background: var(--accent-2-soft); color: var(--accent-2); box-shadow: inset 0 0 0 1px rgba(126, 224, 192, .35); }
+body.red .sens-btn.is-on { background: rgba(255, 106, 61, .18); color: #ffb08a; box-shadow: inset 0 0 0 1px rgba(255, 120, 80, .4); }
+#liveCalBtn { font-weight: 800; }
+
+/* =========================================================================
+   4부 — iOS Safari 보정 · 하단 탭 바
+   ========================================================================= */
+
+/* iOS의 date/time 입력은 기본 모양(밝은 배경·중앙 정렬)을 강제로 그립니다 */
+input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] {
+  -webkit-appearance: none; appearance: none;
+  background-color: rgba(6, 10, 20, .75); color: var(--text);
+  min-width: 0; max-width: 100%; width: 100%;
+  box-sizing: border-box; font-family: inherit;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: .55; filter: invert(1) brightness(1.2); cursor: pointer; margin-left: 2px;
+}
+body.red input[type="date"]::-webkit-calendar-picker-indicator,
+body.red input[type="time"]::-webkit-calendar-picker-indicator { filter: none; opacity: .65; }
+body.red input[type="date"], body.red input[type="time"] { background-color: rgba(30, 6, 4, .8); color: var(--text); }
+
+/* flex/grid 안의 컨트롤이 고유 최소 너비로 카드를 뚫고 나가는 문제 */
+.field, .field-date, .field-time, .control-row > *, .sort-row > *, .filter-bar > * { min-width: 0; }
+.field select, .field input, .field textarea { max-width: 100%; }
+
+/* 카드 밖으로 1px도 나가지 않게 */
+.control-panel, .summary-card, .panel, .obj-card, .site-card { overflow-x: clip; }
+
+/* ------------------------------------------------------------- 하단 탭 바 */
+.tabbar { display: none; }

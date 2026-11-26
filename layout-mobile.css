@@ -332,3 +332,55 @@ html[data-layout="mobile"] body.red .space-dock { background: rgba(20, 3, 1, .94
 
 /* 시각 입력의 기본 시계 아이콘은 '지금' 버튼과 겹치므로 숨깁니다 (탭하면 그대로 열립니다) */
 html[data-layout="mobile"] .field-time input::-webkit-calendar-picker-indicator { opacity: 0; }
+
+/* ------------------------------------------------------------- 하단 탭 바 */
+/* 겹쳐 뜨는 플로팅 독 대신, 화면 맨 아래 고정 탭 바 (본문은 padding으로 비워 둠) */
+html[data-layout="mobile"] .space-dock { display: none !important; }
+html[data-layout="mobile"] body {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+}
+html[data-layout="mobile"] .tabbar {
+  display: grid;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: rgba(6, 9, 18, .96);
+  border-top: 1px solid var(--border-hi);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -10px 30px -18px #000;
+}
+html[data-layout="mobile"] .tab-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; min-height: 48px; padding: 3px 2px; border: 0; background: none;
+  color: var(--faint); font: 700 .64rem var(--font); border-radius: 12px;
+  text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+html[data-layout="mobile"] .tab-item:hover { text-decoration: none; color: var(--muted); }
+html[data-layout="mobile"] .tab-ico { font-size: 17px; line-height: 1.1; }
+html[data-layout="mobile"] .tab-item.is-active { color: var(--accent); background: var(--accent-soft); }
+html[data-layout="mobile"] body.red .tabbar { background: rgba(12, 1, 0, .96); }
+html[data-layout="mobile"] body.red .tab-item.is-active { color: #ffb08a; background: rgba(255, 106, 61, .16); }
+
+/* 라이브 하늘 조작 UI가 탭 바에 가리지 않게 */
+html[data-layout="mobile"] .live-panel { margin-bottom: 8px; }
+
+/* iOS Safari 관측지 컨트롤: 2×2 고정 그리드로 카드 밖으로 나가지 않게 */
+html[data-layout="mobile"] .control-panel { overflow: hidden; }
+html[data-layout="mobile"] .control-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "site geo" "date time";
+  align-items: end;
+}
+html[data-layout="mobile"] .control-row > .field:first-child { grid-area: site; }
+html[data-layout="mobile"] #btnGeo { grid-area: geo; justify-self: end; width: auto; max-width: 100%; }
+html[data-layout="mobile"] .field-date { grid-area: date; }
+html[data-layout="mobile"] .field-time { grid-area: time; }
+html[data-layout="mobile"] .field-date input,
+html[data-layout="mobile"] .field-time input {
+  width: 100%; max-width: 100%; min-width: 0;
+  height: 44px; padding: 0 10px; font-size: .88rem;
+}
+html[data-layout="mobile"] .field-time input { padding-right: 46px; }
+html[data-layout="mobile"] #btnGeo { min-height: 44px; padding: 0 12px; }
+html[data-layout="mobile"] .tab-ico svg { width: 21px; height: 21px; display: block; }
+html[data-layout="mobile"] .tab-txt { white-space: nowrap; font-size: .62rem; letter-spacing: -0.01em; }

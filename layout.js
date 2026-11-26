@@ -115,4 +115,27 @@
 
   /* 5) 인쇄할 때는 지금 판 이름을 남깁니다 -------------------------------- */
   document.body.setAttribute('data-version', me.label);
+
+  /* 6) 하단 탭 바 — ☰ 더보기 연결 + 현재 섹션 강조 ------------------------- */
+  var tabBar = document.getElementById('tabBar');
+  if (tabBar) {
+    var moreTab = document.getElementById('tabMore');
+    var btnMore = document.getElementById('btnMore');
+    if (moreTab && btnMore) {
+      moreTab.addEventListener('click', function () { btnMore.click(); });
+    }
+    var nav = document.getElementById('mainNav');
+    var items = Array.prototype.slice.call(tabBar.querySelectorAll('[data-nav]'));
+    var syncTabs = function () {
+      var act = nav ? nav.querySelector('.nav-link.is-active') : null;
+      var key = act ? act.getAttribute('data-nav') : null;
+      items.forEach(function (it) { it.classList.toggle('is-active', it.getAttribute('data-nav') === key); });
+      if (moreTab) moreTab.setAttribute('aria-expanded', btnMore && btnMore.getAttribute('aria-expanded') === 'true' ? 'true' : 'false');
+    };
+    if (nav && window.MutationObserver) {
+      new MutationObserver(syncTabs).observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    }
+    window.addEventListener('hashchange', function () { setTimeout(syncTabs, 60); });
+    syncTabs();
+  }
 })();

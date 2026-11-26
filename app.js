@@ -1823,6 +1823,194 @@
   };
   let liveDirty = true;
 
+  /* ----------------------------------------------------------------------
+     센서 추적 엔진 — 스텔라리움식 융합
+     · devicemotion 의 rotationRate(자이로)를 쿼터니언으로 적분 = 부드럽고 지연 없는 주축
+     · deviceorientation 의 나침반(webkitCompassHeading)은 아주 느린 비율로만 당겨 주는 보정
+       → 나침반이 90° 튀어도 화면은 프레임당 1.2° 이상 움직이지 못합니다
+     · 나침반은 최근 5개 중앙값 + 이상치 차단(45° 점프는 4연속 일치 전까지 무시)
+     · 0/360 경계는 항상 최단 경로(shortestDelta)로 계산
+     ---------------------------------------------------------------------- */
+  const Q = {
+    mul: function (a, b) {
+      return [
+        a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
+        a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+        a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
+        a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0]
+      ];
+    },
+    norm: function (q) {
+      const n = Math.hypot(q[0], q[1], q[2], q[3]) || 1;
+      return [q[0] / n, q[1] / n, q[2] / n, q[3] / n];
+    },
+    conj: function (q) { return [q[0], -q[1], -q[2], -q[3]]; },
+    rot: function (q, v) {
+      const p = Q.mul(Q.mul(q, [0, v[0], v[1], v[2]]), Q.conj(q));
+      return [p[1], p[2], p[3]];
+    },
+    axis: function (ax, deg) {
+      const len = Math.hypot(ax[0], ax[1], ax[2]);
+      const h = deg * RAD / 2;
+      if (!len) return [1, 0, 0, 0];
+      const s = Math.sin(h) / len;
+      return [Math.cos(h), ax[0] * s, ax[1] * s, ax[2] * s];
+    },
+    mix: function (a, b, t) {
+      if (a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3] < 0) b = [-b[0], -b[1], -b[2], -b[3]];
+      return Q.norm([
+        a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t,
+        a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t
+      ]);
+    }
+  };
+
+  // W3C 규약: 기기→지구 좌표(X 동, Y 북, Z 위) R = Rz(alpha)·Rx(beta)·Ry(gamma)
+  function qFromEuler(alpha, beta, gamma) {
+    return Q.mul(Q.mul(Q.axis([0, 0, 1], alpha), Q.axis([1, 0, 0], beta)), Q.axis([0, 1, 0], gamma));
+  }
+  // 기기 후면 카메라(-Z)가 가리키는 하늘의 방위·고도
+  function camDir(q) {
+    const v = Q.rot(q, [0, 0, -1]);
+    const alt = Math.asin(clamp(v[2], -1, 1)) / RAD;
+    let az = Math.atan2(v[0], v[1]) / RAD;
+    if (az < 0) az += 360;
+    return { az: az, alt: alt };
+  }
+  function qAlignNorth(q, heading) {
+    const d = camDir(q);
+    // 지구 Z축 회전: 방위를 heading 으로(최단 경로)
+    return Q.norm(Q.mul(Q.axis([0, 0, 1], heading - d.az), q));
+  }
+  function circMedian(list, ref) {
+    if (!list.length) return ref;
+    const vals = list.map(function (v) { return ref + shortestDelta(ref, v); }).sort(function (a, b) { return a - b; });
+    return A.mod(vals[Math.floor(vals.length / 2)], 360);
+  }
+
+  const track = {
+    q: null, ready: false,
+    rot: [0, 0, 0],                 // 아직 반영하지 않은 자이로 회전(도)
+    motionSeen: false, lastMotEv: 0, lastOriEv: 0, lastApply: 0,
+    comp: null, compBuf: [], spike: 0, acc: null, compT: 0, bigErrSince: 0,
+    calAz: 0,                      // '방향 맞추기'로 잡은 나침반 오차
+    altTarget: null,
+    az: 180, alt: 30,
+    sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
+    suspendUntil: 0,
+    raf: null, lastTs: 0, drawAt: 0
+  };
+
+  function trackReset() {
+    track.q = null; track.ready = false; track.rot = [0, 0, 0];
+    track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
+    track.acc = null; track.altTarget = null; track.calAz = 0; track.bigErrSince = 0;
+    track.az = live.az; track.alt = live.alt;
+    track.motionSeen = false; track.lastMotEv = 0; track.lastTs = 0; track.suspendUntil = 0;
+  }
+
+  // 프레임마다: 자이로 적분 → 나침반·중력 느린 보정
+  function trackCorrect(dt) {
+    if (!track.q) return;
+    if (track.rot[0] || track.rot[1] || track.rot[2]) {
+      const r = track.rot;
+      const ang = Math.hypot(r[0], r[1], r[2]);
+      if (ang > 1e-6 && ang < 120) track.q = Q.norm(Q.mul(track.q, Q.axis(r, ang)));
+      track.rot = [0, 0, 0];
+    }
+    const now = performance.now();
+    const d = camDir(track.q);
+
+    // 1) 나침반 — 느린 보정. 품질이 나쁘면 0, 35° 넘는 오차는 '나침반 오류'로 보고 무시.
+    //    (자이로가 주축이므로 나침반은 분당 몇 도의 드리프트만 잡으면 됩니다)
+    if (track.comp != null && now - track.compT < 1600) {
+      const bad = track.acc != null && (track.acc < 0 || track.acc > 25);
+      const err = shortestDelta(d.az, track.comp + track.calAz);
+      let step = 0;
+      if (!bad && Math.abs(err) <= 35) {
+        track.bigErrSince = 0;
+        const q = (track.acc != null && track.acc >= 0) ? clamp(1 - track.acc / 45, 0.35, 1) : 0.8;
+        step = clamp(err * clamp(dt / (3.2 * track.sens), 0, 0.05) * q, -0.7, 0.7);
+      } else if (!bad && Math.abs(err) > 35) {
+        // 큰 오차가 3초 이상 계속되면 그때만 아주 천천히 따라갑니다(재보정)
+        if (!track.bigErrSince) track.bigErrSince = now;
+        if (now - track.bigErrSince > 3000) step = (err > 0 ? 1 : -1) * 0.12;
+      } else {
+        track.bigErrSince = 0;
+      }
+      if (Math.abs(step) > 0.002) track.q = Q.norm(Q.mul(Q.axis([0, 0, 1], -step), track.q));
+    }
+
+    // 2) 중력(베타) — 고도만 아주 느리게. 30° 넘게 어긋나면(천정 응시 등) 무시.
+    if (track.altTarget != null) {
+      const camNow = camDir(track.q);
+      const err = track.altTarget - camNow.alt;
+      if (Math.abs(err) < 30) {
+        let step = clamp(err * clamp(dt / (3.2 * track.sens), 0, 0.05), -0.6, 0.6);
+        if (Math.abs(step) > 0.002) {
+          const dir = Q.rot(track.q, [0, 0, -1]);
+          const ax = [dir[2], 0, -dir[0]];          // 지평선 방향 수직축(up×dir)
+          const n = Math.hypot(ax[0], ax[1], ax[2]);
+          if (n > 1e-4) track.q = Q.norm(Q.mul(Q.axis(ax, -step), track.q));
+        }
+      }
+    }
+  }
+
+  // 결과를 화면 값으로 — 데드존 + 각속도 상한으로 절대 튀지 않게
+  function trackApply(dt) {
+    if (!track.q) return false;
+    const d = camDir(track.q);
+    let dAz = shortestDelta(track.az, d.az);
+    let dAlt = d.alt - track.alt;
+    if (Math.abs(dAz) < 0.25) dAz = 0;      // 데드존
+    if (Math.abs(dAlt) < 0.25) dAlt = 0;
+    const k = clamp(dt * 16, 0.25, 0.9);
+    // 자이로가 살아 있으면 빠른 회전 허용, 나침반만 있으면 천천히(튐 억제)
+    const now = performance.now();
+    const gyroLive = track.motionSeen && (now - track.lastMotEv < 1500);
+    const capAz = (gyroLive ? 240 : 110) * dt;
+    const sAz = clamp(dAz * k, -capAz, capAz);
+    const sAlt = clamp(dAlt * k, -(gyroLive ? 180 : 90) * dt, (gyroLive ? 180 : 90) * dt);
+    if (!sAz && !sAlt) return false;
+    track.az = A.mod(track.az + sAz, 360);
+    track.alt = clamp(track.alt + sAlt, -18, 89);
+    live.az = track.az;
+    live.alt = track.alt;
+    return true;
+  }
+
+  function trackLoop(ts) {
+    track.raf = null;
+    if (!live.sensor) return;
+    const now = ts || performance.now();
+    const dt = track.lastTs ? clamp((now - track.lastTs) / 1000, 0.004, 0.1) : 0.016;
+    track.lastTs = now;
+    let moved = false;
+    if (now >= track.suspendUntil) {
+      trackCorrect(dt);
+      moved = trackApply(dt);
+    }
+    if (moved || liveDirty || now - track.drawAt > 400) {
+      liveDraw();
+      syncLiveInputs();
+      liveDirty = false;
+      track.drawAt = now;
+    }
+    track.raf = requestAnimationFrame(trackLoop);
+  }
+
+  function trackStart() {
+    if (!track.raf) {
+      track.lastTs = 0;
+      track.raf = requestAnimationFrame(trackLoop);
+    }
+  }
+  function trackStop() {
+    if (track.raf) { cancelAnimationFrame(track.raf); track.raf = null; }
+    track.rot = [0, 0, 0];
+  }
+
   function shortestDelta(from, to) { return A.mod(to - from + 180, 360) - 180; }
 
   function liveResize() {
@@ -1843,6 +2031,7 @@
   }
 
   function kickLive() {
+    if (live.sensor) { trackStart(); return; }
     if (live.raf) return;
     live.raf = requestAnimationFrame(liveTick);
   }
@@ -1853,7 +2042,7 @@
     const dAz = shortestDelta(live.az, live.targetAz);
     const dAlt = live.targetAlt - live.alt;
     if (Math.abs(dAz) > 0.12 || Math.abs(dAlt) > 0.12) {
-      const k = live.sensor ? 0.28 : 0.2;
+      const k = 0.2;
       live.az = A.mod(live.az + dAz * k, 360);
       live.alt = clamp(live.alt + dAlt * k, -18, 89);
       animating = true;
@@ -1864,7 +2053,7 @@
       syncLiveInputs();
       liveDirty = false;
     }
-    if (animating || live.sensor) kickLive();
+    if (animating) kickLive();
   }
 
   function syncLiveInputs() {
@@ -2388,52 +2577,151 @@
 
   function sensorFail(msg) {
     live.sensor = false;
+    trackStop();
     window.removeEventListener('deviceorientation', onOrientation, true);
+    window.removeEventListener('deviceorientationabsolute', onOrientation, true);
+    window.removeEventListener('devicemotion', onMotion, true);
     setSensorUi(false, 'error', '센서 차단됨');
     const help = $('#liveHelp');
     if (help) {
-      help.innerHTML = '<b>' + esc(msg) + '.</b> 센서는 HTTPS(보안 연결)에서만 허용되며 iOS는 권한 허용이 필요합니다. ' +
+      help.innerHTML = '<b>' + esc(msg) + '.</b> 센서는 HTTPS(보안 연결)에서만 허용되며, 아이폰은 <b>권한 허용</b>이 필요합니다. ' +
         '지금은 <b>드래그·터치</b> 또는 <b>북/동/남/서/천정</b> 버튼과 방위·고도 슬라이더로 하늘을 둘러보세요.';
     }
     toast(msg + ' — 드래그·버튼으로 둘러볼 수 있습니다.');
   }
 
+  /* 나침반 값 한 점을 중앙값 버퍼에 넣고, 90° 튐은 차단 */
+  function pushCompass(heading, now) {
+    if (!isFinite(heading)) return;
+    const ref = track.comp != null && isFinite(track.comp) ? track.comp : heading;
+    const dev = shortestDelta(ref, heading);
+    if (track.comp != null && Math.abs(dev) > 45) {
+      track.spike++;
+      if (track.spike < 12) return;             // 이상치 — 약 0.2~0.4초 지속되는 튐은 버립니다
+      track.comp = A.mod(heading, 360);         // 오래 지속되면 실제 회전/재보정으로 인정
+      track.compBuf = [heading];
+      track.spike = 0;
+    } else {
+      track.spike = 0;
+      track.compBuf.push(heading);
+      if (track.compBuf.length > 5) track.compBuf.shift();
+      const med = circMedian(track.compBuf, ref);
+      track.comp = track.comp == null ? med : A.mod(track.comp + shortestDelta(track.comp, med) * 0.35, 360);
+    }
+    track.compT = now;
+  }
+
   function onOrientation(ev) {
     if (!live.sensor) return;
-    const hasHeading = typeof ev.webkitCompassHeading === 'number' && !isNaN(ev.webkitCompassHeading);
-    if (!hasHeading && ev.alpha == null) return;
+    const now = performance.now();
+    if (now - track.lastOriEv < 6) return;       // ≤ 160Hz
+    track.lastOriEv = now;
     live.gotEvent = true;
-    let heading;
-    if (hasHeading) heading = ev.webkitCompassHeading;
-    else heading = 360 - ev.alpha;
-    live.targetAz = A.mod(heading, 360);
-    let beta = (ev.beta == null ? 90 : ev.beta);
-    let altRaw = beta - 90;
-    if (altRaw < -90) altRaw += 360;
-    live.targetAlt = clamp(altRaw, -12, 89);
-    if (!live.raf) setSensorUi(true, 'on', '센서 연결됨');
+    const absolute = ev.type === 'deviceorientationabsolute' || ev.absolute === true;
+    track.acc = (typeof ev.webkitCompassAccuracy === 'number') ? ev.webkitCompassAccuracy : null;
+
+    let heading = null;
+    if (typeof ev.webkitCompassHeading === 'number' && ev.webkitCompassHeading >= 0) {
+      heading = ev.webkitCompassHeading;         // iOS: 자기/진북 기준 방위
+    } else if (absolute && ev.alpha != null) {
+      heading = 360 - ev.alpha;                  // Android: 절대 alpha
+    } else if (ev.alpha != null && !track.motionSeen) {
+      heading = 360 - ev.alpha;                  // 자이로가 없을 때만 상대 alpha 사용
+    }
+    if (heading != null) pushCompass(A.mod(heading, 360), now);
+
+    const usingGyro = track.motionSeen && (now - track.lastMotEv < 1500);
+
+    if (!track.ready) {
+      if (ev.alpha == null || ev.beta == null) return;
+      let q = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
+      if (track.comp != null) q = qAlignNorth(q, track.comp + track.calAz);
+      track.q = q;
+      const d = camDir(q);
+      track.az = live.az = d.az;
+      track.alt = live.alt = clamp(d.alt, -18, 89);
+      track.ready = true;
+      setSensorUi(true, 'on', track.motionSeen ? '센서 연결됨' : '나침반 모드');
+      trackStart();
+      return;
+    }
+
+    if (ev.beta != null) {
+      let a = ev.beta - 90;
+      if (a < -90) a += 360;
+      track.altTarget = clamp(a, -15, 89.5);
+    }
+
+    // 자이로가 없거나 끊긴 경우: 오일러 자세를 목표로 부드럽게 따라갑니다(중앙값+EMA+상한)
+    if (!usingGyro && ev.alpha != null && ev.beta != null) {
+      let qe = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
+      if (track.comp != null) qe = qAlignNorth(qe, track.comp + track.calAz);
+      track.q = Q.mix(track.q, qe, 0.14);
+    }
     liveDirty = true;
-    kickLive();
+    trackStart();
+  }
+
+  function onMotion(ev) {
+    if (!live.sensor) return;
+    const rr = ev.rotationRate;
+    const now = performance.now();
+    if (!rr) return;
+    const gap = track.lastMotEv ? (now - track.lastMotEv) / 1000 : 0.016;
+    if (gap > 0.25) { track.lastMotEv = now; return; }   // 끊겼다가 돌아온 값은 버림
+    const dt = clamp(gap, 0.004, 0.08);
+    track.lastMotEv = now;
+    if (!track.motionSeen) {
+      track.motionSeen = true;
+      if (setSensorUi) setSensorUi(true, 'on', '센서 연결됨');
+    }
+    const cap = function (v) { return clamp(v == null || isNaN(v) ? 0 : v, -600, 600); };
+    track.rot[0] += cap(rr.beta) * dt;      // x축(앞뒤 기울기)
+    track.rot[1] += cap(rr.gamma) * dt;     // y축(좌우 기울기)
+    track.rot[2] += cap(rr.alpha) * dt;     // z축(화면 수직)
+    liveDirty = true;
+    trackStart();
+  }
+
+  function calibrateLive() {
+    if (!live.sensor) { toast('먼저 🧭 센서로 하늘 비추기를 켜 주세요.'); return; }
+    if (track.comp == null) { toast('나침반 값을 기다리는 중입니다. 1~2초 뒤 다시 눌러 주세요.'); return; }
+    track.calAz = A.mod(track.az - track.comp, 360);
+    toast('지금 보는 방향(' + Math.round(track.az) + '°)을 기준으로 맞췄습니다.');
   }
 
   function enableSensor() {
     const DOE = window.DeviceOrientationEvent;
     if (!DOE) { sensorFail('이 브라우저에는 방향 센서 API가 없습니다'); return; }
+    const DME = window.DeviceMotionEvent;
+    const jobs = [];
+    if (typeof DOE.requestPermission === 'function') {
+      jobs.push(Promise.resolve().then(function () { return DOE.requestPermission(); }));
+    }
+    if (DME && typeof DME.requestPermission === 'function') {
+      jobs.push(Promise.resolve().then(function () { return DME.requestPermission(); }).catch(function () { return 'granted'; }));
+    }
     const proceed = function () {
       live.sensor = true;
       live.gotEvent = false;
+      trackReset();
+      track.az = live.az;
+      track.alt = live.alt;
       window.addEventListener('deviceorientation', onOrientation, true);
+      window.addEventListener('deviceorientationabsolute', onOrientation, true);
+      window.addEventListener('devicemotion', onMotion, true);
       setSensorUi(true, 'on', '센서 연결 중…');
+      if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; }
+      trackStart();
       setTimeout(function () {
-        if (live.sensor && !live.gotEvent) sensorFail('센서 값을 받지 못했습니다(HTTPS·권한 확인)');
+        if (!live.sensor) return;
+        if (!live.gotEvent) { sensorFail('센서 값을 받지 못했습니다(HTTPS·권한 확인)'); return; }
+        if (!track.motionSeen) setSensorUi(true, 'on', '나침반 모드');
       }, 2400);
-      kickLive();
     };
-    if (typeof DOE.requestPermission === 'function') {
-      let p;
-      try { p = DOE.requestPermission(); } catch (e) { sensorFail('센서 권한 요청을 시작할 수 없습니다'); return; }
-      Promise.resolve(p).then(function (res) {
-        if (res === 'granted') proceed();
+    if (jobs.length) {
+      Promise.all(jobs).then(function (res) {
+        if (res[0] === 'granted') proceed();
         else sensorFail('센서 권한이 거부되었습니다');
       }).catch(function () { sensorFail('센서 권한 요청이 차단되었습니다'); });
     } else {
@@ -2444,10 +2732,27 @@
   function disableSensor(silent) {
     if (!live.sensor) return;
     live.sensor = false;
+    trackStop();
     window.removeEventListener('deviceorientation', onOrientation, true);
+    window.removeEventListener('deviceorientationabsolute', onOrientation, true);
+    window.removeEventListener('devicemotion', onMotion, true);
     setSensorUi(false, 'off', '센서 꺼짐');
     if (!silent) toast('센서를 껐습니다. 드래그·버튼으로 둘러보세요.');
+    kickLive();
   }
+
+  // 화면 구조 개편·테스트에서 쓰는 공개 API
+  window.LiveSky = {
+    state: function () {
+      return { az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen, compass: track.comp, cal: track.calAz };
+    },
+    pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } },
+    resume: function () { liveDirty = true; kickLive(); },
+    calibrate: calibrateLive,
+    sensorOn: function () { return live.sensor; },
+    enableSensor: enableSensor,
+    disableSensor: disableSensor
+  };
 
   function pickStartView() {
     const c = state.last || computeNight();
@@ -2490,15 +2795,20 @@
     let drag = null;
     stage.addEventListener('pointerdown', function (ev) {
       if (ev.button != null && ev.button !== 0) return;
-      if (live.sensor) disableSensor(true);
-      drag = { x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false };
+      // 확대/축소·HUD 등 스테이지 위 버튼은 드래그 캡처에서 제외 (클릭이 죽지 않게)
+      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card')) return;
+      drag = { x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false, t: performance.now() };
       stage.classList.add('is-dragging');
       try { stage.setPointerCapture(ev.pointerId); } catch (e) { }
     });
     stage.addEventListener('pointermove', function (ev) {
       if (!drag) return;
       const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 8) {
+        drag.moved = true;
+        if (live.sensor) { disableSensor(true); toast('터치로 둘러보는 중 — 🧭 센서를 다시 켜면 하늘을 따라갑니다.'); }
+      }
+      if (!drag.moved) return;
       const degPerPx = live.fov / Math.max(220, live.h);
       const az = A.mod(drag.az - dx * degPerPx, 360);
       const alt = clamp(drag.alt + dy * degPerPx, -15, 89);
@@ -2567,6 +2877,15 @@
       live.targetAz = 180; live.targetAlt = 32; live.fov = 65;
       liveDirty = true; kickLive();
       toast('시선을 남쪽 32°, 시야 65°로 되돌렸습니다.');
+    });
+    const calBtn = $('#liveCalBtn');
+    if (calBtn) calBtn.addEventListener('click', calibrateLive);
+    $$('.sens-btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        track.sens = Number(b.getAttribute('data-sens')) || 1;
+        $$('.sens-btn').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+        toast(b.textContent + ' 모드 — ' + (track.sens < 1 ? '빠르게 따라옵니다.' : track.sens > 1.2 ? '나침반 보정을 천천히 합니다.' : '기본 추적입니다.'));
+      });
     });
     const nightBtn = $('#liveNightBtn');
     if (nightBtn) nightBtn.addEventListener('click', function () {
