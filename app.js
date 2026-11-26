@@ -1819,7 +1819,7 @@
     az: 180, alt: 32, fov: 65, targetAz: 180, targetAlt: 32,
     labels: true, deep: true, sensor: false, gotEvent: false,
     w: 0, h: 0, dpr: 1, canvas: null, ctx: null,
-    raf: null, hits: [], lastIv: 0, lastCenter: ''
+    raf: null, hits: [], lastIv: 0, lastCenter: '', selected: null
   };
   let liveDirty = true;
 
@@ -2097,6 +2097,7 @@
     const ctx = live.ctx;
     if (!ctx || !live.w || !live.h) return;
     const W = live.w, H = live.h, cx = W / 2, cy = H / 2;
+    live.hits = [];                       // 프레임마다 새로 계산 (누적 방지)
     const c = state.last || computeNight();
     const jd = c.jd;
     const lat = state.site.lat, lon = state.site.lon;
@@ -2300,7 +2301,7 @@
       const r = mag <= 2.0 ? 2.6 : mag <= 3.2 ? 1.8 : mag <= 4.2 ? 1.3 : 0.9;
       const key = bvColor(st[4]) + '|' + r;
       (starBuckets[key] = starBuckets[key] || []).push(p);
-      if (mag <= 2.3) live.hits.push({ x: p.x, y: p.y, kind: 'star', key: st[0], name: st[0] });
+      if (mag <= 2.3) live.hits.push({ x: p.x, y: p.y, kind: 'star', key: st[0], name: st[0], mag: st[3] });
     });
     Object.keys(starBuckets).forEach(function (key) {
       const parts = key.split('|');
@@ -2405,7 +2406,7 @@
           drawLabel(o.name.replace(' 성단', '').replace(' 대성운', ''), p.x + 7, p.y + 12, pal.dso, '600 10px system-ui, sans-serif');
           ctx.globalAlpha = 1;
         }
-        live.hits.push({ x: p.x, y: p.y, kind: 'dso', key: o.id, name: o.name });
+        live.hits.push({ x: p.x, y: p.y, kind: 'dso', key: o.id, name: o.name, mag: o.mag });
         inView.push({ kind: 'dso', key: o.id, name: o.name, alt: h.alt, az: h.az, d: Math.hypot(p.x - cx, p.y - cy) });
       });
     }
@@ -2438,7 +2439,7 @@
       if (live.labels) {
         drawLabel(pl.name, p.x + r + 5, p.y - 3, col, '700 12px system-ui, sans-serif');
       }
-      live.hits.push({ x: p.x, y: p.y, kind: 'planet', key: pl.key, name: pl.name });
+      live.hits.push({ x: p.x, y: p.y, kind: 'planet', key: pl.key, name: pl.name, mag: pl.mag });
       inView.push({ kind: 'planet', key: pl.key, name: pl.name, alt: pl.hor.alt, az: pl.hor.az, d: Math.hypot(p.x - cx, p.y - cy) });
     });
 
@@ -2478,7 +2479,7 @@
       if (live.labels) {
         drawLabel('달 ' + Math.round(ill * 100) + '%', moonPt.x + r + 6, moonPt.y + 4, '#ffeec8', '700 12px system-ui, sans-serif');
       }
-      live.hits.push({ x: moonPt.x, y: moonPt.y, kind: 'moon', key: '', name: '달' });
+      live.hits.push({ x: moonPt.x, y: moonPt.y, kind: 'moon', key: '', name: '달', mag: -12.7 });
       inView.push({ kind: 'moon', key: '', name: '달', alt: moonH.alt, az: moonH.az, d: Math.hypot(moonPt.x - cx, moonPt.y - cy) });
     }
 
@@ -2503,8 +2504,24 @@
         ctx.arc(p.x, p.y, sr, 0, Math.PI * 2);
         ctx.fill();
         if (live.labels) drawLabel('태양', p.x + sr + 5, p.y - 3, '#ffe9a8', '700 12px system-ui, sans-serif');
-        live.hits.push({ x: p.x, y: p.y, kind: 'sun', key: '', name: '태양' });
+        live.hits.push({ x: p.x, y: p.y, kind: 'sun', key: '', name: '태양', mag: -26.7 });
         inView.push({ kind: 'sun', key: '', name: '태양', alt: sunH.alt, az: sunH.az, d: Math.hypot(p.x - cx, p.y - cy) });
+      }
+    }
+
+    /* 선택한 천체 표시 링 */
+    if (live.selected) {
+      const sel = live.hits.find(function (h) {
+        return h.kind === live.selected.kind && String(h.key) === String(live.selected.key);
+      });
+      if (sel) {
+        const pulse = 1 + Math.sin(Date.now() / 320) * 0.12;
+        ctx.strokeStyle = 'rgba(255,212,121,.95)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(sel.x, sel.y, 15 * pulse, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,212,121,.35)';
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(sel.x, sel.y, 15 * pulse, 0, Math.PI * 2); ctx.stroke();
       }
     }
 
@@ -2553,12 +2570,207 @@
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
     const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
-    let best = null, bestD = 28;
+    // 손가락 크기 고려: 32px 안에서 가장 가까운 천체. 가까우면 밝은(등급 낮은) 쪽 우선.
+    let best = null, bestScore = Infinity;
     live.hits.forEach(function (h) {
       const d = Math.hypot(h.x - x, h.y - y);
-      if (d < bestD) { bestD = d; best = h; }
+      if (d > 32) return;
+      const score = d + (typeof h.mag === 'number' ? Math.max(0, h.mag + 1) * 1.5 : 0);
+      if (score < bestScore) { bestScore = score; best = h; }
     });
-    if (best) showInspector(best.kind, best.key);
+    if (best) openLiveInfo(best);
+    else { live.selected = null; liveDirty = true; kickLive(); }
+  }
+
+
+  /* ======================================================================
+     라이브 하늘 천체 정보 창 — 이름·방위/고도·사진 갤러리(여러 장)
+     ====================================================================== */
+  const li = { items: [], idx: 0, info: null, busy: false };
+
+  function skyviewUrl(raH, decD, survey, sizeDeg, px) {
+    const ra = ((raH * 15 % 360) + 360) % 360;
+    return 'https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl' +
+      '?Survey=' + encodeURIComponent(survey) +
+      '&Position=' + ra.toFixed(4) + ',' + Number(decD).toFixed(4) +
+      '&Size=' + Number(sizeDeg).toFixed(2) + '&Pixels=' + (px || 600) + '&Return=JPEG';
+  }
+
+  function photoSetFor(info) {
+    const out = [];
+    const cur = window.PHOTO_SETS && window.PHOTO_SETS[info.name];
+    if (cur && cur.length) {
+      cur.forEach(function (p) {
+        out.push({ src: p.src, thumb: p.src, title: p.title, credit: p.credit, link: p.link });
+      });
+      return out;
+    }
+    if (info.raH != null && info.decD != null && isFinite(info.raH) && isFinite(info.decD)) {
+      const size = info.kind === 'dso' ? 1.2 : 2.6;   // 별은 넓게 잡아 주변 은하수까지
+      // SkyView는 요청마다 새로 계산해 2MASS/WISE는 20초 넘게 걸리는 경우가 있어
+      // 실제로 안정적으로 오는 DSS2 적색·청색 두 장만 씁니다.
+      [
+        ['DSS2 Red', '가시광 · DSS2 적색'],
+        ['DSS2 Blue', '가시광 · DSS2 청색']
+      ].forEach(function (sv) {
+        const u = skyviewUrl(info.raH, info.decD, sv[0], size, 560);
+        out.push({
+          src: u, thumb: u,
+          title: info.name + ' · ' + sv[1],
+          credit: 'NASA SkyView · ' + sv[0],
+          link: u
+        });
+      });
+    }
+    return out;
+  }
+
+  function factRow(label, value) {
+    return '<div class="li-fact"><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>';
+  }
+
+  function openLiveInfo(hit) {
+    const box = $('#liveInfo');
+    if (!box) return;
+    const jd = (state.last || computeNight()).jd;
+    const info = skyInfo(hit.kind, hit.key, jd);
+    if (!info) return;
+    live.selected = { kind: hit.kind, key: hit.key };
+    liveDirty = true; kickLive();
+
+    const obj = info.objId ? D.catalog.find(function (x) { return x.id === info.objId; }) : null;
+    const facts = [];
+    facts.push(factRow('지금', dirName(info.az) + ' ' + nf(info.alt, 0) + '° (방위 ' + nf(info.az, 0) + '°)'));
+    if (typeof info.mag === 'number') facts.push(factRow('겉보기 등급', (info.mag > 0 ? '+' : '') + nf(info.mag, 2) + '등'));
+    if (obj && obj.con && obj.con !== '—') facts.push(factRow('별자리', obj.con));
+    if (obj && obj.dist && obj.dist !== '—') facts.push(factRow('거리', obj.dist));
+    if (info.kind === 'con' && info.cells) info.cells.slice(0, 3).forEach(function (c) { facts.push(factRow(c[0], c[1])); });
+
+    li.items = photoSetFor(info);
+    li.idx = 0;
+    li.info = info;
+
+    box.innerHTML =
+      '<div class="li-backdrop" data-li-close></div>' +
+      '<div class="li-card" role="dialog" aria-label="' + esc(info.name) + ' 정보">' +
+      '  <button class="li-close" type="button" data-li-close aria-label="닫기">×</button>' +
+      '  <div class="li-head"><h3>' + esc(info.name) + '</h3><p>' + esc(info.sub) + '</p></div>' +
+      '  <div class="li-facts">' + facts.join('') + '</div>' +
+      (info.note ? '<p class="li-note">' + esc(info.note) + '</p>' : '') +
+      '  <div class="li-gallery">' +
+      '    <div class="li-shot is-loading" id="liShot">' +
+      '      <div class="li-skel" aria-hidden="true"><span></span><small>사진 불러오는 중…</small></div>' +
+      '      <img id="liImg" alt="' + esc(info.name) + ' 사진" decoding="async" draggable="false">' +
+      '      <div class="li-fallback" id="liFallback" hidden><span>사진을 불러오지 못했습니다</span><small>성도 위치로 대신 표시합니다</small></div>' +
+      '      <span class="li-count" id="liCount">0/0</span>' +
+      '      <button class="li-arrow li-prev" type="button" aria-label="이전 사진">‹</button>' +
+      '      <button class="li-arrow li-next" type="button" aria-label="다음 사진">›</button>' +
+      '    </div>' +
+      '    <div class="li-cap"><b id="liTitle">—</b><span id="liCredit">—</span><a id="liLink" target="_blank" rel="noopener noreferrer" hidden>원본 보기 ↗</a></div>' +
+      '    <div class="li-thumbs" id="liThumbs"></div>' +
+      '  </div>' +
+      '  <div class="li-actions">' +
+      (info.objId ? '<button class="btn btn-primary btn-sm" type="button" data-li-obj="' + esc(info.objId) + '">도감에서 보기</button>' : '') +
+      '    <button class="mini-btn" type="button" data-li-aim>🎯 라이브 뷰로 조준</button>' +
+      '  </div>' +
+      '</div>';
+    box.hidden = false;
+    document.body.classList.add('li-open');
+    renderLivePhoto(0);
+  }
+
+  function closeLiveInfo() {
+    const box = $('#liveInfo');
+    if (!box || box.hidden) return;
+    box.hidden = true;
+    box.innerHTML = '';
+    document.body.classList.remove('li-open');
+    live.selected = null;
+    liveDirty = true; kickLive();
+  }
+
+  function renderLivePhoto(i) {
+    const img = $('#liImg'), count = $('#liCount'), title = $('#liTitle'),
+      credit = $('#liCredit'), link = $('#liLink'), thumbs = $('#liThumbs'),
+      shot = $('#liShot'), fb = $('#liFallback');
+    if (!img || !li.items.length) return;
+    i = ((i % li.items.length) + li.items.length) % li.items.length;
+    li.idx = i;
+    const it = li.items[i];
+    shot.classList.remove('is-broken');
+    fb.hidden = true;
+    img.hidden = true;
+    shot.classList.add('is-loading');
+    const done = function () { shot.classList.remove('is-loading'); img.hidden = false; };
+    img.onload = done;
+    img.onerror = function () {
+      shot.classList.remove('is-loading');
+      shot.classList.add('is-broken');
+      img.hidden = true;
+      fb.hidden = false;
+    };
+    // SkyView는 계산에 수 초 걸릴 수 있어 12초 넘으면 성도 폴백
+    if (li.timer) clearTimeout(li.timer);
+    li.timer = setTimeout(function () {
+      if (!img.complete || !img.naturalWidth) {
+        shot.classList.remove('is-loading');
+        shot.classList.add('is-broken');
+        img.hidden = true;
+        fb.hidden = false;
+      }
+    }, 12000);
+    img.src = it.src;
+    count.textContent = (i + 1) + '/' + li.items.length;
+    title.textContent = it.title || li.info.name;
+    credit.textContent = it.credit || '';
+    if (it.link) { link.hidden = false; link.href = it.link; } else link.hidden = true;
+    if (thumbs) {
+      thumbs.innerHTML = li.items.map(function (t, k) {
+        return '<button type="button" class="li-thumb' + (k === i ? ' is-active' : '') + '" data-li-i="' + k + '" aria-label="사진 ' + (k + 1) + '">' +
+          '<img src="' + esc(t.thumb || t.src) + '" alt="" loading="lazy" decoding="async"></button>';
+      }).join('');
+    }
+    const nx = li.items[(i + 1) % li.items.length];
+    if (nx) { const pre = new Image(); pre.src = nx.src; }
+    const prev = $('#liImg');
+    if (prev) prev.setAttribute('data-i', String(i));
+  }
+
+  function wireLiveInfo() {
+    const box = $('#liveInfo');
+    if (!box || box.dataset.wired) return;
+    box.dataset.wired = '1';
+    box.addEventListener('click', function (ev) {
+      const t = ev.target;
+      if (t.closest('[data-li-close]')) { closeLiveInfo(); return; }
+      if (t.closest('.li-prev')) { renderLivePhoto(li.idx - 1); return; }
+      if (t.closest('.li-next')) { renderLivePhoto(li.idx + 1); return; }
+      const th = t.closest('[data-li-i]');
+      if (th) { renderLivePhoto(Number(th.getAttribute('data-li-i'))); return; }
+      const objBtn = t.closest('[data-li-obj]');
+      if (objBtn) { closeLiveInfo(); openObject(objBtn.getAttribute('data-li-obj')); return; }
+      const aim = t.closest('[data-li-aim]');
+      if (aim && li.info) { const i = li.info; closeLiveInfo(); aimAt(i.kind, i.key); }
+    });
+    // 손가락 스와이프
+    const shot = function () { return $('#liShot'); };
+    let sx = null, sy = null;
+    box.addEventListener('pointerdown', function (ev) {
+      const s = shot(); if (!s || !s.contains(ev.target)) return;
+      sx = ev.clientX; sy = ev.clientY;
+    });
+    box.addEventListener('pointerup', function (ev) {
+      if (sx == null) return;
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      sx = null;
+      if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.4) renderLivePhoto(li.idx + (dx < 0 ? 1 : -1));
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (box.hidden) return;
+      if (ev.key === 'Escape') closeLiveInfo();
+      else if (ev.key === 'ArrowRight') renderLivePhoto(li.idx + 1);
+      else if (ev.key === 'ArrowLeft') renderLivePhoto(li.idx - 1);
+    });
   }
 
   function setSensorUi(on, cls, txt) {
@@ -2749,6 +2961,9 @@
     pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
     resume: function () { liveResize(); liveDirty = true; kickLive(); },
     calibrate: calibrateLive,
+    hits: function () { return live.hits.map(function (h) { return { x: h.x, y: h.y, kind: h.kind, key: h.key, name: h.name, mag: h.mag }; }); },
+    info: function (kind, key) { openLiveInfo({ kind: kind, key: key }); },
+    aim: function (kind, key) { aimAt(kind, key); },
     sensorOn: function () { return live.sensor; },
     enableSensor: enableSensor,
     disableSensor: disableSensor
@@ -2780,6 +2995,7 @@
 
   function initLive() {
     if (!$('#liveStage')) return;
+    wireLiveInfo();
     liveResize();
     pickStartView();
     window.addEventListener('resize', function () { liveResize(); });

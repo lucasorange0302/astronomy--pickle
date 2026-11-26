@@ -425,3 +425,9 @@ html[data-layout="mobile"] .lc-close {
   color: var(--muted); font: 700 .8rem var(--font); cursor: pointer;
 }
 html[data-layout="mobile"] .lc-close:hover { color: var(--text); border-color: var(--border-hi); }
+
+/* ------------------------------------------ 모바일: 천체 정보는 탭 바 위 시트 */
+html[data-layout="mobile"] .li-card {
+  margin-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  max-height: 72dvh; border-radius: 20px 20px 0 0;
+}

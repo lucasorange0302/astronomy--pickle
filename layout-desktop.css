@@ -243,3 +243,12 @@ html[data-layout="desktop"] #live .live-stage { max-height: 68vh; }
 html[data-layout="desktop"] .grid-1 { grid-template-columns: minmax(0, 1fr); }
 /* 데스크톱은 좌측 레일에 바로가기가 있으므로 떠 있는 독을 쓰지 않습니다 */
 html[data-layout="desktop"] .space-dock { display: none !important; }
+
+/* ------------------------------------------ 데스크톱: 천체 정보는 플로팅 카드 */
+html[data-layout="desktop"] .live-info { justify-content: flex-end; align-items: flex-end; }
+html[data-layout="desktop"] .li-backdrop { background: rgba(2, 4, 10, .28); }
+html[data-layout="desktop"] .li-card {
+  margin: 0 28px 28px 0; width: 430px; max-height: 82vh; border-radius: 20px;
+  padding: 20px 20px 18px;
+}
+html[data-layout="desktop"] .li-head h3 { font-size: 1.35rem; }
