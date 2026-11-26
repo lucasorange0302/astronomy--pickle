@@ -3641,21 +3641,9 @@
       else if (e.key === '?') { toast('단축키 — R: 레드라이트 · /: 천체 검색 · Esc: 창 닫기'); }
     });
 
-    // 섹션 활성 표시
-    if ('IntersectionObserver' in window) {
-      const map = {};
-      $$('.nav-link').forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
-      const obs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) {
-            $$('.nav-link').forEach(function (a) { a.classList.remove('is-active'); a.removeAttribute('aria-current'); });
-            const link = map[en.target.id];
-            if (link) { link.classList.add('is-active'); link.setAttribute('aria-current', 'true'); }
-          }
-        });
-      }, { rootMargin: '-45% 0px -50% 0px' });
-      $$('main section[id]').forEach(function (s) { obs.observe(s); });
-    }
+    // 섹션 활성 표시는 initNav 의 단일 스크롤 스파이에서 처리한다.
+    // (예전 IntersectionObserver 방식은 #constellations 처럼 숨겨진 패널이
+    //  뷰포트 중앙 띠에 걸리면 도감이 계속 강조되는 문제가 있어 제거했다.)
   }
 
   /* ---------------------------------------------------------- 별자리 88종 도감 */
@@ -3742,15 +3730,94 @@
     if (scroll) {
       const sec = $('#catalog');
       if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      lockActiveNav('catalog');
     }
   }
 
+  /* ------------------------------------------------- 상단 내비 활성 표시 */
+  // 내비 4개 항목과 그 대상 요소. #skymap 은 #today 안의 패널이고,
+  // 도감 탭(#constellations)은 #catalog 안의 패널이라 둘 다 카탈로그에 묶는다.
+  const NAV_TARGETS = ['today', 'skymap', 'live', 'catalog'];
+  const NAV_KEYS = { today: 'today', skymap: 'skymap', live: 'live', catalog: 'catalog', constellations: 'catalog' };
+
+  let navLockKey = null;   // 클릭·해시 이동 직후 강제로 유지할 내비 키
+  let navLockAt = 0;       // 잠금 시작 시각
+  let navLockTimer = 0;    // 스크롤이 멈춘 것을 감지하는 타이머
+
   function setActiveNav(id) {
-    const map = { today: 'today', skymap: 'skymap', live: 'live', catalog: 'catalog', constellations: 'catalog' };
-    const key = map[id];
+    const key = NAV_KEYS[id];
     $$('.main-nav .nav-link').forEach(function (a) {
-      a.classList.toggle('is-active', !!key && a.getAttribute('data-nav') === key);
+      const on = !!key && a.getAttribute('data-nav') === key;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
     });
+  }
+
+  // 스티키 헤더 높이와 scroll-padding-top 을 반영한 판정선.
+  // 섹션 상단이 이 선을 지나면 그 섹션이 현재 섹션이다.
+  function navLine() {
+    let pad = 0, head = 0;
+    try { pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0; } catch (e) {}
+    const h = document.getElementById('siteHeader');
+    if (h) head = h.getBoundingClientRect().height;
+    return Math.min(Math.max(pad, head) + 8, window.innerHeight * 0.4);
+  }
+
+  // 화면에 실제로 그려진 요소만 보고, 판정선을 지난 마지막 대상 섹션을 고른다.
+  // (숨겨진 탭 패널처럼 rect.top 이 0 이 되는 요소는 건너뛴다 — 도감 오표시의 원인)
+  // 상단 목차 범위를 벗어나면(도감 다음 섹션=실험실부터) null 로 강조를 해제한다.
+  function navSectionAt() {
+    const line = navLine();
+    const after = document.getElementById('lab');   // 도감 다음 섹션 — 상단 목차 범위 밖
+    if (after && after.getClientRects().length && after.getBoundingClientRect().top <= line) return null;
+    let cur = NAV_TARGETS[0];
+    NAV_TARGETS.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el || !el.getClientRects().length) return;
+      if (el.getBoundingClientRect().top <= line) cur = id;
+    });
+    return cur;
+  }
+
+  function navUnlock() {
+    navLockKey = null;
+    if (navLockTimer) { clearTimeout(navLockTimer); navLockTimer = 0; }
+  }
+
+  // 잠금 유지 타이머: 스크롤 이벤트가 이어지는 동안 재장전하고,
+  // 스크롤이 멈추면(160ms) 목표 위치에 닿았거나 너무 오래 걸렸을 때 풀어 실제 위치로 재계산한다.
+  function navHoldLock() {
+    if (!navLockKey) return;
+    if (navLockTimer) clearTimeout(navLockTimer);
+    navLockTimer = setTimeout(function () {
+      navLockTimer = 0;
+      if (!navLockKey) return;
+      const el = document.getElementById(navLockKey);
+      const settled = !el || Math.abs(el.getBoundingClientRect().top - navLine()) <= 32;
+      if (settled || performance.now() - navLockAt > 1200) {
+        navLockKey = null;
+        setActiveNav(navSectionAt());
+      } else {
+        navHoldLock();
+      }
+    }, 160);
+  }
+
+  // 클릭·해시 이동에서 클릭한 항목을 즉시 칠하고, 부드러운 스크롤이 끝날 때까지
+  // 스크롤 스파이가 중간 섹션으로 덮어쓰지 않도록 잠근다.
+  function lockActiveNav(id) {
+    const key = NAV_KEYS[id];
+    if (!key) { navUnlock(); return; }
+    navLockKey = key;
+    navLockAt = performance.now();
+    setActiveNav(key);
+    navHoldLock();
+  }
+
+  function syncActiveNav() {
+    if (navLockKey) { setActiveNav(navLockKey); navHoldLock(); return; }
+    setActiveNav(navSectionAt());
   }
 
   function jumpTo(id) {
@@ -3761,16 +3828,19 @@
     const el = document.getElementById(target);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     try { history.replaceState(null, '', '#' + id); } catch (e) { /* file:// 에서 생길 수 있음 */ }
-    setActiveNav(id);
+    if (NAV_KEYS[id]) lockActiveNav(id);
+    else navUnlock();
   }
 
   function handleHash(id) {
     if (!id) return;
-    if (id === 'constellations') { activateCatTab('const', false); setActiveNav('constellations'); }
-    else if (id === 'catalog') { activateCatTab('objects', false); setActiveNav('catalog'); }
+    if (id === 'constellations') activateCatTab('const', false);
+    else if (id === 'catalog') activateCatTab('objects', false);
     const target = id === 'glossary' ? 'glossaryPanel' : id;
     const el = document.getElementById(target);
     if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 40);
+    if (NAV_KEYS[id]) lockActiveNav(id);
+    else navUnlock();
   }
 
   function initNav() {
@@ -3850,25 +3920,27 @@
       });
     });
 
-    /* 4) 스크롤 위치로 활성 메뉴 표시 */
-    const secs = ['today', 'skymap', 'live', 'catalog', 'constellations', 'lab', 'guide', 'sites', 'plan', 'calendar', 'science'];
+    /* 4) 스크롤 위치로 활성 메뉴 표시 (헤더 높이 보정 + 클릭 잠금) */
     let ticking = false;
     window.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(function () {
         ticking = false;
-        const y = window.scrollY + Math.max(120, window.innerHeight * 0.35);
-        let cur = 'today';
-        secs.forEach(function (id) {
-          const el = document.getElementById(id);
-          if (!el) return;
-          const top = el.getBoundingClientRect().top + window.scrollY;
-          if (top <= y) cur = id;
-        });
-        setActiveNav(cur);
+        syncActiveNav();
       });
     }, { passive: true });
+
+    // 사용자가 직접 스크롤을 시작하면 클릭 잠금을 즉시 풀어 항상 실제 위치를 따른다.
+    ['wheel', 'touchstart'].forEach(function (t) {
+      window.addEventListener(t, navUnlock, { passive: true });
+    });
+    window.addEventListener('keydown', function (e) {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].indexOf(e.key) >= 0) navUnlock();
+    });
+    window.addEventListener('resize', function () { syncActiveNav(); });
+    window.addEventListener('load', function () { syncActiveNav(); });
+    requestAnimationFrame(function () { syncActiveNav(); });
 
     /* 5) 해시로 들어온 링크(#constellations·#catalog 등) 자동 탭 전환 */
     window.addEventListener('hashchange', function () { handleHash(location.hash.slice(1)); });
