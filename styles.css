@@ -2277,3 +2277,86 @@ body.red .sg-thumb.is-active { border-color: #ff8a6a; box-shadow: 0 0 0 1px #ff8
   .sg.is-modal .sg-shot { max-height: 34vh; }
   .sm-photo .sg-shot { min-height: 180px; max-height: 40vh; }
 }
+
+/* =========================================================================
+   3부 — 홈 화면 설치(PWA)
+   · ☰ 더보기 메뉴의 [📲 앱으로 설치] 배지
+   · 설치 안내 시트(iOS Safari·Chrome·삼성 인터넷)
+   ========================================================================= */
+
+.more-item .pwa-badge {
+  margin-left: auto; flex: 0 0 auto;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--accent); color: #14100a;
+  font-size: .66rem; font-weight: 800; letter-spacing: .02em;
+}
+.more-item .pwa-badge[hidden] { display: none; }
+.more-item.is-running .mi-ico { background: var(--accent-soft); }
+body.red .more-item .pwa-badge { background: #ff6a3d; color: #180502; }
+
+.pwa-sheet { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 16px; }
+.pwa-sheet[hidden] { display: none; }
+.pwa-sheet-back {
+  position: absolute; inset: 0; background: rgba(3, 5, 12, .74);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.pwa-sheet-card {
+  position: relative; width: min(452px, 100%);
+  max-height: calc(100dvh - 40px); overflow-y: auto;
+  padding: 22px 22px 20px; border-radius: 20px;
+  background: linear-gradient(168deg, rgba(24, 33, 54, .98), rgba(9, 13, 23, .99));
+  border: 1px solid var(--border-hi);
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .85);
+  animation: pwaIn .18s ease-out;
+}
+@keyframes pwaIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+.pwa-sheet-x {
+  position: absolute; top: 10px; right: 10px; width: 34px; height: 34px;
+  border: 0; border-radius: 50%; background: rgba(255, 255, 255, .07);
+  color: var(--muted); font-size: 1.2rem; line-height: 1; cursor: pointer;
+}
+.pwa-sheet-x:hover { color: var(--text); background: rgba(255, 255, 255, .12); }
+.pwa-sheet-kicker {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 0 8px;
+  padding: 3px 10px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: .7rem; font-weight: 800; letter-spacing: .04em;
+}
+.pwa-sheet-card h2 { margin: 0 0 6px; font-size: 1.16rem; letter-spacing: -.01em; }
+.pwa-sheet-lead { margin: 0 0 14px; color: var(--muted); font-size: .88rem; line-height: 1.6; }
+.pwa-steps { margin: 0 0 14px; padding: 0; list-style: none; counter-reset: pwa; display: grid; gap: 8px; }
+.pwa-steps li {
+  counter-increment: pwa; position: relative;
+  padding: 9px 12px 9px 38px; border-radius: 12px;
+  background: rgba(255, 255, 255, .045); border: 1px solid var(--border);
+  font-size: .86rem; line-height: 1.55; color: var(--text);
+}
+.pwa-steps li::before {
+  content: counter(pwa); position: absolute; left: 10px; top: 9px;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accent); color: #14100a;
+  font-size: .7rem; font-weight: 800;
+}
+.pwa-steps b { color: var(--accent); font-weight: 700; }
+.pwa-sheet-foot { margin: 0 0 14px; color: var(--faint); font-size: .76rem; line-height: 1.55; }
+body.pwa-sheet-open { overflow: hidden; }
+body.red .pwa-sheet-card { background: linear-gradient(168deg, rgba(52, 9, 5, .99), rgba(16, 3, 1, .99)); }
+body.red .pwa-steps li { background: rgba(255, 106, 61, .08); }
+body.red .pwa-steps b, body.red .pwa-sheet-kicker { color: #ff8a5c; }
+
+@media (max-width: 640px) {
+  .pwa-sheet { place-items: end center; padding: 0; }
+  .pwa-sheet-card {
+    width: 100%; max-height: 88dvh; border-radius: 22px 22px 0 0;
+    padding: 20px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-left: 0; border-right: 0; border-bottom: 0;
+    animation: pwaUp .2s ease-out;
+  }
+  @keyframes pwaUp { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+
+/* iOS 홈 화면 앱(주소창 없이 실행) — 상태 표시줄이 화면 위를 덮으므로 그만큼 띄웁니다 */
+@media (display-mode: standalone) {
+  html[data-layout="desktop"] body { padding-top: env(safe-area-inset-top, 0px); }
+}

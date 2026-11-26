@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#05070f">
+<meta name="theme-color" content="#070b14">
 <meta name="description" content="별너울 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
 <title>별너울 — 대한민국 천체관측 가이드</title>
 <!-- ROUTER-START -->
@@ -29,6 +29,14 @@
 </script>
 <!-- ROUTER-END -->
 <link rel="stylesheet" href="styles.css">
+<!-- 홈 화면 설치(PWA) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="별너울">
+<meta name="application-name" content="별너울">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -84,6 +92,14 @@
             <a href="#skymap" role="menuitem">전천 지도</a>
             <a href="#live" role="menuitem">라이브 하늘</a>
             <a href="#catalog" role="menuitem">도감</a>
+          </div>
+          <div class="more-group more-pwa" role="group" aria-label="앱 설치">
+            <p class="more-title"><span aria-hidden="true">📲</span> 앱</p>
+            <button type="button" class="more-item" id="btnInstall" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">📲</span>
+              <span class="mi-txt"><b id="pwaInstallLabel">앱으로 설치</b><small id="pwaInstallNote">홈 화면에 추가 · 주소창 없이</small></span>
+              <span class="pwa-badge" id="pwaInstallBadge" hidden>실행 중</span>
+            </button>
           </div>
           <div class="more-group" role="group" aria-label="관측 계획과 현장">
             <p class="more-title"><span aria-hidden="true">🗓️</span> 관측 계획 · 현장</p>
@@ -1091,5 +1107,6 @@
 <script src="app.js"></script>
 <script src="space-ui.js"></script>
 <script src="views.js"></script>
+<script src="pwa.js"></script>
 </body>
 </html>

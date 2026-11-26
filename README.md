@@ -3,17 +3,18 @@
 설치·서버·계정 없이 브라우저에서 바로 열리는 정적 천체관측 사이트입니다.
 수익화·광고·회원가입 요소는 없습니다.
 
-## 라이브 사이트 (HTTPS, GitHub Pages)
+## 라이브 사이트 (HTTPS)
 
-- 메인: https://lucasorange0302.github.io/astronomy--pickle/
-- 단일 파일판: https://lucasorange0302.github.io/astronomy--pickle/별너울지도.html
-- 저장소(공개): https://github.com/lucasorange0302/astronomy--pickle (브랜치 `main`, 루트)
-- HTTPS이므로 아이폰 나침반·자이로 센서(라이브 하늘 모드)가 동작합니다.
-- 수정 반영: `astronomy-site/` 파일을 고친 뒤 아래 배포 사본에 복사하고 `git push` 하면 1분 안에 Pages가 다시 빌드됩니다.
+- 메인: **https://byeolneoul.vercel.app/** (Vercel)
+- GitHub Pages: https://lucasorange0302.github.io/byeolbam/
+- 단일 파일판: https://lucasorange0302.github.io/byeolbam/별너울지도.html
+- 저장소(공개): https://github.com/lucasorange0302/byeolbam (브랜치 `main`, 루트)
+- HTTPS이므로 아이폰 나침반·자이로 센서(라이브 하늘 모드)가 동작하고, **홈 화면 설치(PWA)** 도 됩니다.
+- 수정 반영: `astronomy-site/` 파일을 고친 뒤 아래 배포 사본에 복사하고 `git push` 하면 1분 안에 다시 배포됩니다.
   ```bash
-  cd astronomy-site && python3 build.py
-  cp index.html styles.css *.js README.md 별너울지도.html ../deploy/astronomy--pickle/
-  cp -r assets ../deploy/astronomy--pickle/
+  cd astronomy-site && python3 build.py && python3 tools/make_icons.py
+  cp index.html mobile.html desktop.html styles.css layout-*.css *.js manifest.webmanifest README.md 별너울지도.html 별밤지도.html ../deploy/astronomy--pickle/
+  mkdir -p ../deploy/astronomy--pickle/assets/icons && cp assets/icons/* ../deploy/astronomy--pickle/assets/icons/
   cd ../deploy/astronomy--pickle && git add -A && git commit -m "업데이트" && git push
   ```
 
@@ -48,7 +49,39 @@
 | `app.js` | 화면 렌더·추천 엔진·계산기·검색/필터·저장·공유·목차/탭·라이브 하늘 뷰 |
 | `space-ui.js` | 우주 쿠키·자료관·전체 하늘 도감·AI 도우미 |
 | `photo-ui.js` | 자료관 사진 카드(로컬 사진 → NASA SkyView DSS2 → 성도 폴백) + 성도 SVG |
+| `pwa.js` | 홈 화면 설치 연결 — 서비스 워커 등록, 설치 버튼 상태, iOS/Chrome/삼성 안내 시트 |
+| `manifest.webmanifest` | 웹 앱 매니페스트(이름·아이콘·standalone·테마 색) |
+| `sw.js` | 서비스 워커 — 같은 출처 정적 파일만, HTML/JS/CSS 네트워크 우선 + 이미지 캐시 |
+| `assets/icons/icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | 앱 아이콘(`tools/make_icons.py`로 생성) |
 | **`별너울지도.html`** | **단일 파일 배포본** — 위 CSS·JS를 모두 인라인으로 합친 HTML. 이 파일 하나만 있으면 외부 파일 없이 100% 동작합니다. |
+
+## 2026-11-27 업데이트 — 홈 화면 설치(PWA) · 오프라인
+
+### 1) 홈 화면에 앱처럼 설치
+- `manifest.webmanifest`: `별너울 · 한국 밤하늘 관측` / `별너울`, `start_url: ./index.html`(자동 라우터가 모바일·데스크톱 판을 고름), `display: standalone`, 배경·테마 `#070b14`.
+- 아이콘 3종 — `assets/icons/icon-192.png`(192), `icon-512.png`(512), `apple-touch-icon.png`(180, 불투명).
+  - `assets/icons/icon.svg`가 원본이고 `tools/make_icons.py`가 Chromium으로 정확한 픽셀 크기로 렌더링합니다.
+  - 밤하늘 `#070b14` 바탕 가운데에 금빛 별자리(연결선 4개)와 은빛→금빛 너울(파도)을 그렸습니다. 모든 그림 요소가 중심 반지름 190px 안에 있어 **maskable 잘라내기(안전 영역 204.8px)** 에서도 잘리지 않습니다.
+- HTML 메타(`index.html` → `build.py`가 `mobile.html`·`desktop.html`에도 반영): `manifest`, `apple-touch-icon 180×180`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style=black-translucent`, `apple-mobile-web-app-title=별너울`, `theme-color=#070b14`.
+- iOS 홈 화면 앱은 상태 표시줄이 화면을 덮으므로, `display-mode: standalone`에서만 첫 화면·앵커 위치를 `env(safe-area-inset-top)` 만큼 내립니다.
+
+### 2) 서비스 워커 — 오프라인 캐시
+- `sw.js`는 `http:`/`https:`에서만 등록되고(`pwa.js`), `file://`로 연 단일 파일판은 등록하지 않습니다.
+- **같은 출처의 정적 파일만** 다룹니다. `open-meteo.com`·`images-api.nasa.gov`·`skyview.gsfc.nasa.gov` 등 외부 API·CDN 요청은 `fetch` 핸들러에서 곧바로 `return` 해 브라우저에 그대로 넘깁니다(가로채지 않음).
+- 전략: **HTML/JS/CSS/manifest = Network-first**(서버에 먼저 물어보고 실패할 때만 캐시) → 새 배포가 새로고침 한 번에 반영. **이미지(assets/) = Cache-first**(한 번 본 사진은 오프라인에서도).
+- `CACHE_NAME`은 `byeolneoul-core-<VERSION>`(현재 `2026-11-27.1`) + `byeolneoul-assets-v1`. 배포 때 `VERSION`을 올리면 install에서 코어 캐시를 새로 받고, activate에서 지난 버전 캐시를 지웁니다. 사진 캐시는 160개로 자동 정리합니다.
+- 첫 설치 때 코어 27개 파일(HTML 3 + CSS 3 + JS 17 + manifest + 아이콘 3)을 미리 받아, 비행기 모드에서도 화면과 계산 기능이 뜹니다.
+
+### 3) 설치 안내 — ☰ 더보기 › 📲 앱
+- 메뉴 위쪽(화면 버전·화면 공유 다음)에 **📲 앱 → 앱으로 설치** 항목. 상태에 따라 문구가 바뀝니다.
+  - 이미 `standalone`으로 실행 중 → **앱으로 실행 중** 배지, 누르면 "이미 앱으로 실행 중입니다" 안내.
+  - Chrome/Edge가 `beforeinstallprompt`를 잡아 둔 경우 → 누르는 즉시 설치 창(`prompt()`).
+  - iOS Safari → "Safari 공유(□↑) → 홈 화면에 추가" 4단계 안내 시트. 그 밖의 브라우저는 Chrome(⋮ → 앱 설치)·삼성 인터넷(≡ → 페이지 추가 → 홈 화면)·PC(주소창 설치 아이콘) 안내를 띄웁니다.
+- 설치해도 저장한 관측 기록(localStorage)은 그대로이고, 앱을 지우면 함께 지워진다는 점을 시트에 적었습니다.
+
+### 4) 검증
+- `tools/verify_pwa.py <주소>` — manifest·sw.js·아이콘 HTTP 200과 PNG 픽셀 크기, `navigator.serviceWorker.ready`, 콘솔 오류, 기존 기능(요약·행성표·도감·라이브·지역 선택) 회귀, 오프라인 재방문까지 확인합니다.
+- `tools/test_pwa_paths.py <주소>` — Android 프롬프트·iOS 시트·PC 시트·standalone 상태·외부 API 미가로채기를 확인합니다.
 
 ## 2026-11-27 업데이트 — 2단계 지역 선택 · 사진 5~8장 갤러리 · 모바일 상단 바 제거 · 강수량
 

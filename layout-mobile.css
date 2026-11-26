@@ -504,3 +504,10 @@ html[data-layout="mobile"] .li-actions {
 }
 html[data-layout="mobile"] .li-gallery .sg { margin-bottom: 2px; }
 html[data-layout="mobile"] .li-card .sg-shot { max-height: 32dvh; }
+
+/* iOS 홈 화면 앱(standalone) — 상태 표시줄(black-translucent)이 화면 위를 덮으므로
+   첫 화면과 앵커 이동 지점을 그만큼 아래로 내립니다. */
+@media (display-mode: standalone) {
+  html[data-layout="mobile"] .section-hero { padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+  html[data-layout="mobile"] { scroll-padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+}

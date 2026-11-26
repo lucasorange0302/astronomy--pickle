@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "별너울 · 한국 밤하늘 관측",
+  "short_name": "별너울",
+  "description": "오늘 밤 달·행성·별자리, 어두운 시간, 촬영 설정까지 한 번에 계산하는 대한민국 천체관측 가이드.",
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "categories": ["education", "utilities", "weather"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

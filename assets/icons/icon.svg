@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="별너울">
+  <defs>
+    <!-- 밤하늘 바탕: 가운데가 살짝 밝은 남색, 가장자리는 《070b14》 -->
+    <radialGradient id="sky" cx="50%" cy="34%" r="72%">
+      <stop offset="0%" stop-color="#1a2a47"/>
+      <stop offset="42%" stop-color="#0f1a2e"/>
+      <stop offset="100%" stop-color="#070b14"/>
+    </radialGradient>
+
+    <!-- 너울(파도) — 은빛에서 금빛으로 -->
+    <linearGradient id="waveMain" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#9dc0f4" stop-opacity=".22"/>
+      <stop offset="22%" stop-color="#dfe9ff"/>
+      <stop offset="52%" stop-color="#cfe0ff"/>
+      <stop offset="80%" stop-color="#ffe0a4"/>
+      <stop offset="100%" stop-color="#ffd479" stop-opacity=".55"/>
+    </linearGradient>
+    <linearGradient id="waveEcho" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b9cdf1" stop-opacity=".12"/>
+      <stop offset="40%" stop-color="#dbe6fb" stop-opacity=".62"/>
+      <stop offset="100%" stop-color="#ffd479" stop-opacity=".22"/>
+    </linearGradient>
+
+    <!-- 별빛 -->
+    <radialGradient id="goldHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd479" stop-opacity=".95"/>
+      <stop offset="38%" stop-color="#ffd479" stop-opacity=".42"/>
+      <stop offset="100%" stop-color="#ffd479" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="silverHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#eaf2ff" stop-opacity=".9"/>
+      <stop offset="38%" stop-color="#cfe0ff" stop-opacity=".38"/>
+      <stop offset="100%" stop-color="#cfe0ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+
+  <!-- 바탕 (모서리 없이 꽉 채워 maskable 잘라내기에도 안전) -->
+  <rect width="512" height="512" fill="url(#sky)"/>
+
+  <!-- 잔별 -->
+  <g fill="#e7eeff">
+    <circle cx="120" cy="96" r="2.6" opacity=".55"/>
+    <circle cx="196" cy="58" r="1.9" opacity=".4"/>
+    <circle cx="272" cy="72" r="2.2" opacity=".5"/>
+    <circle cx="330" cy="52" r="1.6" opacity=".35"/>
+    <circle cx="404" cy="96" r="2.8" opacity=".6"/>
+    <circle cx="446" cy="176" r="1.8" opacity=".38"/>
+    <circle cx="86" cy="204" r="2.2" opacity=".45"/>
+    <circle cx="452" cy="268" r="1.6" opacity=".3"/>
+    <circle cx="64" cy="300" r="1.8" opacity=".28"/>
+    <circle cx="250" cy="252" r="1.5" opacity=".3"/>
+    <circle cx="168" cy="256" r="1.4" opacity=".26"/>
+    <circle cx="368" cy="288" r="1.6" opacity=".3"/>
+  </g>
+
+  <!-- 별자리 연결선 (은빛) -->
+  <g stroke="#ffd9a0" stroke-opacity=".62" stroke-width="2.6" stroke-linecap="round" fill="none">
+    <path d="M148 200 L224 148"/>
+    <path d="M224 148 L300 198"/>
+    <path d="M300 198 L372 158"/>
+    <path d="M300 198 L338 268"/>
+  </g>
+
+  <!-- 별자리 별 (금빛·은빛) -->
+  <g>
+    <circle cx="224" cy="148" r="34" fill="url(#goldHalo)"/>
+    <circle cx="372" cy="158" r="28" fill="url(#goldHalo)"/>
+    <circle cx="148" cy="200" r="22" fill="url(#goldHalo)"/>
+    <circle cx="300" cy="198" r="20" fill="url(#silverHalo)"/>
+    <circle cx="338" cy="268" r="17" fill="url(#silverHalo)"/>
+
+    <circle cx="224" cy="148" r="10.5" fill="#ffe6b0"/>
+    <circle cx="372" cy="158" r="9" fill="#ffd479"/>
+    <circle cx="148" cy="200" r="7.2" fill="#ffd479"/>
+    <circle cx="300" cy="198" r="6.2" fill="#eef4ff"/>
+    <circle cx="338" cy="268" r="5.2" fill="#dfe9ff"/>
+
+    <!-- 큰 별 두 개에 십자 반짝임 -->
+    <g stroke="#fff4d8" stroke-linecap="round" fill="none">
+      <path d="M224 128v40M204 148h40" stroke-width="2.4" stroke-opacity=".85"/>
+      <path d="M372 142v32M356 158h32" stroke-width="2.1" stroke-opacity=".7"/>
+    </g>
+  </g>
+
+  <!-- 너울 — 별빛이 이는 파도 -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M126 308C172 276 214 274 256 300 296 324 334 334 382 312"
+          stroke="url(#waveEcho)" stroke-width="6"/>
+    <path d="M116 368C160 318 206 314 252 348 292 378 330 396 368 374 386 364 396 350 404 334"
+          stroke="url(#waveMain)" stroke-width="20"/>
+  </g>
+
+  <!-- 파도 위에 부서지는 작은 물빛 -->
+  <g fill="#eaf2ff">
+    <circle cx="196" cy="330" r="3.2" opacity=".7"/>
+    <circle cx="286" cy="364" r="2.6" opacity=".55"/>
+    <circle cx="352" cy="348" r="2.2" opacity=".45"/>
+  </g>
+</svg>
