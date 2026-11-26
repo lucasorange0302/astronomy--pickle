@@ -323,6 +323,10 @@
     return Object.keys(out);
   }
 
+  function titleKey(t) {
+    return String(t || '').toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+  }
+
   function wordHit(text, token) {
     var t = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return new RegExp('(^|[^a-z0-9])' + t + '([^a-z0-9]|$)', 'i').test(text);
@@ -372,7 +376,7 @@
       items.forEach(function (it, idx) {
         if (!relevant(it, d, q)) return;
         var md = (it.data && it.data[0]) || {};
-        var key = String(md.title || '').toLowerCase();
+        var key = titleKey(md.title);
         if (!key || seenTitle[key]) return;
         var href = (it.links && it.links[0] && it.links[0].href) || '';
         if (!href) return;
@@ -629,11 +633,17 @@
           if (!list.length && qs[1]) return nasaSearch(qs[1], 6, d);
           if (qs[1] && list.length < 5) {
             return nasaSearch(qs[1], 6, d).then(function (more) {
-              var seenSrc = {};
-              return list.concat(more).filter(function (c) {
-                if (!c.src || seenSrc[c.src]) return false;
-                seenSrc[c.src] = 1; return true;
+              var seenSrc = {}, seenTitle = {};
+              list.forEach(function (c) {
+                seenSrc[c.src] = 1;
+                seenTitle[titleKey(c.title)] = 1;
               });
+              return list.concat(more.filter(function (c) {
+                var t = titleKey(c.title);
+                if (!c.src || seenSrc[c.src] || seenTitle[t]) return false;
+                seenSrc[c.src] = 1; seenTitle[t] = 1;
+                return true;
+              }));
             });
           }
           return list;
