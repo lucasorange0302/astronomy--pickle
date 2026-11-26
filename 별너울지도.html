@@ -7397,6 +7397,7 @@ window.PHOTO_SETS = {
 
     function addItem(c) {
       if (!S.alive || S.urls[c.src]) return;
+      if (!fig.isConnected) { S.alive = false; return; }   // 창을 닫았으면 그만 받습니다
       if (S.items.length >= TARGET) return;          // 너무 많으면 느려집니다
       S.urls[c.src] = 1;
       var item = {
