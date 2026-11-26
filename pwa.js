@@ -71,27 +71,36 @@
   }
 
   /* ------------------------------------------------------- 버튼 상태 갱신 */
-  function label(text, note) {
+  function label(text, note, badgeText) {
     var b = document.getElementById('pwaInstallLabel');
     var s = document.getElementById('pwaInstallNote');
     var badge = document.getElementById('pwaInstallBadge');
     var item = document.getElementById('btnInstall');
     if (b) b.textContent = text;
     if (s) s.textContent = note;
-    if (badge) badge.hidden = !installed;
+    if (badge) {
+      badge.hidden = !badgeText;
+      if (badgeText) badge.textContent = badgeText;
+    }
     if (item) {
       item.setAttribute('aria-label', text + ' — ' + note);
-      item.classList.toggle('is-running', installed);
+      item.classList.toggle('is-running', !!badgeText);
     }
   }
 
   function refresh() {
     var p = platform();
-    if (installed || isStandalone()) {
-      installed = true;
-      label('앱으로 실행 중', '홈 화면에서 주소창 없이 열렸습니다');
+    // 1) 이미 앱으로 실행 중
+    if (isStandalone()) {
+      label('앱으로 실행 중', '홈 화면에서 주소창 없이 열렸습니다', '실행 중');
       return;
     }
+    // 2) 방금 설치(지금 탭은 브라우저 탭)
+    if (installed) {
+      label('설치됨', '홈 화면의 별너울 아이콘으로 여세요', '설치됨');
+      return;
+    }
+    // 3) 설치 프롬프트를 잡아 둔 경우
     if (deferred) {
       label('앱으로 설치', '지금 누르면 설치 창이 열립니다');
       return;
@@ -208,8 +217,12 @@
 
   /* -------------------------------------------------------------- 버튼 동작 */
   function onInstallClick() {
-    if (installed || isStandalone()) {
+    if (isStandalone()) {
       toast('이미 앱으로 실행 중입니다 — 주소창 없는 화면입니다.');
+      return;
+    }
+    if (installed) {
+      toast('이미 설치했습니다 — 홈 화면의 별너울 아이콘으로 열 수 있습니다.');
       return;
     }
     if (!isHttp) {

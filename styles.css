@@ -2360,3 +2360,8 @@ body.red .pwa-steps b, body.red .pwa-sheet-kicker { color: #ff8a5c; }
 @media (display-mode: standalone) {
   html[data-layout="desktop"] body { padding-top: env(safe-area-inset-top, 0px); }
 }
+
+/* 폰에서는 다른 항목의 설명 줄을 접지만, 설치 항목의 기기별 안내는 남깁니다 */
+@media (max-width: 560px) {
+  #btnInstall .mi-txt small { display: block; line-height: 1.35; }
+}
