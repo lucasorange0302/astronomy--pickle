@@ -64,6 +64,8 @@
     equip: 1,
     filter: { type: 'all', equip: 'all', season: 'all', q: '' },
     siteRegion: '전체',
+    conSeason: '전체',
+    conQuery: '',
     siteSortNear: false,
     eventType: '전체',
     glossQ: '',
@@ -72,6 +74,7 @@
     fovTarget: 'moon',
     simJd: null,
     tmFrac: 0,
+    tmSpeed: 5,
     follow: null,
     last: null
   };
@@ -530,6 +533,18 @@
   }
 
   /* ------------------------------------------------------------- 전천 지도 */
+  // B−V 색지수 → 별빛 색 (푸름 ↔ 붉음). 값을 모르면 흰색.
+  function bvColor(bv) {
+    if (bv == null) return '#eef3ff';
+    if (bv < -0.1) return '#b9d0ff';
+    if (bv < 0.3) return '#d8e4ff';
+    if (bv < 0.7) return '#f4f6ff';
+    if (bv < 1.1) return '#fff3df';
+    if (bv < 1.5) return '#ffe2be';
+    return '#ffc79b';
+  }
+  function isWarm(bv) { return bv != null && bv > 0.7; }
+
   function renderSkyMap(c) {
     const svg = $('#skyMap');
     const lat = state.site.lat, lon = state.site.lon, jd = c.jd;
@@ -559,49 +574,121 @@
       s += '<text x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" class="sky-cardinal">' + d[0] + '</text>';
     });
 
-    // 별
+    // 별 — 1,600여 개. 밝은 별은 하나씩, 나머지는 등급·색 묶음별 path 하나로 그려 DOM을 줄인다.
     const visibleStars = {};
-    D.stars.forEach(function (st) {
+    const pos = new Array(D.stars.length);
+    const dots = {};
+    D.stars.forEach(function (st, i) {
       const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
       if (h.alt <= 0) return;
       const p = proj(h.alt, h.az);
-      const size = st[3] < 0.3 ? 2.9 : st[3] < 1.3 ? 2.2 : st[3] < 2.3 ? 1.7 : 1.25;
-      const op = st[3] < 1.3 ? 0.95 : st[3] < 2.3 ? 0.75 : 0.5;
+      pos[i] = p;
       visibleStars[st[0]] = p;
-      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + size + '" fill="#fff" opacity="' + op + '"/>';
-    });
-
-    // 별자리 선 + 이름
-    D.constellations.forEach(function (con) {
-      const pts = [];
-      con.lines.forEach(function (pair) {
-        const a = visibleStars[pair[0]], b = visibleStars[pair[1]];
-        if (!a || !b) return;
-        pts.push(a, b);
-        s += '<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) +
-          '" y2="' + b.y.toFixed(1) + '" stroke="rgba(140,175,255,.26)" stroke-width="1"/>';
-      });
-      if (pts.length >= 4) {
-        const mx = pts.reduce(function (t, p) { return t + p.x; }, 0) / pts.length;
-        const my = pts.reduce(function (t, p) { return t + p.y; }, 0) / pts.length;
-        s += '<text x="' + mx.toFixed(1) + '" y="' + my.toFixed(1) + '" text-anchor="middle" class="sky-con-name">' + esc(con.name) + '</text>';
+      const mag = st[3];
+      if (mag <= 2.0) {
+        const size = mag < 0.4 ? 2.9 : mag < 1.4 ? 2.3 : 1.9;
+        s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + size +
+          '" fill="' + bvColor(st[4]) + '" opacity=".96"/>';
+        return;
       }
+      const key = (mag <= 3.5 ? 'mid' : mag <= 4.5 ? 'faint' : 'dim') + (isWarm(st[4]) ? 'Warm' : 'Cool');
+      (dots[key] = dots[key] || []).push(p);
+    });
+    const DOT_STYLE = {
+      midCool: ['#dbe6ff', 1.8, 0.82], midWarm: ['#fff0d8', 1.8, 0.82],
+      faintCool: ['#cddcff', 1.35, 0.6], faintWarm: ['#ffe9cc', 1.35, 0.6],
+      dimCool: ['#bccdf0', 1, 0.4], dimWarm: ['#ffdcbc', 1, 0.4]
+    };
+    Object.keys(dots).forEach(function (key) {
+      const stl = DOT_STYLE[key];
+      const d = dots[key].map(function (p) { return 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'h.1'; }).join('');
+      s += '<path d="' + d + '" fill="none" stroke="' + stl[0] + '" stroke-width="' + stl[1] +
+        '" stroke-linecap="round" opacity="' + stl[2] + '"/>';
     });
 
-    // 주요 별 이름 (밝은 것만)
-    ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스', '안타레스', '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트'].forEach(function (nm) {
-      const p = visibleStars[nm];
-      if (!p) return;
-      s += '<text x="' + (p.x + 5).toFixed(1) + '" y="' + (p.y - 4).toFixed(1) + '" class="sky-star-label">' + nm + '</text>';
+    // 별자리 선 88종 — 보이는 비율·중요도(rank)에 따라 진하기와 굵기를 조절
+    const conCand = [];
+    D.constellations.forEach(function (con) {
+      let d = '', total = 0, shown = 0, sx = 0, sy = 0, n = 0;
+      con.lines.forEach(function (pair) {
+        total++;
+        const a = pos[pair[0]], b = pos[pair[1]];
+        if (!a || !b) return;
+        shown++;
+        d += 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
+        sx += a.x + b.x; sy += a.y + b.y; n += 2;
+      });
+      if (!shown) return;
+      const frac = shown / total;
+      const op = (0.08 + 0.12 * frac) * (con.rank === 1 ? 1.45 : con.rank === 2 ? 1.12 : 0.9);
+      s += '<g data-sky="con:' + esc(con.abbr) + '" style="cursor:pointer">' +
+        '<path d="' + d + '" fill="none" stroke="rgba(140,175,255,' + Math.min(0.42, op).toFixed(2) + '" stroke-width="' +
+        (con.rank === 1 ? 1.15 : 0.85) + '" stroke-linecap="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="transparent" stroke-width="9"/></g>';
+      const hor = A.equatorialToHorizontal(con.raH, con.decD, lat, lon, jd);
+      let lx = n ? sx / n : cx, ly = n ? sy / n : cy, lalt = hor.alt;
+      if (hor.alt > 6) { const lp = proj(hor.alt, hor.az); lx = lp.x; ly = lp.y; }
+      conCand.push({ con: con, x: lx, y: ly, alt: lalt, frac: frac });
     });
 
-    // 딥스카이 주요 대상
+    // 이름은 겹치지 않게 — 중요도(rank) → 하늘에 보이는 비율 → 고도 순으로 자리를 잡는다
+    const boxes = [];
+    function overlaps(x, y, w, h) {
+      for (let i = 0; i < boxes.length; i++) {
+        const b = boxes[i];
+        if (x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y) return true;
+      }
+      return false;
+    }
+    function putLabel(txt, x, y, size, color, cls, weight) {
+      const w = txt.length * size * 0.98, h = size + 1.5;
+      if (x - w / 2 < 4 || x + w / 2 > W - 4 || y - h < 2 || y > 414) return false;
+      if (overlaps(x - w / 2 - 1, y - h, w + 2, h + 1)) return false;
+      boxes.push({ x: x - w / 2 - 1, y: y - h, w: w + 2, h: h + 1 });
+      s += '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="middle" class="' + (cls || 'sky-con-name') +
+        '"' + (weight ? ' font-weight="' + weight + '"' : '') +
+        ' style="fill:' + color + ';font-size:' + size + 'px">' + esc(txt) + '</text>';
+      return true;
+    }
+
+    // 딥스카이 마커(심볼) — 이름표는 나중에 겹치지 않게 배치
+    const dsoPts = [];
     D.catalog.filter(function (o) { return o.group === 'dso' && o.mag <= 6.5; }).forEach(function (o) {
       const h = A.equatorialToHorizontal(o.raH, o.decD, lat, lon, jd);
       if (h.alt < 3) return;
       const p = proj(h.alt, h.az);
+      dsoPts.push({ o: o, p: p, alt: h.alt });
       s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.2" fill="none" stroke="rgba(126,224,192,.75)" stroke-width="1" stroke-dasharray="1.5 1.5"/>';
-      s += '<text x="' + (p.x + 6).toFixed(1) + '" y="' + (p.y + 3).toFixed(1) + '" class="sky-dso-label">' + esc(o.name.replace(' 성단', '').replace(' 대성운', '')) + '</text>';
+    });
+
+    // ── 이름표 배치: 밝은 별 → 딥스카이 → 별자리. 겹치면 뒤 순위는 포기한다.
+    ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스', '안타레스',
+      '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카노푸스', '아케르나르'].forEach(function (nm) {
+      const p = visibleStars[nm];
+      if (!p) return;
+      const w = nm.length * 8.5 * 0.98;
+      if (p.x + 5 + w > W - 3 || overlaps(p.x + 3, p.y - 11, w, 10)) return;
+      boxes.push({ x: p.x + 3, y: p.y - 11, w: w, h: 10 });
+      s += '<text x="' + (p.x + 5).toFixed(1) + '" y="' + (p.y - 4).toFixed(1) + '" class="sky-star-label">' + nm + '</text>';
+    });
+
+    dsoPts.sort(function (a, b) { return a.o.mag - b.o.mag; }).slice(0, 10).forEach(function (it) {
+      const txt = it.o.name.replace(' 성단', '').replace(' 대성운', '');
+      const w = txt.length * 7.6 * 0.98;
+      if (it.p.x + 7 + w > W - 3 || overlaps(it.p.x + 5, it.p.y - 5, w, 10)) return;
+      boxes.push({ x: it.p.x + 5, y: it.p.y - 5, w: w, h: 10 });
+      s += '<text x="' + (it.p.x + 6).toFixed(1) + '" y="' + (it.p.y + 3).toFixed(1) + '" class="sky-dso-label">' + esc(txt) + '</text>';
+    });
+
+    conCand.sort(function (a, b) { return a.con.rank - b.con.rank || b.frac - a.frac || b.alt - a.alt; });
+    let drawn = 0;
+    conCand.forEach(function (it) {
+      if (drawn >= 24) return;
+      if (it.frac < 0.34) return;
+      if (it.con.rank === 3 && drawn >= 10) return;
+      const size = it.con.rank === 1 ? 9.2 : it.con.rank === 2 ? 7.8 : 6.9;
+      const op = it.con.rank === 1 ? 0.66 : it.con.rank === 2 ? 0.48 : 0.36;
+      if (putLabel(it.con.name, it.x, it.y, size, 'rgba(150,180,255,' + op + ')', 'sky-con-name')) drawn++;
     });
 
     // 행성
@@ -1412,7 +1499,7 @@
 
   function skyInfo(kind, key, jd) {
     const lat = state.site.lat, lon = state.site.lon;
-    let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null;
+    let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null, cells = null;
     if (kind === 'planet') {
       const p = A.planetPos(key, jd);
       raH = p.raH; decD = p.decD; mag = p.mag; name = p.name;
@@ -1438,6 +1525,18 @@
       sub = o.type + ' · ' + o.sub + (o.con && o.con !== '—' ? ' · ' + o.con : '') + (o.dist && o.dist !== '—' ? ' · ' + o.dist : '');
       note = o.brief;
       objId = o.id;
+    } else if (kind === 'con') {
+      const con = D.constellations.find(function (x) { return x.abbr === key; });
+      if (!con) return null;
+      raH = con.raH; decD = con.decD; name = con.name;
+      sub = '별자리 · ' + con.en + ' (' + con.abbr + ') · IAU 88별자리 · 면적 ' + con.areaRank + '위';
+      note = con.desc + (con.bestMonth ? ' 가장 잘 보이는 때는 ' + con.bestMonth + '월(' + con.season + ')입니다.' : '');
+      cells = [
+        ['가장 밝은 별', con.bright ? con.bright + ' (' + (con.brightMag > 0 ? '+' : '') + nf(con.brightMag, 2) + '등)' : '—'],
+        ['면적', con.area.toLocaleString('en-US') + ' deg² · ' + con.areaRank + '위'],
+        ['잘 보이는 때', con.bestMonth + '월 · ' + con.season],
+        ['연결선 별', con.lines.length + '구간']
+      ];
     } else if (kind === 'sun') {
       const sp = A.sunPos(jd);
       raH = sp.raH; decD = sp.decD; name = '태양';
@@ -1448,7 +1547,7 @@
     const hor = A.equatorialToHorizontal(raH, decD, lat, lon, jd);
     const ni = A.objectNight(raH, decD, lat, lon, state.dateStr);
     return {
-      kind: kind, key: key, name: name, sub: sub, note: note, objId: objId,
+      kind: kind, key: key, name: name, sub: sub, note: note, objId: objId, cells: cells,
       mag: mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni
     };
   }
@@ -1464,13 +1563,13 @@
     inspectorRef = { kind: kind, key: key };
     inspectorTs = Date.now();
     const altTxt = info.alt > 0 ? nf(info.alt, 0) + '°' : '지평선 아래 (' + nf(info.alt, 0) + '°)';
-    const cells = [
+    const cells = (info.cells || [
       ['지금 고도', altTxt],
       ['지금 방위', nf(info.az, 0) + '° ' + dirName(info.az)],
       ['겉보기 등급', info.mag == null ? '—' : (info.mag > 0 ? '+' : '') + nf(info.mag, 1)],
       ['출 / 남중 / 몰', A.fmtClock(info.ni.riseJd) + ' / ' + A.fmtClock(info.ni.maxJd) + ' / ' + A.fmtClock(info.ni.setJd)],
       ['오늘 밤 최고', info.ni.neverUp ? '지평선 위로 안 오름' : nf(info.ni.maxAlt, 0) + '° (' + A.fmtClock(info.ni.maxJd) + ')']
-    ];
+    ]).concat(kind === 'con' ? [['지금 하늘', altTxt + ' · ' + dirName(info.az) + ' ' + nf(info.az, 0) + '°']] : []);
     box.innerHTML =
       '<div class="si-head"><div><div class="si-name">' + esc(info.name) + '</div>' +
       '<div class="si-sub">' + esc(info.sub) + '</div></div>' +
@@ -1497,6 +1596,13 @@
     else aimAt('dso', id);
   }
 
+  // 받침 유무로 조사를 고른다 (오리온자리 → 는, 오리온 → 은)
+  function josa(word, withJong, withoutJong) {
+    const ch = (word || '').charCodeAt((word || '').length - 1);
+    if (ch < 0xac00 || ch > 0xd7a3) return withJong + '(' + withoutJong + ')';
+    return (ch - 0xac00) % 28 === 0 ? withoutJong : withJong;
+  }
+
   function aimAt(kind, key) {
     const c = state.last || computeNight();
     const info = skyInfo(kind, key, c.jd);
@@ -1509,8 +1615,8 @@
     showInspector(kind, key);
     const sec = $('#live');
     if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    if (info.alt < 0) toast(info.name + '은(는) 지금 지평선 아래(' + nf(info.alt, 0) + '°)입니다. 지평선 쪽으로 맞췄습니다.');
-    else if (info.alt < 12) toast(info.name + '은(는) 낮은 하늘 ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°에 있습니다.');
+    if (info.alt < 0) toast(info.name + josa(info.name, '은', '는') + ' 지금 지평선 아래(' + nf(info.alt, 0) + '°)입니다. 지평선 쪽으로 맞췄습니다.');
+    else if (info.alt < 12) toast(info.name + josa(info.name, '은', '는') + ' 낮은 하늘 ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°에 있습니다.');
     else toast(info.name + ' 방향으로 시선을 맞췄습니다 — ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°.');
   }
 
@@ -1795,68 +1901,97 @@
     })();
 
     /* 별 */
-    const starPts = {};
+    const starPts = new Array(D.stars.length);
+    const starByName = {};
     const labelStars = ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스',
-      '안타레스', '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카스토르', '미라크'];
-    D.stars.forEach(function (st) {
+      '안타레스', '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카스토르', '미라크', '카노푸스', '아케르나르'];
+    const starBuckets = {};
+    const starFade = 1 - dayF * 0.92;
+    D.stars.forEach(function (st, i) {
       const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
       if (h.alt < -2) return;
       const p = project(h.alt, h.az);
       if (!inBox(p, 10)) return;
-      starPts[st[0]] = p;
+      starPts[i] = p;
+      starByName[st[0]] = p;
+      if (starFade < 0.06) return;
       const mag = st[3];
-      const r = clamp(3.4 - mag * 0.42, 0.7, 3.6);
-      const a = clamp(1.05 - mag * 0.1, 0.32, 1) * (1 - dayF * 0.92);
-      if (a < 0.06) return;
-      ctx.globalAlpha = a;
-      ctx.fillStyle = pal.star;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
+      const r = mag <= 2.0 ? 2.6 : mag <= 3.2 ? 1.8 : mag <= 4.2 ? 1.3 : 0.9;
+      const key = bvColor(st[4]) + '|' + r;
+      (starBuckets[key] = starBuckets[key] || []).push(p);
       if (mag <= 2.3) live.hits.push({ x: p.x, y: p.y, kind: 'star', key: st[0], name: st[0] });
     });
+    Object.keys(starBuckets).forEach(function (key) {
+      const parts = key.split('|');
+      const r = Number(parts[1]);
+      ctx.globalAlpha = clamp(1.05 - (r < 1 ? 0.52 : r < 1.5 ? 0.34 : r < 2 ? 0.2 : 0.06), 0.25, 1) * starFade;
+      ctx.fillStyle = isRed() ? pal.star : parts[0];
+      ctx.beginPath();
+      starBuckets[key].forEach(function (p) { ctx.moveTo(p.x + r, p.y); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); });
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
 
-    /* 별자리 선 */
+    /* 별자리 선 88종 — 보이는 별의 고도와 중요도(rank)로 진하기를 조절 */
+    const conCand = [];
     ctx.save();
     D.constellations.forEach(function (con) {
+      const pts = [];
+      let total = 0, shown = 0, sx = 0, sy = 0, n = 0;
+      ctx.beginPath();
       con.lines.forEach(function (pair) {
+        total++;
         const a = starPts[pair[0]], b = starPts[pair[1]];
         if (!a || !b) return;
         if (Math.hypot(a.x - b.x, a.y - b.y) > Math.max(W, H) * 1.4) return;
-        ctx.strokeStyle = pal.con;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
+        shown++;
+        pts.push(a, b);
+        sx += a.x + b.x; sy += a.y + b.y; n += 2;
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
-        ctx.stroke();
       });
-      if (live.labels && fovDeg <= 105) {
-        const pts = [];
-        con.lines.forEach(function (pair) {
-          const a = starPts[pair[0]], b = starPts[pair[1]];
-          if (a) pts.push(a);
-          if (b) pts.push(b);
-        });
-        if (pts.length >= 4) {
-          const mx = pts.reduce(function (t, p) { return t + p.x; }, 0) / pts.length;
-          const my = pts.reduce(function (t, p) { return t + p.y; }, 0) / pts.length;
-          if (mx > 0 && mx < W && my > 0 && my < H) {
-            ctx.globalAlpha = 0.8;
-            drawLabel(con.name, mx, my, pal.label, '600 11px system-ui, sans-serif', 'center');
-            ctx.globalAlpha = 1;
-          }
-        }
-      }
+      if (!shown) return;
+      const frac = shown / total;
+      ctx.strokeStyle = isRed() ? pal.con : 'rgba(120,160,255,' + Math.min(0.46, (0.10 + 0.20 * frac) * (con.rank === 1 ? 1.25 : con.rank === 2 ? 1 : 0.86) * (1 - dayF * 0.7)).toFixed(3) + ')';
+      ctx.lineWidth = con.rank === 1 ? 1.15 : 0.85;
+      ctx.stroke();
+      const mx = n ? sx / n : cx, my = n ? sy / n : cy;
+      const lhor = A.equatorialToHorizontal(con.raH, con.decD, lat, lon, jd);
+      const lp = lhor.alt > 0 ? project(lhor.alt, lhor.az) : null;
+      const hx = (lp && inBox(lp, 0)) ? lp.x : mx, hy = (lp && inBox(lp, 0)) ? lp.y : my;
+      live.hits.push({ x: hx, y: hy, kind: 'con', key: con.abbr, name: con.name });
+      conCand.push({ con: con, x: hx, y: hy, frac: frac });
     });
     ctx.restore();
+
+    /* 별자리 이름 — 중요도 → 화면 중앙에 가까운 순. 좁은 시야(FOV)에서는 더 많이 */
+    if (live.labels && fovDeg <= 110) {
+      const maxLabels = fovDeg <= 45 ? 26 : fovDeg <= 70 ? 20 : 12;
+      const ranked = conCand.slice().sort(function (a, b) {
+        return a.con.rank - b.con.rank || b.frac - a.frac ||
+          Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy);
+      });
+      let drawn = 0;
+      ctx.textAlign = 'center';
+      for (let i = 0; i < ranked.length && drawn < maxLabels; i++) {
+        const it = ranked[i];
+        if (it.frac < 0.34) continue;
+        if (it.con.rank === 3 && fovDeg > 70) continue;
+        const size = it.con.rank === 1 ? 12 : it.con.rank === 2 ? 10.5 : 9.5;
+        ctx.font = (it.con.rank === 1 ? '700 ' : '600 ') + size + 'px system-ui, sans-serif';
+        ctx.globalAlpha = it.con.rank === 1 ? 0.85 : it.con.rank === 2 ? 0.68 : 0.52;
+        if (drawLabel(it.con.name, it.x, it.y, pal.label, ctx.font, 'center')) drawn++;
+        ctx.globalAlpha = 1;
+      }
+      ctx.textAlign = 'left';
+    }
 
     /* 별 이름 */
     if (live.labels) {
       ctx.font = '600 11px system-ui, sans-serif';
       ctx.textAlign = 'left';
       labelStars.forEach(function (nm) {
-        const p = starPts[nm];
+        const p = starByName[nm];
         if (!p) return;
         ctx.globalAlpha = 0.9;
         drawLabel(nm, p.x + 5, p.y + 13, pal.star);
@@ -2311,15 +2446,150 @@
 
   function updateTmBar() {
     const w = nightWindow();
-    const sLbl = $('#tmStartLbl'), eLbl = $('#tmEndLbl'), clock = $('#tmClock'), slider = $('#tmSlider');
-    if (sLbl) sLbl.textContent = '일몰 ' + A.fmtClock(w.start);
-    if (eLbl) eLbl.textContent = '일출 ' + A.fmtClock(w.end);
     const baseJd = state.simJd != null ? state.simJd : (state.last ? state.last.jd : null);
-    if (clock) clock.textContent = (baseJd != null ? A.fmtClock(baseJd) : '--:--') + ' KST' + (state.simJd != null ? ' · 시뮬레이션' : '');
-    if (slider && document.activeElement !== slider) {
-      const f = state.simJd != null ? clamp((state.simJd - w.start) / (w.end - w.start), 0, 1) : 0;
-      slider.value = String(Math.round(f * 1000));
+    const sim = state.simJd != null;
+    const clockTxt = (baseJd != null ? A.fmtClock(baseJd) : '--:--') + (sim ? ' · 시뮬레이션' : '');
+    const frac = sim ? clamp((state.simJd - w.start) / (w.end - w.start), 0, 1) : 0;
+    tmDocks().forEach(function (dock) {
+      const clock = dock.querySelector('[data-tm-clock]');
+      if (clock) clock.textContent = clockTxt;
+      const sLbl = dock.querySelector('[data-tm-start]'), eLbl = dock.querySelector('[data-tm-end]');
+      if (sLbl) sLbl.textContent = '일몰 ' + A.fmtClock(w.start);
+      if (eLbl) eLbl.textContent = '일출 ' + A.fmtClock(w.end);
+      const slider = dock.querySelector('[data-tm-slider]');
+      if (slider && document.activeElement !== slider) {
+        slider.value = String(Math.round(frac * 1000));
+        paintSlider(slider);
+      }
+      paintDial(dock);
+    });
+    // 관측 시각 입력칸도 실제로 쓰이는 시각을 그대로 보여 준다(시뮬레이션 중이면 그 시각).
+    const ti = $('#timeInput');
+    if (ti && document.activeElement !== ti) {
+      if (sim && baseJd != null) ti.value = A.fmtClock(baseJd);
+      else ti.value = state.timeStr || (state.dateStr === todayKST() ? '' : '22:00');
     }
+  }
+
+  /* ------------------------------------------------------------ 속도 다이얼 */
+  const TM_SPEEDS = [0.5, 1, 2, 3, 5, 8, 10, 15, 20, 30];
+  const TM_MIN = 0.5, TM_MAX = 30;
+
+  function tmDocks() { return $$('[data-tm]'); }
+  function tmSpeedText(v) { return (v < 1 ? '0.5' : String(Math.round(v))) + '분/초'; }
+  function tmAngle(v) {
+    const t = Math.log(clamp(v, TM_MIN, TM_MAX) / TM_MIN) / Math.log(TM_MAX / TM_MIN);
+    return -135 + 270 * clamp(t, 0, 1);
+  }
+  function tmSpeedFromAngle(a) {
+    const t = (clamp(a, -135, 135) + 135) / 270;
+    const v = TM_MIN * Math.pow(TM_MAX / TM_MIN, t);
+    return v < 2 ? Math.round(v * 4) / 4 : Math.round(v);
+  }
+  function paintSlider(el) {
+    const pct = (Number(el.value) / 1000) * 100;
+    el.style.setProperty('--tm-fill', pct.toFixed(1) + '%');
+  }
+  function paintDial(dock) {
+    const dial = dock.querySelector('[data-tm-dial]');
+    if (!dial) return;
+    const ang = tmAngle(state.tmSpeed);
+    const needle = dial.querySelector('[data-tm-needle]');
+    if (needle) needle.setAttribute('transform', 'rotate(' + ang.toFixed(1) + ' 27 25)');
+    const arc = dial.querySelector('.tm-dial-arc');
+    if (arc) {
+      const circ = 2 * Math.PI * 16, span = (ang + 135) / 270 * (circ * 0.75);
+      arc.setAttribute('stroke-dasharray', (span < 0.5 ? 0.5 : span).toFixed(1) + ' ' + (circ + 2).toFixed(1));
+    }
+    const val = dial.querySelector('[data-tm-speed]');
+    if (val) val.textContent = tmSpeedText(state.tmSpeed);
+    dial.setAttribute('aria-valuenow', String(state.tmSpeed));
+    dial.setAttribute('aria-valuetext', tmSpeedText(state.tmSpeed));
+  }
+  function setTmSpeed(v) {
+    state.tmSpeed = clamp(Math.round(v * 10) / 10, TM_MIN, TM_MAX);
+    tmDocks().forEach(paintDial);
+  }
+
+  function bindDial(dial) {
+    let dragging = false;
+    function apply(ev) {
+      const box = dial.querySelector('svg').getBoundingClientRect();
+      const cx = box.left + box.width / 2;
+      const cy = box.top + box.height * (25 / 42);
+      const dx = ev.clientX - cx, dy = ev.clientY - cy;
+      if (Math.hypot(dx, dy) < 5) return;
+      let ang = Math.atan2(dx, -dy) * 180 / Math.PI;   // 0° = 위, 시계방향 +
+      if (ang > 135 || ang < -135) ang = dx >= 0 ? 135 : -135;
+      setTmSpeed(tmSpeedFromAngle(ang));
+    }
+    dial.addEventListener('pointerdown', function (ev) {
+      ev.preventDefault();
+      dragging = true;
+      try { dial.setPointerCapture(ev.pointerId); } catch (e) {}
+      apply(ev);
+    });
+    dial.addEventListener('pointermove', function (ev) { if (dragging) apply(ev); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (t) {
+      dial.addEventListener(t, function () { dragging = false; });
+    });
+    dial.addEventListener('wheel', function (ev) {
+      ev.preventDefault();
+      const i = TM_SPEEDS.indexOf(state.tmSpeed);
+      const step = ev.deltaY > 0 ? 1 : -1;
+      const next = i >= 0 ? TM_SPEEDS[clamp(i + step, 0, TM_SPEEDS.length - 1)]
+        : state.tmSpeed > 5 ? 5 : 10;
+      setTmSpeed(next);
+    }, { passive: false });
+    dial.addEventListener('keydown', function (ev) {
+      const i = TM_SPEEDS.indexOf(state.tmSpeed);
+      const near = i >= 0 ? i : TM_SPEEDS.reduce(function (best, v, k) {
+        return Math.abs(v - state.tmSpeed) < Math.abs(TM_SPEEDS[best] - state.tmSpeed) ? k : best;
+      }, 0);
+      if (ev.key === 'ArrowRight' || ev.key === 'ArrowUp') { setTmSpeed(TM_SPEEDS[clamp(near + 1, 0, TM_SPEEDS.length - 1)]); ev.preventDefault(); }
+      else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowDown') { setTmSpeed(TM_SPEEDS[clamp(near - 1, 0, TM_SPEEDS.length - 1)]); ev.preventDefault(); }
+      else if (ev.key === 'Home') { setTmSpeed(TM_MIN); ev.preventDefault(); }
+      else if (ev.key === 'End') { setTmSpeed(TM_MAX); ev.preventDefault(); }
+    });
+  }
+
+  function initTm() {
+    const docks = tmDocks();
+    if (!docks.length) return;
+    docks.forEach(function (dock) {
+      const play = dock.querySelector('[data-tm-play]');
+      if (play) play.addEventListener('click', function () { if (state.playing) stopPlay(); else startPlay(); });
+      const slider = dock.querySelector('[data-tm-slider]');
+      if (slider) {
+        paintSlider(slider);
+        slider.addEventListener('input', function () {
+          stopPlay();
+          paintSlider(this);
+          setSimFrac(Number(this.value) / 1000);
+        });
+      }
+      const sunset = dock.querySelector('[data-tm-sunset]');
+      if (sunset) sunset.addEventListener('click', function () { stopPlay(); setSimFrac(0); });
+      const now = dock.querySelector('[data-tm-now]');
+      if (now) now.addEventListener('click', function () { clearSim(); setViewDate(todayKST(), ''); });
+      const dial = dock.querySelector('[data-tm-dial]');
+      if (dial) {
+        const ticks = dial.querySelector('[data-tm-ticks]');
+        if (ticks) {
+          let html = '';
+          for (let k = 0; k <= 8; k++) {
+            const a = (-135 + k * 33.75) * Math.PI / 180;
+            const x1 = 27 + 12.4 * Math.sin(a), y1 = 25 - 12.4 * Math.cos(a);
+            const x2 = 27 + 15.0 * Math.sin(a), y2 = 25 - 15.0 * Math.cos(a);
+            html += '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"/>';
+          }
+          ticks.innerHTML = html;
+        }
+        bindDial(dial);
+      }
+    });
+    paintDial(docks[0]);
+    updateTmBar();
   }
 
   function setSimFrac(frac) {
@@ -2338,12 +2608,21 @@
     updateTmBar();
   }
 
+  // 사용자가 날짜·시각을 직접 고르면 시뮬레이션 상태를 버리고 그 시각으로 돌아간다.
+  function dropSim() {
+    state.simJd = null;
+    state.tmFrac = 0;
+    stopPlay();
+    const ti = $('#timeInput');
+    if (ti) ti.value = state.timeStr;
+  }
+
   function playStep(ts) {
     if (!state.playing) return;
     const dt = Math.min(0.3, Math.max(0, (ts - playLast) / 1000));
     playLast = ts;
     const w = nightWindow();
-    const speedMin = Number(($('#tmSpeed') || {}).value) || 300;
+    const speedMin = state.tmSpeed || 5;
     const totalMin = Math.max(1, (w.end - w.start) * 1440);
     state.tmFrac = clamp(state.tmFrac + (speedMin * dt) / totalMin, 0, 1);
     state.simJd = w.start + (w.end - w.start) * state.tmFrac;
@@ -2356,6 +2635,17 @@
     playRaf = requestAnimationFrame(playStep);
   }
 
+  function paintPlayBtns() {
+    tmDocks().forEach(function (dock) {
+      const btn = dock.querySelector('[data-tm-play]');
+      if (!btn) return;
+      btn.textContent = state.playing ? '⏸' : '▶';
+      btn.setAttribute('aria-pressed', String(state.playing));
+      btn.classList.toggle('is-playing', state.playing);
+      btn.setAttribute('aria-label', state.playing ? '밤하늘 타임랩스 일시정지' : '밤하늘 타임랩스 재생');
+    });
+  }
+
   function startPlay() {
     if (state.simJd == null) {
       const w = nightWindow();
@@ -2363,8 +2653,7 @@
       state.simJd = w.start + (w.end - w.start) * state.tmFrac;
     }
     state.playing = true;
-    const btn = $('#tmPlay');
-    if (btn) { btn.textContent = '⏸ 멈춤'; btn.setAttribute('aria-pressed', 'true'); }
+    paintPlayBtns();
     playLast = performance.now();
     if (playRaf) cancelAnimationFrame(playRaf);
     playRaf = requestAnimationFrame(playStep);
@@ -2374,24 +2663,7 @@
   function stopPlay() {
     state.playing = false;
     if (playRaf) { cancelAnimationFrame(playRaf); playRaf = null; }
-    const btn = $('#tmPlay');
-    if (btn) { btn.textContent = '▶ 재생'; btn.setAttribute('aria-pressed', 'false'); }
-  }
-
-  function initTm() {
-    if (!$('#tmSlider')) return;
-    $('#tmSlider').addEventListener('input', function () {
-      stopPlay();
-      setSimFrac(Number(this.value) / 1000);
-    });
-    $('#tmPlay').addEventListener('click', function () {
-      if (state.playing) stopPlay();
-      else startPlay();
-    });
-    if ($('#tmSpeed')) $('#tmSpeed').addEventListener('change', function () { if (state.playing) { stopPlay(); startPlay(); } });
-    $('#tmSunset').addEventListener('click', function () { stopPlay(); setSimFrac(0); });
-    $('#tmNow').addEventListener('click', function () { clearSim(); setViewDate(todayKST(), ''); });
-    updateTmBar();
+    paintPlayBtns();
   }
 
   /* ======================================================================
@@ -2927,15 +3199,21 @@
     $('#dateInput').value = state.dateStr;
     $('#dateInput').addEventListener('change', function () {
       state.dateStr = $('#dateInput').value || todayKST();
+      dropSim();
       renderAll();
     });
     $('#timeInput').addEventListener('change', function () {
       state.timeStr = $('#timeInput').value || '';
+      dropSim();
       renderAll();
     });
     $('#btnNow').addEventListener('click', function () {
       state.dateStr = todayKST();
       state.timeStr = '';
+      state.simJd = null;
+      state.tmFrac = 0;
+      state.follow = null;
+      stopPlay();
       $('#dateInput').value = state.dateStr;
       $('#timeInput').value = '';
       renderAll();
@@ -3194,6 +3472,74 @@
     }
   }
 
+  /* ---------------------------------------------------------- 별자리 88종 도감 */
+  function renderConGrid() {
+    const grid = $('#conGrid');
+    if (!grid) return;
+    const q = (state.conQuery || '').trim().toLowerCase();
+    const season = state.conSeason || '전체';
+    const list = D.constellations.filter(function (c) {
+      if (season !== '전체' && c.season !== season) return false;
+      if (!q) return true;
+      return (c.name + ' ' + c.en + ' ' + c.abbr).toLowerCase().indexOf(q) >= 0;
+    });
+    grid.innerHTML = list.length ? list.map(function (c) {
+      const mag = c.brightMag == null ? '' : ' ' + (c.brightMag > 0 ? '+' : '') + nf(c.brightMag, 2) + '등';
+      return '<article class="con-card" data-con="' + esc(c.abbr) + '" tabindex="0" role="button" aria-expanded="false">' +
+        '<div class="con-head"><b>' + esc(c.name) + '</b><span class="con-abbr">' + esc(c.abbr) + '</span>' +
+        '<span class="con-aim" role="button" tabindex="0" data-aim="' + esc(c.abbr) + '" title="라이브 하늘에서 보기" aria-label="' + esc(c.name) + ' 라이브 하늘에서 보기">🎯</span></div>' +
+        '<span class="con-meta">' + esc(c.season) + ' · ' + (c.bestMonth || '—') + '월 · ' + esc(c.bright || '—') + mag + '</span>' +
+        '<p class="con-desc">' + esc(c.desc) + '<br><span class="con-facts">영문 ' + esc(c.en) + ' · 면적 ' + c.areaRank + '위 · 연결선 ' + c.lines.length + '구간</span></p>' +
+        '</article>';
+    }).join('') : '<p class="con-empty">조건에 맞는 별자리가 없습니다. 검색어를 지워 보세요.</p>';
+    const cnt = $('#conCount');
+    if (cnt) cnt.textContent = list.length + ' / ' + D.constellations.length + '개';
+  }
+
+  function initConGrid() {
+    const grid = $('#conGrid');
+    if (!grid) return;
+    const seasons = ['전체', '봄', '여름', '가을', '겨울'];
+    const row = $('#conSeason');
+    if (row) {
+      row.innerHTML = seasons.map(function (s) {
+        return '<button class="chip' + (s === '전체' ? ' is-active' : '') + '" type="button" data-season="' + s + '">' + s + '</button>';
+      }).join('');
+      row.addEventListener('click', function (ev) {
+        const b = ev.target.closest('[data-season]');
+        if (!b) return;
+        state.conSeason = b.getAttribute('data-season');
+        $$('#conSeason .chip').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+        renderConGrid();
+      });
+    }
+    const search = $('#conSearch');
+    if (search) search.addEventListener('input', function () { state.conQuery = this.value; renderConGrid(); });
+    function toggle(card) {
+      const open = !card.classList.contains('is-open');
+      card.classList.toggle('is-open', open);
+      card.setAttribute('aria-expanded', String(open));
+    }
+    grid.addEventListener('click', function (ev) {
+      const aim = ev.target.closest('[data-aim]');
+      if (aim) {
+        ev.stopPropagation();
+        aimAt('con', aim.getAttribute('data-aim'));
+        return;
+      }
+      const card = ev.target.closest('.con-card');
+      if (card) toggle(card);
+    });
+    grid.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' && ev.key !== ' ') return;
+      const aim = ev.target.closest('[data-aim]');
+      if (aim) { ev.preventDefault(); aimAt('con', aim.getAttribute('data-aim')); return; }
+      const card = ev.target.closest('.con-card');
+      if (card) { ev.preventDefault(); toggle(card); }
+    });
+    renderConGrid();
+  }
+
   /* ------------------------------------------------------------- 실행 */
   function init() {
     initSiteSelect();
@@ -3204,6 +3550,7 @@
     calcDeclination();
     renderSites();
     renderEvents();
+    initConGrid();
     renderChecklist();
     renderLogs();
     renderAll();

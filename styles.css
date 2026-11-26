@@ -919,6 +919,43 @@ h2 { letter-spacing: -0.025em; }
 .qa-btn.is-active { background: var(--accent); color: #17130a; border-color: var(--accent); }
 body.red .qa-btn.is-active { color: #180502; }
 
+/* ------------------------------------------------------- 별자리 88종 도감 */
+.con-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+.con-search {
+  flex: 1 1 190px; min-width: 140px; min-height: 40px; padding: 8px 12px;
+  background: rgba(255, 255, 255, .05); border: 1px solid var(--border); border-radius: 11px;
+  color: var(--text); font: inherit; font-size: .82rem;
+}
+.con-search::placeholder { color: var(--faint); }
+.con-count { margin-left: auto; font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.con-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 8px; }
+.con-card {
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .028);
+  border-radius: 12px; padding: 9px 11px; cursor: pointer; outline: none;
+  transition: border-color .15s ease, background .15s ease, transform .12s ease;
+}
+.con-card:hover, .con-card:focus-visible { border-color: var(--border-hi); background: rgba(255, 255, 255, .06); }
+.con-card.is-open { border-color: rgba(126, 224, 192, .45); background: rgba(126, 224, 192, .07); }
+.con-head { display: flex; align-items: center; gap: 6px; }
+.con-head b { font-size: .88rem; font-weight: 800; }
+.con-abbr { font-size: .66rem; font-weight: 700; color: var(--faint); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.con-aim {
+  margin-left: auto; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; font-size: .72rem;
+  border: 1px solid var(--border); color: var(--muted);
+}
+.con-aim:hover, .con-aim:focus-visible { border-color: var(--accent); color: var(--accent); }
+.con-meta { display: block; font-size: .67rem; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.con-desc { display: none; font-size: .75rem; line-height: 1.6; color: var(--text); margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--border); }
+.con-card.is-open .con-desc { display: block; }
+.con-empty { font-size: .8rem; color: var(--faint); grid-column: 1 / -1; }
+@media (max-width: 560px) {
+  .con-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .con-head b { font-size: .8rem; }
+  .con-card { padding: 8px 9px; }
+  .con-tools .con-season { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: 100%; }
+}
+
 /* ------------------------------------------------------------- 타임머신 */
 .timemachine { padding: 14px 18px 12px; }
 .tm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -947,6 +984,76 @@ body.red .qa-btn.is-active { color: #180502; }
 }
 .tm-scale { display: flex; justify-content: space-between; font-size: .68rem; color: var(--faint); font-variant-numeric: tabular-nums; }
 .tm-hint { font-size: .72rem; color: var(--faint); margin: 8px 0 0; }
+
+/* --------------------------------------------- 타임랩스 도크 (하늘 뷰 바로 아래) */
+.tm-dock {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 10px 0 4px; padding: 9px 12px;
+  border-radius: 14px; background: rgba(255, 255, 255, .035);
+  border: 1px solid var(--border);
+}
+.tm-dock-live { margin: 12px 0; }
+.tm-play {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center; font-size: .95rem; line-height: 1;
+  color: #17130a; background: radial-gradient(circle at 35% 30%, #fff3cf, var(--accent));
+  border: 1px solid rgba(255, 212, 121, .55); cursor: pointer;
+  box-shadow: 0 0 16px rgba(255, 212, 121, .28);
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+.tm-play:hover { transform: translateY(-1px); }
+.tm-play.is-playing { background: radial-gradient(circle at 35% 30%, #b6ffe6, var(--accent-2)); border-color: rgba(126, 224, 192, .6); box-shadow: 0 0 16px rgba(126, 224, 192, .35); }
+.tm-readout { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tm-readout .tm-clock { font-size: .95rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .01em; white-space: nowrap; }
+.tm-quick { display: flex; gap: 4px; flex: 0 0 auto; }
+.tm-chip {
+  min-height: 24px; padding: 1px 7px; border-radius: 99px; cursor: pointer;
+  font: inherit; font-size: .62rem; font-weight: 700; color: var(--muted);
+  background: rgba(255, 255, 255, .06); border: 1px solid var(--border);
+}
+.tm-chip:hover { color: var(--accent); border-color: rgba(255, 212, 121, .45); }
+.tm-slide { flex: 1 1 140px; min-width: 110px; }
+.tm-dock .tm-slider {
+  margin: 0 0 1px; height: 6px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) var(--tm-fill, 0%), #1a2338 var(--tm-fill, 0%), #1a2338 100%);
+}
+.tm-dock .tm-slider::-webkit-slider-thumb { width: 16px; height: 16px; }
+.tm-dock .tm-scale { font-size: .58rem; }
+.tm-dial {
+  flex: 0 0 auto; width: 54px; display: flex; flex-direction: column; align-items: center;
+  cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  border-radius: 12px; outline: none;
+}
+.tm-dial:active { cursor: grabbing; }
+.tm-dial:focus-visible { box-shadow: 0 0 0 2px var(--accent-2); }
+.tm-dial svg { width: 52px; height: 40px; display: block; }
+.tm-dial-arc { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; transform: rotate(135deg); transform-origin: 27px 25px; }
+.tm-dial-bg { fill: none; stroke: rgba(255, 255, 255, .13); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 75.4 200; transform: rotate(135deg); transform-origin: 27px 25px; }
+.tm-dial-ticks line { stroke: rgba(255, 255, 255, .24); stroke-width: 1.1; stroke-linecap: round; }
+.tm-dial-needle line { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
+.tm-dial-hub { fill: var(--panel-solid); stroke: var(--accent); stroke-width: 1.4; }
+.tm-dial-val { font-size: .58rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: -1px; white-space: nowrap; }
+body.red .tm-play { color: #180502; background: radial-gradient(circle at 35% 30%, #ffd0b8, #ff7a4a); border-color: rgba(255, 120, 80, .6); box-shadow: 0 0 16px rgba(255, 100, 60, .3); }
+body.red .tm-dial-arc, body.red .tm-dial-needle line { stroke: #ff8a5c; }
+body.red .tm-dial-bg { stroke: rgba(255, 140, 100, .18); }
+body.red .tm-dial-hub { stroke: #ff8a5c; }
+body.red .tm-dial-val { color: #ff9a7a; }
+body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #ff8a5c var(--tm-fill, 0%), #1a0805 var(--tm-fill, 0%), #1a0805 100%); }
+
+@media (max-width: 640px) {
+  .tm-dock {
+    display: grid; gap: 7px 10px; padding: 9px 10px;
+    grid-template-columns: 42px minmax(0, 1fr) 54px;
+    grid-template-areas: "play read dial" "slide slide slide";
+    align-items: center;
+  }
+  .tm-play { grid-area: play; }
+  .tm-readout { grid-area: read; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+  .tm-dial { grid-area: dial; }
+  .tm-slide { grid-area: slide; }
+  .tm-readout .tm-clock { font-size: .9rem; }
+  .tm-chip { min-height: 26px; }
+}
 
 /* ------------------------------------------------------- 라이브 하늘 뷰 */
 .live-panel { padding: 14px; }

@@ -34,6 +34,7 @@
     <nav class="main-nav" id="mainNav" aria-label="주요 메뉴">
       <a href="#today" class="nav-link is-active">오늘 밤</a>
       <a href="#live" class="nav-link">라이브 하늘</a>
+      <a href="#constellations" class="nav-link">별자리 88</a>
       <a href="#catalog" class="nav-link">천체 도감</a>
       <a href="#lab" class="nav-link">촬영·계산</a>
       <a href="#guide" class="nav-link">초보자 가이드</a>
@@ -132,31 +133,6 @@
       </div>
     </div>
 
-    <!-- 밤하늘 타임랩스 -->
-    <div class="panel timemachine" id="timeMachine">
-      <div class="tm-head">
-        <div class="tm-title">
-          <span class="tm-label">밤하늘 타임랩스</span>
-          <strong class="tm-clock" id="tmClock">—</strong>
-        </div>
-        <div class="tm-actions">
-          <button class="btn btn-primary btn-sm" id="tmPlay" type="button" aria-pressed="false">▶ 재생</button>
-          <label class="tm-speed">속도
-            <select id="tmSpeed" aria-label="재생 속도">
-              <option value="60">1분/초</option>
-              <option value="300" selected>5분/초</option>
-              <option value="900">15분/초</option>
-            </select>
-          </label>
-          <button class="mini-btn" id="tmSunset" type="button">일몰부터</button>
-          <button class="mini-btn" id="tmNow" type="button">지금</button>
-        </div>
-      </div>
-      <input type="range" class="tm-slider" id="tmSlider" min="0" max="1000" value="0" step="1" aria-label="밤 시간 이동">
-      <div class="tm-scale"><span id="tmStartLbl">일몰</span><span>자정</span><span id="tmEndLbl">일출</span></div>
-      <p class="tm-hint">슬라이더를 밀면 전천 지도 · 라이브 하늘 · 행성 고도 · 달 위치가 함께 움직입니다. 재생을 누르면 밤새 하늘 변화를 빠르게 미리 볼 수 있습니다.</p>
-    </div>
-
     <!-- 10초 요약 히어로 카드 -->
     <div class="summary-card" id="heroSummary" aria-live="polite">
       <div class="summary-main">
@@ -235,6 +211,30 @@
         </div>
         <div class="skymap-wrap">
           <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도"></svg>
+        </div>
+        <div class="tm-dock" data-tm>
+          <button class="tm-play" data-tm-play type="button" aria-pressed="false" aria-label="밤하늘 타임랩스 재생">▶</button>
+          <div class="tm-readout">
+            <b class="tm-clock" data-tm-clock>—</b>
+            <div class="tm-quick">
+              <button class="tm-chip" data-tm-sunset type="button">일몰부터</button>
+              <button class="tm-chip" data-tm-now type="button">지금</button>
+            </div>
+          </div>
+          <div class="tm-slide">
+            <input type="range" class="tm-slider" data-tm-slider min="0" max="1000" step="1" value="0" aria-label="밤 시간 이동">
+            <div class="tm-scale"><span data-tm-start>일몰</span><span>자정</span><span data-tm-end>일출</span></div>
+          </div>
+          <div class="tm-dial" data-tm-dial role="slider" tabindex="0" aria-label="재생 속도" aria-valuemin="0.5" aria-valuemax="30" aria-valuenow="5" aria-valuetext="5분/초">
+            <svg viewBox="0 0 54 42" aria-hidden="true" focusable="false">
+              <circle class="tm-dial-bg" cx="27" cy="25" r="16"></circle>
+              <circle class="tm-dial-arc" cx="27" cy="25" r="16"></circle>
+              <g class="tm-dial-ticks" data-tm-ticks></g>
+              <g class="tm-dial-needle" data-tm-needle><line x1="27" y1="25" x2="27" y2="9"></line></g>
+              <circle class="tm-dial-hub" cx="27" cy="25" r="2.8"></circle>
+            </svg>
+            <span class="tm-dial-val" data-tm-speed>5분/초</span>
+          </div>
         </div>
         <p class="panel-foot">가운데가 머리 위(천정), 테두리가 지평선입니다. 동쪽이 왼쪽인 것은 하늘을 올려다보는 방향이기 때문입니다. <b>별·행성·달·성운을 눌러 보세요</b> — 그 자리에서 실시간 고도·방위·출몰을 보여 줍니다.</p>
         <div class="sky-inspector" id="skyInspector"></div>
@@ -325,6 +325,31 @@
         </div>
       </div>
 
+      <div class="tm-dock tm-dock-live" data-tm>
+      <button class="tm-play" data-tm-play type="button" aria-pressed="false" aria-label="밤하늘 타임랩스 재생">▶</button>
+      <div class="tm-readout">
+        <b class="tm-clock" data-tm-clock>—</b>
+        <div class="tm-quick">
+          <button class="tm-chip" data-tm-sunset type="button">일몰부터</button>
+          <button class="tm-chip" data-tm-now type="button">지금</button>
+        </div>
+      </div>
+      <div class="tm-slide">
+        <input type="range" class="tm-slider" data-tm-slider min="0" max="1000" step="1" value="0" aria-label="밤 시간 이동">
+        <div class="tm-scale"><span data-tm-start>일몰</span><span>자정</span><span data-tm-end>일출</span></div>
+      </div>
+      <div class="tm-dial" data-tm-dial role="slider" tabindex="0" aria-label="재생 속도" aria-valuemin="0.5" aria-valuemax="30" aria-valuenow="5" aria-valuetext="5분/초">
+        <svg viewBox="0 0 54 42" aria-hidden="true" focusable="false">
+          <circle class="tm-dial-bg" cx="27" cy="25" r="16"></circle>
+        <circle class="tm-dial-arc" cx="27" cy="25" r="16"></circle>
+          <g class="tm-dial-ticks" data-tm-ticks></g>
+          <g class="tm-dial-needle" data-tm-needle><line x1="27" y1="25" x2="27" y2="9"></line></g>
+          <circle class="tm-dial-hub" cx="27" cy="25" r="2.8"></circle>
+        </svg>
+        <span class="tm-dial-val" data-tm-speed>5분/초</span>
+      </div>
+    </div>
+
       <div class="live-controls">
         <div class="live-pad" role="group" aria-label="방향 회전">
           <button class="pad-btn pad-n" data-az="0" data-alt="30" type="button">북</button>
@@ -360,7 +385,27 @@
   </div>
 </section>
 
-<!-- ===================== 2. 천체 도감 ===================== -->
+<!-- ===================== 별자리 도감 ===================== -->
+<section class="section" id="constellations">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">별자리 도감</p>
+      <h2>IAU <span class="grad">88개 별자리</span>를 전부</h2>
+      <p class="section-sub">한국 하늘 33~38°N에서 뜨는 별자리를 빠짐없이 담았습니다. 카드를 누르면 설명이 열리고, <b>🎯</b>를 누르면 라이브 하늘 뷰가 그 별자리로 돌아갑니다.</p>
+    </div>
+    <div class="panel">
+      <div class="con-tools">
+        <input type="search" id="conSearch" class="con-search" placeholder="별자리 이름 · 영문 · 약자로 찾기" aria-label="별자리 검색">
+        <div class="chip-row con-season" id="conSeason"></div>
+        <span class="con-count" id="conCount">88개</span>
+      </div>
+      <div class="con-grid" id="conGrid"></div>
+      <p class="panel-foot">연결선은 Stellarium 현대 IAU 별자리 그림, 좌표·등급은 J2000 카탈로그를 썼습니다. ‘가장 밝은 별’은 그 별자리에 속한 별 중 겉보기 등급이 가장 낮은 별입니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 3. 천체 도감 ===================== -->
 <section class="section" id="catalog">
   <div class="wrap">
     <div class="section-head">
