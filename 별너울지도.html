@@ -12382,9 +12382,9 @@ window.Astro = (function () {
       if (byKind.구.length) html += '<optgroup label="광주권 자치구">' + opts(byKind.구) + '</optgroup>';
       const rest = byKind.시.concat(byKind.군);
       if (rest.length) html += '<optgroup label="전남 시·군">' + opts(rest) + '</optgroup>';
-    } else if (byKind.구.length && !byKind.시.length && !byKind.군.length) {
-      html += '<optgroup label="자치구">' + opts(byKind.구) + '</optgroup>';
     } else {
+      // 부산·대구·인천·울산처럼 자치구와 군이 함께 있는 경우도 빠뜨리지 않습니다.
+      if (byKind.구.length) html += '<optgroup label="자치구">' + opts(byKind.구) + '</optgroup>';
       if (byKind.시.length) html += '<optgroup label="시">' + opts(byKind.시) + '</optgroup>';
       if (byKind.군.length) html += '<optgroup label="군">' + opts(byKind.군) + '</optgroup>';
     }
