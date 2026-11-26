@@ -67,7 +67,12 @@
 - 사진 순서: ① `assets/space/` 로컬 사진(photo-sets.js의 천체별 여러 장 + catalog-photos.js 대표 사진) → ② **NASA Image and Video Library**(`images-api.nasa.gov`, CORS 허용)에서 이름·번호로 검색한 관련 사진 → ③ **NASA SkyView** 실제 하늘 탐사 사진(DSS2 적색·청색·적외선, 2MASS-K, WISE 3.4, ROSAT X선).
 - 실제로 로드된 사진(`naturalWidth > 0`)만 세고, 중복 URL·깨진 URL은 버립니다. 모두 실패하면 성도 SVG로 대체합니다.
 - 1/6 카운터 · 썸네일 · 좌우 화살표 · 손가락 스와이프 · 키보드 ←/→ 를 지원하고, 30분 동안 결과를 캐시합니다.
-- 항성은 NASA 검색에 로켓·항공기 같은 동명 자료가 섞여 오히려 엉뚱한 사진이 나오므로, 실제 하늘 탐사 사진으로만 채웁니다.
+- **사진 신뢰성 규칙(2026-11-27 보강)** — 실사진만 나오게 아래를 강제합니다.
+  - **항성은 NASA 텍스트 검색을 아예 쓰지 않습니다.** `type` 이 비어 있는 라이브 하늘 객체(kind: star)까지 잡도록 이름·Bayer 명칭(α Lyrae)·별 목록(`SKY_DATA.stars`, `catalog-photos.js` 의 `star: true`)으로 판별합니다. 'Vega' 검색이 라스베가스(Vegas)·록히드 베가·베가 로켓을, 'Sirius' 가 위성을, 'Orion' 이 오리온 우주선을 물어 오던 문제 때문입니다.
+  - **NASA 결과는 제목+설명+키워드를 모두 검사**합니다. `las vegas`, `artist concept`, `illustration`, `concept`, `artwork`, `diagram`, `chart`, `infographic`, `poster`, `rocket`, `launch`, `spacecraft`, `astronaut`, `crew`, `logo`, `banner`, `rendering`, `simulation`, 도시·미국 지명 등이 하나라도 있으면 버립니다.
+  - 천문 근거 단어가 없거나, 천체 이름이 **단어 단위**로 제목(또는 키워드+번호)에 확인되지 않으면 채택하지 않습니다. 본문에 다른 메시에/NGC 번호가 적힌 항목(예: 'Southern Ring Nebula'=NGC 3132)도 제외합니다.
+  - 망원경·관측소 촬영 근거(Hubble·Webb·Spitzer·Chandra·ESO·observatory 등)가 있는 항목을 앞에 놓습니다.
+  - 2MASS-K 는 기본 스케일에서 새까맣게 나와 빈 사진처럼 보이므로 `Scaling=HistEq` 로 밝기를 폅니다. SkyView 는 한 번 실패 시 한 번 재시도하고, 행성상성운(M57·M27)이 태양계로 오인돼 SkyView 가 빠지던 버그도 고쳤습니다.
 
 ### 3) 모바일 상단 바 제거
 - `mobile.html` / `layout-mobile.css`에서 상단 헤더를 접어(높이 0) 화면 전체를 콘텐츠와 라이브 하늘에 씁니다. 탐색은 하단 5탭 바가 담당합니다.
