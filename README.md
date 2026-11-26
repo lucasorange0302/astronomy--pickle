@@ -3,6 +3,18 @@
 설치·서버·계정 없이 브라우저에서 바로 열리는 정적 천체관측 사이트입니다.
 수익화·광고·회원가입 요소는 없습니다.
 
+## 라이브 사이트 (HTTPS, GitHub Pages)
+
+- 메인: https://lucasorange0302.github.io/astronomy--pickle/
+- 단일 파일판: https://lucasorange0302.github.io/astronomy--pickle/별밤지도.html
+- 저장소(공개): https://github.com/lucasorange0302/astronomy--pickle (브랜치 `main`, 루트)
+- HTTPS이므로 아이폰 나침반·자이로 센서(라이브 하늘 모드)가 동작합니다.
+- 수정 반영: `astronomy-site/` 파일을 고친 뒤 아래 배포 사본에 복사하고 `git push` 하면 1분 안에 Pages가 다시 빌드됩니다.
+  ```bash
+  cp index.html styles.css data.js data-extra.js astro.js app.js README.md 별밤지도.html ../deploy/astronomy--pickle/
+  cd ../deploy/astronomy--pickle && git add -A && git commit -m "업데이트" && git push
+  ```
+
 ## 실행 방법
 
 1. `astronomy-site` 폴더를 내려받습니다.
