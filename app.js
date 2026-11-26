@@ -3567,10 +3567,28 @@
   }
 
   // 다른 페이지·스크립트에서 쓸 수 있는 최소 공개 API
+  // 임의 좌표(적경·적위)로 라이브 하늘 뷰를 조준한다 — 확장 도감·관측 자료관에서 사용
+  function aimRaDec(raDeg, decDeg, name) {
+    if (raDeg == null || decDeg == null || !isFinite(raDeg) || !isFinite(decDeg)) return false;
+    const c = state.last || computeNight();
+    const h = A.equatorialToHorizontal(A.mod(raDeg, 360) / 15, decDeg, state.site.lat, state.site.lon, c.jd);
+    state.follow = null;
+    live.targetAz = A.mod(h.az, 360);
+    live.targetAlt = clamp(h.alt, -8, 88);
+    liveDirty = true;
+    kickLive();
+    const sec = $('#live');
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (h.alt < 0) toast((name || '천체') + josa(name || '천체', '은', '는') + ' 지금 지평선 아래(' + nf(h.alt, 0) + '°)입니다. 지평선 쪽으로 맞췄습니다.');
+    else toast((name || '천체') + ' 방향으로 시선을 맞췄습니다 — ' + dirName(h.az) + ' ' + nf(h.alt, 0) + '°.');
+    return true;
+  }
+
   window.OneulBam = {
     openObject: openObject,
     computeNight: computeNight,
     aimAt: aimAt,
+    aimRaDec: aimRaDec,
     aimObject: aimObject,
     showInspector: showInspector,
     setViewDate: setViewDate,
