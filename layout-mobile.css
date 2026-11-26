@@ -52,7 +52,9 @@ html[data-layout="mobile"] .nav-link:hover { background: none; }
 html[data-layout="mobile"] .nav-link.is-active { background: var(--accent); color: #14100a; }
 html[data-layout="mobile"] .more-menu {
   position: fixed; left: 10px; right: 10px; top: 88px; width: auto;
-  max-height: calc(100dvh - 104px);
+  /* 하단 탭 바(약 64px + 안전영역)에 마지막 항목이 가리지 않게 */
+  max-height: calc(100dvh - 88px - 76px - env(safe-area-inset-bottom, 0px));
+  z-index: 120;                     /* 탭 바(z 95)보다 위에 떠서 항목을 누를 수 있게 */
 }
 
 /* --------------------------------------------------------------- 섹션 */

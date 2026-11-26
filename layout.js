@@ -123,6 +123,14 @@
     var btnMore = document.getElementById('btnMore');
     if (moreTab && btnMore) {
       moreTab.addEventListener('click', function () { btnMore.click(); });
+      // 메뉴가 열리고 닫힐 때 탭의 aria-expanded 도 함께 맞춥니다
+      var syncMore = function () {
+        moreTab.setAttribute('aria-expanded', btnMore.getAttribute('aria-expanded') === 'true' ? 'true' : 'false');
+      };
+      if (window.MutationObserver) {
+        new MutationObserver(syncMore).observe(btnMore, { attributes: true, attributeFilter: ['aria-expanded'] });
+      }
+      syncMore();
     }
     var nav = document.getElementById('mainNav');
     var items = Array.prototype.slice.call(tabBar.querySelectorAll('[data-nav]'));
