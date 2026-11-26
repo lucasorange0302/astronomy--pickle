@@ -214,52 +214,52 @@ window.CATALOG_PHOTOS = [
   },
   {
     file: 'betelgeuse-dss.jpg', title: '베텔게우스 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['베텔게우스', 'Betelgeuse', 'α Orionis', '알파 오리오니스']
   },
   {
     file: 'rigel-dss.jpg', title: '리겔 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['리겔', 'Rigel', 'β Orionis']
   },
   {
     file: 'sirius-dss.jpg', title: '시리우스 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['시리우스', 'Sirius', 'α Canis Majoris']
   },
   {
     file: 'aldebaran-dss.jpg', title: '알데바란 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['알데바란', 'Aldebaran', 'α Tauri']
   },
   {
     file: 'regulus-dss.jpg', title: '레굴루스 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['레굴루스', 'Regulus', 'α Leonis']
   },
   {
     file: 'vega-dss.jpg', title: '베가 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['베가', 'Vega', 'α Lyrae', '직녀성']
   },
   {
     file: 'deneb-dss.jpg', title: '데네브 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['데네브', 'Deneb', 'α Cygni']
   },
   {
     file: 'altair-dss.jpg', title: '알타이르 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['알타이르', 'Altair', 'α Aquilae', '견우성']
   },
   {
     file: 'albireo-dss.jpg', title: '알비레오 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['알비레오', 'Albireo', 'β Cygni']
   },
   {
     file: 'proxima-dss.jpg', title: '프록시마 센타우리 — 실제 하늘 사진 (DSS2)',
-    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true, star: true,
     keys: ['프록시마 센타우리', '프록시마', 'Proxima Centauri', 'Proxima']
   }
 ];

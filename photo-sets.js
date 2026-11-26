@@ -113,10 +113,10 @@ window.PHOTO_SETS = {
  "금성": [
   {
    "src": "assets/space/ps-venus-1.jpg",
-   "title": "Venus - Comparison of Initial Magellan Radar Test and Data Acquired in 4/91",
+   "title": "Venus from Mariner 10",
    "credit": "NASA/JPL-Caltech · NASA/JPL",
-   "link": "https://images.nasa.gov/details/PIA00220",
-   "date": "1996-02-01",
+   "link": "https://images.nasa.gov/details/PIA23791",
+   "date": "2020-06-08",
    "kb": 205
   },
   {
@@ -137,10 +137,10 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-venus-4.jpg",
-   "title": "Venus - Magellan and Arecibo Comparison",
+   "title": "Computer Simulated Global View of Venus Centered at 0° East Longitude",
    "credit": "NASA/JPL-Caltech · NASA/JPL",
-   "link": "https://images.nasa.gov/details/PIA00207",
-   "date": "1996-02-05",
+   "link": "https://images.nasa.gov/details/PIA00257",
+   "date": "1996-03-14",
    "kb": 197
   }
  ],
@@ -155,16 +155,16 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-mercury-2.jpg",
-   "title": "Locations of Mercury Newly Named Craters",
-   "credit": "NASA/JPL-Caltech · NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington",
-   "link": "https://images.nasa.gov/details/PIA12157",
-   "date": "2009-07-28",
+   "title": "Full Global Mercury Mosaic (MESSENGER)",
+   "credit": "NASA/JPL-Caltech · NASA/JHU APL/Carnegie/USGS/ASU",
+   "link": "https://images.nasa.gov/details/PIA12397",
+   "date": "2009-12-15",
    "kb": 95
   },
   {
    "src": "assets/space/ps-mercury-3.jpg",
-   "title": "Using Reprojections to Examine Mercury Surface",
-   "credit": "NASA/JPL-Caltech · NASA/Johns Hopkins University Applied Physics Laboratory/Arizona State University/Carnegie Institution of Washington",
+   "title": "Mercury Crater and Ridge (MESSENGER)",
+   "credit": "NASA/JPL-Caltech · NASA/JHU APL/Carnegie Institution of Washington",
    "link": "https://images.nasa.gov/details/PIA12054",
    "date": "2009-06-02",
    "kb": 61
@@ -257,10 +257,10 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-moon-2.jpg",
-   "title": "Moon As Seen By NIMS",
+   "title": "Moon Color Composite (Galileo)",
    "credit": "NASA/JPL-Caltech · NASA/JPL",
-   "link": "https://images.nasa.gov/details/PIA00231",
-   "date": "1996-02-08",
+   "link": "https://images.nasa.gov/details/PIA00113",
+   "date": "1996-02-02",
    "kb": 84
   },
   {
@@ -325,10 +325,10 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-pluto-2.jpg",
-   "title": "Elevation Map of Pluto Sunken Heart",
-   "credit": "NASA/JPL-Caltech · NASA/Johns Hopkins University Applied Physics Laboratory/Southwest Research Institute",
-   "link": "https://images.nasa.gov/details/PIA20657",
-   "date": "2016-05-02",
+   "title": "Pluto in True Color (New Horizons)",
+   "credit": "NASA/JPL-Caltech · NASA/JHU APL/SwRI",
+   "link": "https://images.nasa.gov/details/PIA19857",
+   "date": "2015-07-25",
    "kb": 286
   },
   {
@@ -409,10 +409,10 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-europa-4.jpg",
-   "title": "Map of Water Signatures at Europa's Manannán Crater",
-   "credit": "NASA/JPL-Caltech · NASA/JPL-Caltech/Ames/SETI",
-   "link": "https://images.nasa.gov/details/PIA26104",
-   "date": "2024-10-11",
+   "title": "Looking for Eruptions at Jupiter's Moon Europa (Juno)",
+   "credit": "NASA/JPL-Caltech · Image data: NASA/JPL-Caltech/SwRI/MSSS, processing Brian Swift CC BY",
+   "link": "https://images.nasa.gov/details/PIA25694",
+   "date": "2022-12-14",
    "kb": 98
   }
  ],
@@ -427,10 +427,10 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-ganymede-2.jpg",
-   "title": "Ganymede Coverage by the JIRAM Instrument Aboard Juno",
-   "credit": "NASA/JPL-Caltech · NASA/JPL-Caltech/SwRI/ASI/INAF/JIRAM/USGS",
-   "link": "https://images.nasa.gov/details/PIA24792",
-   "date": "2021-08-05",
+   "title": "Ganymede Global (Galileo)",
+   "credit": "NASA/JPL-Caltech · NASA/JPL",
+   "link": "https://images.nasa.gov/details/PIA00706",
+   "date": "1997-09-07",
    "kb": 151
   },
   {
@@ -477,10 +477,10 @@ window.PHOTO_SETS = {
   },
   {
    "src": "assets/space/ps-callisto-4.jpg",
-   "title": "Callisto Asgard Region as Viewed by NIMS",
-   "credit": "NASA/JPL-Caltech · NASA/JPL",
-   "link": "https://images.nasa.gov/details/PIA00839",
-   "date": "1998-03-26",
+   "title": "Callisto Valhalla Impact Structure (Galileo)",
+   "credit": "NASA/JPL-Caltech · NASA/JPL/ASU",
+   "link": "https://images.nasa.gov/details/PIA00516",
+   "date": "1997-12-18",
    "kb": 16
   }
  ],
