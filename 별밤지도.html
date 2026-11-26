@@ -1900,9 +1900,9 @@ body.red .cc-col.is-best .cc-val, body.red .cc-recommend b { color: #ff9a72; }
 }
 .catphoto[data-state="ready"] .cp-skel, .catphoto[data-state="fallback"] .cp-skel { display: none; }
 @keyframes cpshine { to { background-position: -220% 0; } }
-.catphoto .cp-fallback { width: 100%; }
+.catphoto .cp-fallback { width: 100%; display: grid; place-items: center; }
 .catphoto .cp-fallback[hidden] { display: none; }
-.catphoto .cp-fallback svg { display: block; width: 100%; height: auto; }
+.catphoto .cp-fallback svg { display: block; width: 100%; height: auto; max-height: 100%; }
 .cp-grid path { stroke: rgba(255, 255, 255, .05); fill: none; }
 .cp-target-ring { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 3 3; }
 .cp-cross { fill: none; stroke: var(--accent); stroke-width: 1.2; }
@@ -1924,6 +1924,7 @@ body.red .cp-target-ring, body.red .cp-cross { stroke: #ff8a5c; }
 .sm-photo .catphoto { margin: 0; height: 100%; }
 .sm-photo .catphoto .cp-media { border: 0; border-radius: 0; aspect-ratio: auto; height: 100%; min-height: 220px; max-height: calc(100vh - 210px); }
 .sm-photo .catphoto .cp-cap { padding: 6px 14px 8px; background: rgba(0, 0, 0, .35); }
+.sm-photo .catphoto .cp-fallback { height: 100%; }
 .sm-media img[hidden] { display: none; }
 
 /* 모바일 보정 */
@@ -11811,7 +11812,7 @@ window.Astro = (function () {
     return sign + d + '° ' + (m < 10 ? '0' : '') + m + '′';
   }
 
-  function miniChartSvg(d, note) {
+  function miniChartSvg(d) {
     var rand = rng(hash(d.label || 'sky'));
     var stars = '';
     for (var i = 0; i < 90; i++) {
@@ -11829,7 +11830,7 @@ window.Astro = (function () {
       '<circle class="cp-target-ring" cx="160" cy="90" r="' + rr.toFixed(1) + '"/>' +
       '<path class="cp-cross" d="M160 78v-10M160 102v10M148 90h-10M172 90h10"/>' +
       '<text class="cp-chart-name" x="160" y="150" text-anchor="middle">' + esc(d.label) + '</text>' +
-      '<text class="cp-chart-meta" x="160" y="166" text-anchor="middle">RA ' + fmtRa(d.ra) + ' · Dec ' + fmtDec(d.dec) + (note ? ' · ' + esc(note) : '') + '</text>' +
+      '<text class="cp-chart-meta" x="160" y="166" text-anchor="middle">RA ' + fmtRa(d.ra) + ' · Dec ' + fmtDec(d.dec) + '</text>' +
       '</svg>';
   }
   function esc(s) {
@@ -11877,7 +11878,7 @@ window.Astro = (function () {
       img.removeAttribute('src');
       img.style.display = 'none';
       fallbackEl.hidden = false;
-      fallbackEl.innerHTML = miniChartSvg(d, note);
+      fallbackEl.innerHTML = miniChartSvg(d);
       titleEl.textContent = d.label + ' · 성도 미리보기';
       creditEl.textContent = note || '사진을 불러오지 못해 성도로 대신 표시합니다.';
       var q = (d.keys[0] || d.label || '').toString();

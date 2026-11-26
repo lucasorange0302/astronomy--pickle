@@ -112,7 +112,7 @@
     return sign + d + '° ' + (m < 10 ? '0' : '') + m + '′';
   }
 
-  function miniChartSvg(d, note) {
+  function miniChartSvg(d) {
     var rand = rng(hash(d.label || 'sky'));
     var stars = '';
     for (var i = 0; i < 90; i++) {
@@ -130,7 +130,7 @@
       '<circle class="cp-target-ring" cx="160" cy="90" r="' + rr.toFixed(1) + '"/>' +
       '<path class="cp-cross" d="M160 78v-10M160 102v10M148 90h-10M172 90h10"/>' +
       '<text class="cp-chart-name" x="160" y="150" text-anchor="middle">' + esc(d.label) + '</text>' +
-      '<text class="cp-chart-meta" x="160" y="166" text-anchor="middle">RA ' + fmtRa(d.ra) + ' · Dec ' + fmtDec(d.dec) + (note ? ' · ' + esc(note) : '') + '</text>' +
+      '<text class="cp-chart-meta" x="160" y="166" text-anchor="middle">RA ' + fmtRa(d.ra) + ' · Dec ' + fmtDec(d.dec) + '</text>' +
       '</svg>';
   }
   function esc(s) {
@@ -178,7 +178,7 @@
       img.removeAttribute('src');
       img.style.display = 'none';
       fallbackEl.hidden = false;
-      fallbackEl.innerHTML = miniChartSvg(d, note);
+      fallbackEl.innerHTML = miniChartSvg(d);
       titleEl.textContent = d.label + ' · 성도 미리보기';
       creditEl.textContent = note || '사진을 불러오지 못해 성도로 대신 표시합니다.';
       var q = (d.keys[0] || d.label || '').toString();

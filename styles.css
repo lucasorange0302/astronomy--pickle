@@ -1890,9 +1890,9 @@ body.red .cc-col.is-best .cc-val, body.red .cc-recommend b { color: #ff9a72; }
 }
 .catphoto[data-state="ready"] .cp-skel, .catphoto[data-state="fallback"] .cp-skel { display: none; }
 @keyframes cpshine { to { background-position: -220% 0; } }
-.catphoto .cp-fallback { width: 100%; }
+.catphoto .cp-fallback { width: 100%; display: grid; place-items: center; }
 .catphoto .cp-fallback[hidden] { display: none; }
-.catphoto .cp-fallback svg { display: block; width: 100%; height: auto; }
+.catphoto .cp-fallback svg { display: block; width: 100%; height: auto; max-height: 100%; }
 .cp-grid path { stroke: rgba(255, 255, 255, .05); fill: none; }
 .cp-target-ring { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 3 3; }
 .cp-cross { fill: none; stroke: var(--accent); stroke-width: 1.2; }
@@ -1914,6 +1914,7 @@ body.red .cp-target-ring, body.red .cp-cross { stroke: #ff8a5c; }
 .sm-photo .catphoto { margin: 0; height: 100%; }
 .sm-photo .catphoto .cp-media { border: 0; border-radius: 0; aspect-ratio: auto; height: 100%; min-height: 220px; max-height: calc(100vh - 210px); }
 .sm-photo .catphoto .cp-cap { padding: 6px 14px 8px; background: rgba(0, 0, 0, .35); }
+.sm-photo .catphoto .cp-fallback { height: 100%; }
 .sm-media img[hidden] { display: none; }
 
 /* 모바일 보정 */
