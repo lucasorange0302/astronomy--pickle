@@ -888,7 +888,7 @@
     var history = AI.msgs.slice(-6).map(function (m) { return { role: m.role, text: m.text }; });
     history.push({ role: 'user', text: q });
     apiChat(AI.provider, aiKey(AI.provider), AI.model || defaultModel(AI.provider), AI.endpoint, history,
-      '너는 대한민국 천체관측 사이트 "별밤"의 천문 도우미다. 아래 사이트 데이터를 근거로 한국어로 친절하고 정확하게 답한다. 주어진 수치를 우선 사용하고, 모르면 모른다고 말한다. 답은 3~6문장으로 간결하게.\n\n[사이트 데이터]\n' + buildContext())
+      '너는 대한민국 천체관측 사이트 "별너울"의 천문 도우미다. 아래 사이트 데이터를 근거로 한국어로 친절하고 정확하게 답한다. 주어진 수치를 우선 사용하고, 모르면 모른다고 말한다. 답은 3~6문장으로 간결하게.\n\n[사이트 데이터]\n' + buildContext())
       .then(function (txt) {
         typing.innerHTML = '<div class="ai-bubble">' + esc(txt).replace(/\n/g, '<br>') + '</div>';
         AI.msgs.push({ role: 'user', text: q }, { role: 'assistant', text: txt });

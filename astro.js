@@ -1,5 +1,5 @@
 /* =========================================================================
-   별밤 — 천문 계산 엔진 (astro.js)
+   별너울 — 천문 계산 엔진 (astro.js)
    근거:
    · 태양 위치: NOAA Solar Calculator 방식(저정밀, 오차 약 ±0.01°)
    · 달·행성 위치: Paul Schlyter, "Computing planetary positions" (저정밀, 행성 오차 약 1~2′)

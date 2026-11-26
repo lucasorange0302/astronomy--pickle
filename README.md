@@ -1,4 +1,4 @@
-# 별밤 — 대한민국 천체관측 가이드
+# 별너울 — 대한민국 천체관측 가이드
 
 설치·서버·계정 없이 브라우저에서 바로 열리는 정적 천체관측 사이트입니다.
 수익화·광고·회원가입 요소는 없습니다.
@@ -6,13 +6,13 @@
 ## 라이브 사이트 (HTTPS, GitHub Pages)
 
 - 메인: https://lucasorange0302.github.io/astronomy--pickle/
-- 단일 파일판: https://lucasorange0302.github.io/astronomy--pickle/별밤지도.html
+- 단일 파일판: https://lucasorange0302.github.io/astronomy--pickle/별너울지도.html
 - 저장소(공개): https://github.com/lucasorange0302/astronomy--pickle (브랜치 `main`, 루트)
 - HTTPS이므로 아이폰 나침반·자이로 센서(라이브 하늘 모드)가 동작합니다.
 - 수정 반영: `astronomy-site/` 파일을 고친 뒤 아래 배포 사본에 복사하고 `git push` 하면 1분 안에 Pages가 다시 빌드됩니다.
   ```bash
   cd astronomy-site && python3 build.py
-  cp index.html styles.css *.js README.md 별밤지도.html ../deploy/astronomy--pickle/
+  cp index.html styles.css *.js README.md 별너울지도.html ../deploy/astronomy--pickle/
   cp -r assets ../deploy/astronomy--pickle/
   cd ../deploy/astronomy--pickle && git add -A && git commit -m "업데이트" && git push
   ```
@@ -46,7 +46,7 @@
 | `app.js` | 화면 렌더·추천 엔진·계산기·검색/필터·저장·공유·목차/탭·라이브 하늘 뷰 |
 | `space-ui.js` | 우주 쿠키·자료관·전체 하늘 도감·AI 도우미 |
 | `photo-ui.js` | 도감 상세 사진 카드(로컬 사진 → NASA SkyView DSS2 → 성도 폴백) |
-| **`별밤지도.html`** | **단일 파일 배포본** — 위 CSS·JS를 모두 인라인으로 합친 HTML. 이 파일 하나만 있으면 외부 파일 없이 100% 동작합니다. |
+| **`별너울지도.html`** | **단일 파일 배포본** — 위 CSS·JS를 모두 인라인으로 합친 HTML. 이 파일 하나만 있으면 외부 파일 없이 100% 동작합니다. |
 
 ## 기능 전체 목록
 
@@ -161,7 +161,7 @@
 
 ## 2026-11-26 업데이트 — 검증본 반영 · 라이브 하늘 뷰 · 단일 파일
 
-### 새 파일: `별밤지도.html`
+### 새 파일: `별너울지도.html`
 - `styles.css` + `data.js` + `data-extra.js` + `astro.js` + `app.js`를 인라인 `<style>`·`<script>`로 합친 **단일 HTML**(약 582KB).
 - 외부 요청 0건(아이콘도 data URI). 폰이나 PC에서 이 파일만 열면 모든 기능이 동작합니다.
 - 인라인 스크립트 안의 `</script>` 문자열은 이스케이프해 HTML 파싱이 깨지지 않게 했습니다.
@@ -241,4 +241,4 @@
 ### 검증
 - 헤드리스 Chromium(1280px·390px): 콘솔 오류 0, 페이지 오류 0, 렌더 텍스트 NaN 0, 가로 넘침 0.
 - 쿠키 열기·뜯기·다른 쿠키·전체 목록, 자료관 24장·라이트박스 이전/다음·ESC, 도감 검색/칩/페이지/상세/조준, AI 로컬 답변 3종, 레드라이트 모드 확인.
-- `별밤지도.html` 단일 파일 1.06MB(외부 요청 0). 사진은 `assets/space/` 상대경로 → 없으면 NASA 공식 URL 폴백.
+- `별너울지도.html` 단일 파일 1.06MB(외부 요청 0). 사진은 `assets/space/` 상대경로 → 없으면 NASA 공식 URL 폴백.

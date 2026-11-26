@@ -1,5 +1,5 @@
 /* =========================================================================
-   별밤 — app.js (UI · 계산 · 저장)
+   별너울 — app.js (UI · 계산 · 저장)
    의존: data.js (SKY_DATA), astro.js (Astro)
    ========================================================================= */
 (function () {
@@ -3801,7 +3801,7 @@
     const site = state.site;
     const recs = recommend(c, 1, 3);
     const lines = [];
-    lines.push('🔭 별밤 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
+    lines.push('🔭 별너울 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
     lines.push('🌙 달: ' + nf(c.phase.illum * 100) + '% · ' + c.phase.name + (n.moonSet ? ' (월몰 ' + A.fmtClock(n.moonSet) + ')' : ''));
     if (c.cloud != null) lines.push('☁️ 구름: 밤 평균 ' + Math.round(c.cloud) + '% · ' + SkyWeather.labelOf(c.cloud));
     lines.push('🌇 일몰 ' + A.fmtClock(n.sunset) + ' → 천문박명 ' + A.fmtClock(n.astro.dusk) + (c.darkEnd ? ' → 새벽 ' + A.fmtClock(c.darkEnd) : ''));
@@ -3816,7 +3816,7 @@
       .map(function (p) { return p.name + ' ' + nf(p.mag, 1) + '등 ' + dirName(p.hor.az) + ' ' + Math.round(p.hor.alt) + '°'; });
     if (planetUp.length) lines.push('🪐 행성: ' + planetUp.join(', '));
     lines.push('');
-    lines.push('전국 관측 명소·촬영 계산기·2026~2027 천문 캘린더 → 별밤');
+    lines.push('전국 관측 명소·촬영 계산기·2026~2027 천문 캘린더 → 별너울');
     return lines.join('\n');
   }
 
@@ -4135,7 +4135,7 @@
     });
     $('#btnExportLog').addEventListener('click', function () {
       const logs = store.get('logs', []);
-      const blob = new Blob([JSON.stringify({ site: '별밤', exportedAt: new Date().toISOString(), logs: logs }, null, 2)],
+      const blob = new Blob([JSON.stringify({ site: '별너울', exportedAt: new Date().toISOString(), logs: logs }, null, 2)],
         { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
