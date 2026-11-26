@@ -453,13 +453,22 @@ window.Astro = (function () {
   }
 
   /* --------------------------------------------------- 관측 가능성 지수 */
-  function observingScore(moonIllum, bortle, darkHours, cloud) {
+  function observingScore(moonIllum, bortle, darkHours, cloud, rain) {
     // 달 영향(0~1), 광공해(0~1), 어두운 시간(0~1)
     const moonFactor = 1 - Math.pow(moonIllum, 1.3) * 0.72;
     const bortleFactor = 1 - (Math.max(1, bortle) - 1) / 9 * 0.85;
     const timeFactor = Math.min(1, darkHours / 6);
     const cloudFactor = cloud == null ? 1 : (1 - cloud / 100 * 0.8);
-    const score = Math.round(100 * moonFactor * (0.62 + 0.38 * bortleFactor) * (0.7 + 0.3 * timeFactor) * cloudFactor);
+    // 비·눈: 한 시간 최고 강수량(mmMax)과 평균 강수확률로 감점합니다.
+    let rainFactor = 1;
+    if (rain) {
+      const mm = Math.max(0, Number(rain.mmMax) || 0);
+      const prob = Number(rain.prob) || 0;
+      if (prob >= 30) rainFactor *= 1 - Math.min(0.6, (prob - 30) / 70 * 0.6); // 30%→1.0, 100%→0.4
+      if (mm > 0) rainFactor *= 1 - Math.min(0.75, mm * 0.25);                 // 0.2mm→0.95, 3mm→0.25
+      rainFactor = Math.max(0.06, rainFactor);
+    }
+    const score = Math.round(100 * moonFactor * (0.62 + 0.38 * bortleFactor) * (0.7 + 0.3 * timeFactor) * cloudFactor * rainFactor);
     return Math.max(0, Math.min(100, score));
   }
 

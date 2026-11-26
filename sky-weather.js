@@ -42,16 +42,26 @@
     var times = h.time || [];
     var cc = h.cloud_cover || [];
     var pp = h.precipitation_probability || [];
+    var pm = h.precipitation || [];
     var map = {};
     for (var i = 0; i < times.length; i++) {
-      map[times[i]] = { cloud: (typeof cc[i] === 'number' ? cc[i] : null), precip: (typeof pp[i] === 'number' ? pp[i] : null) };
+      map[times[i]] = {
+        cloud: (typeof cc[i] === 'number' ? cc[i] : null),
+        prob: (typeof pp[i] === 'number' ? pp[i] : null),
+        mm: (typeof pm[i] === 'number' ? pm[i] : null)
+      };
     }
     var next = addDay(date);
     var series = [];
     function push(day, hour, abs) {
       var t = day + 'T' + (hour < 10 ? '0' : '') + hour + ':00';
       var v = map[t] || {};
-      series.push({ abs: abs, hour: hour, day: day, clock: hour, cloud: v.cloud == null ? null : v.cloud, precip: v.precip == null ? null : v.precip });
+      series.push({
+        abs: abs, hour: hour, day: day, clock: hour,
+        cloud: v.cloud == null ? null : v.cloud,
+        prob: v.prob == null ? null : v.prob,
+        mm: v.mm == null ? 0 : v.mm
+      });
     }
     for (var a = 18; a <= 23; a++) push(date, a, a);
     for (var b = 0; b <= 6; b++) push(next, b, 24 + b);
@@ -100,7 +110,7 @@
 
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
-      '&hourly=cloud_cover,precipitation_probability' +
+      '&hourly=cloud_cover,precipitation,precipitation_probability' +
       '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + addDay(date);
 
     function finish(snap) {
@@ -158,13 +168,39 @@
     return pool.reduce(function (sum, s) { return sum + s.cloud; }, 0) / pool.length;
   }
 
-  /** 가장 맑은 연속 구간 찾기 (cloud <= 30 우선, 없으면 최소 2시간 평균) */
+  /** 밤 구간(또는 특정 시각)의 강수량(mm)·강수확률(%) */
+  function precipFor(snap, opts) {
+    if (!snap || snap.status !== 'ok' || !snap.series.length) return null;
+    opts = opts || {};
+    var pool = snap.series.filter(function (s) {
+      if (opts.hour != null) return s.abs === (opts.hour < 12 ? opts.hour + 24 : opts.hour);
+      if (opts.startH == null || opts.endH == null) return true;
+      return s.abs >= opts.startH && s.abs <= opts.endH;
+    });
+    if (!pool.length) return null;
+    var sum = 0, max = 0, prob = 0, n = 0, wet = 0;
+    pool.forEach(function (s) {
+      var m = s.mm || 0;
+      sum += m;
+      if (m > max) max = m;
+      if (s.prob != null) { prob += s.prob; n++; }
+      if (m > 0 || (s.prob != null && s.prob >= 60)) wet++;
+    });
+    return {
+      mm: sum, mmMax: max, prob: n ? prob / n : null,
+      wetHours: wet, hours: pool.length
+    };
+  }
+
+  /** 가장 맑은 연속 구간 찾기 — 비·눈 오는 시간은 먼저 제외합니다 */
   function bestWindow(snap) {
     if (!snap || snap.status !== 'ok') return null;
     var s = snap.series.filter(function (x) { return x.cloud != null; });
     if (!s.length) return null;
+    var dry = s.filter(function (x) { return !(x.mm > 0) && !(x.prob != null && x.prob >= 70); });
+    var pool = dry.length ? dry : s;
     var runs = [], cur = null;
-    s.forEach(function (x) {
+    pool.forEach(function (x) {
       if (x.cloud <= 30) {
         if (!cur) cur = { from: x.abs, to: x.abs, vals: [x.cloud] };
         else { cur.to = x.abs; cur.vals.push(x.cloud); }
@@ -175,7 +211,7 @@
       return (b.vals.length - a.vals.length) || (mean(a.vals) - mean(b.vals));
     })[0];
     if (!pick) {
-      var sorted = s.slice().sort(function (a, b) { return a.cloud - b.cloud; });
+      var sorted = pool.slice().sort(function (a, b) { return a.cloud - b.cloud; });
       pick = { from: sorted[0].abs, to: sorted[Math.min(1, sorted.length - 1)].abs, vals: sorted.slice(0, 2).map(function (x) { return x.cloud; }) };
     }
     return { from: pick.from, to: pick.to, mean: mean(pick.vals), hours: pick.vals.length };
@@ -194,6 +230,7 @@
     cached: cached,
     fetch: fetchForecast,
     cloudFor: cloudFor,
+    precipFor: precipFor,
     bestWindow: bestWindow,
     labelOf: labelOf,
     hourKey: function (h) { return h < 12 ? h + 24 : h; }

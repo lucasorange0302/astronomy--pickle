@@ -622,7 +622,8 @@
     if (ph) {
       ph.hidden = false;
       ph.innerHTML = '';
-      if (window.SkyPhoto) ph.appendChild(SkyPhoto.figure(o, { variant: 'modal' }));
+      if (window.SkyGallery) ph.appendChild(SkyGallery.create(o, { variant: 'modal' }));
+      else if (window.SkyPhoto) ph.appendChild(SkyPhoto.figure(o, { variant: 'modal' }));
     }
     var pv2 = $('.sm-nav.prev', m), nx2 = $('.sm-nav.next', m);
     if (pv2) pv2.hidden = true;

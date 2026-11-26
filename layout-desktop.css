@@ -34,6 +34,11 @@ html[data-layout="desktop"] .control-row {
 }
 html[data-layout="desktop"] .control-row .field { width: 100%; }
 html[data-layout="desktop"] .control-row #btnGeo { order: 4; min-height: 42px; }
+/* 시·도 → 시·군·구 2단계 + 내 위치 + 날짜 + 시각 (5칸) */
+html[data-layout="desktop"] .control-row-region {
+  grid-template-columns: minmax(150px, .95fr) minmax(180px, 1.1fr) auto minmax(150px, .85fr) minmax(140px, .8fr);
+}
+html[data-layout="desktop"] .control-row-region #btnGeo { order: 0; }
 html[data-layout="desktop"] .control-row .field select,
 html[data-layout="desktop"] .control-row .field input { width: 100%; min-width: 0; }
 html[data-layout="desktop"] .field select, html[data-layout="desktop"] .field input { padding: 10px 12px; }

@@ -366,17 +366,23 @@ html[data-layout="mobile"] body.red .tab-item.is-active { color: #ffb08a; backgr
 /* 라이브 하늘 조작 UI가 탭 바에 가리지 않게 */
 html[data-layout="mobile"] .live-panel { margin-bottom: 8px; }
 
-/* iOS Safari 관측지 컨트롤: 2×2 고정 그리드로 카드 밖으로 나가지 않게 */
+/* iOS Safari 관측지 컨트롤: 시·도 → 시·군·구 2단계 + 날짜·시각 */
 html[data-layout="mobile"] .control-panel { overflow: hidden; }
 html[data-layout="mobile"] .control-row {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-areas: "site geo" "date time";
+  grid-template-areas: "prov prov" "dist geo" "date time";
   align-items: end;
 }
-html[data-layout="mobile"] .control-row > .field:first-child { grid-area: site; }
-html[data-layout="mobile"] #btnGeo { grid-area: geo; justify-self: end; width: auto; max-width: 100%; }
+html[data-layout="mobile"] .control-row-region > .field-prov { grid-area: prov; }
+html[data-layout="mobile"] .control-row-region > .field-dist { grid-area: dist; }
+html[data-layout="mobile"] .control-row-region > #btnGeo {
+  grid-area: geo; justify-self: stretch; width: 100%; max-width: 100%;
+}
+html[data-layout="mobile"] .field-prov select,
+html[data-layout="mobile"] .field-dist select { min-width: 0; width: 100%; max-width: 100%; }
 html[data-layout="mobile"] .field-date { grid-area: date; }
 html[data-layout="mobile"] .field-time { grid-area: time; }
+html[data-layout="mobile"] .region-hint { display: block; flex: 1 1 100%; font-size: .66rem; line-height: 1.45; }
 html[data-layout="mobile"] .field-date input,
 html[data-layout="mobile"] .field-time input {
   width: 100%; max-width: 100%; min-width: 0;
@@ -433,3 +439,68 @@ html[data-layout="mobile"] .li-card {
   margin-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   max-height: 72dvh; border-radius: 20px 20px 0 0;
 }
+
+/* =========================================================================
+   모바일 상단 바 제거 — 탐색은 하단 5탭 바가 담당합니다.
+   · 헤더는 자리(높이)를 차지하지 않게 접고, ☰ 더보기 메뉴(#moreMenu)만
+     하단 탭 바 위에 띄워 그대로 쓸 수 있게 남깁니다.
+   · 데스크톱판(html[data-layout="desktop"])은 이 규칙의 영향을 받지 않습니다.
+   ========================================================================= */
+html[data-layout="mobile"] { scroll-padding-top: 10px; }
+
+html[data-layout="mobile"] .site-header {
+  position: static; top: auto; height: 0; min-height: 0; overflow: visible;
+  background: none; border: 0; box-shadow: none; z-index: auto;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html[data-layout="mobile"] body.red .site-header { background: none; }
+html[data-layout="mobile"] .site-header .header-inner {
+  display: block; max-width: none; margin: 0; padding: 0; min-height: 0;
+}
+html[data-layout="mobile"] .site-header .brand,
+html[data-layout="mobile"] .site-header .main-nav,
+html[data-layout="mobile"] .site-header .header-tools > *:not(.more-wrap),
+html[data-layout="mobile"] .site-header .more-wrap > .icon-btn { display: none !important; }
+html[data-layout="mobile"] .site-header .header-tools,
+html[data-layout="mobile"] .site-header .more-wrap { display: contents; }
+
+/* ☰ 더보기 — 하단 탭 바 바로 위에 뜨는 시트 */
+html[data-layout="mobile"] .more-menu {
+  position: fixed; left: 8px; right: 8px; top: auto;
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  width: auto;
+  max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px));
+  z-index: 130;
+  border-radius: 20px;
+  box-shadow: 0 -20px 44px -20px #000, 0 24px 60px rgba(0, 0, 0, .5);
+  animation: moreUp .18s ease-out;
+}
+@keyframes moreUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* 상단 바가 사라진 만큼 라이브 하늘 뷰가 그 높이까지 씁니다 */
+html[data-layout="mobile"] #live .live-stage {
+  height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px));
+  min-height: 380px;
+}
+html[data-layout="mobile"] .section-hero { padding-top: 14px; }
+html[data-layout="mobile"] .live-panel { margin-top: 0; }
+html[data-layout="mobile"] .li-card .sg-shot { aspect-ratio: 4 / 3; max-height: 34dvh; }
+html[data-layout="mobile"] .sg-thumb { width: 50px; height: 38px; }
+html[data-layout="mobile"] .more-fs {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+}
+html[data-layout="mobile"] .more-fs > span { font-size: .8rem; color: var(--muted); flex: 1 1 auto; }
+html[data-layout="mobile"] .more-fs button {
+  min-width: 52px; min-height: 38px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--border-hi); background: rgba(255, 255, 255, .05);
+  color: var(--text); font: 800 .86rem var(--font);
+}
+html[data-layout="mobile"] .more-fs button:hover { background: rgba(255, 255, 255, .1); }
+
+/* 라이브 정보 시트 — 사진 갤러리 아래 조준 버튼이 썸네일을 가리지 않게 */
+html[data-layout="mobile"] .li-actions {
+  position: static; margin: 10px 0 0; padding: 10px 0 0;
+  background: none; border-top: 1px solid var(--border);
+}
+html[data-layout="mobile"] .li-gallery .sg { margin-bottom: 2px; }
+html[data-layout="mobile"] .li-card .sg-shot { max-height: 32dvh; }

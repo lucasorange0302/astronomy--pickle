@@ -113,6 +113,53 @@
     });
   }
 
+  /* 7) 모바일 상단 바 제거 — 화면·공유 기능을 ☰ 더보기로 옴깁니다 ------- */
+  if (mode === 'mobile' && menu && !menu.querySelector('.more-screen')) {
+    var btnMoreM = document.getElementById('btnMore');
+    var moreTabM = document.getElementById('tabMore');
+    var scr = document.createElement('div');
+    scr.className = 'more-group more-screen';
+    scr.setAttribute('role', 'group');
+    scr.setAttribute('aria-label', '화면과 공유');
+    scr.innerHTML =
+      '<p class="more-title"><span aria-hidden="true">🎛️</span> 화면 · 공유</p>' +
+      '<button type="button" class="more-item" data-trigger="btnRed" role="menuitem">' +
+      '  <span class="mi-ico" aria-hidden="true">🔴</span>' +
+      '  <span class="mi-txt"><b class="ms-red">레드라이트 모드</b><small>암순응 보호 · 붉은 화면으로 전환</small></span>' +
+      '</button>' +
+      '<button type="button" class="more-item" data-trigger="btnShareTop" role="menuitem">' +
+      '  <span class="mi-ico" aria-hidden="true">🔗</span>' +
+      '  <span class="mi-txt"><b>오늘 밤 플랜 공유</b><small>카카오톡·문자에 복사</small></span>' +
+      '</button>' +
+      '<div class="more-fs" role="group" aria-label="글자 크기">' +
+      '  <span>글자 크기</span>' +
+      '  <button type="button" data-trigger="fsDown" aria-label="글자 작게">A−</button>' +
+      '  <button type="button" data-trigger="fsUp" aria-label="글자 크게">A+</button>' +
+      '</div>';
+    // 상단 바가 없어진 만큼 레드라이트·공유는 메뉴 위쪽(화면 버전 다음)에 둡니다.
+    menu.insertBefore(scr, menu.children[1] || null);
+
+    var syncRed = function () {
+      var on = document.body.classList.contains('red');
+      var lb = scr.querySelector('.ms-red');
+      if (lb) lb.textContent = on ? '레드라이트 모드 끄기' : '레드라이트 모드 켜기';
+    };
+    scr.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-trigger]');
+      if (!b) return;
+      var id = b.getAttribute('data-trigger');
+      var target = document.getElementById(id);
+      if (target) target.click();
+      if (id === 'btnRed' || id === 'btnShareTop') {
+        if (btnMoreM) btnMoreM.setAttribute('aria-expanded', 'false');
+        menu.hidden = true;
+        if (moreTabM) moreTabM.setAttribute('aria-expanded', 'false');
+      }
+      syncRed();
+    });
+    syncRed();
+  }
+
   /* 5) 인쇄할 때는 지금 판 이름을 남깁니다 -------------------------------- */
   document.body.setAttribute('data-version', me.label);
 

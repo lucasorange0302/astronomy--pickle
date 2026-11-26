@@ -141,25 +141,28 @@
     const darkEnd = night.astro.dawn || night.nautical.dawn || night.civil.dawn;
     const darkHours = (darkStart && darkEnd) ? (darkEnd - darkStart) * 24 : 0;
 
-    // 시간별 구름양(Open-Meteo) — 캐시된 값만 동기로 읽는다. 없으면 다음 틱에 받아 다시 그린다.
+    // 시간별 구름양·강수(Open-Meteo) — 캐시된 값만 동기로 읽는다. 없으면 다음 틱에 받아 다시 그린다.
     const wx = (window.SkyWeather ? SkyWeather.cached(lat, lon, state.dateStr) : null);
-    let cloud = null, cloudAt = null;
+    let cloud = null, cloudAt = null, rain = null, rainAt = null;
     if (wx && wx.status === 'ok') {
       cloudAt = SkyWeather.cloudFor(wx, { hour: selectedHour() });
+      rainAt = SkyWeather.precipFor(wx, { hour: selectedHour() });
       if (state.timeStr || state.simJd != null) cloud = cloudAt;
       if (cloud == null) {
         const win = darkWindowHours(darkStart, darkEnd);
         cloud = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+        rain = SkyWeather.precipFor(wx, { startH: win.start, endH: win.end });
       }
       if (cloud == null) cloud = cloudAt;
+      if (!rain) rain = rainAt;
     }
-    const score = A.observingScore(phase.illum, state.site.bortle, darkHours, cloud);
+    const score = A.observingScore(phase.illum, state.site.bortle, darkHours, cloud, rain);
 
     return {
       night: night, jd: jd, sun: sun, sunHor: sunHor, moonPos: moonP, moonHor: moonH,
       phase: phase, planets: planets, darkStart: darkStart, darkEnd: darkEnd,
       darkHours: darkHours, score: score, lst: A.lstHours(jd, lon),
-      wx: wx, cloud: cloud, cloudAt: cloudAt
+      wx: wx, cloud: cloud, cloudAt: cloudAt, rain: rain, rainAt: rainAt
     };
   }
 
@@ -263,20 +266,25 @@
     arc.style.stroke = score >= 70 ? 'url(#scoreGrad)' : score >= 40 ? '#ffd479' : '#ff8a6a';
     let scoreLabel = score >= 80 ? '최고의 밤' : score >= 65 ? '아주 좋은 밤' : score >= 45 ? '볼 만한 밤' : score >= 25 ? '아쉬운 밤' : '관측 불리';
     if (c.cloud != null && c.cloud >= 85) scoreLabel = '구름 많아 관측 어려움';
+    if (c.rain && (c.rain.mmMax >= 0.5 || (c.rain.prob || 0) >= 60)) scoreLabel = '비·눈 예보로 관측 어려움';
     $('#heroScoreNum').title = scoreLabel;
 
-    // 점수 산출 근거 배지 — 구름 · 달 · Bortle
+    // 점수 산출 근거 배지 — 구름 · 강수 · 달 · Bortle
     const basis = $('#heroScoreBasis');
     if (basis) {
       const bits = [];
       if (c.cloud != null) bits.push('<span class="sb-cloud">구름 ' + Math.round(c.cloud) + '%</span>');
       else if (c.wx) bits.push('<span class="sb-none">구름 예보 없음</span>');
       else bits.push('<span class="sb-loading">구름 확인 중</span>');
+      if (c.rain && ((c.rain.mmMax || 0) > 0 || (c.rain.prob || 0) >= 30)) {
+        bits.push('<span class="sb-rain">☔ ' + (c.rain.mmMax > 0 ? nf(c.rain.mmMax, 1) + 'mm/시' : '') +
+          (c.rain.prob != null ? ((c.rain.mmMax > 0 ? ' · ' : '') + Math.round(c.rain.prob) + '%') : '') + '</span>');
+      }
       bits.push('<span>달 ' + Math.round(c.phase.illum * 100) + '%</span>');
       bits.push('<span>Bortle ' + (site.bortle || '?') + '</span>');
       basis.innerHTML = bits.join('<i aria-hidden="true">·</i>');
       basis.title = c.cloud != null
-        ? '구름 ' + Math.round(c.cloud) + '%는 관측 지수에 가장 크게 반영됩니다(85% 이상은 관측이 어렵습니다).'
+        ? '구름 ' + Math.round(c.cloud) + '%는 관측 지수에 가장 크게 반영됩니다(85% 이상은 관측이 어렵습니다). 강수량·강수확률이 높으면 추가로 감점합니다.'
         : '구름 예보가 없어 맑은 하늘(구름 0%)을 가정했습니다.';
     }
 
@@ -285,7 +293,11 @@
       if (c.wx && c.wx.status === 'ok') {
         const win = darkWindowHours(c.darkStart, c.darkEnd);
         const nv = SkyWeather.cloudFor(c.wx, { startH: win.start, endH: win.end });
-        hc.textContent = nv == null ? '—' : Math.round(nv) + '% · ' + SkyWeather.labelOf(nv);
+        const rv = SkyWeather.precipFor(c.wx, { startH: win.start, endH: win.end });
+        hc.textContent = (nv == null ? '—' : Math.round(nv) + '% · ' + SkyWeather.labelOf(nv)) +
+          (rv && rv.prob != null && rv.prob >= 20
+            ? ' · ☔ ' + Math.round(rv.prob) + '%' + (rv.mm >= 0.05 ? ' ' + nf(rv.mm, 1) + 'mm' : '')
+            : '');
       } else if (c.wx) hc.textContent = '예보 없음';
       else hc.textContent = '확인 중…';
     }
@@ -375,27 +387,45 @@
     const best = SkyWeather.bestWindow(wx);
     const showBest = !!best && best.hours < wx.series.length;
     const avg = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+    const rainAgg = SkyWeather.precipFor(wx, { startH: win.start, endH: win.end });
     let html = '<div class="cc-cols">';
     wx.series.forEach(function (s) {
       const v = s.cloud == null ? null : Math.round(s.cloud);
+      const mm = s.mm == null ? 0 : s.mm;
+      const prob = s.prob == null ? null : s.prob;
+      const wet = mm > 0 || (prob != null && prob >= 50);
       let cls = 'cc-col';
       if (v == null) cls += ' is-na';
       else if (v <= 25) cls += ' is-clear';
       else if (v <= 50) cls += ' is-some';
       else if (v <= 85) cls += ' is-many';
       else cls += ' is-over';
+      if (wet) cls += ' is-wet';
       if (showBest && s.abs >= best.from && s.abs <= best.to) cls += ' is-best';
       if (s.hour === 0) cls += ' is-midnight';
       const hPct = v == null ? 0 : Math.max(3, v);
+      const rainPct = mm > 0 ? Math.min(100, 12 + mm * 18) : 0;
       const tip = hh(s.hour) + '시 · 구름 ' + (v == null ? '정보 없음' : v + '%') +
-        (s.precip != null ? ' · 강수확률 ' + Math.round(s.precip) + '%' : '');
+        (prob != null ? ' · 강수확률 ' + Math.round(prob) + '%' : '') +
+        (mm > 0 ? ' · 강수량 ' + nf(mm, 1) + 'mm' : '');
       html += '<div class="' + cls + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' +
         '<span class="cc-val">' + (v == null ? '–' : v) + '</span>' +
-        '<div class="cc-bar"><i style="height:' + hPct + '%"></i></div>' +
-        '<span class="cc-h">' + hh(s.hour) + '</span>' +
+        '<div class="cc-bar"><i style="height:' + hPct + '%"></i>' +
+        (mm > 0 ? '<b class="cc-rain" style="height:' + rainPct + '%"></b>' : '') + '</div>' +
+        '<span class="cc-h">' + hh(s.hour) + (wet ? '<i class="cc-wet" aria-hidden="true">💧</i>' : '') + '</span>' +
         '</div>';
     });
     html += '</div>';
+    const wetSlots = wx.series.filter(function (s) { return (s.mm || 0) > 0 || (s.prob || 0) >= 60; });
+    if (wetSlots.length) {
+      html += '<p class="cc-rainline">☔ 비·눈 예보 ' + wetSlots.map(function (s) {
+        return hh(s.hour) + '시 ' + ((s.mm || 0) > 0 ? nf(s.mm, 1) + 'mm' : '') +
+          (s.prob != null ? ' ' + Math.round(s.prob) + '%' : '');
+      }).join(' · ') + '</p>';
+    } else {
+      html += '<p class="cc-rainline is-dry">☔ 강수 예보 없음' +
+        (rainAgg && rainAgg.prob != null ? ' · 밤 평균 강수확률 ' + Math.round(rainAgg.prob) + '%' : '') + '</p>';
+    }
     if (showBest && best) {
       html += '<p class="cc-recommend">🎯 가장 맑은 관측 시간 <b>' + hh(best.from) + '시 – ' + hh(best.to) + '시</b>' +
         '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
@@ -406,11 +436,19 @@
     chart.innerHTML = html;
 
     const shown = avg == null ? '—' : Math.round(avg) + '%';
-    if (pill) { pill.textContent = shown + ' · ' + SkyWeather.labelOf(avg); pill.className = 'cloud-pill ' + cloudClass(avg); }
+    if (pill) {
+      pill.textContent = shown + ' · ' + SkyWeather.labelOf(avg) + (wetSlots.length ? ' · ☔' : '');
+      pill.className = 'cloud-pill ' + cloudClass(avg);
+    }
     if (note) note.textContent = 'Open-Meteo · ' + kstClock(wx.fetchedAt) + ' 갱신 · 오늘 18시 → 내일 06시';
     if (foot) {
-      foot.innerHTML = '밤 평균 구름 <b>' + shown + '</b> — 달·광공해와 함께 관측 지수에 반영됩니다. ' +
-        '<span class="cc-hint">막대에 마우스를 올리면 그 시각 강수확률까지 보입니다.</span> ' +
+      const rainTxt = rainAgg && rainAgg.prob != null
+        ? (rainAgg.mm > 0.05
+          ? '강수확률 <b>' + Math.round(rainAgg.prob) + '%</b> · 밤 합계 <b>' + nf(rainAgg.mm, 1) + 'mm</b>'
+          : '강수확률 <b>' + Math.round(rainAgg.prob) + '%</b>')
+        : '강수 정보 없음';
+      foot.innerHTML = '밤 평균 구름 <b>' + shown + '</b> · ' + rainTxt + ' — 달·광공해와 함께 관측 지수에 반영됩니다. ' +
+        '<span class="cc-hint">막대에 마우스를 올리면 그 시각 구름양·강수량·강수확률이 보입니다. 파란 막대가 강수량입니다.</span> ' +
         '<button class="mini-btn cc-refresh" type="button" id="cloudRefresh">예보 새로고침</button>';
       const rb = $('#cloudRefresh');
       if (rb) rb.addEventListener('click', function () {
@@ -1257,10 +1295,12 @@
       '<p class="small">겉보기 등급은 거리와 실제 광도가 함께 만든 결과입니다. 같은 밝기라도 거리가 2배면 5등급 어두워집니다(거리 지수). <a href="#lab" data-close="1">등급·거리 계산기</a>에서 직접 확인해 보세요.</p>' +
       '</details>';
 
-    // 상단 사진 카드 — NASA·허블·제임스웹 또는 실제 하늘 탐사 사진
-    if (window.SkyPhoto) {
+    // 상단 사진 갤러리 — NASA·허블·제임스웹 + 실제 하늘 탐사 사진 5~6장
+    if (window.SkyGallery || window.SkyPhoto) {
       const body = $('#modalBody');
-      const fig = SkyPhoto.figure(o, { variant: 'modal' });
+      const fig = window.SkyGallery
+        ? SkyGallery.create(o, { variant: 'modal' })
+        : SkyPhoto.figure(o, { variant: 'modal' });
       const head = body.querySelector('.md-head');
       if (head && head.nextSibling) body.insertBefore(fig, head.nextSibling);
       else body.appendChild(fig);
@@ -2689,18 +2729,7 @@
       '  <div class="li-head"><h3>' + esc(info.name) + '</h3><p>' + esc(info.sub) + '</p></div>' +
       '  <div class="li-facts">' + facts.join('') + '</div>' +
       (info.note ? '<p class="li-note">' + esc(info.note) + '</p>' : '') +
-      '  <div class="li-gallery">' +
-      '    <div class="li-shot is-loading" id="liShot">' +
-      '      <div class="li-skel" aria-hidden="true"><span></span><small>사진 불러오는 중…</small></div>' +
-      '      <img id="liImg" alt="' + esc(info.name) + ' 사진" decoding="async" draggable="false">' +
-      '      <div class="li-fallback" id="liFallback" hidden><span>사진을 불러오지 못했습니다</span><small>성도 위치로 대신 표시합니다</small></div>' +
-      '      <span class="li-count" id="liCount">0/0</span>' +
-      '      <button class="li-arrow li-prev" type="button" aria-label="이전 사진">‹</button>' +
-      '      <button class="li-arrow li-next" type="button" aria-label="다음 사진">›</button>' +
-      '    </div>' +
-      '    <div class="li-cap"><b id="liTitle">—</b><span id="liCredit">—</span><a id="liLink" target="_blank" rel="noopener noreferrer" hidden>원본 보기 ↗</a></div>' +
-      '    <div class="li-thumbs" id="liThumbs"></div>' +
-      '  </div>' +
+      '  <div class="li-gallery" id="liGallery"></div>' +
       '  <div class="li-actions">' +
       (info.objId ? '<button class="btn btn-primary btn-sm" type="button" data-li-obj="' + esc(info.objId) + '">도감에서 보기</button>' : '') +
       '    <button class="mini-btn" type="button" data-li-aim>🎯 라이브 뷰로 조준</button>' +
@@ -2708,7 +2737,8 @@
       '</div>';
     box.hidden = false;
     document.body.classList.add('li-open');
-    renderLivePhoto(0);
+    const gal = $('#liGallery');
+    if (gal && window.SkyGallery) gal.appendChild(SkyGallery.create(info, { variant: 'sheet' }));
   }
 
   function closeLiveInfo() {
@@ -3742,8 +3772,6 @@
     const geoBtn = $('#btnGeo');
     if (geoBtn) geoBtn.addEventListener('click', function () { clearSim(true); });
 
-    const st = $('#siteSelect');
-    if (st) st.addEventListener('change', function () { clearSim(true); });
 
     // 도감 검색 지우기
     const sc = $('#searchClear');
@@ -3847,6 +3875,11 @@
     lines.push('🔭 별너울 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
     lines.push('🌙 달: ' + nf(c.phase.illum * 100) + '% · ' + c.phase.name + (n.moonSet ? ' (월몰 ' + A.fmtClock(n.moonSet) + ')' : ''));
     if (c.cloud != null) lines.push('☁️ 구름: 밤 평균 ' + Math.round(c.cloud) + '% · ' + SkyWeather.labelOf(c.cloud));
+    if (c.rain && ((c.rain.prob || 0) >= 20 || (c.rain.mm || 0) > 0.05)) {
+      lines.push('☔ 강수: 확률 ' + Math.round(c.rain.prob || 0) + '%' +
+        ((c.rain.mm || 0) > 0.05 ? ' · 밤 합계 ' + nf(c.rain.mm, 1) + 'mm' : '') +
+        (c.rain.mmMax >= 0.5 ? ' (한때 ' + nf(c.rain.mmMax, 1) + 'mm/시)' : ''));
+    }
     lines.push('🌇 일몰 ' + A.fmtClock(n.sunset) + ' → 천문박명 ' + A.fmtClock(n.astro.dusk) + (c.darkEnd ? ' → 새벽 ' + A.fmtClock(c.darkEnd) : ''));
     if (recs.length) {
       lines.push('⭐ 추천: ' + recs.map(function (r, i) {
@@ -3937,34 +3970,208 @@
     refreshWeather();
   }
 
-  /* ------------------------------------------------------------- 초기화 */
-  function initSiteSelect() {
-    const sel = $('#siteSelect');
-    let html = '<optgroup label="지역">';
-    D.locations.forEach(function (l) { html += '<option value="loc:' + l.id + '">' + esc(l.name) + '</option>'; });
-    html += '</optgroup><optgroup label="전국 관측 명소">';
-    D.sites.forEach(function (s, i) { html += '<option value="site:' + i + '">' + esc(s.name) + '</option>'; });
-    html += '</optgroup>';
-    sel.innerHTML = html;
+  /* ====================================================================== 지역 선택 — 시·도 → 시·군·구 2단계
+     · 1단계(시·도)에서 좁히면 2단계(시·군·구) 목록이 그 시·도 것만 남습니다.
+     · '전국 관측 명소'를 고르면 2단계가 기존 34곳 목록으로 바뀝니다.
+     · 내 위치(GPS)·위경도 직접 입력은 그대로 두고, 고른 뒤에는 가장 가까운
+       시·군·구 이름을 함께 보여 줍니다.
+     ====================================================================== */
+  const KR = window.KR_REGIONS || null;
 
-    const matchId = D.locations.find(function (l) { return Math.abs(l.lat - state.site.lat) < 0.001 && Math.abs(l.lon - state.site.lon) < 0.001; });
-    if (matchId) sel.value = 'loc:' + matchId.id;
-    else {
-      const si = D.sites.findIndex(function (s) { return Math.abs(s.lat - state.site.lat) < 0.001 && Math.abs(s.lon - state.site.lon) < 0.001; });
-      if (si >= 0) sel.value = 'site:' + si;
+  function krPairs() {
+    const out = [];
+    if (!KR) return out;
+    KR.provinces.forEach(function (p) {
+      p.districts.forEach(function (d) { out.push({ prov: p, dist: d }); });
+    });
+    return out;
+  }
+
+  function kmBetween(lat1, lon1, lat2, lon2) {
+    const dy = (lat2 - lat1) * 111.32;
+    const dx = (lon2 - lon1) * 111.32 * Math.cos(lat1 * Math.PI / 180);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /** 좌표에서 가장 가까운 시·군·구 */
+  function nearestRegion(lat, lon) {
+    let best = null, bestKm = Infinity;
+    krPairs().forEach(function (x) {
+      const km = kmBetween(lat, lon, x.dist.lat, x.dist.lon);
+      if (km < bestKm) { bestKm = km; best = { prov: x.prov, dist: x.dist, km: km }; }
+    });
+    return best;
+  }
+
+  function siteFromDistrict(prov, d) {
+    return {
+      name: prov.short + ' ' + d.name, lat: d.lat, lon: d.lon, bortle: d.bortle,
+      region: prov.id, district: d.name
+    };
+  }
+  function siteFromProvince(prov) {
+    return { name: prov.name, lat: prov.lat, lon: prov.lon, bortle: prov.bortle, region: prov.id, district: '' };
+  }
+  function siteFromSpot(s) {
+    return { name: s.name, lat: s.lat, lon: s.lon, bortle: s.bortle, spot: true };
+  }
+
+  function provById(id) {
+    return KR ? (KR.provinces.filter(function (p) { return p.id === id; })[0] || null) : null;
+  }
+
+  function buildProvinceOptions() {
+    const sel = $('#provinceSelect');
+    if (!sel || !KR) return;
+    let html = KR.provinces.map(function (p) {
+      return '<option value="p:' + p.id + '">' + esc(p.name) + '</option>';
+    }).join('');
+    html += '<option value="spots">🏕️ 전국 관측 명소 (' + D.sites.length + '곳)</option>';
+    sel.innerHTML = html;
+  }
+
+  /** 2단계 목록을 그 시·도의 시·군·구만으로 다시 채웁니다. */
+  function fillDistrictOptions(provinceId, customLabel) {
+    const sel = $('#districtSelect');
+    if (!sel) return;
+    let html = '';
+    const custom = customLabel
+      ? '<option value="custom">✏️ ' + esc(customLabel) + '</option>'
+      : '';
+
+    if (provinceId === 'spots') {
+      const groups = {};
+      D.sites.forEach(function (s, i) { (groups[s.region] = groups[s.region] || []).push(i); });
+      html = custom || '<option value="">명소를 고르세요</option>';
+      Object.keys(groups).forEach(function (g) {
+        html += '<optgroup label="' + esc(g) + '">' + groups[g].map(function (i) {
+          return '<option value="site:' + i + '">' + esc(D.sites[i].name) + '</option>';
+        }).join('') + '</optgroup>';
+      });
+      sel.innerHTML = html;
+      return;
     }
 
-    sel.addEventListener('change', function () {
-      const v = sel.value;
-      if (v.indexOf('loc:') === 0) {
-        const l = D.locations.find(function (x) { return x.id === v.slice(4); });
-        if (l) state.site = { name: l.name, lat: l.lat, lon: l.lon, bortle: l.bortle };
-      } else if (v.indexOf('site:') === 0) {
-        const s = D.sites[Number(v.slice(5))];
-        if (s) state.site = { name: s.name, lat: s.lat, lon: s.lon, bortle: s.bortle };
+    const prov = provById(provinceId);
+    if (!prov) { sel.innerHTML = '<option value="">시·도를 먼저 고르세요</option>'; return; }
+    html = custom || '<option value="">' + esc(prov.short) + ' 시·군·구 선택</option>';
+
+    const byKind = { 시: [], 군: [], 구: [] };
+    prov.districts.forEach(function (d) { (byKind[d.kind] || byKind['시']).push(d); });
+    const opts = function (arr) {
+      return arr.map(function (d) {
+        return '<option value="d:' + esc(d.name) + '">' + esc(d.name) + ' · Bortle ' + d.bortle + '</option>';
+      }).join('');
+    };
+
+    if (provinceId === 'jeonnam') {
+      // 통합특별시: 광주권 자치구와 전남 시·군을 나눠 보여 줍니다.
+      if (byKind.구.length) html += '<optgroup label="광주권 자치구">' + opts(byKind.구) + '</optgroup>';
+      const rest = byKind.시.concat(byKind.군);
+      if (rest.length) html += '<optgroup label="전남 시·군">' + opts(rest) + '</optgroup>';
+    } else if (byKind.구.length && !byKind.시.length && !byKind.군.length) {
+      html += '<optgroup label="자치구">' + opts(byKind.구) + '</optgroup>';
+    } else {
+      if (byKind.시.length) html += '<optgroup label="시">' + opts(byKind.시) + '</optgroup>';
+      if (byKind.군.length) html += '<optgroup label="군">' + opts(byKind.군) + '</optgroup>';
+    }
+    sel.innerHTML = html;
+  }
+
+  /** 현재 관측지에 맞춰 1·2단계 선택 상자를 맞춥니다. */
+  function syncRegionSelects() {
+    const selP = $('#provinceSelect'), selD = $('#districtSelect');
+    if (!selP || !selD || !KR) return;
+    const s = state.site;
+
+    const si = D.sites.findIndex(function (x) {
+      return Math.abs(x.lat - s.lat) < 0.0008 && Math.abs(x.lon - s.lon) < 0.0008;
+    });
+    if (si >= 0) {
+      selP.value = 'spots';
+      fillDistrictOptions('spots');
+      selD.value = 'site:' + si;
+      return;
+    }
+
+    const hit = krPairs().filter(function (x) {
+      return Math.abs(x.dist.lat - s.lat) < 0.002 && Math.abs(x.dist.lon - s.lon) < 0.002;
+    })[0];
+    if (hit) {
+      selP.value = 'p:' + hit.prov.id;
+      fillDistrictOptions(hit.prov.id);
+      selD.value = 'd:' + hit.dist.name;
+      return;
+    }
+
+    const hp = KR.provinces.filter(function (p) {
+      return Math.abs(p.lat - s.lat) < 0.002 && Math.abs(p.lon - s.lon) < 0.002;
+    })[0];
+    if (hp) {
+      selP.value = 'p:' + hp.id;
+      fillDistrictOptions(hp.id);
+      selD.value = '';
+      return;
+    }
+
+    // 내 위치·직접 입력 — 가장 가까운 시·도의 목록을 보여 주고 '직접 입력'을 남깁니다.
+    const near = nearestRegion(s.lat, s.lon);
+    if (near) {
+      selP.value = 'p:' + near.prov.id;
+      fillDistrictOptions(near.prov.id, s.name || '직접 입력한 위치');
+      selD.value = 'custom';
+    }
+  }
+
+  function applySite(site, note) {
+    state.site = site;
+    store.set('site', site);
+    clearSim(true);
+    renderAll();
+    syncRegionSelects();
+    if (note) toast(note);
+  }
+
+  function initSiteSelect() {
+    const selP = $('#provinceSelect'), selD = $('#districtSelect');
+    if (!selP || !selD) return;
+    if (!KR) {
+      selP.innerHTML = '<option>지역 데이터를 불러오지 못했습니다</option>';
+      selP.disabled = true; selD.disabled = true;
+      return;
+    }
+    buildProvinceOptions();
+    syncRegionSelects();
+
+    selP.addEventListener('change', function () {
+      const v = selP.value;
+      if (v === 'spots') {
+        fillDistrictOptions('spots');
+        selD.value = '';
+        selD.focus && selD.focus();
+        return;
       }
-      store.set('site', state.site);
-      renderAll();
+      const prov = provById(v.replace(/^p:/, ''));
+      if (!prov) return;
+      fillDistrictOptions(prov.id);
+      selD.value = '';
+      applySite(siteFromProvince(prov));
+    });
+
+    selD.addEventListener('change', function () {
+      const v = selD.value;
+      if (v === 'custom' || v === '') return;
+      if (v.indexOf('site:') === 0) {
+        const s = D.sites[Number(v.slice(5))];
+        if (s) applySite(siteFromSpot(s), s.name + '로 관측지를 바꿨습니다.');
+        return;
+      }
+      if (v.indexOf('d:') === 0) {
+        const prov = provById(selP.value.replace(/^p:/, ''));
+        const name = v.slice(2);
+        const d = prov && prov.districts.filter(function (x) { return x.name === name; })[0];
+        if (prov && d) applySite(siteFromDistrict(prov, d), prov.short + ' ' + d.name + ' 기준으로 계산합니다.');
+      }
     });
   }
 
@@ -4006,8 +4213,8 @@
       }
       state.site = { name: '사용자 지정', lat: lat, lon: lon, bortle: 5 };
       store.set('site', state.site);
-      $('#siteSelect').value = '';
       renderAll();
+      syncRegionSelects();
       toast('관측지 좌표를 적용했습니다.');
     });
 
@@ -4015,14 +4222,22 @@
       if (!navigator.geolocation) { toast('이 브라우저는 위치 기능을 지원하지 않습니다.'); return; }
       toast('현재 위치를 확인하는 중…');
       navigator.geolocation.getCurrentPosition(function (pos) {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        const near = nearestRegion(lat, lon);
         state.site = {
-          name: '내 위치', lat: pos.coords.latitude, lon: pos.coords.longitude,
-          bortle: state.site.bortle || 6
+          name: near ? near.dist.name + ' 근처 · 내 위치' : '내 위치',
+          lat: lat, lon: lon,
+          bortle: near ? near.dist.bortle : (state.site.bortle || 6),
+          region: near ? near.prov.id : undefined,
+          district: near ? near.dist.name : undefined,
+          gps: true
         };
         store.set('site', state.site);
-        $('#siteSelect').value = '';
         renderAll();
-        toast('현재 위치로 계산했습니다.');
+        syncRegionSelects();
+        toast(near
+          ? '가장 가까운 시·군·구는 ' + near.prov.short + ' ' + near.dist.name + '입니다. GPS 좌표로 계산했습니다.'
+          : '현재 위치로 계산했습니다.');
       }, function (err) {
         toast('위치를 가져오지 못했습니다(' + (err && err.code === 1 ? '권한 거부' : '시간 초과') + '). 위경도를 직접 입력하거나 관측지를 고르세요.');
       }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });

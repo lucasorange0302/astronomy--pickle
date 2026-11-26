@@ -165,10 +165,14 @@
 
     <!-- 관측지·날짜 선택 -->
     <div class="control-panel" id="controlPanel">
-      <div class="control-row">
-        <label class="field">
-          <span class="field-label">관측지</span>
-          <select id="siteSelect" aria-label="관측지 선택"></select>
+      <div class="control-row control-row-region">
+        <label class="field field-prov">
+          <span class="field-label">시·도</span>
+          <select id="provinceSelect" aria-label="시·도 선택"></select>
+        </label>
+        <label class="field field-dist">
+          <span class="field-label">시·군·구</span>
+          <select id="districtSelect" aria-label="시·군·구 선택"></select>
         </label>
         <button class="btn btn-ghost" id="btnGeo" title="브라우저 위치 권한을 허용하면 현재 위치로 계산합니다">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg>
@@ -187,6 +191,7 @@
       <div class="control-row control-row-sub">
         <button class="link-btn" id="btnCustom" aria-expanded="false">위경도 직접 입력</button>
         <span class="coord-note" id="coordNote">37.1969°N · 127.0343°E · Bortle 7</span>
+        <span class="region-hint" id="regionHint">시·도 → 시·군·구 순서로 좁혀집니다 · 2026.7 행정구역 기준</span>
         <div class="custom-coords" id="customCoords" hidden>
           <label class="field field-sm"><span class="field-label">위도</span><input type="number" id="latInput" step="0.0001" min="-90" max="90" inputmode="decimal"></label>
           <label class="field field-sm"><span class="field-label">경도</span><input type="number" id="lonInput" step="0.0001" min="-180" max="180" inputmode="decimal"></label>
@@ -227,7 +232,7 @@
               </svg>
               <span id="heroScoreNum">—</span>
             </div>
-            <div class="sum-label term" data-tip="달 밝기·관측지 광공해·어두운 시간·시간별 구름양을 종합한 '깊은하늘 관측' 지수입니다. 구름이 많을수록 점수가 크게 떨어집니다. 달과 행성은 이 점수와 별개로 언제든 볼 수 있습니다.">오늘 밤 관측 지수</div>
+            <div class="sum-label term" data-tip="달 밝기·관측지 광공해·어두운 시간·시간별 구름양·강수를 종합한 '깊은하늘 관측' 지수입니다. 구름이 많을수록 점수가 크게 떨어집니다. 달과 행성은 이 점수와 별개로 언제든 볼 수 있습니다.">오늘 밤 관측 지수</div>
             <div class="score-basis" id="heroScoreBasis" aria-live="polite">—</div>
           </div>
         </div>
@@ -238,7 +243,7 @@
         <div class="sum-side-row"><span>천문박명 끝</span><strong id="heroDusk">—</strong></div>
         <div class="sum-side-row"><span>새벽 박명 시작</span><strong id="heroDawn">—</strong></div>
         <div class="sum-side-row"><span>달 출/몰</span><strong id="heroMoonRS">—</strong></div>
-        <div class="sum-side-row"><span class="term" data-tip="관측지 좌표 기준 시간별 구름양(Open-Meteo)의 오늘 밤 평균입니다. 18시부터 다음날 06시까지를 봅니다.">구름(밤 평균)</span><strong id="heroCloud">—</strong></div>
+        <div class="sum-side-row"><span class="term" data-tip="관측지 좌표 기준 시간별 구름양·강수확률(Open-Meteo)의 오늘 밤 평균입니다. 18시부터 다음날 06시까지를 봅니다.">구름(밤 평균)</span><strong id="heroCloud">—</strong></div>
         <div class="sum-side-row"><span class="term" data-tip="내 위치 기준 하늘의 '현재 시각'. 적경 0h가 남중하는 때를 0시로 셉니다. 별이 지금 어디 있는지 계산하는 기준입니다.">지방항성시</span><strong id="heroLst">—</strong></div>
         <button class="btn btn-primary btn-block" id="btnSharePlan">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M9 12.5l6-3.5M9 12.5l6 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
@@ -269,8 +274,8 @@
     <!-- 시간별 구름양 -->
     <div class="panel cloud-panel" id="cloudPanel">
       <div class="panel-head">
-        <h2>시간별 구름양 <span class="cloud-pill" id="cloudPill">—</span></h2>
-        <span class="panel-note" id="cloudNote">Open-Meteo 시간별 예보 · 오늘 18시 → 내일 06시</span>
+        <h2>시간별 구름양·강수 <span class="cloud-pill" id="cloudPill">—</span></h2>
+        <span class="panel-note" id="cloudNote">Open-Meteo 시간별 구름양·강수 예보 · 오늘 18시 → 내일 06시</span>
       </div>
       <div class="cloud-chart" id="cloudChart" aria-live="polite"></div>
       <div class="cloud-legend" id="cloudLegend">
@@ -278,6 +283,7 @@
         <span><i class="cc-dot cc-some"></i>조금 25–50%</span>
         <span><i class="cc-dot cc-many"></i>구름 많음 50–85%</span>
         <span><i class="cc-dot cc-over"></i>흐림 85% 이상</span>
+        <span><i class="cc-dot cc-rain-dot"></i>💧 비·눈 (파란 막대 = 강수량)</span>
       </div>
       <p class="panel-foot" id="cloudFoot">기상 예보를 불러오는 중입니다…</p>
     </div>
@@ -1005,6 +1011,9 @@
         <li>NASA GSFC Eclipse Web Site / NASA Science — 2026~2027 일식·월식 종류와 가시 지역</li>
         <li>NAOJ 2027 천문현상 표 — 행성 충·최대이각 시각</li>
         <li>행성 위치는 사이트 내 VSOP87 계열 근사 계산(Schlyter)으로, 실제와 ±1~2′ 차이가 날 수 있습니다.</li>
+        <li>시·도 → 시·군·구 지역 좌표·인구: Wikidata 행정구역(2026년 7월 1일 시행 기준, CC0). 2026년 7월 광주광역시·전라남도가 전남광주통합특별시로 통합되고 인천광역시가 2군 9구로 개편된 내용을 반영했습니다.</li>
+        <li>광공해(Bortle) 등급은 측정값이 아니라 시·군·구 인구와 도시까지의 거리로 추정한 값입니다. 전국 관측지 46곳의 기존 등급을 기준으로 눈금을 맞췄습니다(오차 약 ±0.5등급).</li>
+        <li>천체 사진: NASA Image and Video Library(images-api.nasa.gov) 검색 결과와 NASA SkyView(DSS2·2MASS·WISE·ROSAT) 실제 하늘 탐사 사진. NASA 공개 이미지는 저작권 없이 쓸 수 있으며, 사진마다 관측 기관을 표시합니다.</li>
         <li>일출·일몰·박명·월출·월몰은 2분 간격 고도 표본화로 계산해 ±1~2분 오차가 있습니다.</li>
       </ul>
     </div>
@@ -1070,15 +1079,17 @@
 </noscript>
 <script src="data.js"></script>
 <script src="data-extra.js"></script>
+<script src="regions-kr.js"></script>
 <script src="data-catalog.js"></script>
 <script src="space-data.js"></script>
 <script src="catalog-photos.js"></script>
 <script src="photo-sets.js"></script>
+<script src="photo-ui.js"></script>
+<script src="gallery.js"></script>
 <script src="sky-weather.js"></script>
 <script src="astro.js"></script>
 <script src="app.js"></script>
 <script src="space-ui.js"></script>
-<script src="photo-ui.js"></script>
 <script src="views.js"></script>
 </body>
 </html>

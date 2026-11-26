@@ -270,6 +270,7 @@
     figure: figure,
     describe: describe,
     prefetch: prefetch,
+    chartSvg: miniChartSvg,
     lookup: function (o) { return lookup(describe(o)); },
     surveyUrl: function (o) { return surveyUrl(describe(o)); }
   };
