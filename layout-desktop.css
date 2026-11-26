@@ -1,0 +1,201 @@
+/* =========================================================================
+   layout-desktop.css — 데스크톱판(desktop.html) 전용 레이아웃
+   1280px+ 와이드 화면 기준 · 다단 대시보드 · 넓은 모달
+   · 모든 규칙은 html[data-layout="desktop"] 아래에서만 적용됩니다.
+   ========================================================================= */
+
+html[data-layout="desktop"] {
+  font-size: 17px;
+  scroll-padding-top: 84px;
+}
+html[data-layout="desktop"] .wrap { max-width: 1200px; padding: 0 36px; }
+html[data-layout="desktop"] .site-header .header-inner { max-width: 1272px; padding: 10px 20px; min-height: 62px; gap: 18px; }
+html[data-layout="desktop"] .brand-text strong { font-size: 1.08rem; }
+html[data-layout="desktop"] .brand-text small { font-size: .66rem; }
+html[data-layout="desktop"] .nav-link { padding: 9px 14px; font-size: .86rem; }
+html[data-layout="desktop"] .more-menu { width: 380px; }
+
+/* --------------------------------------------------------------- 섹션 */
+html[data-layout="desktop"] .section { padding: 76px 0; }
+html[data-layout="desktop"] .section-hero { padding-top: 30px; }
+html[data-layout="desktop"] .section-head { max-width: 900px; margin-bottom: 30px; }
+html[data-layout="desktop"] .section-sub { font-size: 1rem; line-height: 1.7; }
+html[data-layout="desktop"] .hero-head { max-width: 960px; margin-bottom: 28px; }
+html[data-layout="desktop"] .hero-head h1 { font-size: clamp(2.5rem, 3.9vw, 3.4rem); letter-spacing: -0.04em; }
+html[data-layout="desktop"] .hero-sub { font-size: 1.02rem; max-width: 700px; }
+html[data-layout="desktop"] .quick-actions { margin-top: 20px; }
+html[data-layout="desktop"] .qa-btn { padding: 9px 15px; font-size: .84rem; }
+
+/* ------------------------------------------------------------ 컨트롤 바 */
+html[data-layout="desktop"] .control-panel { padding: 16px 18px; margin-bottom: 18px; }
+html[data-layout="desktop"] .control-row {
+  display: grid; gap: 12px; align-items: end;
+  grid-template-columns: minmax(210px, 1.45fr) minmax(170px, 1fr) minmax(185px, 1fr) auto;
+}
+html[data-layout="desktop"] .control-row .field { width: 100%; }
+html[data-layout="desktop"] .control-row #btnGeo { order: 4; min-height: 42px; }
+html[data-layout="desktop"] .control-row .field select,
+html[data-layout="desktop"] .control-row .field input { width: 100%; min-width: 0; }
+html[data-layout="desktop"] .field select, html[data-layout="desktop"] .field input { padding: 10px 12px; }
+html[data-layout="desktop"] .field-label { font-size: .73rem; }
+
+/* ------------------------------------------- 오늘 밤 대시보드 (12단 그리드) */
+html[data-layout="desktop"] #today > .wrap {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+html[data-layout="desktop"] #today > .wrap > * { margin-top: 0; }
+html[data-layout="desktop"] #today .hero-head { grid-column: 1 / -1; margin-bottom: 4px; }
+html[data-layout="desktop"] #today .control-panel { grid-column: 1 / -1; margin-bottom: 0; }
+html[data-layout="desktop"] #today .summary-card { grid-column: 1 / -1; }
+html[data-layout="desktop"] #today .timeline-panel { grid-column: 1 / 6; }
+html[data-layout="desktop"] #today .cloud-panel { grid-column: 6 / -1; }
+html[data-layout="desktop"] #today .grid-2 { grid-column: 1 / -1; margin-top: 0; }
+html[data-layout="desktop"] #today .panel[data-dash="planet"] { grid-column: 1 / -1; }
+html[data-layout="desktop"] #today .panel[data-dash="hourly"] { grid-column: 1 / 7; }
+html[data-layout="desktop"] #today .panel[data-dash="best"] { grid-column: 7 / -1; }
+html[data-layout="desktop"] #today .panel[data-dash="targets"] { grid-column: 1 / -1; }
+html[data-layout="desktop"] #today .panel { margin-top: 0; }
+
+html[data-layout="desktop"] .summary-card { grid-template-columns: minmax(0, 1fr) 316px; }
+html[data-layout="desktop"] .summary-main { padding: 26px 30px 24px; }
+html[data-layout="desktop"] .summary-grid { gap: 30px; }
+html[data-layout="desktop"] .summary-date { font-size: 1.12rem; }
+html[data-layout="desktop"] .summary-side { padding: 22px 24px; gap: 9px; }
+html[data-layout="desktop"] .sum-side-row { font-size: .85rem; }
+html[data-layout="desktop"] .moon-svg-wrap { width: 84px; height: 84px; }
+html[data-layout="desktop"] .score-ring { width: 94px; height: 94px; }
+html[data-layout="desktop"] .score-ring svg { width: 94px; height: 94px; }
+html[data-layout="desktop"] .top3-item { padding: 9px 14px; }
+html[data-layout="desktop"] .side-hint { font-size: .7rem; }
+
+html[data-layout="desktop"] .panel { padding: 20px 22px; margin-top: 16px; }
+html[data-layout="desktop"] .panel-head h2 { font-size: 1.1rem; }
+html[data-layout="desktop"] .panel-note { font-size: .78rem; }
+html[data-layout="desktop"] .panel-foot { font-size: .78rem; line-height: 1.65; }
+html[data-layout="desktop"] .grid-2 { gap: 16px; grid-template-columns: minmax(0, 1.04fr) minmax(0, 1fr); }
+
+/* 밤 타임라인 · 구름 차트는 나란히 */
+html[data-layout="desktop"] .night-bar { height: 62px; }
+html[data-layout="desktop"] .night-seg { font-size: .72rem; }
+html[data-layout="desktop"] .night-legend { font-size: .76rem; gap: 10px 14px; }
+html[data-layout="desktop"] .cc-bar { height: 118px; }
+html[data-layout="desktop"] .cc-val { font-size: .7rem; }
+html[data-layout="desktop"] .cc-h { font-size: .68rem; }
+html[data-layout="desktop"] .cloud-legend { font-size: .74rem; }
+
+/* 전천 지도 · 달 */
+html[data-layout="desktop"] #skyMap { max-width: 470px; }
+html[data-layout="desktop"] .moon-large { width: 156px; height: 156px; }
+html[data-layout="desktop"] .moon-facts { font-size: .86rem; gap: 5px; }
+html[data-layout="desktop"] .sun-facts { font-size: .86rem; }
+
+/* 행성 표 */
+html[data-layout="desktop"] .data-table { font-size: .88rem; min-width: 0; }
+html[data-layout="desktop"] .data-table th { font-size: .72rem; padding: 9px 10px; }
+html[data-layout="desktop"] .data-table td { padding: 11px 10px; }
+
+/* 시간대별 · 어두운 밤 */
+html[data-layout="desktop"] .hourly-plan { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+html[data-layout="desktop"] .hour-cell { padding: 11px 13px; }
+html[data-layout="desktop"] .best-nights { grid-template-columns: 1fr; gap: 9px; }
+html[data-layout="desktop"] .best-night { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 14px; padding: 13px 16px; }
+html[data-layout="desktop"] .best-night .bn-btn { grid-column: 2; grid-row: 1 / 4; width: auto; padding: 9px 16px; align-self: center; }
+html[data-layout="desktop"] .bn-score { font-size: 1.6rem; }
+html[data-layout="desktop"] .target-list { grid-template-columns: 1fr 1fr; gap: 9px; }
+html[data-layout="desktop"] .target-item { padding: 12px 15px; }
+
+/* ------------------------------------------------------- 라이브 하늘 뷰 */
+html[data-layout="desktop"] .live-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 336px;
+  grid-template-areas: "stage controls" "dock controls" "foot foot";
+  gap: 14px; padding: 16px;
+}
+html[data-layout="desktop"] .live-stage { grid-area: stage; aspect-ratio: 16 / 9; max-height: 64vh; }
+html[data-layout="desktop"] .tm-dock-live { grid-area: dock; margin: 0; }
+html[data-layout="desktop"] .live-controls {
+  grid-area: controls; margin-top: 0; align-self: start;
+  grid-template-columns: 1fr; gap: 14px; padding: 14px;
+}
+html[data-layout="desktop"] .live-pad {
+  grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 44px);
+  width: 100%; max-width: 240px; margin: 0 auto;
+}
+html[data-layout="desktop"] .pad-btn { min-height: 44px; font-size: .84rem; }
+html[data-layout="desktop"] .live-actions { flex-direction: row; flex-wrap: wrap; min-width: 0; }
+html[data-layout="desktop"] .live-actions .btn { flex: 1 1 100%; }
+html[data-layout="desktop"] .live-actions .mini-btn { flex: 1 1 auto; }
+html[data-layout="desktop"] .live-foot { grid-area: foot; }
+html[data-layout="desktop"] .live-help { font-size: .76rem; }
+
+/* ------------------------------------------------------------ 도감 · 자료 */
+html[data-layout="desktop"] .cat-tabs { margin-bottom: 16px; gap: 8px; }
+html[data-layout="desktop"] .cat-tab { padding: 11px 20px; font-size: .92rem; }
+html[data-layout="desktop"] .filter-bar { gap: 10px; }
+html[data-layout="desktop"] .search-box { max-width: 520px; }
+html[data-layout="desktop"] .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+html[data-layout="desktop"] .obj-card { padding: 17px; }
+html[data-layout="desktop"] .obj-card:hover { border-color: rgba(255, 212, 121, .34); }
+html[data-layout="desktop"] .obj-name { font-size: 1.05rem; }
+html[data-layout="desktop"] .obj-brief { font-size: .84rem; line-height: 1.55; }
+html[data-layout="desktop"] .con-grid { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 9px; }
+html[data-layout="desktop"] .site-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+html[data-layout="desktop"] .bortle-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+html[data-layout="desktop"] .bortle-item p { font-size: .8rem; line-height: 1.55; }
+html[data-layout="desktop"] .glossary-list { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+html[data-layout="desktop"] .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+html[data-layout="desktop"] .sa-grid { grid-template-columns: repeat(auto-fill, minmax(282px, 1fr)); gap: 16px; }
+html[data-layout="desktop"] .sa-body strong { font-size: .88rem; }
+html[data-layout="desktop"] .result-grid { grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); }
+html[data-layout="desktop"] .calc-layout { grid-template-columns: 340px 1fr; gap: 28px; }
+
+/* 이벤트(캘린더) 리스트 */
+html[data-layout="desktop"] .event-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+html[data-layout="desktop"] .event-item { height: 100%; }
+html[data-layout="desktop"] .site-tools { gap: 14px; }
+html[data-layout="desktop"] .site-warn-note { font-size: .78rem; }
+
+/* --------------------------------------------------------------- 모달 */
+html[data-layout="desktop"] .modal { padding: 28px; }
+html[data-layout="desktop"] .modal-card {
+  width: min(1060px, 100%); max-height: 90vh; padding: 30px 32px 34px; border-radius: 24px;
+}
+html[data-layout="desktop"] #modalBody {
+  display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  gap: 6px 30px; align-items: start;
+}
+html[data-layout="desktop"] #modalBody > .md-head { grid-column: 1 / -1; }
+html[data-layout="desktop"] #modalBody > .catphoto {
+  grid-column: 1; grid-row: 2; position: sticky; top: 0; margin-top: 0;
+}
+html[data-layout="desktop"] #modalBody > .catphoto .cp-media { aspect-ratio: 4 / 3; max-height: 46vh; }
+html[data-layout="desktop"] #modalBody > * { grid-column: 2; }
+html[data-layout="desktop"] .md-head h2 { font-size: 1.7rem; }
+html[data-layout="desktop"] .md-stats { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 9px; }
+html[data-layout="desktop"] .md-section p { font-size: .9rem; line-height: 1.7; }
+html[data-layout="desktop"] .md-section h3 { font-size: .84rem; }
+html[data-layout="desktop"] .modal-close { width: 38px; height: 38px; }
+
+/* 라이트박스(자료관) · 쿠키 드로어 폭 */
+html[data-layout="desktop"] .space-drawer .sd-panel { width: 460px; }
+
+/* ------------------------------------------------------- 플로팅 독 (아이콘) */
+/* 오른쪽 여백 기둥에 아이콘만 — 본문 카드와 겹치지 않게 */
+html[data-layout="desktop"] .space-dock { right: 8px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
+html[data-layout="desktop"] .sd-btn {
+  width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 14px;
+  background: rgba(14, 20, 36, .82); backdrop-filter: blur(8px);
+}
+html[data-layout="desktop"] .sd-txt { display: none; }
+html[data-layout="desktop"] .sd-ico { font-size: 19px; }
+html[data-layout="desktop"] .space-toast { bottom: 84px; }
+
+/* 푸터 */
+html[data-layout="desktop"] .site-footer { padding: 40px 0 52px; }
+html[data-layout="desktop"] .footer-inner { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 12px 32px; }
+html[data-layout="desktop"] .footer-links { justify-content: flex-end; }
+html[data-layout="desktop"] .footer-note { grid-column: 1 / -1; max-width: 980px; }
+html[data-layout="desktop"] .footer-version { grid-column: 1 / -1; }

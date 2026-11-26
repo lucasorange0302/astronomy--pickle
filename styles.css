@@ -15,7 +15,7 @@
   --border-hi: rgba(255, 255, 255, 0.18);
   --text: #eef2fb;
   --muted: #9aa6c0;
-  --faint: #6d7994;
+  --faint: #7c88a3;
   --accent: #ffd479;
   --accent-soft: rgba(255, 212, 121, 0.14);
   --accent-2: #7ee0c0;
@@ -44,7 +44,7 @@ body.red {
   --border-hi: rgba(255, 110, 80, 0.4);
   --text: #ea8567;
   --muted: #b05540;
-  --faint: #7f3a2b;
+  --faint: #a3543f;
   --accent: #ff6a3d;
   --accent-soft: rgba(255, 106, 61, 0.16);
   --accent-2: #ff8a5c;
@@ -365,8 +365,8 @@ body.red .nav-link.is-active { color: #1a0402; }
 
 /* --------------------------------------------------------------- 달 카드 */
 .moon-detail { display: flex; gap: 18px; align-items: center; margin-bottom: 10px; }
-.moon-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: .82rem; }
-.moon-facts div { display: flex; justify-content: space-between; gap: 6px; border-bottom: 1px dotted var(--border); padding-bottom: 3px; }
+.moon-facts { display: grid; grid-template-columns: 1fr; gap: 5px; font-size: .84rem; }
+.moon-facts div { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; border-bottom: 1px dotted var(--border); padding-bottom: 3px; }
 .moon-facts span { color: var(--faint); }
 .sun-facts { display: grid; gap: 4px; font-size: .82rem; }
 .sun-facts div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted var(--border); padding-bottom: 3px; }
@@ -1939,3 +1939,85 @@ body.red .cp-target-ring, body.red .cp-cross { stroke: #ff8a5c; }
   .cloud-legend { font-size: .66rem; gap: 4px 10px; }
   .catphoto.is-modal .cp-media { max-height: 34vh; }
 }
+
+/* =========================================================================
+   3부 — 전체 UI 정돈 (2026-11) · 모바일판/데스크톱판 공통
+   · 숫자 정렬·미세 타이포 최소 크기·카드 밀도·배지 정돈
+   · 화면 버전 전환 UI (layout.js가 만드는 요소)
+   ========================================================================= */
+
+/* 숫자는 언제나 같은 폭으로 — 시각·등급·고도가 흔들리지 않게 */
+body { font-variant-numeric: tabular-nums; }
+.sum-big, .bn-score, .result-card strong, .md-stat strong, .tm-clock,
+.data-table td, .hour-time, .cc-val, .cc-h, .geo-now, .coord-note { font-variant-numeric: tabular-nums; }
+
+/* 너무 작던 보조 텍스트를 읽을 수 있는 하한으로 */
+.panel-note { font-size: .78rem; line-height: 1.5; }
+.panel-foot { font-size: .78rem; line-height: 1.65; }
+.field-hint { font-size: .74rem; }
+.coord-note { font-size: .78rem; }
+.hero-sub { line-height: 1.68; }
+.section-sub { line-height: 1.68; }
+.obj-sub { font-size: .74rem; }
+.obj-brief { font-size: .84rem; line-height: 1.55; }
+.obj-meta { font-size: .75rem; }
+.result-count { font-size: .8rem; }
+.hour-meta { font-size: .73rem; line-height: 1.45; }
+.hour-moon { font-size: .69rem; }
+.bn-meta { font-size: .75rem; line-height: 1.5; }
+.night-legend { font-size: .76rem; }
+.cc-val { font-size: .68rem; }
+.cc-h { font-size: .66rem; }
+.cc-recommend { font-size: .84rem; }
+.live-help { font-size: .76rem; }
+.moon-facts, .sun-facts { font-size: .84rem; }
+.event-meta { font-size: .76rem; }
+.site-warn-note { font-size: .78rem; line-height: 1.65; }
+.bortle-item p { font-size: .8rem; line-height: 1.6; }
+.site-card p, .site-card .site-desc { line-height: 1.62; }
+.ai-cookie { font-size: 13px; }
+.space-toast { font-size: 13px; }
+
+/* 배지·태그는 조금 더 낮고 또렷하게 */
+.type-tag, .badge, .flag, .state-tag { line-height: 1.55; }
+.diff i { width: 5px; height: 5px; opacity: .9; }
+.diff i.on { box-shadow: 0 0 6px rgba(255, 212, 121, .55); }
+
+/* 카드 안쪽 호흡 통일 */
+.panel-head { row-gap: 2px; }
+.panel-foot { margin-top: 12px; }
+.obj-card-foot { gap: 8px; }
+.result-card, .hour-cell, .best-night, .target-item { border-radius: 13px; }
+
+/* 화면 버전 전환 — 헤더 버튼 · 더보기 · 푸터 */
+.ver-btn { color: var(--muted); }
+.ver-btn svg { display: block; }
+.ver-btn:hover { border-color: var(--accent-2); color: var(--accent-2); background: var(--accent-2-soft); }
+.ver-now {
+  margin-left: auto; flex: 0 0 auto; padding: 1px 8px; border-radius: 99px;
+  font-size: .62rem; font-weight: 800; letter-spacing: .02em;
+  color: #14100a; background: var(--accent);
+}
+body.red .ver-now { color: #1a0402; }
+.more-version .more-item[data-ver="auto"] { opacity: .82; }
+.footer-version {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding-top: 12px; border-top: 1px solid var(--border); font-size: .76rem;
+}
+.footer-version .fv-label { color: var(--faint); font-weight: 700; letter-spacing: .04em; }
+.footer-version a {
+  color: var(--muted); padding: 4px 10px; border-radius: 99px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .03);
+}
+.footer-version a:hover { color: var(--text); border-color: var(--border-hi); text-decoration: none; }
+.footer-version a[aria-current="page"] { color: var(--accent); border-color: rgba(255, 212, 121, .4); background: var(--accent-soft); }
+
+/* 포커스 가시성 (키보드) */
+.obj-card:focus-visible, .hour-obj:focus-visible, .qa-btn:focus-visible,
+.tier-tab:focus-visible, .chip:focus-visible, .cat-tab:focus-visible,
+.sd-btn:focus-visible, .tm-chip:focus-visible, .mini-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+/* 인쇄에서 판 전환 UI는 숨김 */
+@media print { .footer-version, .ver-btn, .more-version { display: none !important; } }

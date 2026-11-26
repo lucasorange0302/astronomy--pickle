@@ -6,6 +6,28 @@
 <meta name="theme-color" content="#05070f">
 <meta name="description" content="오늘밤별 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
 <title>오늘밤별 — 대한민국 천체관측 가이드</title>
+<!-- ROUTER-START -->
+<script>
+/* 판 자동 선택 — 폰·태블릿은 모바일판, 그 외는 데스크톱판.
+   직접 고른 판은 localStorage에 기억하며, ?view=auto 로 다시 자동으로 돌립니다. */
+(function () {
+  try {
+    var p = new URLSearchParams(location.search);
+    var v = p.get('view');
+    if (v === 'auto') { try { localStorage.removeItem('ob-layout'); } catch (e) {} }
+    var saved = null;
+    try { saved = localStorage.getItem('ob-layout'); } catch (e) {}
+    var pick = (v === 'mobile' || v === 'desktop') ? v
+      : (saved === 'mobile' || saved === 'desktop') ? saved
+      : ((/Mobi|Android|iPhone|iPad|iPod|Windows Phone|IEMobile|Opera Mini/i.test(navigator.userAgent)
+          || Math.min(window.innerWidth || 9999, screen.width || 9999) <= 768) ? 'mobile' : 'desktop');
+    p.delete('view');
+    var qs = p.toString();
+    location.replace(pick + '.html' + (qs ? '?' + qs : '') + location.hash);
+  } catch (e) { /* 라우팅이 막히면 이 페이지(index)가 그대로 보입니다 */ }
+})();
+</script>
+<!-- ROUTER-END -->
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
 </head>
@@ -311,7 +333,7 @@
     </div>
 
     <!-- 행성 -->
-    <div class="panel">
+    <div class="panel" data-dash="planet">
       <div class="panel-head">
         <h2>오늘 밤 행성</h2>
         <span class="panel-note"><span class="term" data-tip="지구에서 본 밝기. 숫자가 작을수록 밝고, 1등급 차이는 약 2.5배 차이입니다.">겉보기 등급</span>·<span class="term" data-tip="지구에서 본 행성 원반의 각도 크기(″=각초). 클수록 망원경으로 크게 보입니다.">시지름</span>은 근사 계산값입니다</span>
@@ -327,7 +349,7 @@
     </div>
 
     <!-- 시간대별 계획 -->
-    <div class="panel">
+    <div class="panel" data-dash="hourly">
       <div class="panel-head">
         <h2>시간대별로 무엇을 볼까</h2>
         <span class="panel-note">일몰부터 새벽까지, 그 시각 가장 잘 보이는 대상</span>
@@ -337,7 +359,7 @@
     </div>
 
     <!-- 이번 달 최고의 밤 -->
-    <div class="panel">
+    <div class="panel" data-dash="best">
       <div class="panel-head">
         <h2>이번 달, 가장 어두운 밤</h2>
         <span class="panel-note">같은 관측지 기준 · 달 밝기와 어두운 시간으로 계산</span>
@@ -346,7 +368,7 @@
     </div>
 
     <!-- 장비별 추천 -->
-    <div class="panel">
+    <div class="panel" data-dash="targets">
       <div class="panel-head">
         <h2>오늘 밤 추천 천체</h2>
         <span class="panel-note">장비 단계를 고르면 그에 맞는 대상만 보여드립니다</span>
@@ -991,7 +1013,7 @@
       <a href="https://www.imo.net/" target="_blank" rel="noopener">IMO 유성우 자료</a>
       <a href="https://eclipse.gsfc.nasa.gov/" target="_blank" rel="noopener">NASA Eclipse</a>
     </div>
-    <p class="footer-note">이 파일(<b>별밤지도.html</b>)은 외부 파일 없이 혼자 동작하는 단일 HTML입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
+    <p class="footer-note"><b>별밤지도.html</b>은 외부 파일 없이 혼자 동작하는 단일 HTML 배포본입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
   </div>
 </footer>
 

@@ -1,0 +1,334 @@
+/* =========================================================================
+   layout-mobile.css — 모바일판(mobile.html) 전용 레이아웃
+   390px 스마트폰 세로 화면 기준 · 한 손 조작(컴팩트 상단 바 + 하단 독)
+   · 모든 규칙은 html[data-layout="mobile"] 아래에서만 적용됩니다.
+   ========================================================================= */
+
+html[data-layout="mobile"] {
+  --tap: 44px;
+  --radius: 16px;
+  scroll-padding-top: 92px;
+  font-size: 16px;
+}
+
+html[data-layout="mobile"] body {
+  padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  line-height: 1.6;
+}
+
+/* 데스크톱 창에서 열어도 휴대폰 한 열처럼 보이도록 폭을 묶습니다 */
+html[data-layout="mobile"] .wrap { max-width: 560px; padding: 0 14px; }
+html[data-layout="mobile"] .site-header .header-inner { max-width: 560px; }
+
+/* ------------------------------------------------------------ 상단 바 */
+html[data-layout="mobile"] .header-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "brand tools" "nav nav";
+  align-items: center;
+  column-gap: 6px; row-gap: 0;
+  padding: 5px 10px 3px; min-height: 0;
+}
+html[data-layout="mobile"] .brand { grid-area: brand; gap: 7px; }
+html[data-layout="mobile"] .brand-mark svg { width: 26px; height: 26px; }
+html[data-layout="mobile"] .brand-text strong { font-size: .98rem; }
+html[data-layout="mobile"] .brand-text small { display: none; }
+html[data-layout="mobile"] .header-tools { grid-area: tools; gap: 4px; }
+html[data-layout="mobile"] .font-ctrl { display: none; }
+html[data-layout="mobile"] .header-tools .icon-btn {
+  width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%;
+}
+html[data-layout="mobile"] .header-tools .tool-label { display: none; }
+html[data-layout="mobile"] .main-nav {
+  grid-area: nav; margin: 0; display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px;
+  padding: 2px 0 4px; overflow: visible;
+}
+html[data-layout="mobile"] .nav-link {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 34px; padding: 0 4px; font-size: .8rem; border-radius: 9px;
+}
+html[data-layout="mobile"] .nav-link:hover { background: none; }
+html[data-layout="mobile"] .nav-link.is-active { background: var(--accent); color: #14100a; }
+html[data-layout="mobile"] .more-menu {
+  position: fixed; left: 10px; right: 10px; top: 88px; width: auto;
+  max-height: calc(100dvh - 104px);
+}
+
+/* --------------------------------------------------------------- 섹션 */
+html[data-layout="mobile"] .section { padding: 34px 0; }
+html[data-layout="mobile"] .section-hero { padding-top: 16px; }
+html[data-layout="mobile"] .section-head { margin-bottom: 18px; }
+html[data-layout="mobile"] .section-head h2 { font-size: 1.32rem; line-height: 1.32; }
+html[data-layout="mobile"] .section-sub { font-size: .9rem; line-height: 1.62; }
+html[data-layout="mobile"] h1 { font-size: 1.72rem; line-height: 1.28; letter-spacing: -0.035em; }
+html[data-layout="mobile"] .eyebrow { font-size: .72rem; margin-bottom: .5em; }
+html[data-layout="mobile"] .hero-head { margin-bottom: 18px; }
+html[data-layout="mobile"] .hero-sub { font-size: .92rem; line-height: 1.62; }
+
+/* 빠른 날짜 — 한 줄 가로 스크롤 (끝이 잘리지 않게 여백 + 페이드) */
+html[data-layout="mobile"] .quick-actions {
+  display: flex; flex-wrap: nowrap; gap: 8px; margin: 14px -14px 0; padding: 2px 14px 6px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 22px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 22px), transparent 100%);
+}
+html[data-layout="mobile"] .quick-actions::-webkit-scrollbar { display: none; }
+html[data-layout="mobile"] .qa-btn {
+  flex: 0 0 auto; scroll-snap-align: start; min-height: 40px; font-size: .82rem; padding: 8px 13px;
+}
+html[data-layout="mobile"] .qa-btn span { font-size: .9rem; }
+
+/* --------------------------------------------------------- 관측지 선택 */
+html[data-layout="mobile"] .control-panel {
+  padding: 12px; border-radius: 16px; margin-bottom: 12px;
+}
+html[data-layout="mobile"] .control-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end;
+}
+html[data-layout="mobile"] .control-row .field { flex: none; width: 100%; }
+html[data-layout="mobile"] .field-label { font-size: .7rem; }
+html[data-layout="mobile"] .field select,
+html[data-layout="mobile"] .field input {
+  min-height: 44px; padding: 10px 12px; font-size: .9rem; width: 100%;
+}
+html[data-layout="mobile"] .field select,
+html[data-layout="mobile"] .field input[type="date"],
+html[data-layout="mobile"] .field input[type="time"] { min-width: 0; }
+html[data-layout="mobile"] #btnGeo { min-height: 44px; padding: 0 11px; font-size: .8rem; gap: 5px; }
+html[data-layout="mobile"] .field-time .mini-btn {
+  top: auto; bottom: 7px; right: 5px; height: 30px; padding: 0 8px; font-size: .68rem;
+}
+html[data-layout="mobile"] .field-time input { padding-right: 48px; }
+html[data-layout="mobile"] .control-row-sub { margin-top: 8px; gap: 6px 10px; }
+html[data-layout="mobile"] .link-btn { font-size: .76rem; min-height: 30px; }
+html[data-layout="mobile"] .coord-note { font-size: .72rem; }
+html[data-layout="mobile"] .custom-coords { gap: 6px; }
+html[data-layout="mobile"] .field-sm input { width: 92px; }
+
+/* ------------------------------------------------------- 10초 요약 카드 */
+html[data-layout="mobile"] .summary-card { grid-template-columns: 1fr; border-radius: 20px; }
+html[data-layout="mobile"] .summary-main { padding: 16px 14px; }
+html[data-layout="mobile"] .summary-head { margin-bottom: 12px; gap: 6px; }
+html[data-layout="mobile"] .summary-date { font-size: .98rem; }
+html[data-layout="mobile"] .summary-place { font-size: .76rem; }
+html[data-layout="mobile"] .summary-grid { grid-template-columns: auto 1fr; gap: 12px 10px; align-items: center; }
+html[data-layout="mobile"] .sum-moon { gap: 10px; }
+html[data-layout="mobile"] .sum-moon .moon-svg-wrap { width: 62px; height: 62px; }
+html[data-layout="mobile"] .sum-moon-meta strong { font-size: .88rem; }
+html[data-layout="mobile"] .sum-moon-meta span { font-size: .74rem; }
+html[data-layout="mobile"] .sum-window { grid-column: 1 / -1; order: 3; border-top: 1px solid var(--border); padding-top: 10px; }
+html[data-layout="mobile"] .sum-big { font-size: 1.16rem; }
+html[data-layout="mobile"] .sum-small { font-size: .74rem; }
+html[data-layout="mobile"] .sum-score { order: 2; justify-self: end; gap: 2px; }
+html[data-layout="mobile"] .score-ring { width: 74px; height: 74px; }
+html[data-layout="mobile"] .score-ring svg { width: 74px; height: 74px; }
+html[data-layout="mobile"] .score-ring span { font-size: 1.1rem; }
+html[data-layout="mobile"] .sum-label { font-size: .66rem; letter-spacing: .02em; text-transform: none; }
+html[data-layout="mobile"] .score-basis { font-size: .66rem; }
+html[data-layout="mobile"] .sum-top3 { margin-top: 12px; gap: 5px; }
+html[data-layout="mobile"] .top3-item { padding: 8px 10px; gap: 8px; font-size: .82rem; align-items: center; }
+html[data-layout="mobile"] .top3-item strong { font-size: .86rem; }
+html[data-layout="mobile"] .top3-why { font-size: .68rem; white-space: normal; max-width: 44%; line-height: 1.35; }
+html[data-layout="mobile"] .summary-side {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 7px 8px;
+  padding: 12px 14px 14px; border-top: 1px solid var(--border);
+}
+html[data-layout="mobile"] .sum-side-row {
+  flex-direction: column; align-items: flex-start; gap: 0;
+  background: rgba(255, 255, 255, .035); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 9px; font-size: .68rem;
+}
+html[data-layout="mobile"] .sum-side-row strong { font-size: .86rem; }
+html[data-layout="mobile"] .summary-side .btn { grid-column: 1 / -1; margin-top: 3px; min-height: 44px; font-size: .86rem; }
+html[data-layout="mobile"] .side-hint { grid-column: 1 / -1; font-size: .66rem; line-height: 1.45; }
+
+/* ---------------------------------------------------------------- 패널 */
+html[data-layout="mobile"] .panel {
+  padding: 14px 13px; border-radius: 16px; margin-top: 12px;
+}
+html[data-layout="mobile"] .panel-head { margin-bottom: 10px; gap: 3px; }
+html[data-layout="mobile"] .panel-head h2 { font-size: .98rem; }
+html[data-layout="mobile"] .panel-note { font-size: .7rem; line-height: 1.45; }
+html[data-layout="mobile"] .panel-foot { font-size: .72rem; line-height: 1.6; }
+html[data-layout="mobile"] .grid-2 { grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+html[data-layout="mobile"] .timeline-panel { margin-top: 12px; }
+html[data-layout="mobile"] .cloud-panel { margin-top: 12px; }
+
+/* 밤 타임라인 */
+html[data-layout="mobile"] .night-bar { height: 46px; border-radius: 10px; }
+html[data-layout="mobile"] .night-seg { font-size: .6rem; }
+html[data-layout="mobile"] .night-seg span { font-size: .55rem; bottom: 3px; }
+html[data-layout="mobile"] .night-marker::after { font-size: .54rem; padding: 1px 4px; }
+html[data-layout="mobile"] .night-legend { gap: 6px 10px; font-size: .68rem; margin-top: 10px; }
+html[data-layout="mobile"] .night-legend span { gap: 4px; }
+
+/* 시간별 구름양 */
+html[data-layout="mobile"] .cc-cols { gap: 2px; }
+html[data-layout="mobile"] .cc-bar { height: 74px; border-radius: 3px; }
+html[data-layout="mobile"] .cc-val { font-size: .6rem; letter-spacing: -0.02em; }
+html[data-layout="mobile"] .cc-h { font-size: .6rem; }
+html[data-layout="mobile"] .cloud-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 8px; font-size: .68rem; }
+html[data-layout="mobile"] .cc-recommend { font-size: .78rem; gap: 2px 8px; }
+
+/* 전천 지도 */
+html[data-layout="mobile"] .skymap-wrap { padding: 2px 0; }
+html[data-layout="mobile"] #skyMap { max-width: 100%; }
+
+/* 달과 태양 */
+html[data-layout="mobile"] .moon-detail { flex-direction: column; align-items: stretch; gap: 10px; }
+html[data-layout="mobile"] .moon-detail .moon-large { width: 96px; height: 96px; margin: 2px auto 0; }
+html[data-layout="mobile"] .moon-facts { grid-template-columns: 1fr; gap: 3px; font-size: .8rem; }
+html[data-layout="mobile"] .moon-strip { grid-template-columns: repeat(7, 1fr); gap: 3px; }
+html[data-layout="mobile"] .sun-facts { font-size: .8rem; }
+
+/* 행성 표 — 가로 스크롤 안에서만 스크롤 */
+html[data-layout="mobile"] .table-scroll { margin: 0 -13px; padding: 0 13px 4px; }
+html[data-layout="mobile"] .data-table { font-size: .78rem; min-width: 560px; }
+html[data-layout="mobile"] .data-table th { font-size: .62rem; padding: 7px 6px; }
+html[data-layout="mobile"] .data-table td { padding: 8px 6px; }
+
+/* 시간대별 계획 · 어두운 밤 · 추천 */
+html[data-layout="mobile"] .hourly-plan { grid-template-columns: 1fr 1fr; gap: 7px; }
+html[data-layout="mobile"] .hour-cell { padding: 9px 10px; }
+html[data-layout="mobile"] .hour-obj { font-size: .84rem; }
+html[data-layout="mobile"] .hour-meta { font-size: .68rem; line-height: 1.4; }
+html[data-layout="mobile"] .hour-moon { font-size: .64rem; }
+html[data-layout="mobile"] .best-nights { grid-template-columns: 1fr; gap: 8px; }
+html[data-layout="mobile"] .tier-tabs { gap: 5px; }
+html[data-layout="mobile"] .tier-tab { padding: 8px 11px; font-size: .76rem; min-height: 36px; }
+html[data-layout="mobile"] .target-item { padding: 10px 11px; gap: 3px 8px; }
+html[data-layout="mobile"] .target-item .t-sub,
+html[data-layout="mobile"] .target-item .t-geo { font-size: .7rem; }
+html[data-layout="mobile"] .target-item strong { font-size: .88rem; }
+
+/* ------------------------------------------------------- 라이브 하늘 뷰 */
+html[data-layout="mobile"] .live-panel { padding: 10px; }
+html[data-layout="mobile"] .live-stage { aspect-ratio: 3 / 4; max-height: 58vh; border-radius: 14px; }
+html[data-layout="mobile"] .live-hud-top { top: 8px; left: 8px; right: 8px; gap: 4px; }
+html[data-layout="mobile"] .live-chip { font-size: .66rem; padding: 3px 8px; }
+html[data-layout="mobile"] .live-controls {
+  grid-template-columns: 1fr; gap: 10px; padding: 10px; margin-top: 10px;
+}
+html[data-layout="mobile"] .live-pad {
+  grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 44px);
+  width: 100%; max-width: 250px; margin: 0 auto; gap: 5px;
+}
+html[data-layout="mobile"] .pad-btn { min-height: 44px; font-size: .84rem; }
+html[data-layout="mobile"] .live-sliders { gap: 10px; }
+html[data-layout="mobile"] .live-field { font-size: .74rem; }
+html[data-layout="mobile"] .live-field input[type="range"] { height: 8px; }
+html[data-layout="mobile"] .live-actions { flex-direction: row; flex-wrap: wrap; min-width: 0; gap: 6px; }
+html[data-layout="mobile"] .live-actions .btn { flex: 1 1 100%; min-height: 44px; }
+html[data-layout="mobile"] .live-actions .mini-btn { flex: 1 1 auto; min-height: 38px; font-size: .74rem; }
+html[data-layout="mobile"] .live-help { font-size: .7rem; line-height: 1.55; }
+html[data-layout="mobile"] .live-inview .iv-item { font-size: .7rem; padding: 5px 9px; }
+
+/* ------------------------------------------------------------ 도감 */
+html[data-layout="mobile"] .cat-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+html[data-layout="mobile"] .cat-tab {
+  justify-content: center; padding: 11px 6px; font-size: .84rem; min-height: 44px; text-align: center;
+}
+html[data-layout="mobile"] .cat-tab-num { font-size: .66rem; }
+html[data-layout="mobile"] .filter-bar { gap: 8px; margin-bottom: 10px; }
+html[data-layout="mobile"] .search-box { max-width: none; padding: 11px 12px; }
+html[data-layout="mobile"] .search-box input { font-size: .86rem; }
+html[data-layout="mobile"] .chip-row {
+  flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  gap: 5px; padding-bottom: 2px; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 16px), transparent 100%);
+}
+html[data-layout="mobile"] .chip-row::-webkit-scrollbar { display: none; }
+html[data-layout="mobile"] .chip { flex: 0 0 auto; padding: 7px 12px; font-size: .76rem; min-height: 34px; }
+html[data-layout="mobile"] .sort-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; margin-top: 2px; }
+html[data-layout="mobile"] .sort-row .field-inline { grid-column: 1; grid-row: 1; }
+html[data-layout="mobile"] .sort-row .mini-btn { grid-column: 2; grid-row: 1; justify-self: end; }
+html[data-layout="mobile"] .sort-row .check-inline { grid-column: 1 / -1; grid-row: 2; font-size: .76rem; }
+html[data-layout="mobile"] .result-count { font-size: .74rem; margin-bottom: 9px; }
+html[data-layout="mobile"] .catalog-grid { grid-template-columns: 1fr; gap: 9px; }
+html[data-layout="mobile"] .obj-card { padding: 13px; gap: 6px; border-radius: 14px; }
+html[data-layout="mobile"] .obj-name { font-size: .98rem; }
+html[data-layout="mobile"] .obj-brief { font-size: .8rem; line-height: 1.55; }
+html[data-layout="mobile"] .obj-meta { font-size: .7rem; gap: 8px; }
+html[data-layout="mobile"] .obj-card-foot .mini-btn { min-height: 32px; }
+html[data-layout="mobile"] .con-search { max-width: none; }
+html[data-layout="mobile"] .con-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+html[data-layout="mobile"] .con-tools { gap: 8px; }
+
+/* ------------------------------------------------------- 계산기 · 학습 */
+html[data-layout="mobile"] .lab-tabs { gap: 5px; }
+html[data-layout="mobile"] .lab-tab { padding: 9px 13px; font-size: .8rem; min-height: 40px; }
+html[data-layout="mobile"] .calc-layout { grid-template-columns: 1fr; gap: 14px; }
+html[data-layout="mobile"] .result-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+html[data-layout="mobile"] .result-card { padding: 10px 12px; }
+html[data-layout="mobile"] .result-card strong { font-size: 1.22rem; }
+html[data-layout="mobile"] .steps { grid-template-columns: 1fr; gap: 10px; }
+html[data-layout="mobile"] .glossary-list { grid-template-columns: 1fr; }
+html[data-layout="mobile"] .site-grid { grid-template-columns: 1fr; }
+
+/* 관측 명소 · 캘린더 */
+html[data-layout="mobile"] .site-regions { flex-wrap: nowrap; overflow-x: auto; }
+html[data-layout="mobile"] .event-item { grid-template-columns: 1fr; gap: 5px; padding: 11px 12px; }
+html[data-layout="mobile"] .event-meta { grid-column: 1; flex-direction: row; align-items: center; flex-wrap: wrap; }
+html[data-layout="mobile"] .event-alert { font-size: .72rem; line-height: 1.55; }
+html[data-layout="mobile"] .log-row { grid-template-columns: 1fr; }
+
+/* 자료관 갤러리 */
+html[data-layout="mobile"] .sa-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+html[data-layout="mobile"] .sa-body { padding: 9px 10px 11px; }
+
+/* --------------------------------------------------------------- 모달 */
+html[data-layout="mobile"] .modal { padding: 0; place-items: end stretch; }
+html[data-layout="mobile"] .modal-card {
+  width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0;
+  padding: 26px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  animation: sheetIn .28s cubic-bezier(.2, .8, .2, 1);
+}
+html[data-layout="mobile"] .modal-card::before {
+  content: ""; position: sticky; top: -14px; display: block; width: 40px; height: 4px;
+  margin: 0 auto 12px; border-radius: 99px; background: rgba(255, 255, 255, .22);
+}
+html[data-layout="mobile"] .modal-close { width: 40px; height: 40px; top: 10px; right: 12px; }
+html[data-layout="mobile"] .md-head { padding-right: 44px; margin-bottom: 10px; }
+html[data-layout="mobile"] .md-head h2 { font-size: 1.28rem; }
+html[data-layout="mobile"] .md-stats { grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+html[data-layout="mobile"] .md-stat { padding: 7px 9px; }
+html[data-layout="mobile"] .md-stat strong { font-size: .86rem; }
+html[data-layout="mobile"] .md-section p { font-size: .84rem; line-height: 1.68; }
+html[data-layout="mobile"] .catphoto.is-modal .cp-media { aspect-ratio: 4 / 3; max-height: 38vh; }
+html[data-layout="mobile"] .views-row { grid-template-columns: 48px 1fr; }
+@keyframes sheetIn { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
+
+/* ------------------------------------------------------ 하단 독 · 푸터 */
+html[data-layout="mobile"] .space-dock {
+  left: 50%; right: auto; transform: translateX(-50%);
+  width: min(540px, calc(100% - 20px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  flex-direction: row; gap: 4px; padding: 6px;
+  border-radius: 18px; background: rgba(7, 11, 21, .94);
+  border: 1px solid var(--border-hi); backdrop-filter: blur(12px);
+  box-shadow: 0 16px 36px -22px #000;
+}
+html[data-layout="mobile"] .sd-btn {
+  flex: 1 1 0; justify-content: center; min-height: 44px; padding: 8px 4px;
+  border-radius: 13px; border: 0; background: transparent; box-shadow: none;
+  font-size: .7rem; gap: 6px;
+}
+html[data-layout="mobile"] .sd-btn + .sd-btn { border-left: 1px solid var(--border); border-radius: 0 13px 13px 0; }
+html[data-layout="mobile"] .sd-btn:hover { transform: none; background: rgba(255, 255, 255, .05); }
+html[data-layout="mobile"] .sd-ico { font-size: 16px; }
+html[data-layout="mobile"] body.red .sd-btn { background: transparent; }
+html[data-layout="mobile"] .space-toast { bottom: 92px; }
+html[data-layout="mobile"] .toast { bottom: 86px; font-size: .8rem; }
+html[data-layout="mobile"] .site-footer { padding: 26px 0 18px; margin-top: 20px; }
+html[data-layout="mobile"] .footer-links { gap: 10px 14px; font-size: .74rem; }
+html[data-layout="mobile"] .footer-note { font-size: .68rem; line-height: 1.6; }
+
+/* 레드라이트 모드에서 경계가 사라지지 않게 */
+html[data-layout="mobile"] body.red .sum-side-row { background: rgba(255, 100, 70, .05); }
+html[data-layout="mobile"] body.red .space-dock { background: rgba(20, 3, 1, .94); }
+
+/* 시각 입력의 기본 시계 아이콘은 '지금' 버튼과 겹치므로 숨깁니다 (탭하면 그대로 열립니다) */
+html[data-layout="mobile"] .field-time input::-webkit-calendar-picker-indicator { opacity: 0; }
