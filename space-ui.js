@@ -133,7 +133,7 @@
     if (!c || !c.aim) { toastLocal('이 쿠키에는 연결된 천체가 없습니다.'); return; }
     var a = c.aim;
     if (a.key === 'moon') return aimAt({ moon: true });
-    if (a.key && !a.ra) return aimAt({ planet: a.key, name: a.name });
+    if (a.key && !a.ra) return aimAt({ planet: String(a.key).toLowerCase(), name: a.name });
     return aimAt({ ra: a.ra, dec: a.dec, name: a.name });
   }
 
@@ -174,8 +174,7 @@
       '  </button>' +
       '  <p class="ck-hint">누르면 오늘의 우주 사실이 하나 나옵니다 — ' + SD.COOKIES.length + '개 중 하나</p>' +
       '</div>' +
-      '<div class="ck-sky" id="ckSky"></div>' +
-      '<div class="ck-recent" id="ckRecent"></div>' +
+      '' +
       '<article class="ck-result" id="ckResult" hidden>' +
       '  <div class="ck-meta"><span class="ck-cat" data-c="' + esc(c.c) + '">' + cat.icon + ' ' + esc(cat.label) + '</span>' +
       '    <span class="ck-idx">#' + (STATE.cookie + 1) + ' / ' + SD.COOKIES.length + '</span></div>' +
@@ -188,7 +187,9 @@
       '    <button class="btn btn-ghost btn-sm" data-ck="all">전체 모아보기</button>' +
       '    <button class="btn btn-ghost btn-sm" data-ck="aim" hidden>🎯 관련 천체 조준</button>' +
       '  </div>' +
-      '</article>';
+      '</article>' +
+      '<div class="ck-sky" id="ckSky"></div>' +
+      '<div class="ck-recent" id="ckRecent"></div>';
     if (!reduced) {
       var shell = $('#ckShell');
       if (shell) { shell.classList.remove('is-open'); }
@@ -219,12 +220,12 @@
     if (!box) return;
     try {
       var st = window.OneulBam.state, c = st.last || window.OneulBam.computeNight();
-      var pl = (c.planets || []).filter(function (p) { return p.alt > 5; }).sort(function (a, b) { return b.alt - a.alt; })[0];
+      var pl = (c.planets || []).filter(function (p) { return p.hor && p.hor.alt > 10 && p.mag != null && p.mag < 6.5; }).sort(function (a, b) { return a.mag - b.mag; })[0];
       box.innerHTML = '<p class="ck-recent-title">지금 하늘</p><div class="ck-sky-row">' +
         '<div><span>관측지</span><strong>' + esc(st.site.name) + '</strong></div>' +
         '<div><span>달</span><strong>' + esc(c.phase.name) + ' ' + Math.round(c.phase.illum * 100) + '%</strong></div>' +
         '<div><span>관측지수</span><strong>' + c.score + '/100</strong></div>' +
-        (pl ? '<div><span>뜬 행성</span><strong>' + esc(pl.name) + ' ' + pl.alt.toFixed(0) + '°</strong></div>' : '') +
+        (pl ? '<div><span>뜬 행성</span><strong>' + esc(pl.name) + ' ' + pl.hor.alt.toFixed(0) + '°</strong></div>' : '') +
         '</div>';
     } catch (e) { box.innerHTML = ''; }
   }
@@ -392,6 +393,10 @@
     if (!g) return;
     m.hidden = false;
     document.body.classList.add('space-lock');
+    $('.sm-media', m).classList.remove('is-text');
+    var pv = $('.sm-nav.prev', m), nx = $('.sm-nav.next', m);
+    if (pv) pv.hidden = false;
+    if (nx) nx.hidden = false;
     var img = $('#smImg');
     img.alt = g.title;
     img.src = 'assets/space/' + g.file;
@@ -515,8 +520,8 @@
       if (groups && groups.indexOf(o.t) < 0) return false;
       if (C2.con && o.c !== C2.con) return false;
       if (q) {
-        var hay = (o.i + ' ' + o.ko + ' ' + o.en + ' ' + (o.M || '')).toLowerCase();
-        if (hay.indexOf(q) < 0) return false;
+        var hay = (o.i + ' ' + o.ko + ' ' + o.en + ' ' + (o.M || '')).toLowerCase().replace(/\s+/g, '');
+        if (hay.indexOf(q.replace(/\s+/g, '')) < 0) return false;
       }
       return true;
     });
@@ -569,7 +574,7 @@
     if (o.t === 'moon') return aimAt({ moon: true });
     if (o.t === 'sun') { toastLocal('태양은 라이브 조준 대신 ☀️ 태양 카드를 확인하세요. (직접 보면 위험합니다)'); return; }
     if (o.t === 'planet' || o.t === 'dwarf') {
-      var pmap = { 'Mercury': 'Mercury', 'Venus': 'Venus', 'Mars': 'Mars', 'Jupiter': 'Jupiter', 'Saturn': 'Saturn', 'Uranus': 'Uranus', 'Neptune': 'Neptune' };
+      var pmap = { Mercury: 'mercury', Venus: 'venus', Mars: 'mars', Jupiter: 'jupiter', Saturn: 'saturn', Uranus: 'uranus', Neptune: 'neptune' };
       if (pmap[o.en]) return aimAt({ planet: pmap[o.en], name: o.ko });
     }
     if (o.ra == null || o.dec == null) { toastLocal('이 천체는 좌표가 없어 조준할 수 없습니다.'); return; }
@@ -593,6 +598,9 @@
     var h = altitudeOf(o);
     $('#smImg').removeAttribute('src');
     $('.sm-media', m).classList.add('is-text');
+    var pv2 = $('.sm-nav.prev', m), nx2 = $('.sm-nav.next', m);
+    if (pv2) pv2.hidden = true;
+    if (nx2) nx2.hidden = true;
     $('#smCredit').textContent = '';
     $('#smKind').textContent = '천체 도감 · ' + (TYPE_LABEL[o.t] || o.t);
     $('#smKind').className = 'sm-kind';
@@ -818,8 +826,8 @@
     lines.push('날짜·시각: ' + st.dateStr + ' ' + (st.timeStr || new Date().toTimeString().slice(0, 5)) + ' KST');
     lines.push('달: ' + c.phase.name + ', 조명률 ' + Math.round(c.phase.illum * 100) + '%, 삭부터 ' + c.phase.age.toFixed(1) + '일');
     lines.push('관측지수: ' + c.score + '/100, 완전한 어둠 ' + (c.darkHours ? c.darkHours.toFixed(1) : '?') + '시간');
-    var pl = (c.planets || []).filter(function (p) { return p.alt > 0; }).sort(function (a, b) { return b.alt - a.alt; }).slice(0, 5);
-    lines.push('지평선 위 행성: ' + (pl.length ? pl.map(function (p) { return p.name + ' 고도 ' + p.alt.toFixed(0) + '° 방위 ' + p.az.toFixed(0) + '° 등급 ' + (p.mag != null ? p.mag.toFixed(1) : '?'); }).join(' / ') : '없음'));
+    var pl = (c.planets || []).filter(function (p) { return p.hor && p.hor.alt > 0; }).sort(function (a, b) { return b.hor.alt - a.hor.alt; }).slice(0, 5);
+    lines.push('지평선 위 행성: ' + (pl.length ? pl.map(function (p) { return p.name + ' 고도 ' + p.hor.alt.toFixed(0) + '° 방위 ' + p.hor.az.toFixed(0) + '° 등급 ' + (p.mag != null ? p.mag.toFixed(1) : '?'); }).join(' / ') : '없음'));
     var picks = [];
     ['M42', 'M31', 'M45', 'M13', 'M8', 'M27', 'M57', 'M81'].forEach(function (id) {
       var o = SC.items.find(function (x) { return x.i === id; });
@@ -953,6 +961,14 @@
   function localAnswer(q) {
     var s = q.toLowerCase();
     var parts = [];
+
+    // 1) 행성 이름이 있으면 실시간 위치로 답한다
+    var pk = planetMention(q);
+    if (pk) return planetAnswer(pk);
+    // 2) 천체 이름/번호가 있으면 먼저 찾아 준다
+    var hitObj = objectMention(q);
+    if (hitObj) return objectAnswer(hitObj, /어떻게|찾|어디|조준|보이/.test(q));
+
     var intent = detectIntent(s);
 
     if (intent === 'recommend') {
@@ -965,8 +981,8 @@
       });
       picks.sort(function (a, b) { return b.alt - a.alt; });
       parts.push('<div class="ai-bubble"><strong>' + esc(st.site.name) + ' ' + esc(st.dateStr) + ' ' + esc(st.timeStr || '지금') + '</strong> 기준입니다.<br>달은 <strong>' + esc(c.phase.name) + ' ' + Math.round(c.phase.illum * 100) + '%</strong>, 관측지수 <strong>' + c.score + '/100</strong>입니다.');
-      var pl = (c.planets || []).filter(function (p) { return p.alt > 5; }).sort(function (a, b) { return b.alt - a.alt; }).slice(0, 3);
-      if (pl.length) parts.push('지금 떠 있는 행성: ' + pl.map(function (p) { return '<strong>' + esc(p.name) + '</strong> ' + p.alt.toFixed(0) + '°'; }).join(', ') + '.');
+      var pl = (c.planets || []).filter(function (p) { return p.hor && p.hor.alt > 5 && p.mag != null && p.mag < 6.5; }).sort(function (a, b) { return a.mag - b.mag; }).slice(0, 3);
+      if (pl.length) parts.push('지금 떠 있는 행성: ' + pl.map(function (p) { return '<strong>' + esc(p.name) + '</strong> ' + p.hor.alt.toFixed(0) + '°'; }).join(', ') + '.');
       if (picks.length) {
         parts.push('지금 높이 있는 대표 천체:<div class="ai-chips">' + picks.slice(0, 4).map(function (x) {
           return '<button class="ai-chip" data-ai-open="' + esc(x.o.i) + '">' + esc(x.o.ko) + ' ' + x.alt.toFixed(0) + '°</button>';
@@ -1033,10 +1049,97 @@
   }
 
   function detectIntent(s) {
+    if (/유성우|별똥별|페르세우스|쌍둥이자리\s*유성|리리드|사분의자리/.test(s)) return 'meteor';
     if (/추천|뭐\s*보|뭘\s*보|볼만|오늘\s*밤|지금.*(보|관측)|관측.*좋/.test(s)) return 'recommend';
-    if (/달|월령|위상|보름|초승/.test(s)) return 'moon';
-    if (/유성우|별똥별|페르세우스|쌍둥이자리\s*유성/.test(s)) return 'meteor';
+    if (/(^|[^이번지난다음한])달(은|이|의|을|도|이\s|\s|$)|월령|위상|보름달|초승달|상현달|하현달/.test(s)) return 'moon';
     return '';
+  }
+
+  var PLANET_KO = { '수성': 'mercury', '금성': 'venus', '화성': 'mars', '목성': 'jupiter', '토성': 'saturn', '천왕성': 'uranus', '해왕성': 'neptune' };
+  function planetMention(q) {
+    for (var k in PLANET_KO) if (q.indexOf(k) >= 0) return PLANET_KO[k];
+    var en = { mercury: 'mercury', venus: 'venus', mars: 'mars', jupiter: 'jupiter', saturn: 'saturn', uranus: 'uranus', neptune: 'neptune' };
+    var low = q.toLowerCase();
+    for (var e in en) if (new RegExp('\\b' + e + '\\b').test(low)) return en[e];
+    return null;
+  }
+
+  function planetAnswer(key) {
+    try {
+      var st = window.OneulBam.state, c = st.last || window.OneulBam.computeNight();
+      var p = window.Astro.planetPos(key, c.jd);
+      var h = window.Astro.equatorialToHorizontal(p.raH, p.decD, st.site.lat, st.site.lon, c.jd);
+      var ni = window.Astro.objectNight(p.raH, p.decD, st.site.lat, st.site.lon, st.dateStr);
+      var A = window.Astro;
+      var up = h.alt > 0;
+      var dir = dirName(h.az);
+      var line = up
+        ? '<strong>' + esc(p.name) + '</strong>' + josa(p.name, '은', '는') + ' 지금 <strong>' + dir + ' ' + h.alt.toFixed(0) + '°</strong>에 떠 있습니다.'
+        : '<strong>' + esc(p.name) + '</strong>' + josa(p.name, '은', '는') + ' 지금 지평선 아래(' + h.alt.toFixed(0) + '°)에 있습니다.';
+      var when = ni && !ni.neverUp ? '<br>오늘 ' + esc(st.site.name) + ' 기준 <strong>' + A.fmtClock(ni.riseJd) + '에 뜨고 ' + A.fmtClock(ni.maxJd) + '에 가장 높이(' + ni.maxAlt.toFixed(0) + '°), ' + A.fmtClock(ni.setJd) + '에 집니다.' : '';
+      return '<div class="ai-bubble">' + line + when +
+        '<br>겉보기 등급 <strong>' + (p.mag != null ? p.mag.toFixed(1) : '—') + '등</strong>, 시지름 ' + (p.diamArcsec != null ? p.diamArcsec.toFixed(1) + '″' : '—') + ', 조명률 ' + (p.illum != null ? Math.round(p.illum * 100) + '%' : '—') + ' (위상각 ' + (p.phaseD != null ? p.phaseD.toFixed(0) + '°' : '—') + ').' +
+        '<div class="ai-chips"><button class="ai-chip" data-ai-aim=\'' + esc(JSON.stringify({ planet: key, name: p.name })) + '\'>🎯 ' + esc(p.name) + ' 조준</button></div>' +
+        '<span class="ai-small">라이브 하늘 뷰에서 그 방향으로 시선이 맞춰집니다.</span></div>';
+    } catch (e) {
+      return '<div class="ai-bubble">행성 위치를 계산하지 못했습니다. 페이지를 새로고침해 보세요.</div>';
+    }
+  }
+
+  function objectMention(q) {
+    var m = q.match(/\bM\s?(\d{1,3})\b/i);
+    if (m) {
+      var o = SC.items.find(function (x) { return x.i === 'M' + parseInt(m[1], 10); });
+      if (o) return o;
+    }
+    var n = q.match(/\bNGC\s?(\d{1,4})\b/i);
+    if (n) {
+      var o2 = SC.items.find(function (x) { return x.i.replace(/\s/g, '') === 'NGC' + n[1]; });
+      if (o2) return o2;
+    }
+    // 이름 부분 일치 — '안드로메다는'처럼 조사가 붙어도 찾는다
+    var best = null, qq = q.replace(/\s/g, '').toLowerCase();
+    var ALIAS = { '안드로메다': 'M31', '오리온성운': 'M42', '플레이아데스': 'M45', '게성운': 'M1', '솜브레로': 'M104', '소용돌이은하': 'M51' };
+    for (var a in ALIAS) if (qq.indexOf(a) >= 0) { var ao = SC.items.find(function (x) { return x.i === ALIAS[a]; }); if (ao) return ao; }
+    SC.items.forEach(function (o) {
+      var ko = o.ko.replace(/\s/g, ''), en = (o.en || '').replace(/\s/g, '');
+      if (ko.length < 2) return;
+      var prefix = ko.length >= 5 ? ko.slice(0, ko.length - 2) : ko;
+      if (qq.indexOf(ko.toLowerCase()) >= 0 || (prefix.length >= 3 && qq.indexOf(prefix.toLowerCase()) >= 0) ||
+          (en.length > 2 && qq.indexOf(en.toLowerCase()) >= 0)) {
+        if (!best || (o.M ? 1 : 0) > (best.M ? 1 : 0)) best = o;
+      }
+    });
+    return best;
+  }
+
+  function objectAnswer(o, howto) {
+    var h = altitudeOf(o);
+    var alt = h ? (h.alt > 0 ? '지금 <strong>' + dirName(h.az) + ' ' + h.alt.toFixed(0) + '°</strong>에 떠 있습니다.' : '지금은 지평선 아래(' + h.alt.toFixed(0) + '°)입니다.') : '';
+    var meta = esc(TYPE_LABEL[o.t] || o.t) + (o.c ? ' · ' + esc(o.c) + '자리' : '') + (o.m != null && o.m < 90 ? ' · ' + o.m.toFixed(1) + '등' : '') + (o.d ? ' · ' + (o.d >= 1e6 ? (o.d / 1e6).toFixed(1) + '백만 광년' : Math.round(o.d).toLocaleString('en-US') + '광년') : '');
+    var tip = howto || /찾|어떻게|어디/.test('') ? findTip(o) : '';
+    return '<div class="ai-bubble"><strong>' + esc(o.ko) + '</strong>' + (o.M ? ' (' + esc(o.M) + ')' : '') + ' — ' + meta + '.<br>' + alt +
+      (o.x ? '<br>' + esc(o.x) : '') +
+      (tip ? '<br><span class="ai-small">' + tip + '</span>' : '') +
+      '<div class="ai-chips"><button class="ai-chip" data-ai-open="' + esc(o.i) + '">상세 정보</button>' +
+      (o.ra != null ? '<button class="ai-chip" data-ai-aim=\'' + esc(JSON.stringify({ ra: o.ra, dec: o.dec, name: o.ko })) + '\'>🎯 조준</button>' : '') +
+      '</div></div>';
+  }
+
+  var HOP = {
+    M42: '오리온자리 세 별(삼태성) 아래로 늘어진 검(칼) 부분 한가운데에 흐릿한 빛덩어리가 M42입니다. 맨눈으로도 보입니다.',
+    M31: '안드로메다자리 β(미라크)에서 μ·ν 별을 지나 두 단계 올라가면 흐릿한 타원이 보입니다. 맨눈으로도 가능한 어두운 곳에서 보세요.',
+    M45: '황소자리 알데바란 오른쪽 위에 작은 국자 모양으로 모인 6~7개의 별이 플레이아데스입니다.',
+    M13: '헤르쿨레스자리의 네 별(사각형) 중 하나인 η별과 ζ별 사이를 1/3쯤 따라가면 보입니다.',
+    M8: '궁수자리 찻주전자 손잡이 위쪽, 은하수 띠 안에 흐릿한 빛덩어리로 보입니다.'
+  };
+  function findTip(o) {
+    if (HOP[o.i]) return HOP[o.i];
+    if (o.t === 'moon') return '달은 가장 밝아서 찾기 쉽습니다. 남쪽 하늘에서 밝은 원반을 찾으세요.';
+    if (o.t === 'planet') return '행성은 깜빡이지 않고 일정한 밝기로 빛납니다. 그 별자리에서 가장 밝은 점을 찾으세요.';
+    if (o.t === 'G' || o.t === 'GCl' || o.t === 'OCl') return '먼저 주변 별자리를 찾고, 카드의 좌표로 별을 따라가며 찾으세요. 쌍안경이면 충분한 대상도 많습니다.';
+    if (o.t === 'star' || o.t === 'var') return '별자리 그림에서 가장 밝은 별을 기준으로 각거리를 따라가면 찾을 수 있습니다. 라이브 하늘 뷰의 조준 버튼을 쓰면 방향이 바로 나옵니다.';
+    return '밝은 별을 길잡이로 삼아 조금씩 이동하며 찾으세요. 달이 없는 밤과 광공해가 적은 곳이 유리합니다.';
   }
 
   /* ======================================================================

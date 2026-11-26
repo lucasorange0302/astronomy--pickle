@@ -1723,3 +1723,19 @@ body.red .space-toast { background: #1a0402; }
 .ck-sky-row strong { font-size: 12.5px; color: var(--text); }
 .ck-cat-row button { cursor: pointer; border: 0; }
 .ck-cat-row button:hover { color: var(--text) !important; }
+
+/* 레드라이트 모드 보정 — 새로 추가한 요소가 노란색으로 튀지 않도록 */
+body.red .ck-actions .btn-primary,
+body.red .ai-form .btn-primary,
+body.red .ai-set-actions .btn-primary,
+body.red .sm-actions .btn-primary {
+  background: linear-gradient(180deg, #ff9a72, #ff6a3d); color: #1a0402;
+  box-shadow: 0 10px 26px -12px rgba(255, 100, 60, .6);
+}
+body.red .ck-btn-txt { background: #ff6a3d; color: #1a0402; }
+body.red .ck-cat[data-c="solar"], body.red .ck-cat[data-c="deep"], body.red .ck-cat[data-c="tip"], body.red .ck-cat[data-c="nasa"] { background: rgba(255,106,61,.16); color: #ff9a7a; }
+body.red .space-dock { background: rgba(20,3,1,.92); }
+body.red .ai-badge.is-api { background: rgba(255,106,61,.18); color: #ff9a7a; border-color: rgba(255,110,80,.4); }
+body.red .ai-msg.user .ai-bubble { background: rgba(255,106,61,.12); border-color: rgba(255,106,61,.28); }
+body.red .sa-tag { color: #ff9a72; }
+body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.22), rgba(255,106,61,0) 68%); }
