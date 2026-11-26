@@ -140,13 +140,45 @@
     const darkStart = night.astro.dusk || night.nautical.dusk || night.civil.dusk;
     const darkEnd = night.astro.dawn || night.nautical.dawn || night.civil.dawn;
     const darkHours = (darkStart && darkEnd) ? (darkEnd - darkStart) * 24 : 0;
-    const score = A.observingScore(phase.illum, state.site.bortle, darkHours);
+
+    // 시간별 구름양(Open-Meteo) — 캐시된 값만 동기로 읽는다. 없으면 다음 틱에 받아 다시 그린다.
+    const wx = (window.SkyWeather ? SkyWeather.cached(lat, lon, state.dateStr) : null);
+    let cloud = null, cloudAt = null;
+    if (wx && wx.status === 'ok') {
+      cloudAt = SkyWeather.cloudFor(wx, { hour: selectedHour() });
+      if (state.timeStr || state.simJd != null) cloud = cloudAt;
+      if (cloud == null) {
+        const win = darkWindowHours(darkStart, darkEnd);
+        cloud = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+      }
+      if (cloud == null) cloud = cloudAt;
+    }
+    const score = A.observingScore(phase.illum, state.site.bortle, darkHours, cloud);
 
     return {
       night: night, jd: jd, sun: sun, sunHor: sunHor, moonPos: moonP, moonHor: moonH,
       phase: phase, planets: planets, darkStart: darkStart, darkEnd: darkEnd,
-      darkHours: darkHours, score: score, lst: A.lstHours(jd, lon)
+      darkHours: darkHours, score: score, lst: A.lstHours(jd, lon),
+      wx: wx, cloud: cloud, cloudAt: cloudAt
     };
+  }
+
+  // 선택 시각(0~23). 시각을 비우면 오늘은 지금, 다른 날은 22시.
+  function selectedHour() {
+    if (state.timeStr) return parseInt(state.timeStr, 10);
+    if (state.simJd != null) return parseInt(A.fmtClock(state.simJd), 10);
+    if (state.dateStr === todayKST()) return new Date(Date.now() + 9 * 3600000).getUTCHours();
+    return 22;
+  }
+
+  // 밤(어두운) 구간을 18~30시 정수 hour 범위로 (자정 넘김은 24+)
+  function darkWindowHours(startJd, endJd) {
+    if (startJd == null || endJd == null) return { start: 18, end: 30 };
+    const a = parseInt(A.fmtClock(startJd), 10);
+    const b0 = parseInt(A.fmtClock(endJd), 10);
+    if (!isFinite(a) || !isFinite(b0)) return { start: 18, end: 30 };
+    let b = b0 <= a ? b0 + 24 : b0;
+    return { start: Math.max(18, a), end: Math.max(a + 1, b) };
   }
 
   /* ------------------------------------------------------------ 객체 위치 */
@@ -229,8 +261,34 @@
     const arc = $('#scoreArc');
     arc.style.strokeDashoffset = String(264 - 264 * score / 100);
     arc.style.stroke = score >= 70 ? 'url(#scoreGrad)' : score >= 40 ? '#ffd479' : '#ff8a6a';
-    const scoreLabel = score >= 80 ? '최고의 밤' : score >= 65 ? '아주 좋은 밤' : score >= 45 ? '볼 만한 밤' : score >= 25 ? '아쉬운 밤' : '관측 불리';
+    let scoreLabel = score >= 80 ? '최고의 밤' : score >= 65 ? '아주 좋은 밤' : score >= 45 ? '볼 만한 밤' : score >= 25 ? '아쉬운 밤' : '관측 불리';
+    if (c.cloud != null && c.cloud >= 85) scoreLabel = '구름 많아 관측 어려움';
     $('#heroScoreNum').title = scoreLabel;
+
+    // 점수 산출 근거 배지 — 구름 · 달 · Bortle
+    const basis = $('#heroScoreBasis');
+    if (basis) {
+      const bits = [];
+      if (c.cloud != null) bits.push('<span class="sb-cloud">구름 ' + Math.round(c.cloud) + '%</span>');
+      else if (c.wx) bits.push('<span class="sb-none">구름 예보 없음</span>');
+      else bits.push('<span class="sb-loading">구름 확인 중</span>');
+      bits.push('<span>달 ' + Math.round(c.phase.illum * 100) + '%</span>');
+      bits.push('<span>Bortle ' + (site.bortle || '?') + '</span>');
+      basis.innerHTML = bits.join('<i aria-hidden="true">·</i>');
+      basis.title = c.cloud != null
+        ? '구름 ' + Math.round(c.cloud) + '%는 관측 지수에 가장 크게 반영됩니다(85% 이상은 관측이 어렵습니다).'
+        : '구름 예보가 없어 맑은 하늘(구름 0%)을 가정했습니다.';
+    }
+
+    const hc = $('#heroCloud');
+    if (hc) {
+      if (c.wx && c.wx.status === 'ok') {
+        const win = darkWindowHours(c.darkStart, c.darkEnd);
+        const nv = SkyWeather.cloudFor(c.wx, { startH: win.start, endH: win.end });
+        hc.textContent = nv == null ? '—' : Math.round(nv) + '% · ' + SkyWeather.labelOf(nv);
+      } else if (c.wx) hc.textContent = '예보 없음';
+      else hc.textContent = '확인 중…';
+    }
 
     // 사이드
     $('#heroSunset').textContent = A.fmtClock(n.sunset);
@@ -256,6 +314,126 @@
         el.addEventListener('click', function () { openObject(el.getAttribute('data-obj')); });
       });
     }
+  }
+
+  /* ------------------------------------------------- 시간별 구름양 패널 */
+  let wxSeq = 0;
+
+  function kstClock(ts) {
+    const d = new Date(ts + 9 * 3600000);
+    return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+  }
+  function hh(h) {
+    const n = ((h % 24) + 24) % 24;
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function refreshWeather() {
+    if (!window.SkyWeather) return;
+    const lat = state.site.lat, lon = state.site.lon, date = state.dateStr;
+    const seq = ++wxSeq;
+    SkyWeather.fetch(lat, lon, date, function (snap) {
+      if (seq !== wxSeq) return;
+      if (state.dateStr !== date) return;
+      if (Math.abs(state.site.lat - lat) > 1e-6 || Math.abs(state.site.lon - lon) > 1e-6) return;
+      const c = computeNight();
+      state.last = c;
+      renderHero(c);
+      renderCloudPanel(c);
+    });
+  }
+
+  function renderCloudPanel(c) {
+    const chart = $('#cloudChart');
+    if (!chart) return;
+    const pill = $('#cloudPill'), note = $('#cloudNote'), foot = $('#cloudFoot');
+    const win = darkWindowHours(c.darkStart, c.darkEnd);
+    const wx = c.wx;
+
+    if (!wx) {
+      chart.innerHTML = '<div class="cc-skel" aria-hidden="true">' +
+        Array.apply(null, Array(13)).map(function () { return '<span></span>'; }).join('') + '</div>';
+      if (pill) { pill.textContent = '확인 중'; pill.className = 'cloud-pill'; }
+      if (note) note.textContent = 'Open-Meteo 시간별 예보 · 오늘 18시 → 내일 06시';
+      if (foot) foot.textContent = '관측 지점의 시간별 구름양을 불러오는 중입니다.';
+      return;
+    }
+
+    if (wx.status !== 'ok') {
+      const why = wx.reason === 'range' ? '이 날짜는 기상 예보 제공 범위(16일) 밖입니다.'
+        : wx.reason === 'timeout' ? '기상 예보 응답이 늦어 시간 초과했습니다.'
+          : wx.reason === 'network' ? '기상 서버에 연결하지 못했습니다.'
+            : '이 날짜·지점의 시간별 예보가 없습니다.';
+      chart.innerHTML = '<div class="cc-empty"><b>기상 예보 미제공</b>' +
+        '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span></div>';
+      if (pill) { pill.textContent = '예보 없음'; pill.className = 'cloud-pill is-none'; }
+      if (note) note.textContent = 'Open-Meteo · ' + (wx.reason === 'range' ? '예보 범위 밖' : '연결 실패');
+      if (foot) foot.textContent = '예보가 없는 날은 구름을 0%로 두고 계산합니다. 당일 다시 확인하면 정확해집니다.';
+      return;
+    }
+
+    const best = SkyWeather.bestWindow(wx);
+    const showBest = !!best && best.hours < wx.series.length;
+    const avg = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+    let html = '<div class="cc-cols">';
+    wx.series.forEach(function (s) {
+      const v = s.cloud == null ? null : Math.round(s.cloud);
+      let cls = 'cc-col';
+      if (v == null) cls += ' is-na';
+      else if (v <= 25) cls += ' is-clear';
+      else if (v <= 50) cls += ' is-some';
+      else if (v <= 85) cls += ' is-many';
+      else cls += ' is-over';
+      if (showBest && s.abs >= best.from && s.abs <= best.to) cls += ' is-best';
+      if (s.hour === 0) cls += ' is-midnight';
+      const hPct = v == null ? 0 : Math.max(3, v);
+      const tip = hh(s.hour) + '시 · 구름 ' + (v == null ? '정보 없음' : v + '%') +
+        (s.precip != null ? ' · 강수확률 ' + Math.round(s.precip) + '%' : '');
+      html += '<div class="' + cls + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' +
+        '<span class="cc-val">' + (v == null ? '–' : v) + '</span>' +
+        '<div class="cc-bar"><i style="height:' + hPct + '%"></i></div>' +
+        '<span class="cc-h">' + hh(s.hour) + '</span>' +
+        '</div>';
+    });
+    html += '</div>';
+    if (showBest && best) {
+      html += '<p class="cc-recommend">🎯 가장 맑은 관측 시간 <b>' + hh(best.from) + '시 – ' + hh(best.to) + '시</b>' +
+        '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
+    } else if (best) {
+      html += '<p class="cc-recommend">🌙 밤새 구름이 적습니다 <b>18시 – 06시</b>' +
+        '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
+    }
+    chart.innerHTML = html;
+
+    const shown = avg == null ? '—' : Math.round(avg) + '%';
+    if (pill) { pill.textContent = shown + ' · ' + SkyWeather.labelOf(avg); pill.className = 'cloud-pill ' + cloudClass(avg); }
+    if (note) note.textContent = 'Open-Meteo · ' + kstClock(wx.fetchedAt) + ' 갱신 · 오늘 18시 → 내일 06시';
+    if (foot) {
+      foot.innerHTML = '밤 평균 구름 <b>' + shown + '</b> — 달·광공해와 함께 관측 지수에 반영됩니다. ' +
+        '<span class="cc-hint">막대에 마우스를 올리면 그 시각 강수확률까지 보입니다.</span> ' +
+        '<button class="mini-btn cc-refresh" type="button" id="cloudRefresh">예보 새로고침</button>';
+      const rb = $('#cloudRefresh');
+      if (rb) rb.addEventListener('click', function () {
+        try {
+          Object.keys(window.localStorage).forEach(function (k) {
+            if (k.indexOf('skywx.') === 0) localStorage.removeItem(k);
+          });
+        } catch (e) { /* ignore */ }
+        state.last = computeNight();
+        renderHero(state.last);
+        renderCloudPanel(state.last);
+        refreshWeather();
+        toast('시간별 구름양을 다시 불러옵니다.');
+      });
+    }
+  }
+
+  function cloudClass(v) {
+    if (v == null) return 'is-none';
+    if (v <= 25) return 'is-clear';
+    if (v <= 50) return 'is-some';
+    if (v <= 85) return 'is-many';
+    return 'is-over';
   }
 
   function noMoonDarkHours(c) {
@@ -1008,6 +1186,11 @@
     }).join('');
 
     $$('#catalogGrid .obj-card').forEach(function (el) {
+      el.addEventListener('mouseenter', function () {
+        if (!window.SkyPhoto) return;
+        const o = D.catalog.find(function (x) { return x.id === el.getAttribute('data-obj'); });
+        if (o) SkyPhoto.prefetch(o);
+      });
       el.addEventListener('click', function (ev) {
         const aim = ev.target.closest ? ev.target.closest('[data-aim]') : null;
         if (aim) { ev.stopPropagation(); aimObject(aim.getAttribute('data-aim')); return; }
@@ -1073,6 +1256,15 @@
       '<p>' + esc(o.science) + ' ' + esc(o.detail) + '</p>' +
       '<p class="small">겉보기 등급은 거리와 실제 광도가 함께 만든 결과입니다. 같은 밝기라도 거리가 2배면 5등급 어두워집니다(거리 지수). <a href="#lab" data-close="1">등급·거리 계산기</a>에서 직접 확인해 보세요.</p>' +
       '</details>';
+
+    // 상단 사진 카드 — NASA·허블·제임스웹 또는 실제 하늘 탐사 사진
+    if (window.SkyPhoto) {
+      const body = $('#modalBody');
+      const fig = SkyPhoto.figure(o, { variant: 'modal' });
+      const head = body.querySelector('.md-head');
+      if (head && head.nextSibling) body.insertBefore(fig, head.nextSibling);
+      else body.appendChild(fig);
+    }
 
     const modal = $('#modal');
     modal.hidden = false;
@@ -3076,13 +3268,14 @@
     const lines = [];
     lines.push('🔭 오늘밤별 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
     lines.push('🌙 달: ' + nf(c.phase.illum * 100) + '% · ' + c.phase.name + (n.moonSet ? ' (월몰 ' + A.fmtClock(n.moonSet) + ')' : ''));
+    if (c.cloud != null) lines.push('☁️ 구름: 밤 평균 ' + Math.round(c.cloud) + '% · ' + SkyWeather.labelOf(c.cloud));
     lines.push('🌇 일몰 ' + A.fmtClock(n.sunset) + ' → 천문박명 ' + A.fmtClock(n.astro.dusk) + (c.darkEnd ? ' → 새벽 ' + A.fmtClock(c.darkEnd) : ''));
     if (recs.length) {
       lines.push('⭐ 추천: ' + recs.map(function (r, i) {
         return (i + 1) + ') ' + r.obj.name + ' (' + r.why + ')';
       }).join(' / '));
     }
-    lines.push('📊 관측 지수 ' + c.score + '/100 · Bortle ' + (site.bortle || '?'));
+    lines.push('📊 관측 지수 ' + c.score + '/100 · Bortle ' + (site.bortle || '?') + (c.cloud != null ? ' · 구름 ' + Math.round(c.cloud) + '%' : ''));
     lines.push('🧣 준비물: 방한복·적색 손전등·돗자리·보조배터리');
     const planetUp = c.planets.filter(function (p) { return p.hor.alt > 10 && p.mag <= 2; })
       .map(function (p) { return p.name + ' ' + nf(p.mag, 1) + '등 ' + dirName(p.hor.az) + ' ' + Math.round(p.hor.alt) + '°'; });
@@ -3146,6 +3339,7 @@
     state.last = c;
     renderHero(c);
     renderTimeline(c);
+    renderCloudPanel(c);
     renderMoonSun(c);
     renderPlanets(c);
     renderSkyMap(c);
@@ -3162,6 +3356,7 @@
     $('#coordNote').textContent = nf(state.site.lat, 4) + '°N · ' + nf(state.site.lon, 4) + '°E · Bortle ' + (state.site.bortle || '?');
     $('#latInput').value = state.site.lat;
     $('#lonInput').value = state.site.lon;
+    refreshWeather();
   }
 
   /* ------------------------------------------------------------- 초기화 */
@@ -3286,17 +3481,8 @@
     const inline = $('#redModeInline');
     if (inline) inline.addEventListener('click', function () { $('#btnRed').click(); });
 
-    // 모바일 내비
-    $('#navToggle').addEventListener('click', function () {
-      const open = $('#siteHeader').classList.toggle('nav-open');
-      $('#navToggle').setAttribute('aria-expanded', String(open));
-    });
-    $$('.nav-link').forEach(function (a) {
-      a.addEventListener('click', function () {
-        $('#siteHeader').classList.remove('nav-open');
-        $('#navToggle').setAttribute('aria-expanded', 'false');
-      });
-    });
+    // 목차·더보기 메뉴 · 도감 탭
+    initNav();
 
     // 도감 정렬·필터
     if ($('#sortSelect')) $('#sortSelect').addEventListener('change', function () { renderCatalog(state.last); });
@@ -3538,6 +3724,155 @@
       if (card) { ev.preventDefault(); toggle(card); }
     });
     renderConGrid();
+  }
+
+  /* ------------------------------------------------- 목차 · 도감 탭 내비 */
+  function activateCatTab(key, scroll) {
+    const tabs = $$('.cat-tab');
+    if (!tabs.length) return;
+    tabs.forEach(function (t) {
+      const on = t.getAttribute('data-cat-tab') === key;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+    });
+    const po = $('#panelObjects'), pc = $('#panelConstellations');
+    if (po) po.hidden = key !== 'objects';
+    if (pc) pc.hidden = key !== 'const';
+    if (scroll) {
+      const sec = $('#catalog');
+      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function setActiveNav(id) {
+    const map = { today: 'today', skymap: 'skymap', live: 'live', catalog: 'catalog', constellations: 'catalog' };
+    const key = map[id];
+    $$('.main-nav .nav-link').forEach(function (a) {
+      a.classList.toggle('is-active', !!key && a.getAttribute('data-nav') === key);
+    });
+  }
+
+  function jumpTo(id) {
+    if (!id) return;
+    if (id === 'constellations') activateCatTab('const', false);
+    else if (id === 'catalog') activateCatTab('objects', false);
+    const target = id === 'glossary' ? 'glossaryPanel' : id;
+    const el = document.getElementById(target);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try { history.replaceState(null, '', '#' + id); } catch (e) { /* file:// 에서 생길 수 있음 */ }
+    setActiveNav(id);
+  }
+
+  function handleHash(id) {
+    if (!id) return;
+    if (id === 'constellations') { activateCatTab('const', false); setActiveNav('constellations'); }
+    else if (id === 'catalog') { activateCatTab('objects', false); setActiveNav('catalog'); }
+    const target = id === 'glossary' ? 'glossaryPanel' : id;
+    const el = document.getElementById(target);
+    if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 40);
+  }
+
+  function initNav() {
+    /* 1) ☰ 더보기 드롭다운 */
+    const btn = $('#btnMore'), menu = $('#moreMenu');
+    if (btn && menu) {
+      const closeMenu = function (focus) {
+        if (menu.hidden) return;
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        if (focus) btn.focus();
+      };
+      const openMenu = function () {
+        menu.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+      };
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (menu.hidden) openMenu(); else closeMenu();
+      });
+      document.addEventListener('click', function (e) {
+        if (menu.hidden || !e.target.closest) return;
+        if (e.target.closest('#moreMenu') || e.target.closest('#btnMore')) return;
+        closeMenu();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !menu.hidden) closeMenu(true);
+      });
+      menu.addEventListener('click', function (e) {
+        const item = e.target.closest('a,button');
+        if (!item) return;
+        const act = item.getAttribute('data-open');
+        if (act) {
+          e.preventDefault();
+          closeMenu();
+          if (window.SpaceUI) {
+            if (act === 'cookie') SpaceUI.openCookie();
+            else if (act === 'ai') SpaceUI.openAI();
+          }
+          return;
+        }
+        const href = item.getAttribute('href');
+        closeMenu();
+        if (href && href.charAt(0) === '#') {
+          e.preventDefault();
+          jumpTo(href.slice(1));
+        }
+      });
+    }
+
+    /* 2) 주 내비 — 스무스 이동 */
+    $$('.main-nav .nav-link').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        const href = a.getAttribute('href');
+        if (!href || href.charAt(0) !== '#') return;
+        e.preventDefault();
+        jumpTo(href.slice(1));
+      });
+    });
+
+    /* 3) 도감 탭 */
+    const tabs = $$('.cat-tab');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        const key = t.getAttribute('data-cat-tab');
+        activateCatTab(key, false);
+        try { history.replaceState(null, '', key === 'const' ? '#constellations' : '#catalog'); } catch (e) {}
+      });
+      t.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const i = tabs.indexOf(t);
+        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus();
+        next.click();
+      });
+    });
+
+    /* 4) 스크롤 위치로 활성 메뉴 표시 */
+    const secs = ['today', 'skymap', 'live', 'catalog'];
+    let ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        const y = window.scrollY + Math.max(120, window.innerHeight * 0.35);
+        let cur = 'today';
+        secs.forEach(function (id) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const top = el.getBoundingClientRect().top + window.scrollY;
+          if (top <= y) cur = id;
+        });
+        setActiveNav(cur);
+      });
+    }, { passive: true });
+
+    /* 5) 해시로 들어온 링크(#constellations·#catalog 등) 자동 탭 전환 */
+    window.addEventListener('hashchange', function () { handleHash(location.hash.slice(1)); });
+    if (location.hash) setTimeout(function () { handleHash(location.hash.slice(1)); }, 80);
   }
 
   /* ------------------------------------------------------------- 실행 */

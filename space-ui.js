@@ -356,7 +356,7 @@
       '  <button class="sm-close" data-close="1" aria-label="닫기">×</button>' +
       '  <button class="sm-nav prev" data-lb="prev" aria-label="이전 사진">‹</button>' +
       '  <button class="sm-nav next" data-lb="next" aria-label="다음 사진">›</button>' +
-      '  <div class="sm-media"><img id="smImg" alt=""><p class="sm-credit" id="smCredit"></p></div>' +
+      '  <div class="sm-media"><div class="sm-photo" id="smPhoto"></div><img id="smImg" alt=""><p class="sm-credit" id="smCredit"></p></div>' +
       '  <div class="sm-info">' +
       '    <span class="sm-kind" id="smKind">NASA</span>' +
       '    <h3 id="smTitle">—</h3>' +
@@ -398,6 +398,9 @@
     if (pv) pv.hidden = false;
     if (nx) nx.hidden = false;
     var img = $('#smImg');
+    img.hidden = false;
+    var ph0 = $('#smPhoto');
+    if (ph0) { ph0.innerHTML = ''; ph0.hidden = true; }
     img.alt = g.title;
     img.src = 'assets/space/' + g.file;
     img.onerror = function () {
@@ -455,7 +458,7 @@
   }
 
   function buildCatalogBlock() {
-    var wrap = $('#catalog .wrap');
+    var wrap = $('#panelObjects') || $('#catalog .wrap');
     if (!wrap || !SC.items.length) return;
     var box = document.createElement('div');
     box.className = 'cat2';
@@ -507,6 +510,21 @@
       if (obj) openCatalogModal(obj);
     });
     renderCat2();
+    bindPhotoPrefetch();
+  }
+
+  // 카드에 마우스를 올리면 실제 하늘 사진을 미리 받아 둔다(모달 열 때 바로 보임)
+  function bindPhotoPrefetch() {
+    var grid = $('#c2grid');
+    if (!grid || !window.SkyPhoto) return;
+    function warm(e) {
+      var card = e.target.closest ? e.target.closest('[data-c2]') : null;
+      if (!card) return;
+      var obj = SC.items.find(function (x) { return x.i === card.getAttribute('data-c2'); });
+      if (obj) SkyPhoto.prefetch(obj);
+    }
+    grid.addEventListener('mouseover', warm);
+    grid.addEventListener('focusin', warm);
   }
 
   function debounce(fn, ms) {
@@ -596,8 +614,16 @@
     m.hidden = false;
     document.body.classList.add('space-lock');
     var h = altitudeOf(o);
-    $('#smImg').removeAttribute('src');
-    $('.sm-media', m).classList.add('is-text');
+    $('.sm-media', m).classList.remove('is-text');
+    var imgEl = $('#smImg');
+    imgEl.hidden = true;
+    imgEl.removeAttribute('src');
+    var ph = $('#smPhoto');
+    if (ph) {
+      ph.hidden = false;
+      ph.innerHTML = '';
+      if (window.SkyPhoto) ph.appendChild(SkyPhoto.figure(o, { variant: 'modal' }));
+    }
     var pv2 = $('.sm-nav.prev', m), nx2 = $('.sm-nav.next', m);
     if (pv2) pv2.hidden = true;
     if (nx2) nx2.hidden = true;
@@ -1186,6 +1212,16 @@
     STATE.cookie = pickCookie();
     renderCookie();
   }
+
+  window.SpaceUI = {
+    openCookie: openCookie,
+    openAI: openAI,
+    openGallery: function () {
+      closeAll();
+      var s = $('#spacearchive');
+      if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 0); });
   else setTimeout(init, 0);

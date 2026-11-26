@@ -803,16 +803,17 @@ body.red .modal-card { background: linear-gradient(170deg, #1f0603, #0c0100); }
 
 @media (max-width: 820px) {
   .font-ctrl { display: none; }
+  .header-inner { flex-wrap: wrap; row-gap: 2px; padding-bottom: 6px; }
   .main-nav {
-    position: fixed; top: 58px; left: 0; right: 0;
-    flex-direction: column; gap: 2px; padding: 10px 14px 16px;
-    background: rgba(6, 9, 17, .98); border-bottom: 1px solid var(--border);
-    transform: translateY(-8px); opacity: 0; pointer-events: none; transition: all .2s;
-    backdrop-filter: blur(20px);
+    order: 3; flex: 1 0 100%; margin-left: 0; gap: 4px;
+    padding: 2px 0 0; overflow-x: auto; -webkit-overflow-scrolling: touch;
   }
-  .site-header.nav-open .main-nav { transform: none; opacity: 1; pointer-events: auto; }
-  .nav-link { padding: 12px 14px; font-size: .95rem; border-radius: 10px; }
-  .nav-toggle { display: inline-flex; }
+  .nav-link { padding: 6px 11px; font-size: .82rem; border-radius: 99px; }
+  .header-tools { margin-left: auto; }
+  .more-menu { position: fixed; left: 10px; right: 10px; top: 94px; width: auto; max-height: calc(100dvh - 112px); }
+  .more-core { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 4px 4px 10px; }
+  .more-core a { text-align: center; padding: 9px 4px; border-radius: 10px; background: rgba(255,255,255,.05); font-size: .78rem; font-weight: 700; color: var(--text); text-decoration: none; white-space: nowrap; }
+  .more-core a:hover { text-decoration: none; }
   .tool-label { display: none; }
   .header-tools .icon-btn { padding: 9px; }
   .section { padding: 52px 0; }
@@ -1259,10 +1260,7 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
   .live-actions .btn { flex: 1 1 200px; }
 }
 @media (max-width: 820px) {
-  .main-nav {
-    max-height: calc(100vh - 58px); overflow-y: auto;
-  }
-  .nav-link { min-height: 44px; display: flex; align-items: center; }
+  .nav-link { min-height: 34px; display: inline-flex; align-items: center; }
   .chip { min-height: 38px; padding: 8px 14px; font-size: .8rem; }
   .mini-btn { min-height: 38px; }
   .btn { min-height: 44px; }
@@ -1750,6 +1748,207 @@ body.red .ai-msg.user .ai-bubble { background: rgba(255,106,61,.12); border-colo
 body.red .sa-tag { color: #ff9a72; }
 body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.22), rgba(255,106,61,0) 68%); }
 
+/* =========================================================================
+   3부 — 통합 목차(더보기) · 도감 탭 · 시간별 구름양 · 도감 사진 카드
+   (2026-11-26 추가: IA 재정비 + NASA 사진 연동 + Open-Meteo 구름 예보)
+   ========================================================================= */
+
+/* ---------------------------------------------------- ☰ 더보기 드롭다운 */
+.more-wrap { position: relative; }
+.more-menu {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 70;
+  width: 348px; max-height: min(84vh, 726px); overflow-y: auto;
+  padding: 10px; border-radius: 18px;
+  background: #080c16; border: 1px solid var(--border-hi);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, .55);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  transform-origin: top right; animation: moreIn .16s ease-out;
+}
+.more-menu[hidden] { display: none; }
+@keyframes moreIn { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+.more-core { display: none; }
+.more-group { padding: 8px 2px; border-top: 1px solid var(--border); }
+.more-group:first-of-type { border-top: 0; }
+.more-title { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; padding: 0 8px; font-size: .69rem; font-weight: 700; letter-spacing: .05em; color: var(--faint); }
+.more-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px; border: 0; border-radius: 12px; background: none;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  transition: background .16s;
+}
+.more-item:hover, .more-item:focus-visible { background: rgba(255, 255, 255, .06); text-decoration: none; }
+.mi-ico { flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: rgba(255, 255, 255, .06); font-size: 15px; }
+.mi-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mi-txt b { font-size: .86rem; font-weight: 700; }
+.mi-txt small { font-size: .71rem; color: var(--muted); }
+.more-item:hover .mi-txt b { color: var(--accent); }
+body.red .more-menu { background: rgba(16, 2, 1, .98); }
+body.red .mi-ico { background: rgba(255, 106, 61, .14); }
+body.red .more-item:hover { background: rgba(255, 106, 61, .12); }
+
+/* ------------------------------------------------------- 도감 전환 탭 */
+.cat-tabs {
+  display: flex; gap: 6px; margin: 0 0 18px; padding: 6px;
+  border-radius: 16px; background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--border); width: fit-content; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none;
+}
+.cat-tabs::-webkit-scrollbar { display: none; }
+.cat-tab {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 10px 18px; border-radius: 11px; border: 1px solid transparent;
+  background: none; color: var(--muted); font-size: .9rem; font-weight: 700;
+  white-space: nowrap; transition: all .16s;
+}
+.cat-tab:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
+.cat-tab.is-active { color: #10131c; background: var(--accent); box-shadow: 0 8px 22px -14px rgba(255, 212, 121, .9); }
+.cat-tab-num { font-size: .68rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: rgba(255, 255, 255, .14); }
+.cat-tab.is-active .cat-tab-num { background: rgba(16, 19, 28, .18); }
+.cat-panel { animation: catIn .22s ease-out; }
+.cat-panel[hidden] { display: none; }
+@keyframes catIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.cat-panel-lead { margin: 0 0 14px; color: var(--muted); font-size: .92rem; }
+.con-block .panel { margin-top: 0; }
+body.red .cat-tab.is-active { color: #1a0402; }
+
+/* -------------------------------------------------------- 관측 지수 근거 */
+.score-basis {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 3px 5px; max-width: 168px; font-size: .68rem; line-height: 1.35; color: var(--muted);
+}
+.score-basis i { font-style: normal; color: var(--faint); }
+.score-basis .sb-cloud { color: #9fd6ff; font-weight: 700; }
+.score-basis .sb-none, .score-basis .sb-loading { color: var(--faint); }
+
+/* ---------------------------------------------------------- 시간별 구름양 */
+.cloud-panel .panel-head h2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cloud-pill {
+  font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 99px;
+  background: rgba(255, 255, 255, .08); color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.cloud-pill.is-clear { background: rgba(126, 224, 192, .16); color: #9ff0d4; }
+.cloud-pill.is-some { background: rgba(232, 212, 138, .16); color: #f0dfa6; }
+.cloud-pill.is-many { background: rgba(224, 160, 106, .18); color: #f0b98a; }
+.cloud-pill.is-over { background: rgba(200, 120, 120, .2); color: #eda3a3; }
+.cloud-pill.is-none { background: rgba(255, 255, 255, .07); color: var(--faint); }
+.cloud-chart { margin-top: 4px; }
+.cc-cols { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; align-items: end; }
+.cc-col {
+  display: grid; grid-template-rows: auto 1fr auto; gap: 3px;
+  justify-items: center; align-items: end; min-width: 0; padding: 2px 1px;
+}
+.cc-col.is-midnight { border-left: 1px dashed var(--border-hi); }
+.cc-val { font-size: .66rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cc-bar { width: 100%; height: 92px; display: flex; align-items: flex-end; background: rgba(255, 255, 255, .022); border-radius: 4px; overflow: hidden; }
+.cc-bar i { display: block; width: 100%; min-height: 3px; border-radius: 6px 6px 0 0; background: var(--cc, #7ee0c0); transition: height .45s cubic-bezier(.2, .8, .2, 1); }
+.cc-h { font-size: .64rem; color: var(--faint); font-variant-numeric: tabular-nums; }
+.cc-col.is-clear { --cc: #7ee0c0; }
+.cc-col.is-some { --cc: #e8d48a; }
+.cc-col.is-many { --cc: #e0a06a; }
+.cc-col.is-over { --cc: #c87878; }
+.cc-col.is-na { --cc: rgba(255, 255, 255, .16); }
+.cc-col.is-best .cc-bar { background: rgba(255, 212, 121, .09); }
+.cc-col.is-best .cc-val { color: var(--accent); font-weight: 800; }
+.cc-recommend { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 12px 0 0; font-size: .82rem; color: var(--muted); }
+.cc-recommend b { color: var(--accent); }
+.cc-recommend span { font-size: .72rem; color: var(--faint); }
+.cc-empty { display: grid; gap: 6px; padding: 22px 16px; border-radius: 14px; text-align: center; background: rgba(255, 255, 255, .03); border: 1px dashed var(--border-hi); }
+.cc-empty b { color: var(--accent); }
+.cc-empty span { font-size: .8rem; color: var(--muted); }
+.cc-skel { display: grid; grid-template-columns: repeat(13, 1fr); gap: 4px; height: 128px; }
+.cc-skel span { border-radius: 8px; background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02)); animation: ccpulse 1.4s ease-in-out infinite; }
+@keyframes ccpulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+.cloud-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .71rem; color: var(--faint); }
+.cc-dot { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 3px; }
+.cc-dot.cc-clear { background: #7ee0c0; }
+.cc-dot.cc-some { background: #e8d48a; }
+.cc-dot.cc-many { background: #e0a06a; }
+.cc-dot.cc-over { background: #c87878; }
+.cc-hint { color: var(--faint); }
+.cc-refresh { margin-left: 4px; }
+body.red .score-basis .sb-cloud { color: #ffb08a; }
+body.red .cloud-pill.is-clear { background: rgba(255, 160, 106, .16); color: #ffbd96; }
+body.red .cloud-pill.is-some { background: rgba(232, 115, 74, .18); color: #ffa684; }
+body.red .cc-col.is-clear { --cc: #ffa06a; }
+body.red .cc-col.is-some { --cc: #e8734a; }
+body.red .cc-col.is-many { --cc: #b8452a; }
+body.red .cc-col.is-over { --cc: #7d2417; }
+body.red .cc-dot.cc-clear { background: #ffa06a; }
+body.red .cc-dot.cc-some { background: #e8734a; }
+body.red .cc-dot.cc-many { background: #b8452a; }
+body.red .cc-dot.cc-over { background: #7d2417; }
+body.red .cc-col.is-best .cc-bar { background: rgba(255, 106, 61, .14); }
+body.red .cc-col.is-best .cc-val, body.red .cc-recommend b { color: #ff9a72; }
+
+/* --------------------------------------------------------- 도감 사진 카드 */
+.catphoto { display: grid; gap: 6px; margin: 14px 0 6px; }
+.catphoto .cp-media {
+  position: relative; display: grid; place-items: center;
+  border-radius: 14px; overflow: hidden; background: #04060c;
+  aspect-ratio: 16 / 10; border: 1px solid var(--border);
+}
+.catphoto.is-modal .cp-media { aspect-ratio: 16 / 9; max-height: 44vh; }
+.catphoto .cp-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.catphoto[data-state="ready"] .cp-media img { animation: cpFade .35s ease-out; }
+@keyframes cpFade { from { opacity: 0; } to { opacity: 1; } }
+.catphoto .cp-media.is-survey img { object-fit: cover; filter: contrast(1.12) brightness(1.05); }
+.catphoto .cp-skel {
+  position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 10px;
+  color: var(--faint); font-size: .78rem; text-align: center;
+  background: linear-gradient(110deg, #070b14 8%, #101a2e 20%, #070b14 33%);
+  background-size: 220% 100%; animation: cpshine 1.5s linear infinite;
+}
+.catphoto[data-state="ready"] .cp-skel, .catphoto[data-state="fallback"] .cp-skel { display: none; }
+@keyframes cpshine { to { background-position: -220% 0; } }
+.catphoto .cp-fallback { width: 100%; }
+.catphoto .cp-fallback[hidden] { display: none; }
+.catphoto .cp-fallback svg { display: block; width: 100%; height: auto; }
+.cp-grid path { stroke: rgba(255, 255, 255, .05); fill: none; }
+.cp-target-ring { fill: none; stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.cp-cross { fill: none; stroke: var(--accent); stroke-width: 1.2; }
+.cp-chart-name { fill: var(--text); font-size: 11px; font-weight: 700; }
+.cp-chart-meta { fill: var(--faint); font-size: 8.5px; }
+.cp-cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font-size: .72rem; color: var(--faint); line-height: 1.5; }
+.cp-title { color: var(--muted); font-weight: 600; }
+.cp-credit { font-size: .68rem; }
+.cp-link { margin-left: auto; color: var(--accent); font-size: .7rem; white-space: nowrap; }
+body.red .catphoto .cp-media img,
+body.red .sm-photo .cp-media img {
+  filter: grayscale(1) sepia(1) hue-rotate(-35deg) saturate(3.2) brightness(.66) contrast(1.05);
+}
+body.red .cp-target-ring, body.red .cp-cross { stroke: #ff8a5c; }
+
+/* 사진 + 정보 모달(spaceModal) 안에서의 사진 영역 */
+.sm-photo { min-height: 0; display: grid; }
+.sm-photo[hidden] { display: none; }
+.sm-photo .catphoto { margin: 0; height: 100%; }
+.sm-photo .catphoto .cp-media { border: 0; border-radius: 0; aspect-ratio: auto; height: 100%; min-height: 220px; max-height: calc(100vh - 210px); }
+.sm-photo .catphoto .cp-cap { padding: 6px 14px 8px; background: rgba(0, 0, 0, .35); }
+.sm-media img[hidden] { display: none; }
+
+/* 모바일 보정 */
+@media (max-width: 820px) {
+  .more-menu {
+    position: fixed; top: 94px; left: 10px; right: 10px;
+    width: auto; max-height: calc(100dvh - 112px);
+  }
+  .cat-tabs { width: 100%; }
+  .cat-tab { flex: 1 1 0; justify-content: center; padding: 9px 10px; font-size: .84rem; }
+  .cc-bar { height: 78px; }
+  .cc-col { gap: 2px; }
+  .cc-val { font-size: .6rem; }
+  .cc-h { font-size: .58rem; }
+  .score-basis { max-width: none; }
+  .sm-photo .catphoto .cp-media { min-height: 180px; max-height: 40vh; }
+}
+@media (max-width: 560px) {
+  .more-menu { position: fixed; top: 88px; left: 8px; right: 8px; width: auto; max-height: calc(100dvh - 104px); }
+  .mi-txt small { display: none; }
+  .cc-bar { height: 68px; }
+  .cloud-legend { font-size: .66rem; gap: 4px 10px; }
+  .catphoto.is-modal .cp-media { max-height: 34vh; }
+}
+
 </style>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
 </head>
@@ -1776,17 +1975,10 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
     </a>
 
     <nav class="main-nav" id="mainNav" aria-label="주요 메뉴">
-      <a href="#today" class="nav-link is-active">오늘 밤</a>
-      <a href="#live" class="nav-link">라이브 하늘</a>
-      <a href="#constellations" class="nav-link">별자리 88</a>
-      <a href="#catalog" class="nav-link">천체 도감</a>
-      <a href="#spacearchive" class="nav-link">우주 자료</a>
-      <a href="#lab" class="nav-link">촬영·계산</a>
-      <a href="#guide" class="nav-link">초보자 가이드</a>
-      <a href="#sites" class="nav-link">관측 명소</a>
-      <a href="#plan" class="nav-link">체크리스트</a>
-      <a href="#calendar" class="nav-link">천문 캘린더</a>
-      <a href="#science" class="nav-link">원리</a>
+      <a href="#today" class="nav-link is-active" data-nav="today">오늘 밤</a>
+      <a href="#skymap" class="nav-link" data-nav="skymap">전천 지도</a>
+      <a href="#live" class="nav-link" data-nav="live">라이브 하늘</a>
+      <a href="#catalog" class="nav-link" data-nav="catalog">도감</a>
     </nav>
 
     <div class="header-tools">
@@ -1802,26 +1994,71 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
         <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.4 10.8 15.6 6.4M8.4 13.2l7.2 4.4" stroke="currentColor" stroke-width="1.6"/></svg>
         <span class="tool-label">공유</span>
       </button>
-      <button class="icon-btn nav-toggle" id="navToggle" aria-label="메뉴 열기" aria-expanded="false">
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
+      <div class="more-wrap">
+        <button class="icon-btn more-btn" id="btnMore" aria-expanded="false" aria-controls="moreMenu" aria-haspopup="true" title="전체 목차 열기">
+          <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="tool-label">더보기</span>
+        </button>
+        <div class="more-menu" id="moreMenu" role="menu" aria-label="전체 목차" hidden>
+          <div class="more-core" role="group" aria-label="주요 메뉴">
+            <a href="#today" role="menuitem">오늘 밤</a>
+            <a href="#skymap" role="menuitem">전천 지도</a>
+            <a href="#live" role="menuitem">라이브 하늘</a>
+            <a href="#catalog" role="menuitem">도감</a>
+          </div>
+          <div class="more-group" role="group" aria-label="관측 계획과 현장">
+            <p class="more-title"><span aria-hidden="true">🗓️</span> 관측 계획 · 현장</p>
+            <a href="#calendar" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">📅</span>
+              <span class="mi-txt"><b>관측 일정</b><small>2026~2027 천문 캘린더</small></span>
+            </a>
+            <a href="#sites" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🏕️</span>
+              <span class="mi-txt"><b>전국 관측 명소</b><small>광공해 등급 · 권역별 추천</small></span>
+            </a>
+          </div>
+          <div class="more-group" role="group" aria-label="도구와 자료">
+            <p class="more-title"><span aria-hidden="true">🧰</span> 도구 · 자료</p>
+            <a href="#lab" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🧮</span>
+              <span class="mi-txt"><b>촬영·광학 계산기</b><small>노출 · 화각 · 배율 · 한계등급</small></span>
+            </a>
+            <a href="#spacearchive" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🛰️</span>
+              <span class="mi-txt"><b>NASA·SpaceX 자료관</b><small>공식 관측 사진과 기록</small></span>
+            </a>
+          </div>
+          <div class="more-group" role="group" aria-label="입문과 학습">
+            <p class="more-title"><span aria-hidden="true">🎓</span> 입문 · 학습</p>
+            <a href="#guide" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">📖</span>
+              <span class="mi-txt"><b>초보자 가이드 &amp; 용어사전</b><small>첫 관측 7단계 + 용어 89개</small></span>
+            </a>
+            <a href="#glossary" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🔤</span>
+              <span class="mi-txt"><b>용어사전 바로 보기</b><small>적위 · Bortle · 시상 등</small></span>
+            </a>
+            <a href="#science" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🔬</span>
+              <span class="mi-txt"><b>원리 깊이 보기</b><small>암순응 · 노출 · 구경 · 시상</small></span>
+            </a>
+          </div>
+          <div class="more-group" role="group" aria-label="빠른 실행">
+            <p class="more-title"><span aria-hidden="true">⚡</span> 빠른 실행</p>
+            <button type="button" class="more-item" data-open="cookie" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🍪</span>
+              <span class="mi-txt"><b>오늘의 우주 쿠키</b><small>NASA · SpaceX 오늘의 소식</small></span>
+            </button>
+            <button type="button" class="more-item" data-open="ai" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🤖</span>
+              <span class="mi-txt"><b>AI 천문 도우미</b><small>이 사이트 데이터로 답합니다</small></span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
-
-<!-- 모바일 구역 바로가기 (가로 스크롤 칩) -->
-<nav class="section-chips" id="sectionChips" aria-label="구역 바로가기">
-  <a href="#today">오늘 밤</a>
-  <a href="#live">라이브 하늘</a>
-  <a href="#catalog">도감</a>
-  <a href="#spacearchive">자료관</a>
-  <a href="#lab">계산기</a>
-  <a href="#guide">가이드</a>
-  <a href="#sites">명소</a>
-  <a href="#plan">체크리스트</a>
-  <a href="#calendar">캘린더</a>
-  <a href="#science">원리</a>
-</nav>
 
 <main>
 
@@ -1911,7 +2148,8 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
               </svg>
               <span id="heroScoreNum">—</span>
             </div>
-            <div class="sum-label term" data-tip="달 밝기·관측지 광공해·어두운 시간을 종합한 '깊은하늘 관측' 지수입니다. 달과 행성은 이 점수와 별개로 언제든 볼 수 있습니다.">오늘 밤 관측 지수</div>
+            <div class="sum-label term" data-tip="달 밝기·관측지 광공해·어두운 시간·시간별 구름양을 종합한 '깊은하늘 관측' 지수입니다. 구름이 많을수록 점수가 크게 떨어집니다. 달과 행성은 이 점수와 별개로 언제든 볼 수 있습니다.">오늘 밤 관측 지수</div>
+            <div class="score-basis" id="heroScoreBasis" aria-live="polite">—</div>
           </div>
         </div>
         <div class="sum-top3" id="heroTop3"></div>
@@ -1921,6 +2159,7 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
         <div class="sum-side-row"><span>천문박명 끝</span><strong id="heroDusk">—</strong></div>
         <div class="sum-side-row"><span>새벽 박명 시작</span><strong id="heroDawn">—</strong></div>
         <div class="sum-side-row"><span>달 출/몰</span><strong id="heroMoonRS">—</strong></div>
+        <div class="sum-side-row"><span class="term" data-tip="관측지 좌표 기준 시간별 구름양(Open-Meteo)의 오늘 밤 평균입니다. 18시부터 다음날 06시까지를 봅니다.">구름(밤 평균)</span><strong id="heroCloud">—</strong></div>
         <div class="sum-side-row"><span class="term" data-tip="내 위치 기준 하늘의 '현재 시각'. 적경 0h가 남중하는 때를 0시로 셉니다. 별이 지금 어디 있는지 계산하는 기준입니다.">지방항성시</span><strong id="heroLst">—</strong></div>
         <button class="btn btn-primary btn-block" id="btnSharePlan">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M9 12.5l6-3.5M9 12.5l6 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
@@ -1948,9 +2187,25 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
       </div>
     </div>
 
+    <!-- 시간별 구름양 -->
+    <div class="panel cloud-panel" id="cloudPanel">
+      <div class="panel-head">
+        <h2>시간별 구름양 <span class="cloud-pill" id="cloudPill">—</span></h2>
+        <span class="panel-note" id="cloudNote">Open-Meteo 시간별 예보 · 오늘 18시 → 내일 06시</span>
+      </div>
+      <div class="cloud-chart" id="cloudChart" aria-live="polite"></div>
+      <div class="cloud-legend" id="cloudLegend">
+        <span><i class="cc-dot cc-clear"></i>맑음 0–25%</span>
+        <span><i class="cc-dot cc-some"></i>조금 25–50%</span>
+        <span><i class="cc-dot cc-many"></i>구름 많음 50–85%</span>
+        <span><i class="cc-dot cc-over"></i>흐림 85% 이상</span>
+      </div>
+      <p class="panel-foot" id="cloudFoot">기상 예보를 불러오는 중입니다…</p>
+    </div>
+
     <div class="grid-2">
       <!-- 전천 지도 -->
-      <div class="panel skymap-panel">
+      <div class="panel skymap-panel" id="skymap">
         <div class="panel-head">
           <h2>지금 하늘 (전천 지도)</h2>
           <span class="panel-note" id="skyMapNote">—</span>
@@ -2131,59 +2386,61 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
   </div>
 </section>
 
-<!-- ===================== 별자리 도감 ===================== -->
-<section class="section" id="constellations">
-  <div class="wrap">
-    <div class="section-head">
-      <p class="eyebrow">별자리 도감</p>
-      <h2>IAU <span class="grad">88개 별자리</span>를 전부</h2>
-      <p class="section-sub">한국 하늘 33~38°N에서 뜨는 별자리를 빠짐없이 담았습니다. 카드를 누르면 설명이 열리고, <b>🎯</b>를 누르면 라이브 하늘 뷰가 그 별자리로 돌아갑니다.</p>
-    </div>
-    <div class="panel">
-      <div class="con-tools">
-        <input type="search" id="conSearch" class="con-search" placeholder="별자리 이름 · 영문 · 약자로 찾기" aria-label="별자리 검색">
-        <div class="chip-row con-season" id="conSeason"></div>
-        <span class="con-count" id="conCount">88개</span>
-      </div>
-      <div class="con-grid" id="conGrid"></div>
-      <p class="panel-foot">연결선은 Stellarium 현대 IAU 별자리 그림, 좌표·등급은 J2000 카탈로그를 썼습니다. ‘가장 밝은 별’은 그 별자리에 속한 별 중 겉보기 등급이 가장 낮은 별입니다.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== 3. 천체 도감 ===================== -->
+<!-- ===================== 3. 천체 · 별자리 도감 (통합) ===================== -->
 <section class="section" id="catalog">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow">천체 도감</p>
+      <p class="eyebrow">천체 · 별자리 도감</p>
       <h2>오늘 밤 볼 수 있는 것들, <span class="grad">전부</span> 여기 있습니다</h2>
-      <p class="section-sub">관측 난이도와 계절로 고른 대표 천체 40여 종을 먼저 보여 주고, 아래 <b>하늘 전체 도감</b>에서 메시에 110종 전체와 밝은 NGC/IC, 항성까지 2,500여 종을 검색·조준할 수 있습니다.</p>
+      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2,571종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>와 <b>별자리</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
     </div>
 
-    <div class="filter-bar">
-      <div class="search-box">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <input type="search" id="searchInput" placeholder="천체 이름 검색 (예: 오리온, M42, 목성)" aria-label="천체 검색">
-        <button class="clear-btn" id="searchClear" type="button" aria-label="검색어 지우기" hidden>×</button>
+    <div class="cat-tabs" role="tablist" aria-label="도감 보기 전환">
+      <button class="cat-tab is-active" type="button" id="tabObjects" role="tab" aria-selected="true" aria-controls="panelObjects" data-cat-tab="objects">🌌 천체 도감 <span class="cat-tab-num">2,571종</span></button>
+      <button class="cat-tab" type="button" id="tabConst" role="tab" aria-selected="false" aria-controls="panelConstellations" data-cat-tab="const" tabindex="-1">✨ 별자리 88 <span class="cat-tab-num">IAU 전체</span></button>
+    </div>
+
+    <div class="cat-panel" id="panelObjects" role="tabpanel" aria-labelledby="tabObjects">
+      <div class="filter-bar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input type="search" id="searchInput" placeholder="천체 이름 검색 (예: 오리온, M42, 목성)" aria-label="천체 검색">
+          <button class="clear-btn" id="searchClear" type="button" aria-label="검색어 지우기" hidden>×</button>
+        </div>
+        <div class="chip-row" id="typeFilters" data-group="type"></div>
+        <div class="chip-row" id="equipFilters" data-group="equip"></div>
+        <div class="chip-row" id="seasonFilters" data-group="season"></div>
+        <div class="sort-row">
+          <label class="field field-inline"><span class="field-label">정렬</span>
+            <select id="sortSelect">
+              <option value="mag">밝은 순</option>
+              <option value="alt">지금 높은 순</option>
+              <option value="diff">쉬운 순</option>
+              <option value="name">이름 순</option>
+            </select>
+          </label>
+          <label class="check-inline"><input type="checkbox" id="onlyVisible"> 오늘 밤 지평선 위에 뜨는 것만</label>
+          <button class="mini-btn" id="filterReset" type="button">필터 초기화</button>
+        </div>
       </div>
-      <div class="chip-row" id="typeFilters" data-group="type"></div>
-      <div class="chip-row" id="equipFilters" data-group="equip"></div>
-      <div class="chip-row" id="seasonFilters" data-group="season"></div>
-      <div class="sort-row">
-        <label class="field field-inline"><span class="field-label">정렬</span>
-          <select id="sortSelect">
-            <option value="mag">밝은 순</option>
-            <option value="alt">지금 높은 순</option>
-            <option value="diff">쉬운 순</option>
-            <option value="name">이름 순</option>
-          </select>
-        </label>
-        <label class="check-inline"><input type="checkbox" id="onlyVisible"> 오늘 밤 지평선 위에 뜨는 것만</label>
-        <button class="mini-btn" id="filterReset" type="button">필터 초기화</button>
+      <p class="result-count" id="catalogCount">—</p>
+      <div class="catalog-grid" id="catalogGrid"></div>
+    </div>
+
+    <div class="cat-panel" id="panelConstellations" role="tabpanel" aria-labelledby="tabConst" hidden>
+      <div class="con-block" id="constellations">
+        <p class="cat-panel-lead">한국 하늘 33~38°N에서 뜨는 IAU 별자리 88개를 빠짐없이 담았습니다. 카드를 누르면 설명이 열리고, <b>🎯</b>를 누르면 라이브 하늘 뷰가 그 별자리로 돌아갑니다.</p>
+        <div class="panel">
+          <div class="con-tools">
+            <input type="search" id="conSearch" class="con-search" placeholder="별자리 이름 · 영문 · 약자로 찾기" aria-label="별자리 검색">
+            <div class="chip-row con-season" id="conSeason"></div>
+            <span class="con-count" id="conCount">88개</span>
+          </div>
+          <div class="con-grid" id="conGrid"></div>
+          <p class="panel-foot">연결선은 Stellarium 현대 IAU 별자리 그림, 좌표·등급은 J2000 카탈로그를 썼습니다. ‘가장 밝은 별’은 그 별자리에 속한 별 중 겉보기 등급이 가장 낮은 별입니다.</p>
+        </div>
       </div>
     </div>
-    <p class="result-count" id="catalogCount">—</p>
-    <div class="catalog-grid" id="catalogGrid"></div>
   </div>
 </section>
 
@@ -2520,6 +2777,7 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
       <p class="panel-foot">남중 최고 고도 = 90° − |위도 − 적위|. 적위가 (위도 − 90°)보다 남쪽이면 지평선 위로 전혀 올라오지 않습니다. 지평선 위 10° 이하는 대기 소광 때문에 실제로 보기 어렵습니다.</p>
     </div>
 
+    <span id="glossary" class="anchor-alias" aria-hidden="true"></span>
     <div class="panel" id="glossaryPanel">
       <div class="panel-head"><h2>용어사전 <span class="count-pill" id="glossCount">89</span></h2><span class="panel-note">용어를 누르면 설명이 열립니다 · 본문의 점선 용어도 눌러 보세요</span></div>
       <div class="gloss-tools">
@@ -5305,6 +5563,480 @@ window.SPACE_CATALOG = {"meta":{"count":2571,"generated":"2026-11-26 17:26","sou
 
 </script>
 <script>
+/* ===== catalog-photos.js ===== */
+/* =========================================================================
+   도감 천체 — NASA·허블·제임스웹·탐사선 공개 사진 매칭표
+   · 모든 파일은 assets/space/ 에 내려받아 두었습니다 (외부 의존 없이 표시).
+   · 출처: NASA Image and Video Library (images-api.nasa.gov) 공개 이미지,
+     M45는 Digitized Sky Survey 2 (NASA SkyView) 실제 하늘 사진.
+   · keys: 도감에서 쓰는 이름·번호를 모두 적습니다. 매칭은 공백/기호를 지우고
+     소문자로 비교합니다 (아래 photo-ui.js 의 norm 참고).
+   ========================================================================= */
+window.CATALOG_PHOTOS = [
+  /* ------------------------------------------------ 태양계 */
+  {
+    file: 'sdo-sun-full-disk.jpg', title: '태양 전면 — SDO',
+    mission: 'NASA SDO (Solar Dynamics Observatory)', date: '2025-09-15', credit: 'NASA/SDO',
+    keys: ['태양', 'Sun', 'solar'], size: null
+  },
+  {
+    file: 'moon-clementine.jpg', title: '달 앞면 — 클레멘타인 탐사선',
+    mission: 'NASA 클레멘타인', date: '1998-06-04', credit: 'NASA/JPL/USGS', nasa: 'PIA00302',
+    keys: ['달', 'Moon', 'luna', '지구의 달']
+  },
+  {
+    file: 'mercury-messenger.jpg', title: '수성 전면 — 메신저',
+    mission: 'NASA MESSENGER', date: '2011-12-01', credit: 'NASA/Johns Hopkins APL/Carnegie', nasa: 'PIA15162',
+    keys: ['수성', 'Mercury']
+  },
+  {
+    file: 'venus-magellan.jpg', title: '금성 전면 — 마젤란 레이더 지도',
+    mission: 'NASA 마젤란', date: '1996-07-18', credit: 'NASA/JPL', nasa: 'PIA00252',
+    keys: ['金星', '금성', 'Venus']
+  },
+  {
+    file: 'epic-earth-185538.jpg', title: '지구 전면 — DSCOVR EPIC',
+    mission: 'NOAA DSCOVR / NASA EPIC', date: '2026-11-23', credit: 'NASA/NOAA',
+    keys: ['지구', 'Earth']
+  },
+  {
+    file: 'mars-global-mgs.jpg', title: '화성 전면 — 화성 탐사선',
+    mission: 'NASA Mars Global Surveyor', date: '2000-09-08', credit: 'NASA/JPL/MSSS', nasa: 'PIA02653',
+    keys: ['화성', 'Mars']
+  },
+  {
+    file: 'juno-crescent-jupiter.jpg', title: '초승달 모양 목성 — 주노',
+    mission: 'NASA 주노', date: '2022-02-22', credit: 'NASA/JPL-Caltech/SwRI/MSSS', nasa: 'PIA25013',
+    keys: ['목성', 'Jupiter']
+  },
+  {
+    file: 'cassini-saturn-mosaic.jpg', title: '토성 모자이크 — 카시니',
+    mission: 'NASA 카시니-하위헌스', date: '2017-07-24', credit: 'NASA/JPL-Caltech/Space Science Institute', nasa: 'PIA21617',
+    keys: ['토성', 'Saturn']
+  },
+  {
+    file: 'uranus-voyager2.jpg', title: '천왕성 — 보이저 2호',
+    mission: 'NASA 보이저 2호', date: '1986', credit: 'NASA/JPL-Caltech', nasa: 'PIA18182',
+    keys: ['천왕성', 'Uranus']
+  },
+  {
+    file: 'neptune-voyager2.jpg', title: '해왕성 — 보이저 2호',
+    mission: 'NASA 보이저 2호', date: '1989', credit: 'NASA/JPL', nasa: 'PIA01492',
+    keys: ['해왕성', 'Neptune']
+  },
+  {
+    file: 'pluto-new-horizons.jpg', title: '명왕성 — 뉴호라이즌스',
+    mission: 'NASA 뉴호라이즌스', date: '2015-09-24', credit: 'NASA/JHU APL/SwRI', nasa: 'PIA19952',
+    keys: ['명왕성', 'Pluto']
+  },
+  {
+    file: 'ceres-dawn.jpg', title: '세레스 — 던 탐사선',
+    mission: 'NASA 던(Dawn)', date: '2015', credit: 'NASA/JPL-Caltech/UCLA/MPS/DLR/IDA', nasa: 'PIA19167',
+    keys: ['세레스', 'Ceres']
+  },
+  {
+    file: 'io-galileo.jpg', title: '이오 — 갈릴레오',
+    mission: 'NASA 갈릴레오', date: '1997', credit: 'NASA/JPL/University of Arizona', nasa: 'PIA02308',
+    keys: ['이오', 'Io']
+  },
+  {
+    file: 'europa-galileo.jpg', title: '유로파 — 갈릴레오',
+    mission: 'NASA 갈릴레오', date: '2014', credit: 'NASA/JPL-Caltech/SETI Institute', nasa: 'PIA19048',
+    keys: ['유로파', 'Europa']
+  },
+  {
+    file: 'ganymede-galileo.jpg', title: '가니메데 — 갈릴레오',
+    mission: 'NASA 갈릴레오', date: '2000', credit: 'NASA/JPL', nasa: 'PIA02278',
+    keys: ['가니메데', 'Ganymede']
+  },
+  {
+    file: 'callisto-galileo.jpg', title: '칼리스토 — 갈릴레오',
+    mission: 'NASA 갈릴레오', date: '2001', credit: 'NASA/JPL/DLR', nasa: 'PIA03456',
+    keys: ['칼리스토', 'Callisto']
+  },
+  {
+    file: 'titan-cassini.jpg', title: '타이탄 — 카시니',
+    mission: 'NASA 카시니-하위헌스', date: '2012', credit: 'NASA/JPL-Caltech/Space Science Institute', nasa: 'PIA14909',
+    keys: ['타이탄', 'Titan']
+  },
+  {
+    file: 'enceladus-cassini.jpg', title: '엔셀라두스 — 카시니',
+    mission: 'NASA 카시니-하위헌스', date: '2015-10-30', credit: 'NASA/JPL-Caltech/Space Science Institute', nasa: 'PIA17202',
+    keys: ['엔셀라두스', 'Enceladus']
+  },
+  {
+    file: 'triton-voyager2.jpg', title: '트리톤 — 보이저 2호',
+    mission: 'NASA 보이저 2호', date: '1989', credit: 'NASA/JPL', nasa: 'PIA01994',
+    keys: ['트리톤', 'Triton']
+  },
+
+  /* ------------------------------------------------ 심우주 */
+  {
+    file: 'hubble-orion-nebula.jpg', title: '오리온 대성운과 충격파 — 허블',
+    mission: '허블 우주망원경', date: '1999-12-02', credit: "NASA, C.R. O'Dell and S.K. Wong (Rice University)", nasa: 'PIA04227',
+    keys: ['M42', 'NGC1976', '오리온 대성운', '오리온대성운', 'Orion Nebula', 'm42']
+  },
+  {
+    file: 'hubble-andromeda-panorama.jpg', title: '안드로메다은하 파노라마 — 허블 PHAT',
+    mission: '허블 우주망원경', date: '2017-12-08', credit: 'NASA, ESA, J. Dalcanton, B.F. Williams (Univ. of Washington)', nasa: 'GSFC_20171208_Archive_e000833',
+    keys: ['M31', 'NGC224', '안드로메다 은하', '안드로메다은하', 'Andromeda', 'm31']
+  },
+  {
+    file: 'hubble-pillars-of-creation.jpg', title: '창조의 기둥 — 독수리성운',
+    mission: '허블 우주망원경', date: '1995 (2007 공개)', credit: 'NASA, ESA, STScI, J. Hester and P. Scowen (ASU)', nasa: 'PIA09109',
+    keys: ['M16', 'NGC6611', '독수리성운', '독수리 성운', 'Eagle Nebula', 'm16']
+  },
+  {
+    file: 'hubble-crab-nebula.jpg', title: '게성운 — 1054년 초신성 잔해',
+    mission: '허블 우주망원경', date: '2005-12-01', credit: 'NASA, ESA, J. Hester and A. Loll (ASU)', nasa: 'PIA03606',
+    keys: ['M1', 'NGC1952', '게성운', '게 성운', 'Crab Nebula', 'm1']
+  },
+  {
+    file: 'jwst-carina-cosmic-cliffs.jpg', title: '우주 절벽 — 용골자리 성운',
+    mission: '제임스 웹 우주망원경 (NIRCam)', date: '2022-07-12', credit: 'NASA, ESA, CSA, STScI', nasa: 'carina_nebula',
+    keys: ['NGC3372', 'NGC3324', '용골자리 성운', '용골자리성운', 'Carina Nebula']
+  },
+  {
+    file: 'm8-lagoon-core.jpg', title: '석호성운 중심부 — 허블',
+    mission: '허블 우주망원경', date: '2018', credit: 'NASA/ESA/STScI', nasa: 'GSFC_20171208_Archive_e001955',
+    keys: ['M8', 'NGC6523', '석호성운', '석호 성운', 'Lagoon Nebula', 'm8']
+  },
+  {
+    file: 'm20-trifid-spitzer.jpg', title: '삼열성운 — 스피처 적외선',
+    mission: 'NASA 스피처 우주망원경', date: '2011', credit: 'NASA/JPL-Caltech/UCLA', nasa: 'PIA17834',
+    keys: ['M20', 'NGC6514', '삼열성운', '삼열 성운', 'Trifid Nebula', 'm20']
+  },
+  {
+    file: 'm27-dumbbell.jpg', title: '아령성운 — 허블',
+    mission: '허블 우주망원경', date: '2001', credit: 'NASA/JPL/STScI', nasa: 'PIA04249',
+    keys: ['M27', 'NGC6853', '아령성운', '아령 성운', 'Dumbbell Nebula', 'm27']
+  },
+  {
+    file: 'm57-ring-nebula.jpg', title: '고리성운 — 허블',
+    mission: '허블 우주망원경', date: '2013', credit: 'NASA/JPL-Caltech/ESA, Hubble Heritage (STScI/AURA)', nasa: 'PIA14443',
+    keys: ['M57', 'NGC6720', '고리성운', '고리 성운', 'Ring Nebula', 'm57']
+  },
+  {
+    file: 'm13-hercules-hubble.jpg', title: '헤르쿨레스 구상성단 — 허블',
+    mission: '허블 우주망원경', date: '2015', credit: 'NASA/ESA/STScI', nasa: 'GSFC_20171208_Archive_e001116',
+    keys: ['M13', 'NGC6205', '헤르쿨레스 구상성단', '헤르쿨레스구상성단', 'Hercules Cluster', 'm13']
+  },
+  {
+    file: 'm11-wild-duck.jpg', title: '야생오리 성단 — 허블',
+    mission: '허블 우주망원경', date: '2004', credit: 'NASA/JPL', nasa: 'PIA07878',
+    keys: ['M11', 'NGC6705', '야생오리성단', '야생오리 성단', 'Wild Duck Cluster', 'm11']
+  },
+  {
+    file: 'm45-pleiades-dss.jpg', title: '플레이아데스 성단 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', nasa: null, survey: true,
+    keys: ['M45', '플레이아데스', '플레이아데스 성단', '좀생이별', 'Pleiades', 'm45']
+  },
+  {
+    file: 'm33-triangulum-ir.jpg', title: '삼각형자리 은하 — 적외선 합성',
+    mission: '허셜·플랑크·IRAS·COBE 합성', date: '2019', credit: 'ESA/NASA/JPL-Caltech/GBT/VLA/IRAM/C. Clark (STScI)', nasa: 'PIA25165',
+    keys: ['M33', 'NGC598', '삼각형자리 은하', '삼각형자리은하', 'Triangulum', 'm33']
+  },
+  {
+    file: 'm51-whirlpool.jpg', title: '소용돌이 은하 — 전 파장 합성',
+    mission: '찬드라 · GALEX · 허블 · 스피처 합성', date: '2007', credit: 'NASA/CXC, NASA/JPL-Caltech, NASA/ESA/STScI', nasa: 'PIA10200',
+    keys: ['M51', 'NGC5194', '소용돌이 은하', '소용돌이은하', 'Whirlpool', 'm51']
+  },
+  {
+    file: 'm81-bode.jpg', title: '보데 은하 — 적외선',
+    mission: '스피처 · GALEX', date: '2007', credit: 'NASA/JPL-Caltech/ESA/Harvard-Smithsonian CfA', nasa: 'PIA09579',
+    keys: ['M81', 'NGC3031', '보데 은하', '보데은하', 'Bode', 'm81']
+  },
+  {
+    file: 'm82-cigar.jpg', title: '시가 은하 — 허블',
+    mission: '허블 우주망원경', date: '2006', credit: 'NASA, ESA, R. de Grijs (Cambridge)', nasa: 'PIA04218',
+    keys: ['M82', 'NGC3034', '시가 은하', '시가은하', 'Cigar', 'm82']
+  },
+  {
+    file: 'm104-sombrero.jpg', title: '솜브레로 은하 — 허블',
+    mission: '허블 우주망원경', date: '2011', credit: 'NASA/STScI/AURA', nasa: 'PIA15226',
+    keys: ['M104', 'NGC4594', '솜브레로 은하', '솜브레로은하', 'Sombrero', 'm104']
+  },
+  {
+    file: 'ngc7000-north-america.jpg', title: '북아메리카 성운 — 적외선',
+    mission: 'NASA 스피처 우주망원경', date: '2011', credit: 'NASA/JPL-Caltech', nasa: 'PIA13843',
+    keys: ['NGC7000', '북아메리카 성운', '북아메리카성운', 'North America Nebula']
+  },
+
+  /* ------------------------- 실제 하늘 탐사 사진(DSS2) 미리 받아 둔 항목 */
+  {
+    file: 'm35-cluster-dss.jpg', title: '쌍둥이자리 산개성단 M35 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['M35', 'NGC2168', '쌍둥이자리 산개성단', '쌍둥이자리산개성단']
+  },
+  {
+    file: 'm44-beehive-dss.jpg', title: '벌집성단 M44 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['M44', 'NGC2632', '벌집성단', '벌집 성단', 'Praesepe', 'Beehive']
+  },
+  {
+    file: 'm15-pegasus-dss.jpg', title: '페가수스 구상성단 M15 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['M15', 'NGC7078', '페가수스 구상성단', '페가수스구상성단']
+  },
+  {
+    file: 'betelgeuse-dss.jpg', title: '베텔게우스 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['베텔게우스', 'Betelgeuse', 'α Orionis', '알파 오리오니스']
+  },
+  {
+    file: 'rigel-dss.jpg', title: '리겔 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['리겔', 'Rigel', 'β Orionis']
+  },
+  {
+    file: 'sirius-dss.jpg', title: '시리우스 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['시리우스', 'Sirius', 'α Canis Majoris']
+  },
+  {
+    file: 'aldebaran-dss.jpg', title: '알데바란 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['알데바란', 'Aldebaran', 'α Tauri']
+  },
+  {
+    file: 'regulus-dss.jpg', title: '레굴루스 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['레굴루스', 'Regulus', 'α Leonis']
+  },
+  {
+    file: 'vega-dss.jpg', title: '베가 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['베가', 'Vega', 'α Lyrae', '직녀성']
+  },
+  {
+    file: 'deneb-dss.jpg', title: '데네브 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['데네브', 'Deneb', 'α Cygni']
+  },
+  {
+    file: 'altair-dss.jpg', title: '알타이르 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['알타이르', 'Altair', 'α Aquilae', '견우성']
+  },
+  {
+    file: 'albireo-dss.jpg', title: '알비레오 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['알비레오', 'Albireo', 'β Cygni']
+  },
+  {
+    file: 'proxima-dss.jpg', title: '프록시마 센타우리 — 실제 하늘 사진 (DSS2)',
+    mission: 'Digitized Sky Survey 2 · NASA SkyView', date: '—', credit: 'DSS2 (NASA/ESA/STScI)', survey: true,
+    keys: ['프록시마 센타우리', '프록시마', 'Proxima Centauri', 'Proxima']
+  }
+];
+
+</script>
+<script>
+/* ===== sky-weather.js ===== */
+/* =========================================================================
+   시간별 구름양 (sky-weather.js)
+   · Open-Meteo 공개 예보 API (키 필요 없음 · CORS 허용)에서
+     선택한 관측지의 오늘 18시 ~ 내일 06시 구름양(%)·강수확률(%)을 가져옵니다.
+   · 예보 범위(16일) 밖이거나 네트워크/호출 실패면 status='unavailable' 로
+     돌려주고, 화면은 "기상 예보 미제공(맑음 기준 추정)"으로 표시합니다.
+   · 같은 관측지·날짜는 30분(메모리)·3시간(localStorage) 캐시합니다.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var TTL = 30 * 60 * 1000;
+  var LS_TTL = 3 * 60 * 60 * 1000;
+  var mem = {};
+  var pending = {};
+
+  function key(lat, lon, date) {
+    return Number(lat).toFixed(2) + '|' + Number(lon).toFixed(2) + '|' + date;
+  }
+  function addDay(dateStr) {
+    var p = String(dateStr).split('-').map(Number);
+    var d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function readLS(k) {
+    try {
+      var raw = window.localStorage.getItem('skywx.' + k);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (!o || !o.ts || Date.now() - o.ts > LS_TTL) return null;
+      return o.snap;
+    } catch (e) { return null; }
+  }
+  function writeLS(k, snap) {
+    try { window.localStorage.setItem('skywx.' + k, JSON.stringify({ ts: Date.now(), snap: snap })); } catch (e) {}
+  }
+
+  function buildSnap(json, date, lat, lon) {
+    var h = (json && json.hourly) || {};
+    var times = h.time || [];
+    var cc = h.cloud_cover || [];
+    var pp = h.precipitation_probability || [];
+    var map = {};
+    for (var i = 0; i < times.length; i++) {
+      map[times[i]] = { cloud: (typeof cc[i] === 'number' ? cc[i] : null), precip: (typeof pp[i] === 'number' ? pp[i] : null) };
+    }
+    var next = addDay(date);
+    var series = [];
+    function push(day, hour, abs) {
+      var t = day + 'T' + (hour < 10 ? '0' : '') + hour + ':00';
+      var v = map[t] || {};
+      series.push({ abs: abs, hour: hour, day: day, clock: hour, cloud: v.cloud == null ? null : v.cloud, precip: v.precip == null ? null : v.precip });
+    }
+    for (var a = 18; a <= 23; a++) push(date, a, a);
+    for (var b = 0; b <= 6; b++) push(next, b, 24 + b);
+
+    var known = series.filter(function (s) { return s.cloud != null; });
+    var status = known.length ? 'ok' : 'empty';
+    return {
+      status: status, date: date, lat: lat, lon: lon, series: series,
+      fetchedAt: Date.now(), tz: json && json.timezone ? json.timezone : 'Asia/Seoul'
+    };
+  }
+
+  function unavailable(date, lat, lon, reason) {
+    return { status: 'unavailable', date: date, lat: lat, lon: lon, series: [], fetchedAt: Date.now(), reason: reason || 'forecast' };
+  }
+
+  function rawCached(lat, lon, date) {
+    var k = key(lat, lon, date);
+    var e = mem[k];
+    if (e && Date.now() - e.ts < TTL) return e.snap;
+    var ls = readLS(k);
+    if (ls) { mem[k] = { ts: Date.now(), snap: ls }; return ls; }
+    return null;
+  }
+
+  /** 캐시에 있는 값만 (네트워크 호출 없음). 없으면 null */
+  function cached(lat, lon, date) { return rawCached(lat, lon, date); }
+
+  /** 없으면 받아 온다. cb(snap) 은 캐시·성공·실패 모두에서 호출된다. */
+  function fetchForecast(lat, lon, date, cb) {
+    var k = key(lat, lon, date);
+    var hit = rawCached(lat, lon, date);
+    if (hit && hit.status !== 'empty') { cb(hit); return; }
+    // 예보 범위(오늘 ~ 16일 뒤) 밖은 요청하지 않고 바로 "예보 미제공" — 불필요한 400 응답을 만들지 않는다.
+    var now = Date.now() + 9 * 3600000;
+    var today = new Date(now).toISOString().slice(0, 10);
+    var limit = new Date(now + 15 * 86400000).toISOString().slice(0, 10);
+    if (date < today || date > limit) {
+      var snap0 = unavailable(date, lat, lon, 'range');
+      mem[k] = { ts: Date.now(), snap: snap0 };
+      cb(snap0);
+      return;
+    }
+    if (pending[k]) { pending[k].push(cb); return; }
+    pending[k] = [cb];
+
+    var url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
+      '&hourly=cloud_cover,precipitation_probability' +
+      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + addDay(date);
+
+    function finish(snap) {
+      mem[k] = { ts: Date.now(), snap: snap };
+      if (snap.status === 'ok') writeLS(k, snap);
+      var list = pending[k] || [];
+      delete pending[k];
+      list.forEach(function (fn) { try { fn(snap); } catch (e) {} });
+    }
+
+    if (typeof window.fetch !== 'function') { finish(unavailable(date, lat, lon, 'unsupported')); return; }
+
+    var done = false;
+    var guard = setTimeout(function () { if (!done) { done = true; finish(unavailable(date, lat, lon, 'timeout')); } }, 12000);
+    window.fetch(url, { credentials: 'omit' }).then(function (r) {
+      if (!r.ok) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          throw new Error((j && j.reason) || ('HTTP ' + r.status));
+        });
+      }
+      return r.json();
+    }).then(function (json) {
+      if (done) return;
+      done = true; clearTimeout(guard);
+      if (!json || json.error) { finish(unavailable(date, lat, lon, (json && json.reason) || 'error')); return; }
+      var snap = buildSnap(json, date, lat, lon);
+      if (snap.status !== 'ok') finish(unavailable(date, lat, lon, 'empty'));
+      else finish(snap);
+    }).catch(function (err) {
+      if (done) return;
+      done = true; clearTimeout(guard);
+      finish(unavailable(date, lat, lon, /forecast|range|past/i.test(String(err && err.message)) ? 'range' : 'network'));
+    });
+  }
+
+  /** 특정 시각(0~23) 또는 밤 구간(startH~endH, 자정 넘김은 24+) 평균 구름양(%) */
+  function cloudFor(snap, opts) {
+    if (!snap || snap.status !== 'ok' || !snap.series.length) return null;
+    opts = opts || {};
+    if (opts.hour != null) {
+      var target = opts.hour < 12 ? opts.hour + 24 : opts.hour;
+      var hit = snap.series.filter(function (s) { return s.abs === target; })[0];
+      if (hit && hit.cloud != null) return hit.cloud;
+      var near = snap.series.filter(function (s) { return s.cloud != null; })
+        .sort(function (a, b) { return Math.abs(a.abs - target) - Math.abs(b.abs - target); })[0];
+      return near ? near.cloud : null;
+    }
+    var startH = opts.startH, endH = opts.endH;
+    var pool = snap.series.filter(function (s) {
+      if (s.cloud == null) return false;
+      if (startH == null || endH == null) return true;
+      return s.abs >= startH && s.abs <= endH;
+    });
+    if (!pool.length) return null;
+    return pool.reduce(function (sum, s) { return sum + s.cloud; }, 0) / pool.length;
+  }
+
+  /** 가장 맑은 연속 구간 찾기 (cloud <= 30 우선, 없으면 최소 2시간 평균) */
+  function bestWindow(snap) {
+    if (!snap || snap.status !== 'ok') return null;
+    var s = snap.series.filter(function (x) { return x.cloud != null; });
+    if (!s.length) return null;
+    var runs = [], cur = null;
+    s.forEach(function (x) {
+      if (x.cloud <= 30) {
+        if (!cur) cur = { from: x.abs, to: x.abs, vals: [x.cloud] };
+        else { cur.to = x.abs; cur.vals.push(x.cloud); }
+      } else if (cur) { runs.push(cur); cur = null; }
+    });
+    if (cur) runs.push(cur);
+    var pick = runs.sort(function (a, b) {
+      return (b.vals.length - a.vals.length) || (mean(a.vals) - mean(b.vals));
+    })[0];
+    if (!pick) {
+      var sorted = s.slice().sort(function (a, b) { return a.cloud - b.cloud; });
+      pick = { from: sorted[0].abs, to: sorted[Math.min(1, sorted.length - 1)].abs, vals: sorted.slice(0, 2).map(function (x) { return x.cloud; }) };
+    }
+    return { from: pick.from, to: pick.to, mean: mean(pick.vals), hours: pick.vals.length };
+  }
+  function mean(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
+
+  function labelOf(cloud) {
+    if (cloud == null) return '정보 없음';
+    if (cloud <= 25) return '맑음';
+    if (cloud <= 50) return '조금 구름';
+    if (cloud <= 85) return '구름 많음';
+    return '흐림';
+  }
+
+  window.SkyWeather = {
+    cached: cached,
+    fetch: fetchForecast,
+    cloudFor: cloudFor,
+    bestWindow: bestWindow,
+    labelOf: labelOf,
+    hourKey: function (h) { return h < 12 ? h + 24 : h; }
+  };
+})();
+
+</script>
+<script>
 /* ===== astro.js ===== */
 /* =========================================================================
    오늘밤별 — 천문 계산 엔진 (astro.js)
@@ -5933,13 +6665,45 @@ window.Astro = (function () {
     const darkStart = night.astro.dusk || night.nautical.dusk || night.civil.dusk;
     const darkEnd = night.astro.dawn || night.nautical.dawn || night.civil.dawn;
     const darkHours = (darkStart && darkEnd) ? (darkEnd - darkStart) * 24 : 0;
-    const score = A.observingScore(phase.illum, state.site.bortle, darkHours);
+
+    // 시간별 구름양(Open-Meteo) — 캐시된 값만 동기로 읽는다. 없으면 다음 틱에 받아 다시 그린다.
+    const wx = (window.SkyWeather ? SkyWeather.cached(lat, lon, state.dateStr) : null);
+    let cloud = null, cloudAt = null;
+    if (wx && wx.status === 'ok') {
+      cloudAt = SkyWeather.cloudFor(wx, { hour: selectedHour() });
+      if (state.timeStr || state.simJd != null) cloud = cloudAt;
+      if (cloud == null) {
+        const win = darkWindowHours(darkStart, darkEnd);
+        cloud = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+      }
+      if (cloud == null) cloud = cloudAt;
+    }
+    const score = A.observingScore(phase.illum, state.site.bortle, darkHours, cloud);
 
     return {
       night: night, jd: jd, sun: sun, sunHor: sunHor, moonPos: moonP, moonHor: moonH,
       phase: phase, planets: planets, darkStart: darkStart, darkEnd: darkEnd,
-      darkHours: darkHours, score: score, lst: A.lstHours(jd, lon)
+      darkHours: darkHours, score: score, lst: A.lstHours(jd, lon),
+      wx: wx, cloud: cloud, cloudAt: cloudAt
     };
+  }
+
+  // 선택 시각(0~23). 시각을 비우면 오늘은 지금, 다른 날은 22시.
+  function selectedHour() {
+    if (state.timeStr) return parseInt(state.timeStr, 10);
+    if (state.simJd != null) return parseInt(A.fmtClock(state.simJd), 10);
+    if (state.dateStr === todayKST()) return new Date(Date.now() + 9 * 3600000).getUTCHours();
+    return 22;
+  }
+
+  // 밤(어두운) 구간을 18~30시 정수 hour 범위로 (자정 넘김은 24+)
+  function darkWindowHours(startJd, endJd) {
+    if (startJd == null || endJd == null) return { start: 18, end: 30 };
+    const a = parseInt(A.fmtClock(startJd), 10);
+    const b0 = parseInt(A.fmtClock(endJd), 10);
+    if (!isFinite(a) || !isFinite(b0)) return { start: 18, end: 30 };
+    let b = b0 <= a ? b0 + 24 : b0;
+    return { start: Math.max(18, a), end: Math.max(a + 1, b) };
   }
 
   /* ------------------------------------------------------------ 객체 위치 */
@@ -6022,8 +6786,34 @@ window.Astro = (function () {
     const arc = $('#scoreArc');
     arc.style.strokeDashoffset = String(264 - 264 * score / 100);
     arc.style.stroke = score >= 70 ? 'url(#scoreGrad)' : score >= 40 ? '#ffd479' : '#ff8a6a';
-    const scoreLabel = score >= 80 ? '최고의 밤' : score >= 65 ? '아주 좋은 밤' : score >= 45 ? '볼 만한 밤' : score >= 25 ? '아쉬운 밤' : '관측 불리';
+    let scoreLabel = score >= 80 ? '최고의 밤' : score >= 65 ? '아주 좋은 밤' : score >= 45 ? '볼 만한 밤' : score >= 25 ? '아쉬운 밤' : '관측 불리';
+    if (c.cloud != null && c.cloud >= 85) scoreLabel = '구름 많아 관측 어려움';
     $('#heroScoreNum').title = scoreLabel;
+
+    // 점수 산출 근거 배지 — 구름 · 달 · Bortle
+    const basis = $('#heroScoreBasis');
+    if (basis) {
+      const bits = [];
+      if (c.cloud != null) bits.push('<span class="sb-cloud">구름 ' + Math.round(c.cloud) + '%</span>');
+      else if (c.wx) bits.push('<span class="sb-none">구름 예보 없음</span>');
+      else bits.push('<span class="sb-loading">구름 확인 중</span>');
+      bits.push('<span>달 ' + Math.round(c.phase.illum * 100) + '%</span>');
+      bits.push('<span>Bortle ' + (site.bortle || '?') + '</span>');
+      basis.innerHTML = bits.join('<i aria-hidden="true">·</i>');
+      basis.title = c.cloud != null
+        ? '구름 ' + Math.round(c.cloud) + '%는 관측 지수에 가장 크게 반영됩니다(85% 이상은 관측이 어렵습니다).'
+        : '구름 예보가 없어 맑은 하늘(구름 0%)을 가정했습니다.';
+    }
+
+    const hc = $('#heroCloud');
+    if (hc) {
+      if (c.wx && c.wx.status === 'ok') {
+        const win = darkWindowHours(c.darkStart, c.darkEnd);
+        const nv = SkyWeather.cloudFor(c.wx, { startH: win.start, endH: win.end });
+        hc.textContent = nv == null ? '—' : Math.round(nv) + '% · ' + SkyWeather.labelOf(nv);
+      } else if (c.wx) hc.textContent = '예보 없음';
+      else hc.textContent = '확인 중…';
+    }
 
     // 사이드
     $('#heroSunset').textContent = A.fmtClock(n.sunset);
@@ -6049,6 +6839,126 @@ window.Astro = (function () {
         el.addEventListener('click', function () { openObject(el.getAttribute('data-obj')); });
       });
     }
+  }
+
+  /* ------------------------------------------------- 시간별 구름양 패널 */
+  let wxSeq = 0;
+
+  function kstClock(ts) {
+    const d = new Date(ts + 9 * 3600000);
+    return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+  }
+  function hh(h) {
+    const n = ((h % 24) + 24) % 24;
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function refreshWeather() {
+    if (!window.SkyWeather) return;
+    const lat = state.site.lat, lon = state.site.lon, date = state.dateStr;
+    const seq = ++wxSeq;
+    SkyWeather.fetch(lat, lon, date, function (snap) {
+      if (seq !== wxSeq) return;
+      if (state.dateStr !== date) return;
+      if (Math.abs(state.site.lat - lat) > 1e-6 || Math.abs(state.site.lon - lon) > 1e-6) return;
+      const c = computeNight();
+      state.last = c;
+      renderHero(c);
+      renderCloudPanel(c);
+    });
+  }
+
+  function renderCloudPanel(c) {
+    const chart = $('#cloudChart');
+    if (!chart) return;
+    const pill = $('#cloudPill'), note = $('#cloudNote'), foot = $('#cloudFoot');
+    const win = darkWindowHours(c.darkStart, c.darkEnd);
+    const wx = c.wx;
+
+    if (!wx) {
+      chart.innerHTML = '<div class="cc-skel" aria-hidden="true">' +
+        Array.apply(null, Array(13)).map(function () { return '<span></span>'; }).join('') + '</div>';
+      if (pill) { pill.textContent = '확인 중'; pill.className = 'cloud-pill'; }
+      if (note) note.textContent = 'Open-Meteo 시간별 예보 · 오늘 18시 → 내일 06시';
+      if (foot) foot.textContent = '관측 지점의 시간별 구름양을 불러오는 중입니다.';
+      return;
+    }
+
+    if (wx.status !== 'ok') {
+      const why = wx.reason === 'range' ? '이 날짜는 기상 예보 제공 범위(16일) 밖입니다.'
+        : wx.reason === 'timeout' ? '기상 예보 응답이 늦어 시간 초과했습니다.'
+          : wx.reason === 'network' ? '기상 서버에 연결하지 못했습니다.'
+            : '이 날짜·지점의 시간별 예보가 없습니다.';
+      chart.innerHTML = '<div class="cc-empty"><b>기상 예보 미제공</b>' +
+        '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span></div>';
+      if (pill) { pill.textContent = '예보 없음'; pill.className = 'cloud-pill is-none'; }
+      if (note) note.textContent = 'Open-Meteo · ' + (wx.reason === 'range' ? '예보 범위 밖' : '연결 실패');
+      if (foot) foot.textContent = '예보가 없는 날은 구름을 0%로 두고 계산합니다. 당일 다시 확인하면 정확해집니다.';
+      return;
+    }
+
+    const best = SkyWeather.bestWindow(wx);
+    const showBest = !!best && best.hours < wx.series.length;
+    const avg = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+    let html = '<div class="cc-cols">';
+    wx.series.forEach(function (s) {
+      const v = s.cloud == null ? null : Math.round(s.cloud);
+      let cls = 'cc-col';
+      if (v == null) cls += ' is-na';
+      else if (v <= 25) cls += ' is-clear';
+      else if (v <= 50) cls += ' is-some';
+      else if (v <= 85) cls += ' is-many';
+      else cls += ' is-over';
+      if (showBest && s.abs >= best.from && s.abs <= best.to) cls += ' is-best';
+      if (s.hour === 0) cls += ' is-midnight';
+      const hPct = v == null ? 0 : Math.max(3, v);
+      const tip = hh(s.hour) + '시 · 구름 ' + (v == null ? '정보 없음' : v + '%') +
+        (s.precip != null ? ' · 강수확률 ' + Math.round(s.precip) + '%' : '');
+      html += '<div class="' + cls + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' +
+        '<span class="cc-val">' + (v == null ? '–' : v) + '</span>' +
+        '<div class="cc-bar"><i style="height:' + hPct + '%"></i></div>' +
+        '<span class="cc-h">' + hh(s.hour) + '</span>' +
+        '</div>';
+    });
+    html += '</div>';
+    if (showBest && best) {
+      html += '<p class="cc-recommend">🎯 가장 맑은 관측 시간 <b>' + hh(best.from) + '시 – ' + hh(best.to) + '시</b>' +
+        '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
+    } else if (best) {
+      html += '<p class="cc-recommend">🌙 밤새 구름이 적습니다 <b>18시 – 06시</b>' +
+        '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
+    }
+    chart.innerHTML = html;
+
+    const shown = avg == null ? '—' : Math.round(avg) + '%';
+    if (pill) { pill.textContent = shown + ' · ' + SkyWeather.labelOf(avg); pill.className = 'cloud-pill ' + cloudClass(avg); }
+    if (note) note.textContent = 'Open-Meteo · ' + kstClock(wx.fetchedAt) + ' 갱신 · 오늘 18시 → 내일 06시';
+    if (foot) {
+      foot.innerHTML = '밤 평균 구름 <b>' + shown + '</b> — 달·광공해와 함께 관측 지수에 반영됩니다. ' +
+        '<span class="cc-hint">막대에 마우스를 올리면 그 시각 강수확률까지 보입니다.</span> ' +
+        '<button class="mini-btn cc-refresh" type="button" id="cloudRefresh">예보 새로고침</button>';
+      const rb = $('#cloudRefresh');
+      if (rb) rb.addEventListener('click', function () {
+        try {
+          Object.keys(window.localStorage).forEach(function (k) {
+            if (k.indexOf('skywx.') === 0) localStorage.removeItem(k);
+          });
+        } catch (e) { /* ignore */ }
+        state.last = computeNight();
+        renderHero(state.last);
+        renderCloudPanel(state.last);
+        refreshWeather();
+        toast('시간별 구름양을 다시 불러옵니다.');
+      });
+    }
+  }
+
+  function cloudClass(v) {
+    if (v == null) return 'is-none';
+    if (v <= 25) return 'is-clear';
+    if (v <= 50) return 'is-some';
+    if (v <= 85) return 'is-many';
+    return 'is-over';
   }
 
   function noMoonDarkHours(c) {
@@ -6801,6 +7711,11 @@ window.Astro = (function () {
     }).join('');
 
     $$('#catalogGrid .obj-card').forEach(function (el) {
+      el.addEventListener('mouseenter', function () {
+        if (!window.SkyPhoto) return;
+        const o = D.catalog.find(function (x) { return x.id === el.getAttribute('data-obj'); });
+        if (o) SkyPhoto.prefetch(o);
+      });
       el.addEventListener('click', function (ev) {
         const aim = ev.target.closest ? ev.target.closest('[data-aim]') : null;
         if (aim) { ev.stopPropagation(); aimObject(aim.getAttribute('data-aim')); return; }
@@ -6866,6 +7781,15 @@ window.Astro = (function () {
       '<p>' + esc(o.science) + ' ' + esc(o.detail) + '</p>' +
       '<p class="small">겉보기 등급은 거리와 실제 광도가 함께 만든 결과입니다. 같은 밝기라도 거리가 2배면 5등급 어두워집니다(거리 지수). <a href="#lab" data-close="1">등급·거리 계산기</a>에서 직접 확인해 보세요.</p>' +
       '</details>';
+
+    // 상단 사진 카드 — NASA·허블·제임스웹 또는 실제 하늘 탐사 사진
+    if (window.SkyPhoto) {
+      const body = $('#modalBody');
+      const fig = SkyPhoto.figure(o, { variant: 'modal' });
+      const head = body.querySelector('.md-head');
+      if (head && head.nextSibling) body.insertBefore(fig, head.nextSibling);
+      else body.appendChild(fig);
+    }
 
     const modal = $('#modal');
     modal.hidden = false;
@@ -8869,13 +9793,14 @@ window.Astro = (function () {
     const lines = [];
     lines.push('🔭 오늘밤별 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
     lines.push('🌙 달: ' + nf(c.phase.illum * 100) + '% · ' + c.phase.name + (n.moonSet ? ' (월몰 ' + A.fmtClock(n.moonSet) + ')' : ''));
+    if (c.cloud != null) lines.push('☁️ 구름: 밤 평균 ' + Math.round(c.cloud) + '% · ' + SkyWeather.labelOf(c.cloud));
     lines.push('🌇 일몰 ' + A.fmtClock(n.sunset) + ' → 천문박명 ' + A.fmtClock(n.astro.dusk) + (c.darkEnd ? ' → 새벽 ' + A.fmtClock(c.darkEnd) : ''));
     if (recs.length) {
       lines.push('⭐ 추천: ' + recs.map(function (r, i) {
         return (i + 1) + ') ' + r.obj.name + ' (' + r.why + ')';
       }).join(' / '));
     }
-    lines.push('📊 관측 지수 ' + c.score + '/100 · Bortle ' + (site.bortle || '?'));
+    lines.push('📊 관측 지수 ' + c.score + '/100 · Bortle ' + (site.bortle || '?') + (c.cloud != null ? ' · 구름 ' + Math.round(c.cloud) + '%' : ''));
     lines.push('🧣 준비물: 방한복·적색 손전등·돗자리·보조배터리');
     const planetUp = c.planets.filter(function (p) { return p.hor.alt > 10 && p.mag <= 2; })
       .map(function (p) { return p.name + ' ' + nf(p.mag, 1) + '등 ' + dirName(p.hor.az) + ' ' + Math.round(p.hor.alt) + '°'; });
@@ -8939,6 +9864,7 @@ window.Astro = (function () {
     state.last = c;
     renderHero(c);
     renderTimeline(c);
+    renderCloudPanel(c);
     renderMoonSun(c);
     renderPlanets(c);
     renderSkyMap(c);
@@ -8955,6 +9881,7 @@ window.Astro = (function () {
     $('#coordNote').textContent = nf(state.site.lat, 4) + '°N · ' + nf(state.site.lon, 4) + '°E · Bortle ' + (state.site.bortle || '?');
     $('#latInput').value = state.site.lat;
     $('#lonInput').value = state.site.lon;
+    refreshWeather();
   }
 
   /* ------------------------------------------------------------- 초기화 */
@@ -9079,17 +10006,8 @@ window.Astro = (function () {
     const inline = $('#redModeInline');
     if (inline) inline.addEventListener('click', function () { $('#btnRed').click(); });
 
-    // 모바일 내비
-    $('#navToggle').addEventListener('click', function () {
-      const open = $('#siteHeader').classList.toggle('nav-open');
-      $('#navToggle').setAttribute('aria-expanded', String(open));
-    });
-    $$('.nav-link').forEach(function (a) {
-      a.addEventListener('click', function () {
-        $('#siteHeader').classList.remove('nav-open');
-        $('#navToggle').setAttribute('aria-expanded', 'false');
-      });
-    });
+    // 목차·더보기 메뉴 · 도감 탭
+    initNav();
 
     // 도감 정렬·필터
     if ($('#sortSelect')) $('#sortSelect').addEventListener('change', function () { renderCatalog(state.last); });
@@ -9331,6 +10249,155 @@ window.Astro = (function () {
       if (card) { ev.preventDefault(); toggle(card); }
     });
     renderConGrid();
+  }
+
+  /* ------------------------------------------------- 목차 · 도감 탭 내비 */
+  function activateCatTab(key, scroll) {
+    const tabs = $$('.cat-tab');
+    if (!tabs.length) return;
+    tabs.forEach(function (t) {
+      const on = t.getAttribute('data-cat-tab') === key;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+    });
+    const po = $('#panelObjects'), pc = $('#panelConstellations');
+    if (po) po.hidden = key !== 'objects';
+    if (pc) pc.hidden = key !== 'const';
+    if (scroll) {
+      const sec = $('#catalog');
+      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function setActiveNav(id) {
+    const map = { today: 'today', skymap: 'skymap', live: 'live', catalog: 'catalog', constellations: 'catalog' };
+    const key = map[id];
+    $$('.main-nav .nav-link').forEach(function (a) {
+      a.classList.toggle('is-active', !!key && a.getAttribute('data-nav') === key);
+    });
+  }
+
+  function jumpTo(id) {
+    if (!id) return;
+    if (id === 'constellations') activateCatTab('const', false);
+    else if (id === 'catalog') activateCatTab('objects', false);
+    const target = id === 'glossary' ? 'glossaryPanel' : id;
+    const el = document.getElementById(target);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try { history.replaceState(null, '', '#' + id); } catch (e) { /* file:// 에서 생길 수 있음 */ }
+    setActiveNav(id);
+  }
+
+  function handleHash(id) {
+    if (!id) return;
+    if (id === 'constellations') { activateCatTab('const', false); setActiveNav('constellations'); }
+    else if (id === 'catalog') { activateCatTab('objects', false); setActiveNav('catalog'); }
+    const target = id === 'glossary' ? 'glossaryPanel' : id;
+    const el = document.getElementById(target);
+    if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 40);
+  }
+
+  function initNav() {
+    /* 1) ☰ 더보기 드롭다운 */
+    const btn = $('#btnMore'), menu = $('#moreMenu');
+    if (btn && menu) {
+      const closeMenu = function (focus) {
+        if (menu.hidden) return;
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        if (focus) btn.focus();
+      };
+      const openMenu = function () {
+        menu.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+      };
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (menu.hidden) openMenu(); else closeMenu();
+      });
+      document.addEventListener('click', function (e) {
+        if (menu.hidden || !e.target.closest) return;
+        if (e.target.closest('#moreMenu') || e.target.closest('#btnMore')) return;
+        closeMenu();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !menu.hidden) closeMenu(true);
+      });
+      menu.addEventListener('click', function (e) {
+        const item = e.target.closest('a,button');
+        if (!item) return;
+        const act = item.getAttribute('data-open');
+        if (act) {
+          e.preventDefault();
+          closeMenu();
+          if (window.SpaceUI) {
+            if (act === 'cookie') SpaceUI.openCookie();
+            else if (act === 'ai') SpaceUI.openAI();
+          }
+          return;
+        }
+        const href = item.getAttribute('href');
+        closeMenu();
+        if (href && href.charAt(0) === '#') {
+          e.preventDefault();
+          jumpTo(href.slice(1));
+        }
+      });
+    }
+
+    /* 2) 주 내비 — 스무스 이동 */
+    $$('.main-nav .nav-link').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        const href = a.getAttribute('href');
+        if (!href || href.charAt(0) !== '#') return;
+        e.preventDefault();
+        jumpTo(href.slice(1));
+      });
+    });
+
+    /* 3) 도감 탭 */
+    const tabs = $$('.cat-tab');
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        const key = t.getAttribute('data-cat-tab');
+        activateCatTab(key, false);
+        try { history.replaceState(null, '', key === 'const' ? '#constellations' : '#catalog'); } catch (e) {}
+      });
+      t.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const i = tabs.indexOf(t);
+        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus();
+        next.click();
+      });
+    });
+
+    /* 4) 스크롤 위치로 활성 메뉴 표시 */
+    const secs = ['today', 'skymap', 'live', 'catalog'];
+    let ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        const y = window.scrollY + Math.max(120, window.innerHeight * 0.35);
+        let cur = 'today';
+        secs.forEach(function (id) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const top = el.getBoundingClientRect().top + window.scrollY;
+          if (top <= y) cur = id;
+        });
+        setActiveNav(cur);
+      });
+    }, { passive: true });
+
+    /* 5) 해시로 들어온 링크(#constellations·#catalog 등) 자동 탭 전환 */
+    window.addEventListener('hashchange', function () { handleHash(location.hash.slice(1)); });
+    if (location.hash) setTimeout(function () { handleHash(location.hash.slice(1)); }, 80);
   }
 
   /* ------------------------------------------------------------- 실행 */
@@ -9756,7 +10823,7 @@ window.Astro = (function () {
       '  <button class="sm-close" data-close="1" aria-label="닫기">×</button>' +
       '  <button class="sm-nav prev" data-lb="prev" aria-label="이전 사진">‹</button>' +
       '  <button class="sm-nav next" data-lb="next" aria-label="다음 사진">›</button>' +
-      '  <div class="sm-media"><img id="smImg" alt=""><p class="sm-credit" id="smCredit"></p></div>' +
+      '  <div class="sm-media"><div class="sm-photo" id="smPhoto"></div><img id="smImg" alt=""><p class="sm-credit" id="smCredit"></p></div>' +
       '  <div class="sm-info">' +
       '    <span class="sm-kind" id="smKind">NASA</span>' +
       '    <h3 id="smTitle">—</h3>' +
@@ -9798,6 +10865,9 @@ window.Astro = (function () {
     if (pv) pv.hidden = false;
     if (nx) nx.hidden = false;
     var img = $('#smImg');
+    img.hidden = false;
+    var ph0 = $('#smPhoto');
+    if (ph0) { ph0.innerHTML = ''; ph0.hidden = true; }
     img.alt = g.title;
     img.src = 'assets/space/' + g.file;
     img.onerror = function () {
@@ -9855,7 +10925,7 @@ window.Astro = (function () {
   }
 
   function buildCatalogBlock() {
-    var wrap = $('#catalog .wrap');
+    var wrap = $('#panelObjects') || $('#catalog .wrap');
     if (!wrap || !SC.items.length) return;
     var box = document.createElement('div');
     box.className = 'cat2';
@@ -9907,6 +10977,21 @@ window.Astro = (function () {
       if (obj) openCatalogModal(obj);
     });
     renderCat2();
+    bindPhotoPrefetch();
+  }
+
+  // 카드에 마우스를 올리면 실제 하늘 사진을 미리 받아 둔다(모달 열 때 바로 보임)
+  function bindPhotoPrefetch() {
+    var grid = $('#c2grid');
+    if (!grid || !window.SkyPhoto) return;
+    function warm(e) {
+      var card = e.target.closest ? e.target.closest('[data-c2]') : null;
+      if (!card) return;
+      var obj = SC.items.find(function (x) { return x.i === card.getAttribute('data-c2'); });
+      if (obj) SkyPhoto.prefetch(obj);
+    }
+    grid.addEventListener('mouseover', warm);
+    grid.addEventListener('focusin', warm);
   }
 
   function debounce(fn, ms) {
@@ -9996,8 +11081,16 @@ window.Astro = (function () {
     m.hidden = false;
     document.body.classList.add('space-lock');
     var h = altitudeOf(o);
-    $('#smImg').removeAttribute('src');
-    $('.sm-media', m).classList.add('is-text');
+    $('.sm-media', m).classList.remove('is-text');
+    var imgEl = $('#smImg');
+    imgEl.hidden = true;
+    imgEl.removeAttribute('src');
+    var ph = $('#smPhoto');
+    if (ph) {
+      ph.hidden = false;
+      ph.innerHTML = '';
+      if (window.SkyPhoto) ph.appendChild(SkyPhoto.figure(o, { variant: 'modal' }));
+    }
     var pv2 = $('.sm-nav.prev', m), nx2 = $('.sm-nav.next', m);
     if (pv2) pv2.hidden = true;
     if (nx2) nx2.hidden = true;
@@ -10587,8 +11680,298 @@ window.Astro = (function () {
     renderCookie();
   }
 
+  window.SpaceUI = {
+    openCookie: openCookie,
+    openAI: openAI,
+    openGallery: function () {
+      closeAll();
+      var s = $('#spacearchive');
+      if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 0); });
   else setTimeout(init, 0);
+})();
+
+</script>
+<script>
+/* ===== photo-ui.js ===== */
+/* =========================================================================
+   도감 사진 카드 (photo-ui.js)
+   · 도감 상세 모달·카드에서 천체 사진을 불러와 보여 줍니다.
+   · 1순위: assets/space/ 에 내려받은 NASA·허블·제임스웹·탐사선 공개 사진
+   · 2순위: RA/Dec 좌표로 NASA SkyView(DSS2) 실제 하늘 탐사 사진
+   · 실패·좌표 없음: 깨진 이미지 대신 성도(별지도) 미리보기 SVG
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var CAT = window.CATALOG_PHOTOS || [];
+  var IDX = {};
+  var DESIGNATION = /(?:^|[^A-Za-z0-9])(M|NGC|IC)\s*-?\s*(\d{1,4})/i;
+
+  function norm(s) {
+    return String(s == null ? '' : s)
+      .toLowerCase()
+      .replace(/[\s·・.\-_\u2013\u2014/()]/g, '')
+      .replace(/[′'′]/g, '');
+  }
+  CAT.forEach(function (e) {
+    (e.keys || []).forEach(function (k) { IDX[norm(k)] = e; });
+  });
+
+  /* ------------------------------------------------------------ 객체 해석 */
+  function parseSizeArcmin(str) {
+    if (!str || typeof str !== 'string') return null;
+    var deg = str.match(/([\d.]+)\s*°/);
+    if (deg) return parseFloat(deg[1]) * 60;
+    var min = str.match(/([\d.]+)\s*[′']/);
+    if (min) return parseFloat(min[1]);
+    return null;
+  }
+
+  function describe(o) {
+    o = o || {};
+    var ra = null, dec = null;
+    if (typeof o.ra === 'number' && typeof o.dec === 'number') { ra = o.ra; dec = o.dec; }
+    else if (typeof o.raH === 'number' && typeof o.decD === 'number') { ra = o.raH * 15; dec = o.decD; }
+    var sizeArcmin = typeof o.s === 'number' ? o.s : parseSizeArcmin(o.size);
+    var keys = [o.id, o.i, o.name, o.ko, o.en, o.sub, o.M, o.dynamic].filter(Boolean);
+    return {
+      ra: ra, dec: dec, sizeArcmin: sizeArcmin,
+      label: o.name || o.ko || o.en || '천체',
+      type: o.type || o.t || '',
+      mag: typeof o.mag === 'number' ? o.mag : (typeof o.m === 'number' ? o.m : null),
+      keys: keys
+    };
+  }
+
+  function lookup(d) {
+    for (var i = 0; i < d.keys.length; i++) {
+      var raw = d.keys[i];
+      var e = IDX[norm(raw)];
+      if (e) return e;
+      var m = String(raw).match(DESIGNATION);
+      if (m) {
+        e = IDX[norm(m[1] + m[2])];
+        if (e) return e;
+      }
+    }
+    return null;
+  }
+
+  /* --------------------------------------------------- 실제 하늘 탐사 사진 */
+  function isStarType(t) { return /star|항성|변광|이중성/.test(String(t || '')); }
+  // 성단은 DSS2 청색 사진이 포화가 적어 별이 또렷합니다.
+  function isBlueType(t) { return isStarType(t) || /OCl|GCl|Cl\+N|\*Ass|성단/.test(String(t || '')); }
+
+  function fovFor(d) {
+    if (isStarType(d.type)) {
+      if (d.mag != null && d.mag <= 1.6) return 3.0;
+      if (d.mag != null && d.mag <= 3) return 1.6;
+      return 0.9;
+    }
+    if (d.sizeArcmin) {
+      return Math.min(4, Math.max(0.16, (d.sizeArcmin / 60) * 2.4));
+    }
+    return 0.7;
+  }
+
+  function surveyUrl(d) {
+    if (d.ra == null || d.dec == null || !isFinite(d.ra) || !isFinite(d.dec)) return null;
+    var survey = isBlueType(d.type) ? 'DSS2%20Blue' : 'DSS2%20Red';
+    var ra = ((d.ra % 360) + 360) % 360;
+    return 'https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl' +
+      '?Survey=' + survey +
+      '&Position=' + ra.toFixed(4) + ',' + d.dec.toFixed(4) +
+      '&Size=' + fovFor(d).toFixed(2) +
+      '&Pixels=480&Return=JPEG';
+  }
+
+  /* ------------------------------------------------------------ 성도 대체 */
+  function hash(str) {
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function rng(seed) {
+    var s = seed || 1;
+    return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  }
+  function fmtRa(ra) {
+    if (ra == null) return '—';
+    var h = ra / 15, hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
+    return hh + 'h ' + (mm < 10 ? '0' : '') + mm + 'm';
+  }
+  function fmtDec(dec) {
+    if (dec == null) return '—';
+    var sign = dec < 0 ? '−' : '+', a = Math.abs(dec);
+    var d = Math.floor(a), m = Math.round((a - d) * 60);
+    return sign + d + '° ' + (m < 10 ? '0' : '') + m + '′';
+  }
+
+  function miniChartSvg(d, note) {
+    var rand = rng(hash(d.label || 'sky'));
+    var stars = '';
+    for (var i = 0; i < 90; i++) {
+      var x = (rand() * 320).toFixed(1), y = (rand() * 180).toFixed(1);
+      var r = (rand() * 1.1 + 0.35).toFixed(2), o = (rand() * 0.7 + 0.25).toFixed(2);
+      stars += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#dfe8ff" opacity="' + o + '"/>';
+    }
+    var rr = d.sizeArcmin ? Math.max(9, Math.min(46, d.sizeArcmin * 0.5)) : 15;
+    return '<svg viewBox="0 0 320 180" role="img" aria-label="' + esc(d.label) + ' 성도 미리보기">' +
+      '<rect width="320" height="180" fill="#05080f"/>' +
+      '<g class="cp-grid">' +
+      '<path d="M0 45h320M0 90h320M0 135h320M80 0v180M160 0v180M240 0v180"/>' +
+      '</g>' +
+      '<g>' + stars + '</g>' +
+      '<circle class="cp-target-ring" cx="160" cy="90" r="' + rr.toFixed(1) + '"/>' +
+      '<path class="cp-cross" d="M160 78v-10M160 102v10M148 90h-10M172 90h10"/>' +
+      '<text class="cp-chart-name" x="160" y="150" text-anchor="middle">' + esc(d.label) + '</text>' +
+      '<text class="cp-chart-meta" x="160" y="166" text-anchor="middle">RA ' + fmtRa(d.ra) + ' · Dec ' + fmtDec(d.dec) + (note ? ' · ' + esc(note) : '') + '</text>' +
+      '</svg>';
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  /* --------------------------------------------------------------- 카드 생성 */
+  function figure(o, opts) {
+    opts = opts || {};
+    var d = describe(o);
+    var entry = lookup(d);
+    var survey = surveyUrl(d);
+
+    var fig = document.createElement('figure');
+    fig.className = 'catphoto' + (opts.variant === 'modal' ? ' is-modal' : '');
+    fig.innerHTML =
+      '<div class="cp-media">' +
+      '  <div class="cp-skel" aria-hidden="true"><span class="cp-shimmer"></span><span class="cp-skel-txt">실제 하늘 사진 불러오는 중…</span></div>' +
+      '  <img alt="' + esc(d.label) + ' 사진" decoding="async">' +
+      '  <div class="cp-fallback" hidden></div>' +
+      '</div>' +
+      '<figcaption class="cp-cap">' +
+      '  <span class="cp-title">—</span>' +
+      '  <span class="cp-credit">—</span>' +
+      '  <a class="cp-link" target="_blank" rel="noopener noreferrer" hidden>원본 보기 ↗</a>' +
+      '</figcaption>';
+
+    var media = fig.querySelector('.cp-media');
+    var img = fig.querySelector('img');
+    var titleEl = fig.querySelector('.cp-title');
+    var creditEl = fig.querySelector('.cp-credit');
+    var linkEl = fig.querySelector('.cp-link');
+    var fallbackEl = fig.querySelector('.cp-fallback');
+    var timer = null;
+    var settled = false;
+
+    function setState(s) { fig.setAttribute('data-state', s); }
+
+    function showFallback(note) {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      img.removeAttribute('src');
+      img.style.display = 'none';
+      fallbackEl.hidden = false;
+      fallbackEl.innerHTML = miniChartSvg(d, note);
+      titleEl.textContent = d.label + ' · 성도 미리보기';
+      creditEl.textContent = note || '사진을 불러오지 못해 성도로 대신 표시합니다.';
+      var q = (d.keys[0] || d.label || '').toString();
+      if (q) {
+        linkEl.hidden = false;
+        linkEl.href = 'https://images.nasa.gov/search?q=' + encodeURIComponent(q);
+        linkEl.textContent = 'NASA 사진 찾기 ↗';
+      }
+      setState('fallback');
+    }
+
+    function ready() {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      setState('ready');
+    }
+
+    function withEntry(e) {
+      img.src = 'assets/space/' + e.file;
+      titleEl.textContent = e.title;
+      creditEl.textContent = '사진: ' + e.mission + ' · ' + e.credit + (e.date && e.date !== '—' ? ' (' + e.date + ')' : '');
+      if (e.nasa) {
+        linkEl.hidden = false;
+        linkEl.href = 'https://images.nasa.gov/details/' + encodeURIComponent(e.nasa);
+        linkEl.textContent = 'NASA 원본 페이지 ↗';
+      } else if (e.survey && d.ra != null) {
+        linkEl.hidden = false;
+        linkEl.href = 'https://skyview.gsfc.nasa.gov/current/cgi/runquery.pl?Survey=DSS2%20Blue&Position=' + d.ra.toFixed(4) + ',' + d.dec.toFixed(4) + '&Size=' + fovFor(d).toFixed(2);
+        linkEl.textContent = 'NASA SkyView 원본 ↗';
+      }
+    }
+
+    img.addEventListener('load', function () {
+      if (img.naturalWidth > 0) ready();
+      else img.dispatchEvent(new Event('error'));
+    });
+    img.addEventListener('error', function () {
+      if (settled) return;
+      if (fig.getAttribute('data-src') === 'local' && survey) {
+        fig.setAttribute('data-src', 'survey');
+        startSurvey();
+        return;
+      }
+      showFallback('사진을 불러오지 못해 성도로 대신 표시합니다');
+    });
+
+    function startSurvey() {
+      settled = false;
+      img.style.display = '';
+      img.src = survey;
+      titleEl.textContent = d.label + ' · 실제 하늘 탐사 사진';
+      creditEl.textContent = 'DSS2(Digitized Sky Survey 2) · NASA SkyView · RA/Dec 좌표 기반 · 보통 3~7초 걸립니다';
+      linkEl.hidden = false;
+      linkEl.href = survey.replace('&Return=JPEG', '');
+      linkEl.textContent = 'NASA SkyView 원본 ↗';
+      media.classList.add('is-survey');
+      timer = setTimeout(function () {
+        if (!settled) showFallback('탐사 사진 응답이 늦어 성도로 대신 표시합니다');
+      }, 20000);
+    }
+
+    if (entry) {
+      fig.setAttribute('data-src', 'local');
+      withEntry(entry);
+    } else if (survey) {
+      fig.setAttribute('data-src', 'survey');
+      startSurvey();
+    } else {
+      showFallback('이 천체는 공개 사진 좌표가 없습니다');
+    }
+    return fig;
+  }
+
+  /* ------------------------------------------------ 미리 받아 두기(호버) */
+  var preloaded = {};
+  function prefetch(o) {
+    var d = describe(o);
+    if (lookup(d)) return;
+    var u = surveyUrl(d);
+    if (!u || preloaded[u]) return;
+    var im = new window.Image();
+    im.decoding = 'async';
+    im.src = u;
+    preloaded[u] = im;
+  }
+
+  window.SkyPhoto = {
+    figure: figure,
+    describe: describe,
+    prefetch: prefetch,
+    lookup: function (o) { return lookup(describe(o)); },
+    surveyUrl: function (o) { return surveyUrl(describe(o)); }
+  };
 })();
 
 </script>
