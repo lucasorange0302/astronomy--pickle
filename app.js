@@ -1,5 +1,5 @@
 /* =========================================================================
-   오늘밤별 — app.js (UI · 계산 · 저장)
+   별밤 — app.js (UI · 계산 · 저장)
    의존: data.js (SKY_DATA), astro.js (Astro)
    ========================================================================= */
 (function () {
@@ -2746,8 +2746,8 @@
     state: function () {
       return { az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen, compass: track.comp, cal: track.calAz };
     },
-    pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } },
-    resume: function () { liveDirty = true; kickLive(); },
+    pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
+    resume: function () { liveResize(); liveDirty = true; kickLive(); },
     calibrate: calibrateLive,
     sensorOn: function () { return live.sensor; },
     enableSensor: enableSensor,
@@ -3585,7 +3585,7 @@
     const site = state.site;
     const recs = recommend(c, 1, 3);
     const lines = [];
-    lines.push('🔭 오늘밤별 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
+    lines.push('🔭 별밤 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
     lines.push('🌙 달: ' + nf(c.phase.illum * 100) + '% · ' + c.phase.name + (n.moonSet ? ' (월몰 ' + A.fmtClock(n.moonSet) + ')' : ''));
     if (c.cloud != null) lines.push('☁️ 구름: 밤 평균 ' + Math.round(c.cloud) + '% · ' + SkyWeather.labelOf(c.cloud));
     lines.push('🌇 일몰 ' + A.fmtClock(n.sunset) + ' → 천문박명 ' + A.fmtClock(n.astro.dusk) + (c.darkEnd ? ' → 새벽 ' + A.fmtClock(c.darkEnd) : ''));
@@ -3600,7 +3600,7 @@
       .map(function (p) { return p.name + ' ' + nf(p.mag, 1) + '등 ' + dirName(p.hor.az) + ' ' + Math.round(p.hor.alt) + '°'; });
     if (planetUp.length) lines.push('🪐 행성: ' + planetUp.join(', '));
     lines.push('');
-    lines.push('전국 관측 명소·촬영 계산기·2026~2027 천문 캘린더 → 오늘밤별');
+    lines.push('전국 관측 명소·촬영 계산기·2026~2027 천문 캘린더 → 별밤');
     return lines.join('\n');
   }
 
@@ -3919,7 +3919,7 @@
     });
     $('#btnExportLog').addEventListener('click', function () {
       const logs = store.get('logs', []);
-      const blob = new Blob([JSON.stringify({ site: '오늘밤별', exportedAt: new Date().toISOString(), logs: logs }, null, 2)],
+      const blob = new Blob([JSON.stringify({ site: '별밤', exportedAt: new Date().toISOString(), logs: logs }, null, 2)],
         { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -4046,7 +4046,7 @@
     const po = $('#panelObjects'), pc = $('#panelConstellations');
     if (po) po.hidden = key !== 'objects';
     if (pc) pc.hidden = key !== 'const';
-    if (scroll) {
+    if (scroll && !window.__VIEWS_MODE__) {
       const sec = $('#catalog');
       if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       lockActiveNav('catalog');
@@ -4126,6 +4126,7 @@
   // 클릭·해시 이동에서 클릭한 항목을 즉시 칠하고, 부드러운 스크롤이 끝날 때까지
   // 스크롤 스파이가 중간 섹션으로 덮어쓰지 않도록 잠근다.
   function lockActiveNav(id) {
+    if (window.__VIEWS_MODE__) return;
     const key = NAV_KEYS[id];
     if (!key) { navUnlock(); return; }
     navLockKey = key;
@@ -4135,12 +4136,14 @@
   }
 
   function syncActiveNav() {
+    if (window.__VIEWS_MODE__) return;          // 화면(view) 구조에서는 views.js가 담당
     if (navLockKey) { setActiveNav(navLockKey); navHoldLock(); return; }
     setActiveNav(navSectionAt());
   }
 
   function jumpTo(id) {
     if (!id) return;
+    if (window.__VIEWS_MODE__ && window.__views) { window.__views.go(id); return; }
     if (id === 'constellations') activateCatTab('const', false);
     else if (id === 'catalog') activateCatTab('objects', false);
     const target = id === 'glossary' ? 'glossaryPanel' : id;
@@ -4153,6 +4156,7 @@
 
   function handleHash(id) {
     if (!id) return;
+    if (window.__VIEWS_MODE__ && window.__views) { window.__views.go(id); return; }
     if (id === 'constellations') activateCatTab('const', false);
     else if (id === 'catalog') activateCatTab('objects', false);
     const target = id === 'glossary' ? 'glossaryPanel' : id;

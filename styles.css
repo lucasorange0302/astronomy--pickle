@@ -1,5 +1,5 @@
 /* =========================================================================
-   오늘밤별 — styles.css
+   별밤 — styles.css
    다크 천문 테마 + 레드라이트(야간 관측) 모드 + 반응형
    ========================================================================= */
 
@@ -2068,3 +2068,31 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 
 /* ------------------------------------------------------------- 하단 탭 바 */
 .tabbar { display: none; }
+
+/* =========================================================================
+   5부 — 화면(view) 전환 구조
+   ========================================================================= */
+main > section[data-view] { display: none; }
+main > section[data-view].is-active { display: block; }
+main > section[data-view].is-active { animation: viewIn .18s ease-out; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.grid-1 { display: grid; gap: 16px; margin-top: 16px; }
+.moon-row { margin-top: 16px; }
+.moon-row .panel { margin-top: 0; }
+html.has-views { scroll-padding-top: 84px; }
+
+/* 하단 탭 바 기본(데스크톱 자동판에서는 숨김) */
+.tabbar { display: none; }
+
+/* 라이브 하늘 위 최소 오버레이 버튼 */
+.live-quick { position: absolute; left: 10px; bottom: 12px; display: flex; gap: 6px; z-index: 3; }
+.live-quick .lq-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 36px; padding: 6px 12px; border-radius: 99px; cursor: pointer;
+  background: rgba(4, 8, 16, .74); color: var(--text);
+  border: 1px solid var(--border-hi); backdrop-filter: blur(8px);
+  font: 700 .74rem var(--font); white-space: nowrap;
+}
+.live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+#liveSensorChip { cursor: pointer; pointer-events: auto; }
+#liveSensorChip:hover { border-color: var(--accent-2); color: var(--accent-2); }

@@ -212,7 +212,7 @@ html[data-layout="mobile"] .live-controls {
   grid-template-columns: 1fr; gap: 10px; padding: 10px; margin-top: 10px;
 }
 html[data-layout="mobile"] .live-pad {
-  grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 44px);
+  grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, 40px);
   width: 100%; max-width: 250px; margin: 0 auto; gap: 5px;
 }
 html[data-layout="mobile"] .pad-btn { min-height: 44px; font-size: .84rem; }
@@ -384,3 +384,44 @@ html[data-layout="mobile"] .field-time input { padding-right: 46px; }
 html[data-layout="mobile"] #btnGeo { min-height: 44px; padding: 0 12px; }
 html[data-layout="mobile"] .tab-ico svg { width: 21px; height: 21px; display: block; }
 html[data-layout="mobile"] .tab-txt { white-space: nowrap; font-size: .62rem; letter-spacing: -0.01em; }
+
+/* ---------------------------------------------------- 모바일: 라이브 하늘이 메인 */
+html[data-layout="mobile"] main > section[data-view="live"] { padding: 0; }
+html[data-layout="mobile"] #live > .wrap { padding: 0; max-width: none; }
+html[data-layout="mobile"] #live .section-head { display: none; }
+html[data-layout="mobile"] #live .live-panel {
+  margin: 0; padding: 0; border: 0; border-radius: 0; background: none; backdrop-filter: none;
+}
+html[data-layout="mobile"] #live .live-stage {
+  height: calc(100dvh - 88px - 64px - env(safe-area-inset-bottom, 0px));
+  min-height: 360px; aspect-ratio: auto; max-height: none; border-radius: 0; border: 0;
+}
+html[data-layout="mobile"] #live .live-controls,
+html[data-layout="mobile"] #live .tm-dock-live,
+html[data-layout="mobile"] #live .live-foot { display: none; }
+html[data-layout="mobile"] #live .live-panel.is-controls-open .live-controls {
+  display: grid; position: fixed; left: 0; right: 0;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 88;
+  margin: 0; padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px)); border-radius: 18px 18px 0 0;
+  background: linear-gradient(180deg, #0c1220, #070b14 70%);
+  border-top: 1px solid var(--border-hi); box-shadow: 0 -22px 44px -26px #000;
+  max-height: 64dvh; overflow-y: auto; gap: 9px;
+}
+html[data-layout="mobile"] body.red #live .live-panel.is-controls-open .live-controls {
+  background: linear-gradient(180deg, #1b0503, #0b0100 70%);
+}
+html[data-layout="mobile"] #live .live-quick .lq-btn { min-height: 40px; font-size: .76rem; }
+html[data-layout="mobile"] #live .live-hud-top { top: 10px; left: 10px; right: 10px; }
+
+/* 조작 시트가 열리면 확대/축소 버튼은 시트 위(오른쪽 위)로 올립니다 */
+html[data-layout="mobile"] #live .live-panel.is-controls-open .live-zoom {
+  bottom: auto; top: 62px; right: 10px;
+}
+html[data-layout="mobile"] #live .live-panel.is-controls-open .live-hud-top { right: 58px; }
+html[data-layout="mobile"] #live .live-panel.is-controls-open .live-quick { display: none; }
+html[data-layout="mobile"] .lc-close {
+  width: 100%; min-height: 36px; margin-bottom: 4px; border-radius: 10px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05);
+  color: var(--muted); font: 700 .8rem var(--font); cursor: pointer;
+}
+html[data-layout="mobile"] .lc-close:hover { color: var(--text); border-color: var(--border-hi); }

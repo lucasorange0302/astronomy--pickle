@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="ko" data-single="1">
 <head>
-<!-- 오늘밤별 · 별밤지도 — 단일 파일 빌드 (CSS·JS 인라인, 외부 의존성 없음) -->
+<!-- 별밤 · 별밤지도 — 단일 파일 빌드 (CSS·JS 인라인, 외부 의존성 없음) -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#05070f">
-<meta name="description" content="오늘밤별 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
-<title>오늘밤별 — 대한민국 천체관측 가이드</title>
+<meta name="description" content="별밤 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
+<title>별밤 — 대한민국 천체관측 가이드</title>
 
 <style>
 /* =========================================================================
-   오늘밤별 — styles.css
+   별밤 — styles.css
    다크 천문 테마 + 레드라이트(야간 관측) 모드 + 반응형
    ========================================================================= */
 
@@ -2080,6 +2080,34 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 /* ------------------------------------------------------------- 하단 탭 바 */
 .tabbar { display: none; }
 
+/* =========================================================================
+   5부 — 화면(view) 전환 구조
+   ========================================================================= */
+main > section[data-view] { display: none; }
+main > section[data-view].is-active { display: block; }
+main > section[data-view].is-active { animation: viewIn .18s ease-out; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.grid-1 { display: grid; gap: 16px; margin-top: 16px; }
+.moon-row { margin-top: 16px; }
+.moon-row .panel { margin-top: 0; }
+html.has-views { scroll-padding-top: 84px; }
+
+/* 하단 탭 바 기본(데스크톱 자동판에서는 숨김) */
+.tabbar { display: none; }
+
+/* 라이브 하늘 위 최소 오버레이 버튼 */
+.live-quick { position: absolute; left: 10px; bottom: 12px; display: flex; gap: 6px; z-index: 3; }
+.live-quick .lq-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 36px; padding: 6px 12px; border-radius: 99px; cursor: pointer;
+  background: rgba(4, 8, 16, .74); color: var(--text);
+  border: 1px solid var(--border-hi); backdrop-filter: blur(8px);
+  font: 700 .74rem var(--font); white-space: nowrap;
+}
+.live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+#liveSensorChip { cursor: pointer; pointer-events: auto; }
+#liveSensorChip:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
 </style>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
 </head>
@@ -2090,7 +2118,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 <!-- ===================== 공통 헤더 ===================== -->
 <header class="site-header" id="siteHeader">
   <div class="header-inner">
-    <a class="brand" href="#today" aria-label="오늘밤별 홈">
+    <a class="brand" href="#today" aria-label="별밤 홈">
       <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 40 40" width="34" height="34">
           <circle cx="20" cy="20" r="19" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35"/>
@@ -2100,7 +2128,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
         </svg>
       </span>
       <span class="brand-text">
-        <strong>오늘밤별</strong>
+        <strong>별밤</strong>
         <small>대한민국 천체관측 가이드</small>
       </span>
     </a>
@@ -2194,7 +2222,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 <main>
 
 <!-- ===================== 1. 오늘 밤 ===================== -->
-<section class="section section-hero" id="today">
+<section class="section section-hero" id="today" data-view="today">
   <div class="hero-sky" aria-hidden="true">
     <div class="hero-glow"></div>
     <canvas class="hero-stars" id="heroStars" width="1200" height="620"></canvas>
@@ -2334,44 +2362,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
       <p class="panel-foot" id="cloudFoot">기상 예보를 불러오는 중입니다…</p>
     </div>
 
-    <div class="grid-2">
-      <!-- 전천 지도 -->
-      <div class="panel skymap-panel" id="skymap">
-        <div class="panel-head">
-          <h2>지금 하늘 (전천 지도)</h2>
-          <span class="panel-note" id="skyMapNote">—</span>
-        </div>
-        <div class="skymap-wrap">
-          <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도"></svg>
-        </div>
-        <div class="tm-dock" data-tm>
-          <button class="tm-play" data-tm-play type="button" aria-pressed="false" aria-label="밤하늘 타임랩스 재생">▶</button>
-          <div class="tm-readout">
-            <b class="tm-clock" data-tm-clock>—</b>
-            <div class="tm-quick">
-              <button class="tm-chip" data-tm-sunset type="button">일몰부터</button>
-              <button class="tm-chip" data-tm-now type="button">지금</button>
-            </div>
-          </div>
-          <div class="tm-slide">
-            <input type="range" class="tm-slider" data-tm-slider min="0" max="1000" step="1" value="0" aria-label="밤 시간 이동">
-            <div class="tm-scale"><span data-tm-start>일몰</span><span>자정</span><span data-tm-end>일출</span></div>
-          </div>
-          <div class="tm-dial" data-tm-dial role="slider" tabindex="0" aria-label="재생 속도" aria-valuemin="0.5" aria-valuemax="30" aria-valuenow="5" aria-valuetext="5분/초">
-            <svg viewBox="0 0 54 42" aria-hidden="true" focusable="false">
-              <circle class="tm-dial-bg" cx="27" cy="25" r="16"></circle>
-              <circle class="tm-dial-arc" cx="27" cy="25" r="16"></circle>
-              <g class="tm-dial-ticks" data-tm-ticks></g>
-              <g class="tm-dial-needle" data-tm-needle><line x1="27" y1="25" x2="27" y2="9"></line></g>
-              <circle class="tm-dial-hub" cx="27" cy="25" r="2.8"></circle>
-            </svg>
-            <span class="tm-dial-val" data-tm-speed>5분/초</span>
-          </div>
-        </div>
-        <p class="panel-foot">가운데가 머리 위(천정), 테두리가 지평선입니다. 동쪽이 왼쪽인 것은 하늘을 올려다보는 방향이기 때문입니다. <b>별·행성·달·성운을 눌러 보세요</b> — 그 자리에서 실시간 고도·방위·출몰을 보여 줍니다.</p>
-        <div class="sky-inspector" id="skyInspector"></div>
-      </div>
-
+    <div class="moon-row">
       <!-- 달 · 태양 상세 -->
       <div class="panel">
         <div class="panel-head"><h2>달과 태양</h2></div>
@@ -2432,7 +2423,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 1-B. 라이브 하늘 뷰 (스텔라리움 모드) ===================== -->
-<section class="section section-alt" id="live">
+<section class="section section-alt" id="live" data-view="live">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">스텔라리움 모드</p>
@@ -2454,6 +2445,10 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
           <button class="live-zbtn" id="liveZoomIn" type="button" aria-label="확대">＋</button>
           <span class="live-fov-val" id="liveFovVal">65°</span>
           <button class="live-zbtn" id="liveZoomOut" type="button" aria-label="축소">－</button>
+        </div>
+        <div class="live-quick" id="liveQuick">
+          <button class="lq-btn" id="liveToolsBtn" type="button" aria-expanded="false" aria-controls="liveControls">⚙ 조작</button>
+          <button class="lq-btn" id="liveCalBtnQ" type="button">🎯 방향 맞추기</button>
         </div>
       </div>
 
@@ -2482,7 +2477,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
       </div>
     </div>
 
-      <div class="live-controls">
+      <div class="live-controls" id="liveControls">
         <div class="live-pad" role="group" aria-label="방향 회전">
           <button class="pad-btn pad-n" data-az="0" data-alt="30" type="button">북</button>
           <button class="pad-btn pad-w" data-az="270" data-alt="30" type="button">서</button>
@@ -2523,8 +2518,60 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
   </div>
 </section>
 
+
+<!-- ===================== 1-C. 전천 지도 (개별 화면) ===================== -->
+<section class="section section-alt" id="skymapView" data-view="skymap">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">전천 지도</p>
+      <h2>지금 하늘을 <span class="grad">한 장에</span></h2>
+      <p class="section-sub">머리 위 하늘 전체를 펼쳐 보여 줍니다. 별·행성·달·성운을 누르면 그 자리의 실시간 고도·방위·출몰을 보여 주고, 아래 도크로 밤새 하늘이 움직이는 모습을 재생할 수 있습니다.</p>
+    </div>
+    <div class="grid-1">
+      <!-- 전천 지도 -->
+      <div class="panel skymap-panel" id="skymap">
+        <div class="panel-head">
+          <h2>지금 하늘 (전천 지도)</h2>
+          <span class="panel-note" id="skyMapNote">—</span>
+        </div>
+        <div class="skymap-wrap">
+          <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도"></svg>
+        </div>
+        <div class="tm-dock" data-tm>
+          <button class="tm-play" data-tm-play type="button" aria-pressed="false" aria-label="밤하늘 타임랩스 재생">▶</button>
+          <div class="tm-readout">
+            <b class="tm-clock" data-tm-clock>—</b>
+            <div class="tm-quick">
+              <button class="tm-chip" data-tm-sunset type="button">일몰부터</button>
+              <button class="tm-chip" data-tm-now type="button">지금</button>
+            </div>
+          </div>
+          <div class="tm-slide">
+            <input type="range" class="tm-slider" data-tm-slider min="0" max="1000" step="1" value="0" aria-label="밤 시간 이동">
+            <div class="tm-scale"><span data-tm-start>일몰</span><span>자정</span><span data-tm-end>일출</span></div>
+          </div>
+          <div class="tm-dial" data-tm-dial role="slider" tabindex="0" aria-label="재생 속도" aria-valuemin="0.5" aria-valuemax="30" aria-valuenow="5" aria-valuetext="5분/초">
+            <svg viewBox="0 0 54 42" aria-hidden="true" focusable="false">
+              <circle class="tm-dial-bg" cx="27" cy="25" r="16"></circle>
+              <circle class="tm-dial-arc" cx="27" cy="25" r="16"></circle>
+              <g class="tm-dial-ticks" data-tm-ticks></g>
+              <g class="tm-dial-needle" data-tm-needle><line x1="27" y1="25" x2="27" y2="9"></line></g>
+              <circle class="tm-dial-hub" cx="27" cy="25" r="2.8"></circle>
+            </svg>
+            <span class="tm-dial-val" data-tm-speed>5분/초</span>
+          </div>
+        </div>
+        <p class="panel-foot">가운데가 머리 위(천정), 테두리가 지평선입니다. 동쪽이 왼쪽인 것은 하늘을 올려다보는 방향이기 때문입니다. <b>별·행성·달·성운을 눌러 보세요</b> — 그 자리에서 실시간 고도·방위·출몰을 보여 줍니다.</p>
+        <div class="sky-inspector" id="skyInspector"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
 <!-- ===================== 3. 천체 · 별자리 도감 (통합) ===================== -->
-<section class="section" id="catalog">
+<section class="section" id="catalog" data-view="catalog">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">천체 · 별자리 도감</p>
@@ -2582,7 +2629,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 3. 촬영 · 계산기 ===================== -->
-<section class="section section-alt" id="lab">
+<section class="section section-alt" id="lab" data-view="lab">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">촬영 · 계산 랩</p>
@@ -2786,7 +2833,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 4. 초보자 가이드 ===================== -->
-<section class="section" id="guide">
+<section class="section" id="guide" data-view="guide">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">처음이라면</p>
@@ -2931,7 +2978,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 5. 관측 명소 ===================== -->
-<section class="section section-alt" id="sites">
+<section class="section section-alt" id="sites" data-view="sites">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">전국 관측 명소</p>
@@ -2955,7 +3002,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 6. 체크리스트 · 로그 ===================== -->
-<section class="section" id="plan">
+<section class="section" id="plan" data-view="plan">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">준비와 기록</p>
@@ -3010,7 +3057,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 7. 천문 캘린더 ===================== -->
-<section class="section section-alt" id="calendar">
+<section class="section section-alt" id="calendar" data-view="calendar">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">2026 ~ 2027</p>
@@ -3045,7 +3092,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 </section>
 
 <!-- ===================== 8. 원리 ===================== -->
-<section class="section" id="science">
+<section class="section" id="science" data-view="science">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">원리 깊이 보기</p>
@@ -3062,7 +3109,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 <footer class="site-footer">
   <div class="wrap footer-inner">
     <div class="footer-brand">
-      <strong>오늘밤별</strong>
+      <strong>별밤</strong>
       <p>대한민국 천체관측 가이드 · 설치 없이 브라우저에서 바로</p>
     </div>
     <div class="footer-links">
@@ -3101,7 +3148,7 @@ body.red input[type="date"], body.red input[type="time"] { background-color: rgb
 <script>
 /* ===== data.js ===== */
 /* =========================================================================
-   오늘밤별 (Oneulbam Byeol) — 데이터 파일
+   별밤 (Oneulbam Byeol) — 데이터 파일
    · 모든 좌표는 J2000.0 기준, 적경(raH)은 시간 단위, 적위(decD)는 도 단위.
    · 거리·등급은 널리 쓰이는 값의 반올림. 관측지 좌표는 지도 기반 근사값.
    · file:// 로 열어도 동작하도록 일반 <script> 로 불러옵니다 (모듈/fetch 금지).
@@ -3111,7 +3158,7 @@ window.SKY_DATA = (function () {
 
   /* ---------------------------------------------------------------- 기본 정보 */
   const meta = {
-    name: '오늘밤별',
+    name: '별밤',
     tagline: '대한민국 천체관측 가이드',
     version: '1.0',
     defaultSite: { name: '오산 세마동', lat: 37.1969, lon: 127.0343, bortle: 7 },
@@ -4921,7 +4968,7 @@ window.SKY_DATA = (function () {
 <script>
 /* ===== data-extra.js ===== */
 /* =========================================================================
-   오늘밤별 — 도감 심화 데이터 (data-extra.js)
+   별밤 — 도감 심화 데이터 (data-extra.js)
    · data.js 의 catalog 항목에 '찾는 방법(find)', '장비별 조견(views)',
      '촬영 팁(photo)', '최적 시기 메모(bestNote)'를 덧붙입니다.
    · 여기에만 있는 천체(신규 6종)는 catalog 배열 끝에 추가됩니다.
@@ -6185,7 +6232,7 @@ window.CATALOG_PHOTOS = [
 <script>
 /* ===== astro.js ===== */
 /* =========================================================================
-   오늘밤별 — 천문 계산 엔진 (astro.js)
+   별밤 — 천문 계산 엔진 (astro.js)
    근거:
    · 태양 위치: NOAA Solar Calculator 방식(저정밀, 오차 약 ±0.01°)
    · 달·행성 위치: Paul Schlyter, "Computing planetary positions" (저정밀, 행성 오차 약 1~2′)
@@ -6670,7 +6717,7 @@ window.Astro = (function () {
 <script>
 /* ===== app.js ===== */
 /* =========================================================================
-   오늘밤별 — app.js (UI · 계산 · 저장)
+   별밤 — app.js (UI · 계산 · 저장)
    의존: data.js (SKY_DATA), astro.js (Astro)
    ========================================================================= */
 (function () {
@@ -9417,8 +9464,8 @@ window.Astro = (function () {
     state: function () {
       return { az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen, compass: track.comp, cal: track.calAz };
     },
-    pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } },
-    resume: function () { liveDirty = true; kickLive(); },
+    pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
+    resume: function () { liveResize(); liveDirty = true; kickLive(); },
     calibrate: calibrateLive,
     sensorOn: function () { return live.sensor; },
     enableSensor: enableSensor,
@@ -10256,7 +10303,7 @@ window.Astro = (function () {
     const site = state.site;
     const recs = recommend(c, 1, 3);
     const lines = [];
-    lines.push('🔭 오늘밤별 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
+    lines.push('🔭 별밤 — ' + Number(state.dateStr.slice(5, 7)) + '월 ' + Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') · ' + site.name);
     lines.push('🌙 달: ' + nf(c.phase.illum * 100) + '% · ' + c.phase.name + (n.moonSet ? ' (월몰 ' + A.fmtClock(n.moonSet) + ')' : ''));
     if (c.cloud != null) lines.push('☁️ 구름: 밤 평균 ' + Math.round(c.cloud) + '% · ' + SkyWeather.labelOf(c.cloud));
     lines.push('🌇 일몰 ' + A.fmtClock(n.sunset) + ' → 천문박명 ' + A.fmtClock(n.astro.dusk) + (c.darkEnd ? ' → 새벽 ' + A.fmtClock(c.darkEnd) : ''));
@@ -10271,7 +10318,7 @@ window.Astro = (function () {
       .map(function (p) { return p.name + ' ' + nf(p.mag, 1) + '등 ' + dirName(p.hor.az) + ' ' + Math.round(p.hor.alt) + '°'; });
     if (planetUp.length) lines.push('🪐 행성: ' + planetUp.join(', '));
     lines.push('');
-    lines.push('전국 관측 명소·촬영 계산기·2026~2027 천문 캘린더 → 오늘밤별');
+    lines.push('전국 관측 명소·촬영 계산기·2026~2027 천문 캘린더 → 별밤');
     return lines.join('\n');
   }
 
@@ -10590,7 +10637,7 @@ window.Astro = (function () {
     });
     $('#btnExportLog').addEventListener('click', function () {
       const logs = store.get('logs', []);
-      const blob = new Blob([JSON.stringify({ site: '오늘밤별', exportedAt: new Date().toISOString(), logs: logs }, null, 2)],
+      const blob = new Blob([JSON.stringify({ site: '별밤', exportedAt: new Date().toISOString(), logs: logs }, null, 2)],
         { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -10717,7 +10764,7 @@ window.Astro = (function () {
     const po = $('#panelObjects'), pc = $('#panelConstellations');
     if (po) po.hidden = key !== 'objects';
     if (pc) pc.hidden = key !== 'const';
-    if (scroll) {
+    if (scroll && !window.__VIEWS_MODE__) {
       const sec = $('#catalog');
       if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       lockActiveNav('catalog');
@@ -10797,6 +10844,7 @@ window.Astro = (function () {
   // 클릭·해시 이동에서 클릭한 항목을 즉시 칠하고, 부드러운 스크롤이 끝날 때까지
   // 스크롤 스파이가 중간 섹션으로 덮어쓰지 않도록 잠근다.
   function lockActiveNav(id) {
+    if (window.__VIEWS_MODE__) return;
     const key = NAV_KEYS[id];
     if (!key) { navUnlock(); return; }
     navLockKey = key;
@@ -10806,12 +10854,14 @@ window.Astro = (function () {
   }
 
   function syncActiveNav() {
+    if (window.__VIEWS_MODE__) return;          // 화면(view) 구조에서는 views.js가 담당
     if (navLockKey) { setActiveNav(navLockKey); navHoldLock(); return; }
     setActiveNav(navSectionAt());
   }
 
   function jumpTo(id) {
     if (!id) return;
+    if (window.__VIEWS_MODE__ && window.__views) { window.__views.go(id); return; }
     if (id === 'constellations') activateCatTab('const', false);
     else if (id === 'catalog') activateCatTab('objects', false);
     const target = id === 'glossary' ? 'glossaryPanel' : id;
@@ -10824,6 +10874,7 @@ window.Astro = (function () {
 
   function handleHash(id) {
     if (!id) return;
+    if (window.__VIEWS_MODE__ && window.__views) { window.__views.go(id); return; }
     if (id === 'constellations') activateCatTab('const', false);
     else if (id === 'catalog') activateCatTab('objects', false);
     const target = id === 'glossary' ? 'glossaryPanel' : id;
@@ -11892,7 +11943,7 @@ window.Astro = (function () {
     var history = AI.msgs.slice(-6).map(function (m) { return { role: m.role, text: m.text }; });
     history.push({ role: 'user', text: q });
     apiChat(AI.provider, aiKey(AI.provider), AI.model || defaultModel(AI.provider), AI.endpoint, history,
-      '너는 대한민국 천체관측 사이트 "오늘밤별"의 천문 도우미다. 아래 사이트 데이터를 근거로 한국어로 친절하고 정확하게 답한다. 주어진 수치를 우선 사용하고, 모르면 모른다고 말한다. 답은 3~6문장으로 간결하게.\n\n[사이트 데이터]\n' + buildContext())
+      '너는 대한민국 천체관측 사이트 "별밤"의 천문 도우미다. 아래 사이트 데이터를 근거로 한국어로 친절하고 정확하게 답한다. 주어진 수치를 우선 사용하고, 모르면 모른다고 말한다. 답은 3~6문장으로 간결하게.\n\n[사이트 데이터]\n' + buildContext())
       .then(function (txt) {
         typing.innerHTML = '<div class="ai-bubble">' + esc(txt).replace(/\n/g, '<br>') + '</div>';
         AI.msgs.push({ role: 'user', text: q }, { role: 'assistant', text: txt });
@@ -12509,6 +12560,274 @@ window.Astro = (function () {
     lookup: function (o) { return lookup(describe(o)); },
     surveyUrl: function (o) { return surveyUrl(describe(o)); }
   };
+})();
+
+</script>
+<script>
+/* ===== views.js ===== */
+/* =========================================================================
+   views.js — 앱형 화면 구조 (2026-11)
+   · 라이브 하늘을 기본 화면으로, 나머지 기능은 각각 독립된 화면(view)으로 전환
+   · 해시 딥링크(#today #skymap #live #catalog #constellations #spacearchive
+     #sites #glossary #lab #guide #calendar #science #plan)를 화면으로 매핑
+   · 화면을 벗어나면 라이브 하늘 캔버스·센서 루프를 멈추고, 돌아오면 재개
+   ========================================================================= */
+(function () {
+  var VIEWS = ['live', 'today', 'skymap', 'catalog', 'spacearchive', 'calendar',
+    'sites', 'lab', 'guide', 'science', 'plan'];
+  var META = {
+    live: ['🧭', '라이브 하늘', '지금 이 방향의 하늘'],
+    today: ['🌙', '오늘 밤', '관측 지수 · 구름 · 행성'],
+    skymap: ['🗺', '전천 지도', '하늘 전체 한 장'],
+    catalog: ['🔭', '도감', '천체 2,571 · 별자리 88'],
+    spacearchive: ['🛰', '자료관', 'NASA · SpaceX 사진'],
+    calendar: ['📅', '관측 일정', '2026~2027 천문 캘린더'],
+    sites: ['🏕', '관측 명소', '전국 34곳'],
+    lab: ['🧮', '계산기', '노출 · 배율 · 거리'],
+    guide: ['📖', '가이드', '초보자 · 용어사전'],
+    science: ['🔬', '원리', '암순응 · 광학 · 시상'],
+    plan: ['✅', '체크리스트', '관측 준비 · 로그']
+  };
+  var MAP = {
+    today: 'today', live: 'live', skymap: 'skymap', catalog: 'catalog',
+    constellations: 'catalog', spacearchive: 'spacearchive', calendar: 'calendar',
+    sites: 'sites', lab: 'lab', guide: 'guide', glossary: 'guide',
+    science: 'science', plan: 'plan', plan_: 'plan'
+  };
+  var DEFAULT = 'live';
+
+  function sections() {
+    return Array.prototype.slice.call(document.querySelectorAll('main > section[data-view]'));
+  }
+  function viewOf(hash) {
+    var h = String(hash || '').replace(/^#/, '');
+    return MAP[h] || null;
+  }
+  function sectionFor(name) {
+    return document.querySelector('main > section[data-view="' + name + '"]');
+  }
+
+  var current = null;
+  var historyOK = true;
+
+  function setActive(name) {
+    var links = document.querySelectorAll('.main-nav .nav-link');
+    Array.prototype.forEach.call(links, function (a) {
+      var on = a.getAttribute('data-nav') === name ||
+        (name === 'spacearchive' && false);
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+    var side = document.querySelectorAll('.app-side [data-view]');
+    Array.prototype.forEach.call(side, function (b) {
+      var on = b.getAttribute('data-view') === name;
+      b.classList.toggle('is-active', on);
+      if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+    });
+    var tabs = document.querySelectorAll('#tabBar [data-nav]');
+    Array.prototype.forEach.call(tabs, function (t) {
+      t.classList.toggle('is-active', t.getAttribute('data-nav') === name);
+    });
+  }
+
+  function scrollToTarget(hashKey) {
+    if (!hashKey || hashKey === current) { window.scrollTo(0, 0); return; }
+    var el = document.getElementById(hashKey === 'glossary' ? 'glossaryPanel' : hashKey);
+    if (el && el.getClientRects().length) {
+      var top = el.getBoundingClientRect().top + window.scrollY -
+        (document.getElementById('siteHeader') ? document.getElementById('siteHeader').offsetHeight : 0) - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function show(name, hashKey, push) {
+    if (VIEWS.indexOf(name) < 0) name = DEFAULT;
+    var list = sections();
+    if (!list.length) return;
+    var changed = name !== current;
+    list.forEach(function (sec) {
+      var on = sec.getAttribute('data-view') === name;
+      sec.classList.toggle('is-active', on);
+      sec.hidden = !on;
+    });
+    current = name;
+    document.documentElement.setAttribute('data-screen', name);
+    document.body.setAttribute('data-screen', name);
+    setActive(name);
+    if (changed) scrollToTarget(hashKey, true);
+    else if (hashKey) scrollToTarget(hashKey, false);
+
+    if (window.LiveSky) {
+      if (name === 'live') window.LiveSky.resume();
+      else window.LiveSky.pause();
+    }
+    if (push) {
+      var key = hashKey || name;
+      try { history.pushState({ view: name }, '', '#' + key); }
+      catch (e) { historyOK = false; try { location.hash = key; } catch (e2) { } }
+    }
+    // 화면 전환 뒤 도감 탭 등이 자기 크기를 다시 재도록
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  function go(id) {
+    var name = MAP[id] || DEFAULT;
+    show(name, id, true);
+  }
+  window.__views = { go: go, show: show, current: function () { return current; } };
+  window.__VIEWS_MODE__ = true;
+
+  /* ---------------------------------------------------------- 딥링크/뒤로 */
+  function fromLocation(push) {
+    var key = (location.hash || '').replace('#', '');
+    var name = MAP[key] || DEFAULT;
+    show(name, key || null, push);
+  }
+  window.addEventListener('popstate', function () { fromLocation(false); });
+  window.addEventListener('hashchange', function () {
+    var key = (location.hash || '').replace('#', '');
+    if (!key) return;
+    var name = MAP[key];
+    if (name && name !== current) show(name, key, false);
+  });
+
+  /* ------------------------------------------------------------- 클릭 가로채기 */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var target = a.getAttribute('href').slice(1);
+    if (!target) return;
+    // 화면 밖(다른 사이트) 링크는 그대로
+    var name = MAP[target] || null;
+    var el = document.getElementById(target);
+    if (!name && !el) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (name) {
+      go(target);
+      // 메뉴 닫기
+      var menu = document.getElementById('moreMenu');
+      if (menu && !menu.hidden) {
+        menu.hidden = true;
+        var btn = document.getElementById('btnMore');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      }
+    } else if (el) {
+      var view = el.closest('section[data-view]');
+      if (view) show(view.getAttribute('data-view'), target, true);
+    }
+  }, true);
+
+  /* --------------------------------------------------- 데스크톱 좌측 레일 */
+  function buildSideRail() {
+    if (document.querySelector('.app-side')) return;
+    var side = document.createElement('aside');
+    side.className = 'app-side';
+    side.id = 'appSide';
+    side.setAttribute('aria-label', '화면 목록');
+    var html = '<p class="as-title">화면</p>';
+    VIEWS.forEach(function (v) {
+      html += '<button type="button" class="as-item" data-view="' + v + '">' +
+        '<span class="as-ico" aria-hidden="true">' + META[v][0] + '</span>' +
+        '<span class="as-txt"><b>' + META[v][1] + '</b><small>' + META[v][2] + '</small></span></button>';
+    });
+    html += '<p class="as-title">바로 열기</p>' +
+      '<button type="button" class="as-item as-quick" data-open="cookie"><span class="as-ico" aria-hidden="true">🍪</span><span class="as-txt"><b>우주 쿠키</b><small>오늘의 우주 사실</small></span></button>' +
+      '<button type="button" class="as-item as-quick" data-view="spacearchive"><span class="as-ico" aria-hidden="true">🛰</span><span class="as-txt"><b>관측 자료관</b><small>NASA · SpaceX 사진</small></span></button>' +
+      '<button type="button" class="as-item as-quick" data-open="ai"><span class="as-ico" aria-hidden="true">🤖</span><span class="as-txt"><b>AI 도우미</b><small>이 사이트 데이터로 답변</small></span></button>';
+    side.innerHTML = html;
+    var main = document.querySelector('main');
+    main.parentNode.insertBefore(side, main);
+    side.addEventListener('click', function (e) {
+      var item = e.target.closest('[data-view]');
+      if (item) { go(item.getAttribute('data-view')); return; }
+      var q = e.target.closest('[data-open]');
+      if (q) {
+        var k = q.getAttribute('data-open');
+        if (window.SpaceUI) { if (k === 'cookie') SpaceUI.openCookie(); else SpaceUI.openAI(); }
+      }
+    });
+  }
+  if (document.documentElement.getAttribute('data-layout') === 'desktop') buildSideRail();
+
+  /* ------------------------------------------------- 라이브 하늘 조작 시트 */
+  function wireLive() {
+    var tools = document.getElementById('liveToolsBtn');
+    var panel = document.querySelector('#live .live-panel');
+    if (tools && panel && !tools.dataset.wired) {
+      tools.dataset.wired = '1';
+      tools.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = panel.classList.toggle('is-controls-open');
+        tools.setAttribute('aria-expanded', open ? 'true' : 'false');
+        tools.textContent = open ? '✕ 닫기' : '⚙ 조작';
+      });
+    }
+    var ctrl = document.getElementById('liveControls');
+    if (ctrl && !ctrl.querySelector('.lc-close')) {
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'lc-close';
+      close.id = 'liveControlsClose';
+      close.textContent = '✕ 조작 닫기';
+      close.addEventListener('click', function () {
+        if (panel) panel.classList.remove('is-controls-open');
+        if (tools) { tools.setAttribute('aria-expanded', 'false'); tools.textContent = '⚙ 조작'; }
+      });
+      ctrl.insertBefore(close, ctrl.firstChild);
+    }
+    var cal2 = document.getElementById('liveCalBtnQ');
+    if (cal2 && !cal2.dataset.wired) {
+      cal2.dataset.wired = '1';
+      cal2.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var b = document.getElementById('liveCalBtn');
+        if (b) b.click();
+      });
+    }
+    var chip = document.getElementById('liveSensorChip');
+    if (chip && !chip.dataset.wired) {
+      chip.dataset.wired = '1';
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('tabindex', '0');
+      chip.title = '탭하면 센서를 켜거나 끕니다';
+      chip.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var b = document.getElementById('liveSensorBtn');
+        if (b) b.click();
+      });
+      chip.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chip.click(); }
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------- 초기화 */
+  function init() {
+    // space-ui가 만든 자료관 섹션도 하나의 화면으로
+    var sa = document.getElementById('spacearchive');
+    if (sa && !sa.getAttribute('data-view')) sa.setAttribute('data-view', 'spacearchive');
+    // 화면 후보를 다시 모아 숨김 상태 정리
+    var list = sections();
+    list.forEach(function (s) { if (!s.classList.contains('is-active')) s.hidden = true; });
+    document.documentElement.classList.add('has-views');
+    wireLive();
+    var key = (location.hash || '').replace('#', '');
+    show(MAP[key] || DEFAULT, key || null, false);
+    document.addEventListener('visibilitychange', function () {
+      if (!window.LiveSky) return;
+      if (document.hidden) window.LiveSky.pause();
+      else if (current === 'live') window.LiveSky.resume();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 0); });
+  } else {
+    setTimeout(init, 0);
+  }
 })();
 
 </script>
