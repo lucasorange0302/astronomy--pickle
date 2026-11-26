@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<meta name="description" content="오늘밤별 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
+<title>오늘밤별 — 대한민국 천체관측 가이드</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<a class="skip-link" href="#today">본문으로 건너뛰기</a>
+
+<!-- ===================== 공통 헤더 ===================== -->
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a class="brand" href="#today" aria-label="오늘밤별 홈">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="34" height="34">
+          <circle cx="20" cy="20" r="19" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35"/>
+          <path d="M25 8.5a12.5 12.5 0 1 0 0 23 10 10 0 0 1 0-23z" fill="currentColor"/>
+          <circle cx="30" cy="12" r="1.4" fill="currentColor"/>
+          <circle cx="12" cy="30" r="1" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <strong>오늘밤별</strong>
+        <small>대한민국 천체관측 가이드</small>
+      </span>
+    </a>
+
+    <nav class="main-nav" id="mainNav" aria-label="주요 메뉴">
+      <a href="#today" class="nav-link is-active">오늘 밤</a>
+      <a href="#live" class="nav-link">라이브 하늘</a>
+      <a href="#catalog" class="nav-link">천체 도감</a>
+      <a href="#lab" class="nav-link">촬영·계산</a>
+      <a href="#guide" class="nav-link">초보자 가이드</a>
+      <a href="#sites" class="nav-link">관측 명소</a>
+      <a href="#plan" class="nav-link">체크리스트</a>
+      <a href="#calendar" class="nav-link">천문 캘린더</a>
+      <a href="#science" class="nav-link">원리</a>
+    </nav>
+
+    <div class="header-tools">
+      <div class="font-ctrl" role="group" aria-label="글자 크기">
+        <button class="icon-btn icon-btn-sm" id="fsDown" aria-label="글자 작게" title="글자 작게">A−</button>
+        <button class="icon-btn icon-btn-sm" id="fsUp" aria-label="글자 크게" title="글자 크게">A+</button>
+      </div>
+      <button class="icon-btn" id="btnRed" aria-pressed="false" title="야간 관측용 레드라이트 모드 (암순응 보호)">
+        <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg>
+        <span class="tool-label">레드</span>
+      </button>
+      <button class="icon-btn" id="btnShareTop" title="오늘 밤 별보기 플랜을 복사">
+        <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.4 10.8 15.6 6.4M8.4 13.2l7.2 4.4" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span class="tool-label">공유</span>
+      </button>
+      <button class="icon-btn nav-toggle" id="navToggle" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 모바일 구역 바로가기 (가로 스크롤 칩) -->
+<nav class="section-chips" id="sectionChips" aria-label="구역 바로가기">
+  <a href="#today">오늘 밤</a>
+  <a href="#live">라이브 하늘</a>
+  <a href="#catalog">도감</a>
+  <a href="#lab">계산기</a>
+  <a href="#guide">가이드</a>
+  <a href="#sites">명소</a>
+  <a href="#plan">체크리스트</a>
+  <a href="#calendar">캘린더</a>
+  <a href="#science">원리</a>
+</nav>
+
+<main>
+
+<!-- ===================== 1. 오늘 밤 ===================== -->
+<section class="section section-hero" id="today">
+  <div class="hero-sky" aria-hidden="true">
+    <div class="hero-glow"></div>
+    <canvas class="hero-stars" id="heroStars" width="1200" height="620"></canvas>
+  </div>
+
+  <div class="wrap">
+    <div class="hero-head">
+      <p class="eyebrow">오늘 밤, 어디서 무엇을 볼까</p>
+      <h1>대한민국 어디서든,<br><span class="grad">오늘 밤 하늘</span>을 10초 만에.</h1>
+      <p class="hero-sub">지역과 날짜를 고르면 달 위상·어두운 시간·지금 떠 있는 천체·촬영 설정까지 한 번에 계산합니다.</p>
+
+      <div class="quick-actions" id="quickActions" role="group" aria-label="빠른 날짜 선택">
+        <button class="qa-btn is-active" data-preset="tonight" type="button"><span aria-hidden="true">🌙</span>오늘 밤</button>
+        <button class="qa-btn" data-preset="weekend" type="button"><span aria-hidden="true">📅</span>이번 주말</button>
+        <button class="qa-btn" data-preset="dark" type="button"><span aria-hidden="true">🌑</span>가장 어두운 밤</button>
+        <button class="qa-btn" data-preset="gem" type="button"><span aria-hidden="true">✨</span>12/14 쌍둥이자리</button>
+        <button class="qa-btn" data-preset="qua" type="button"><span aria-hidden="true">☄️</span>1/4 사분의자리</button>
+      </div>
+    </div>
+
+    <!-- 관측지·날짜 선택 -->
+    <div class="control-panel" id="controlPanel">
+      <div class="control-row">
+        <label class="field">
+          <span class="field-label">관측지</span>
+          <select id="siteSelect" aria-label="관측지 선택"></select>
+        </label>
+        <button class="btn btn-ghost" id="btnGeo" title="브라우저 위치 권한을 허용하면 현재 위치로 계산합니다">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg>
+          내 위치
+        </button>
+        <label class="field field-date">
+          <span class="field-label">날짜</span>
+          <input type="date" id="dateInput" aria-label="관측 날짜">
+        </label>
+        <label class="field field-time">
+          <span class="field-label">시각</span>
+          <input type="time" id="timeInput" aria-label="관측 시각 (비우면 지금)">
+          <button class="mini-btn" id="btnNow" type="button" title="현재 시각으로">지금</button>
+        </label>
+      </div>
+      <div class="control-row control-row-sub">
+        <button class="link-btn" id="btnCustom" aria-expanded="false">위경도 직접 입력</button>
+        <span class="coord-note" id="coordNote">37.1969°N · 127.0343°E · Bortle 7</span>
+        <div class="custom-coords" id="customCoords" hidden>
+          <label class="field field-sm"><span class="field-label">위도</span><input type="number" id="latInput" step="0.0001" min="-90" max="90" inputmode="decimal"></label>
+          <label class="field field-sm"><span class="field-label">경도</span><input type="number" id="lonInput" step="0.0001" min="-180" max="180" inputmode="decimal"></label>
+          <button class="btn btn-sm" id="btnApplyCoords">적용</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 밤하늘 타임랩스 -->
+    <div class="panel timemachine" id="timeMachine">
+      <div class="tm-head">
+        <div class="tm-title">
+          <span class="tm-label">밤하늘 타임랩스</span>
+          <strong class="tm-clock" id="tmClock">—</strong>
+        </div>
+        <div class="tm-actions">
+          <button class="btn btn-primary btn-sm" id="tmPlay" type="button" aria-pressed="false">▶ 재생</button>
+          <label class="tm-speed">속도
+            <select id="tmSpeed" aria-label="재생 속도">
+              <option value="60">1분/초</option>
+              <option value="300" selected>5분/초</option>
+              <option value="900">15분/초</option>
+            </select>
+          </label>
+          <button class="mini-btn" id="tmSunset" type="button">일몰부터</button>
+          <button class="mini-btn" id="tmNow" type="button">지금</button>
+        </div>
+      </div>
+      <input type="range" class="tm-slider" id="tmSlider" min="0" max="1000" value="0" step="1" aria-label="밤 시간 이동">
+      <div class="tm-scale"><span id="tmStartLbl">일몰</span><span>자정</span><span id="tmEndLbl">일출</span></div>
+      <p class="tm-hint">슬라이더를 밀면 전천 지도 · 라이브 하늘 · 행성 고도 · 달 위치가 함께 움직입니다. 재생을 누르면 밤새 하늘 변화를 빠르게 미리 볼 수 있습니다.</p>
+    </div>
+
+    <!-- 10초 요약 히어로 카드 -->
+    <div class="summary-card" id="heroSummary" aria-live="polite">
+      <div class="summary-main">
+        <div class="summary-head">
+          <span class="summary-date" id="summaryDate">—</span>
+          <span class="summary-place" id="summaryPlace">—</span>
+        </div>
+        <div class="summary-grid">
+          <div class="sum-moon">
+            <div class="moon-svg-wrap" id="heroMoonSvg"></div>
+            <div class="sum-moon-meta">
+              <strong id="heroMoonName">—</strong>
+              <span id="heroMoonPct">—</span>
+            </div>
+          </div>
+          <div class="sum-window">
+            <div class="sum-label">완전히 어두운 시간</div>
+            <strong class="sum-big" id="heroDarkWindow">—</strong>
+            <span class="sum-small" id="heroDarkHours">—</span>
+          </div>
+          <div class="sum-score">
+            <div class="score-ring" id="heroScoreRing">
+              <svg viewBox="0 0 100 100" width="88" height="88" aria-hidden="true">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="8"/>
+                <circle id="scoreArc" cx="50" cy="50" r="42" fill="none" stroke="url(#scoreGrad)" stroke-width="8"
+                        stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(-90 50 50)"/>
+                <defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#7ee0c0"/><stop offset="100%" stop-color="#ffd479"/>
+                </linearGradient></defs>
+              </svg>
+              <span id="heroScoreNum">—</span>
+            </div>
+            <div class="sum-label term" data-tip="달 밝기·관측지 광공해·어두운 시간을 종합한 '깊은하늘 관측' 지수입니다. 달과 행성은 이 점수와 별개로 언제든 볼 수 있습니다.">오늘 밤 관측 지수</div>
+          </div>
+        </div>
+        <div class="sum-top3" id="heroTop3"></div>
+      </div>
+      <div class="summary-side">
+        <div class="sum-side-row"><span>일몰</span><strong id="heroSunset">—</strong></div>
+        <div class="sum-side-row"><span>천문박명 끝</span><strong id="heroDusk">—</strong></div>
+        <div class="sum-side-row"><span>새벽 박명 시작</span><strong id="heroDawn">—</strong></div>
+        <div class="sum-side-row"><span>달 출/몰</span><strong id="heroMoonRS">—</strong></div>
+        <div class="sum-side-row"><span class="term" data-tip="내 위치 기준 하늘의 '현재 시각'. 적경 0h가 남중하는 때를 0시로 셉니다. 별이 지금 어디 있는지 계산하는 기준입니다.">지방항성시</span><strong id="heroLst">—</strong></div>
+        <button class="btn btn-primary btn-block" id="btnSharePlan">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M9 12.5l6-3.5M9 12.5l6 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          오늘 밤 플랜 복사
+        </button>
+        <p class="side-hint">카카오톡·문자에 그대로 붙여넣으세요. 위치 권한이 막혀 있으면 위경도를 직접 입력하세요.</p>
+        <button class="mini-btn" id="btnPrintPlan">플랜 인쇄 · PDF</button>
+      </div>
+    </div>
+
+    <!-- 밤 타임라인 -->
+    <div class="panel timeline-panel">
+      <div class="panel-head">
+        <h2>오늘 밤 어두운 시간</h2>
+        <span class="panel-note" id="timelineNote">—</span>
+      </div>
+      <div class="night-bar" id="nightBar"></div>
+      <div class="night-legend">
+        <span><i class="dot dot-day"></i>낮</span>
+        <span><i class="dot dot-civil"></i>시민박명</span>
+        <span><i class="dot dot-naut"></i>항해박명</span>
+        <span><i class="dot dot-astro"></i>천문박명</span>
+        <span><i class="dot dot-dark"></i>완전한 어둠</span>
+        <span><i class="dot dot-moon"></i>달 떠 있는 시간</span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- 전천 지도 -->
+      <div class="panel skymap-panel">
+        <div class="panel-head">
+          <h2>지금 하늘 (전천 지도)</h2>
+          <span class="panel-note" id="skyMapNote">—</span>
+        </div>
+        <div class="skymap-wrap">
+          <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도"></svg>
+        </div>
+        <p class="panel-foot">가운데가 머리 위(천정), 테두리가 지평선입니다. 동쪽이 왼쪽인 것은 하늘을 올려다보는 방향이기 때문입니다. <b>별·행성·달·성운을 눌러 보세요</b> — 그 자리에서 실시간 고도·방위·출몰을 보여 줍니다.</p>
+        <div class="sky-inspector" id="skyInspector"></div>
+      </div>
+
+      <!-- 달 · 태양 상세 -->
+      <div class="panel">
+        <div class="panel-head"><h2>달과 태양</h2></div>
+        <div class="moon-detail">
+          <div class="moon-svg-wrap moon-large" id="moonDetailSvg"></div>
+          <div class="moon-facts" id="moonFacts"></div>
+        </div>
+        <div class="moon-strip" id="moonStrip" aria-label="앞으로 14일 달 위상"></div>
+        <div class="sun-facts" id="sunFacts"></div>
+      </div>
+    </div>
+
+    <!-- 행성 -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>오늘 밤 행성</h2>
+        <span class="panel-note"><span class="term" data-tip="지구에서 본 밝기. 숫자가 작을수록 밝고, 1등급 차이는 약 2.5배 차이입니다.">겉보기 등급</span>·<span class="term" data-tip="지구에서 본 행성 원반의 각도 크기(″=각초). 클수록 망원경으로 크게 보입니다.">시지름</span>은 근사 계산값입니다</span>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="planetTable">
+          <thead><tr>
+            <th>행성</th><th>등급</th><th>고도</th><th>방위</th><th>시지름</th><th>출</th><th>남중</th><th>몰</th><th>관측</th><th>조준</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 시간대별 계획 -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>시간대별로 무엇을 볼까</h2>
+        <span class="panel-note">일몰부터 새벽까지, 그 시각 가장 잘 보이는 대상</span>
+      </div>
+      <div class="hourly-plan" id="hourlyPlan"></div>
+      <p class="panel-foot">각 시간은 정시 기준이며, 고도 20° 이상이고 달빛 영향을 덜 받는 대상을 우선 골랐습니다.</p>
+    </div>
+
+    <!-- 이번 달 최고의 밤 -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>이번 달, 가장 어두운 밤</h2>
+        <span class="panel-note">같은 관측지 기준 · 달 밝기와 어두운 시간으로 계산</span>
+      </div>
+      <div class="best-nights" id="bestNights"></div>
+    </div>
+
+    <!-- 장비별 추천 -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>오늘 밤 추천 천체</h2>
+        <span class="panel-note">장비 단계를 고르면 그에 맞는 대상만 보여드립니다</span>
+      </div>
+      <div class="tier-tabs" id="tierTabs" role="tablist"></div>
+      <div class="target-list" id="tonightTargets"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 1-B. 라이브 하늘 뷰 (스텔라리움 모드) ===================== -->
+<section class="section section-alt" id="live">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">스텔라리움 모드</p>
+      <h2>폰을 하늘로 향하면, <span class="grad">그 방향의 별</span>이 보입니다</h2>
+      <p class="section-sub">지금 선택한 관측지·시각의 하늘을 실제 방위·고도로 그립니다. 센서(자이로·나침반)를 켜면 폰을 움직이는 대로 따라오고, 끄면 드래그·방향 버튼으로 360° 둘러볼 수 있습니다. 별·행성·달을 누르면 정보 카드가 열립니다.</p>
+    </div>
+
+    <div class="panel live-panel">
+      <div class="live-stage" id="liveStage">
+        <canvas id="liveCanvas" role="img" aria-label="현재 방향의 하늘 (방위·고도 투영)"></canvas>
+        <div class="live-hud" aria-hidden="true"><span class="live-cross-h"></span><span class="live-cross-v"></span></div>
+        <div class="live-hud-top">
+          <span class="live-chip" id="liveAzChip">방위 —</span>
+          <span class="live-chip" id="liveAltChip">고도 —</span>
+          <span class="live-chip live-chip-sensor" id="liveSensorChip">센서 꺼짐</span>
+        </div>
+        <div class="live-center-card" id="liveCenterCard">시야 중앙 —</div>
+        <div class="live-zoom">
+          <button class="live-zbtn" id="liveZoomIn" type="button" aria-label="확대">＋</button>
+          <span class="live-fov-val" id="liveFovVal">65°</span>
+          <button class="live-zbtn" id="liveZoomOut" type="button" aria-label="축소">－</button>
+        </div>
+      </div>
+
+      <div class="live-controls">
+        <div class="live-pad" role="group" aria-label="방향 회전">
+          <button class="pad-btn pad-n" data-az="0" data-alt="30" type="button">북</button>
+          <button class="pad-btn pad-w" data-az="270" data-alt="30" type="button">서</button>
+          <button class="pad-btn pad-c" data-az="0" data-alt="88" type="button" title="천정(머리 위)">천정</button>
+          <button class="pad-btn pad-e" data-az="90" data-alt="30" type="button">동</button>
+          <button class="pad-btn pad-s" data-az="180" data-alt="30" type="button">남</button>
+        </div>
+
+        <div class="live-sliders">
+          <label class="live-field"><span>방위 <b id="liveAzVal">0°</b></span>
+            <input type="range" id="liveAz" min="0" max="359" step="1" value="0"></label>
+          <label class="live-field"><span>고도 <b id="liveAltVal">30°</b></span>
+            <input type="range" id="liveAlt" min="-10" max="89" step="1" value="30"></label>
+          <label class="live-field"><span>시야 <b id="liveFovVal2">65°</b></span>
+            <input type="range" id="liveFov" min="25" max="120" step="5" value="65"></label>
+        </div>
+
+        <div class="live-actions">
+          <button class="btn btn-primary btn-sm" id="liveSensorBtn" type="button" aria-pressed="false">🧭 센서로 하늘 비추기</button>
+          <button class="mini-btn" id="liveLabelsBtn" type="button" aria-pressed="true">🏷 이름 표시</button>
+          <button class="mini-btn" id="liveDeepBtn" type="button" aria-pressed="true">✨ 딥스카이</button>
+          <button class="mini-btn" id="liveResetBtn" type="button">↺ 처음 시선</button>
+        </div>
+      </div>
+
+      <div class="live-foot">
+        <div class="live-day-hint" id="liveDayHint" hidden>지금은 낮입니다 — 별은 밤에 보입니다. <button class="mini-btn" id="liveNightBtn" type="button">🌙 밤 22시 하늘 보기</button></div>
+        <div class="live-inview" id="liveInView"></div>
+        <p class="live-help" id="liveHelp">드래그·터치로 둘러보고, <b>북/동/남/서/천정</b> 버튼으로 한 번에 회전할 수 있습니다. 센서 연동은 HTTPS 보안 연결에서만 동작하며(iOS는 권한 허용 필요), 로컬 파일(file://)로 열었다면 자이로·나침반이 차단되므로 드래그·버튼으로 둘러보세요.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 2. 천체 도감 ===================== -->
+<section class="section" id="catalog">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">천체 도감</p>
+      <h2>오늘 밤 볼 수 있는 것들, <span class="grad">전부</span> 여기 있습니다</h2>
+      <p class="section-sub">항성·성운·성단·은하·행성·외계행성 40여 개를 관측 난이도와 계절로 골라 봅니다. 카드를 누르면 좌표·과학 해설·관측 팁이 열립니다.</p>
+    </div>
+
+    <div class="filter-bar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="search" id="searchInput" placeholder="천체 이름 검색 (예: 오리온, M42, 목성)" aria-label="천체 검색">
+        <button class="clear-btn" id="searchClear" type="button" aria-label="검색어 지우기" hidden>×</button>
+      </div>
+      <div class="chip-row" id="typeFilters" data-group="type"></div>
+      <div class="chip-row" id="equipFilters" data-group="equip"></div>
+      <div class="chip-row" id="seasonFilters" data-group="season"></div>
+      <div class="sort-row">
+        <label class="field field-inline"><span class="field-label">정렬</span>
+          <select id="sortSelect">
+            <option value="mag">밝은 순</option>
+            <option value="alt">지금 높은 순</option>
+            <option value="diff">쉬운 순</option>
+            <option value="name">이름 순</option>
+          </select>
+        </label>
+        <label class="check-inline"><input type="checkbox" id="onlyVisible"> 오늘 밤 지평선 위에 뜨는 것만</label>
+        <button class="mini-btn" id="filterReset" type="button">필터 초기화</button>
+      </div>
+    </div>
+    <p class="result-count" id="catalogCount">—</p>
+    <div class="catalog-grid" id="catalogGrid"></div>
+  </div>
+</section>
+
+<!-- ===================== 3. 촬영 · 계산기 ===================== -->
+<section class="section section-alt" id="lab">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">촬영 · 계산 랩</p>
+      <h2>감이 아니라 <span class="grad">계산</span>으로 찍습니다</h2>
+      <p class="section-sub">별이 점으로 찍히는 최대 노출, 망원경 배율·시야·사출동공, 등급과 거리 변환을 실제 공식으로 계산합니다.</p>
+    </div>
+
+    <div class="lab-tabs" role="tablist" id="labTabs">
+      <button class="lab-tab is-active" role="tab" data-tab="exposure" aria-selected="true">별 점상 노출</button>
+      <button class="lab-tab" role="tab" data-tab="optics" aria-selected="false">망원경 광학</button>
+      <button class="lab-tab" role="tab" data-tab="magnitude" aria-selected="false">등급 · 거리</button>
+      <button class="lab-tab" role="tab" data-tab="fov" aria-selected="false">시야 시뮬레이터</button>
+    </div>
+
+    <!-- 노출 계산기 -->
+    <div class="lab-panel panel is-active" id="tab-exposure">
+      <div class="calc-layout">
+        <div class="calc-inputs">
+          <h3>카메라 · 렌즈</h3>
+          <label class="field"><span class="field-label">초점거리 (mm)</span><input type="number" id="exFocal" value="24" min="1" step="1"></label>
+          <label class="field"><span class="field-label">조리개 (f/)</span><input type="number" id="exAperture" value="2.8" min="0.7" step="0.1"></label>
+          <label class="field"><span class="field-label">센서 크기</span>
+            <select id="exSensor">
+              <option value="36,24">풀프레임 (36×24mm)</option>
+              <option value="23.6,15.7">APS-C (23.6×15.7mm)</option>
+              <option value="17.3,13">마이크로 포서드 (17.3×13mm)</option>
+              <option value="13.2,8.8">1인치 (13.2×8.8mm)</option>
+              <option value="9.6,7.2" selected>스마트폰 1/1.3″ (9.6×7.2mm)</option>
+              <option value="6.4,4.8">스마트폰 1/2.3″ (6.4×4.8mm)</option>
+            </select>
+          </label>
+          <label class="field"><span class="field-label">화소 수 (MP)</span><input type="number" id="exMp" value="12" min="1" step="1"></label>
+          <label class="field"><span class="field-label">대상 적위 (°)</span><input type="number" id="exDec" value="0" min="-90" max="90" step="1">
+            <span class="field-hint">천구적도 0° · 오리온 성운 -5° · 북두칠성 +55°</span></label>
+        </div>
+        <div class="calc-results">
+          <div class="result-grid">
+            <div class="result-card accent">
+              <span class="result-label term" data-tip="조리개·픽셀피치·초점거리·적위를 모두 반영해 '별이 점으로 찍히는 최대 노출'을 구하는 경험식입니다.">NPF 권장 최대 노출</span>
+              <strong id="exNpf">—</strong>
+              <span class="result-note">별이 점으로 찍히는 실용 한계</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">500 법칙</span>
+              <strong id="exRule500">—</strong>
+              <span class="result-note">고전적 경험식 · 약간 번짐</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label term" data-tip="센서 한 화소의 물리적 크기(µm). 작을수록 같은 시간에 더 많이 번집니다.">픽셀 피치</span>
+              <strong id="exPitch">—</strong>
+              <span class="result-note">센서·화소에서 계산</span>
+            </div>
+            <div class="result-card">
+              <span class="result-label">픽셀당 화각</span>
+              <strong id="exScale">—</strong>
+              <span class="result-note">1픽셀이 덮는 하늘 각도</span>
+            </div>
+          </div>
+          <div class="result-card wide">
+            <span class="result-label">500 법칙 노출에서 별이 번지는 길이</span>
+            <strong id="exTrail">—</strong>
+            <div class="bar-track"><div class="bar-fill" id="exTrailBar"></div></div>
+            <span class="result-note">2픽셀 이하면 점, 그 이상이면 타원으로 보입니다.</span>
+          </div>
+          <p class="calc-explain" id="exExplain"></p>
+          <details class="explain">
+            <summary>원리 자세히 보기 — 왜 500/NPF가 성립하나</summary>
+            <p>별은 지구 자전으로 적위 δ에서 15″×cos δ /초 만큼 움직입니다. 화소 환산 각도는 (206265×픽셀피치µm)/초점거리mm [″]이므로, 허용 이동 픽셀 수로 나누면 최대 노출이 나옵니다. NPF식 t=(35N+30p)/(f·cosδ)는 이 관계를 근사한 경험식입니다. 자세한 유도는 <a href="#science">원리</a> 섹션에 있습니다.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- 광학 계산기 -->
+    <div class="lab-panel panel" id="tab-optics">
+      <div class="calc-layout">
+        <div class="calc-inputs">
+          <h3>망원경 · 접안렌즈</h3>
+          <label class="field"><span class="field-label">구경 (mm)</span><input type="number" id="opAperture" value="130" min="10" step="1"></label>
+          <label class="field"><span class="field-label">초점거리 (mm)</span><input type="number" id="opFocal" value="650" min="50" step="10"></label>
+          <label class="field"><span class="field-label">접안렌즈 초점거리 (mm)</span><input type="number" id="opEyepiece" value="25" min="1" step="1"></label>
+          <label class="field"><span class="field-label">접안렌즈 겉보기 시야 (°)</span><input type="number" id="opAfov" value="50" min="20" max="120" step="1"></label>
+        </div>
+        <div class="calc-results">
+          <div class="result-grid">
+            <div class="result-card accent"><span class="result-label">배율</span><strong id="opMag">—</strong><span class="result-note">초점거리 ÷ 접안렌즈</span></div>
+            <div class="result-card"><span class="result-label">실시야</span><strong id="opTfov">—</strong><span class="result-note">보이는 하늘의 폭</span></div>
+            <div class="result-card"><span class="result-label term" data-tip="접안렌즈를 통해 나오는 빛다발의 지름(구경÷배율). 5~7mm면 가장 밝고 편안합니다.">사출동공</span><strong id="opExit">—</strong><span class="result-note">구경 ÷ 배율</span></div>
+            <div class="result-card"><span class="result-label">광속비</span><strong id="opFratio">—</strong><span class="result-note">f/ 값</span></div>
+            <div class="result-card"><span class="result-label term" data-tip="이 망원경으로 겨우 볼 수 있는 가장 어두운 별의 등급. 구경이 클수록, 하늘이 어두울수록 좋아집니다.">한계등급</span><strong id="opLimit">—</strong><span class="result-note">이상 조건 근사</span></div>
+            <div class="result-card"><span class="result-label term" data-tip="두 별을 겨우 갈라볼 수 있는 최소 각도(116″÷구경mm). 대기 시상이 나쁘면 이보다 못합니다.">다우스 분해능</span><strong id="opDawes">—</strong><span class="result-note">116″ ÷ 구경</span></div>
+            <div class="result-card"><span class="result-label">집광력</span><strong id="opLight">—</strong><span class="result-note">7mm 눈동자 대비</span></div>
+            <div class="result-card"><span class="result-label">최대 유효 배율</span><strong id="opMaxMag">—</strong><span class="result-note">구경×2 기준</span></div>
+          </div>
+          <div class="result-card wide" id="opVerdictWrap">
+            <span class="result-label">이 조합은?</span>
+            <strong id="opVerdict">—</strong>
+            <span class="result-note" id="opVerdictNote"></span>
+          </div>
+          <div class="result-card wide">
+            <span class="result-label">이 시야에 달(0.5°)이 차지하는 비율</span>
+            <div class="bar-track"><div class="bar-fill" id="opMoonBar"></div></div>
+            <span class="result-note" id="opMoonNote">—</span>
+          </div>
+          <p class="calc-explain" id="opExplain"></p>
+          <details class="explain">
+            <summary>원리 자세히 보기 — 구경·배율·사출동공의 관계</summary>
+            <p>집광력은 구경의 제곱, 분해능은 구경에 반비례합니다. 배율을 올리면 상은 커지지만 사출동공이 작아져 어두워지고, 구경×2를 넘으면 회절 때문에 오히려 흐려집니다. 사출동공이 7mm를 넘으면 빛이 눈동자 밖으로 새고, 0.7mm 아래면 먼지·눈의 부유물이 보입니다.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+
+<!-- 시야(FOV) 시뮬레이터 -->
+    <div class="lab-panel panel" id="tab-fov">
+      <div class="calc-layout">
+        <div class="calc-inputs">
+          <h3>내 장비로 무엇이 얼마나 크게 보일까</h3>
+          <p class="calc-help">망원경+아이피스 또는 카메라+렌즈를 넣으면 실제 시야각을 계산해, 보름달(0.52°)·목성·M42(85′×60′)·M31(178′×63′)이 화면에 어느 크기로 들어오는지 그려 줍니다.</p>
+          <div class="seg-row" role="group" aria-label="장비 종류">
+            <button class="seg-btn is-active" data-fovmode="scope" type="button">망원경 + 아이피스</button>
+            <button class="seg-btn" data-fovmode="camera" type="button">카메라 + 렌즈</button>
+          </div>
+          <div id="fovScopeFields">
+            <label class="field"><span class="field-label">초점거리 (mm)</span><input type="number" id="fovFocal" value="1300" min="50" step="10"></label>
+            <label class="field"><span class="field-label">아이피스 초점거리 (mm)</span><input type="number" id="fovEyepiece" value="25" min="1" step="1"></label>
+            <label class="field"><span class="field-label">아이피스 겉보기 시야 (°)</span><input type="number" id="fovAfov" value="52" min="20" max="120" step="1"></label>
+          </div>
+          <div id="fovCameraFields" hidden>
+            <label class="field"><span class="field-label">렌즈 초점거리 (mm)</span><input type="number" id="fovCamFocal" value="200" min="4" step="5"></label>
+            <label class="field"><span class="field-label">센서 크기</span>
+              <select id="fovSensor">
+                <option value="36,24">풀프레임 (36×24mm)</option>
+                <option value="23.6,15.7">APS-C (23.6×15.7mm)</option>
+                <option value="17.3,13">마이크로 포서드 (17.3×13mm)</option>
+                <option value="9.6,7.2" selected>스마트폰 1/1.3″ (9.6×7.2mm)</option>
+                <option value="6.4,4.8">스마트폰 1/2.3″ (6.4×4.8mm)</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="calc-results">
+          <div class="fov-canvas-wrap"><canvas id="fovCanvas" width="640" height="480" aria-label="시야 시뮬레이터"></canvas></div>
+          <div class="seg-row fov-target-row" id="fovTargets" role="group" aria-label="비교할 천체">
+            <button class="seg-btn is-active" data-fovtarget="moon" type="button">보름달</button>
+            <button class="seg-btn" data-fovtarget="jupiter" type="button">목성</button>
+            <button class="seg-btn" data-fovtarget="m42" type="button">M42</button>
+            <button class="seg-btn" data-fovtarget="m31" type="button">M31</button>
+          </div>
+          <div class="fov-bars" id="fovBars"></div>
+          <div class="result-grid">
+            <div class="result-card accent"><span class="result-label">실시야</span><strong id="fovOutTfov">—</strong><span class="result-note" id="fovOutTfovNote">—</span></div>
+            <div class="result-card"><span class="result-label">배율 / 화각</span><strong id="fovOutMag">—</strong><span class="result-note" id="fovOutMagNote">—</span></div>
+          </div>
+          <div class="fov-legend">
+            <span><i class="fov-dot fov-moon"></i>보름달 0.52°</span>
+            <span><i class="fov-dot fov-jup"></i>목성 (현재 시지름)</span>
+            <span><i class="fov-dot fov-m42"></i>M42 85′×60′</span>
+            <span><i class="fov-dot fov-m31"></i>M31 178′×63′</span>
+          </div>
+          <p class="calc-explain" id="fovExplain"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 등급 계산기 -->
+    <div class="lab-panel panel" id="tab-magnitude">
+      <div class="calc-layout">
+        <div class="calc-inputs">
+          <h3>등급과 거리</h3>
+          <p class="calc-help">세 값 중 두 개를 입력하고 "계산"을 누르면 나머지를 구합니다. 거리 지수 공식 m − M = 5 log₁₀(d) − 5 (d는 파섹).</p>
+          <label class="field"><span class="field-label">겉보기 등급 (m)</span><input type="number" id="mgApparent" step="0.01" placeholder="예: 4.0"></label>
+          <label class="field"><span class="field-label">절대 등급 (M)</span><input type="number" id="mgAbsolute" step="0.01" placeholder="예: -20.5"></label>
+          <div class="field field-inline">
+            <span class="field-label">거리</span>
+            <input type="number" id="mgDistance" step="0.001" placeholder="예: 1.344">
+            <select id="mgUnit"><option value="ly">광년</option><option value="pc">파섹</option><option value="au">AU</option><option value="kly">천광년</option><option value="mly">백만광년</option></select>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="mgCalc">계산</button>
+            <button class="btn btn-ghost" id="mgClear">지우기</button>
+          </div>
+        </div>
+        <div class="calc-results">
+          <div class="result-grid">
+            <div class="result-card accent"><span class="result-label">겉보기 등급</span><strong id="mgOutM">—</strong></div>
+            <div class="result-card"><span class="result-label">절대 등급</span><strong id="mgOutAbs">—</strong></div>
+            <div class="result-card"><span class="result-label">거리</span><strong id="mgOutDist">—</strong></div>
+            <div class="result-card"><span class="result-label">태양 대비 광도</span><strong id="mgOutLum">—</strong></div>
+          </div>
+          <div class="result-card wide"><span class="result-label">해석</span><strong id="mgOutNote" class="note-text">값을 입력해 보세요.</strong></div>
+          <p class="calc-explain" id="mgExplain"></p>
+          <details class="explain">
+            <summary>원리 자세히 보기 — 거리 지수</summary>
+            <p>같은 별이라도 멀수록 어둡게 보입니다. 밝기는 거리의 제곱에 반비례하므로 등급으로는 5 log₁₀(d) 만큼 어두워집니다. 절대 등급은 10파섹에서의 밝기로 정의해, 거리를 모르는 별의 실제 광도를 비교할 수 있게 합니다.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4. 초보자 가이드 ===================== -->
+<section class="section" id="guide">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">처음이라면</p>
+      <h2>오늘 밤 처음 나가도 <span class="grad">실패하지 않는</span> 7단계</h2>
+      <p class="section-sub">망원경 없이, 손에 아무것도 없이 시작하는 순서입니다. 각 단계는 10분이면 됩니다.</p>
+    </div>
+
+    <div class="steps" id="beginnerSteps">
+      <article class="step">
+        <span class="step-num">1</span>
+        <h3>해 진 시각부터 확인</h3>
+        <p>오늘 일몰과 천문박명이 끝나는 시각을 <a href="#today">대시보드</a>에서 확인하세요. 하늘이 완전히 어두워지는 데 보통 1시간 20분이 걸립니다.</p>
+      </article>
+      <article class="step">
+        <span class="step-num">2</span>
+        <h3>달부터 보세요</h3>
+        <p>달은 가장 밝고 찾기 쉬운 천체입니다. 휴대폰 손전등을 끄고 달의 크레이터와 바다를 5분만 봐도 "별 보기"가 무엇인지 감이 옵니다.</p>
+      </article>
+      <article class="step">
+        <span class="step-num">3</span>
+        <h3>"반짝이지 않는 점"을 찾으세요</h3>
+        <p>행성은 원반이라 별처럼 반짝이지 않습니다. 금성·목성·토성·화성은 도심에서도 보입니다. 대시보드의 행성 표에서 방위와 고도를 확인하세요.</p>
+      </article>
+      <article class="step">
+        <span class="step-num">4</span>
+        <h3>계절 대표 별자리 하나만 외우세요</h3>
+        <p>겨울은 오리온, 봄은 사자자리(레굴루스), 여름은 베가·데네브·알타이르 대삼각형, 가을은 페가수스 사각형. 하나를 알면 나머지가 그 주변에 보입니다.</p>
+      </article>
+      <article class="step">
+        <span class="step-num">5</span>
+        <h3>눈을 20분 적응시키세요</h3>
+        <p>휴대폰 화면을 보지 말고 어둠에 눈을 적응시킵니다. 이 사이트의 <button class="inline-link" id="redModeInline">레드라이트 모드</button>를 켜면 화면을 봐도 암순응이 덜 깨집니다.</p>
+      </article>
+      <article class="step">
+        <span class="step-num">6</span>
+        <h3>누워서 넓게 보세요</h3>
+        <p>돗자리를 깔고 누우면 하늘의 절반이 시야에 들어옵니다. 유성우는 복사점만 보지 말고 하늘 전체를 봐야 합니다.</p>
+      </article>
+      <article class="step">
+        <span class="step-num">7</span>
+        <h3>기록을 남기세요</h3>
+        <p>본 날짜·장소·대상·느낌을 <a href="#plan">관측 로그</a>에 남기면, 다음에 무엇을 볼지 스스로 알게 됩니다. 기록은 JSON으로 내보낼 수 있습니다.</p>
+      </article>
+    </div>
+
+    <div class="panel" id="failurePanel">
+      <div class="panel-head"><h2>별 보러 갔는데 아무것도 안 보였다 — 실패 원인 14가지</h2><span class="panel-note">대부분은 하늘 문제가 아니라 준비 문제입니다</span></div>
+      <div class="table-scroll">
+        <table class="data-table failure-table">
+          <thead><tr><th>#</th><th>실패 원인</th><th>실제로 일어나는 일</th><th>해결</th></tr></thead>
+          <tbody id="failureTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel" id="twilightPanel">
+      <div class="panel-head"><h2>어둠의 세 단계 — 천문박명을 알아야 합니다</h2><span class="panel-note">"해가 졌는데 왜 안 보이지"의 답</span></div>
+      <div class="twilight-row" id="twilightList"></div>
+      <p class="panel-foot">계절에 따라 해 진 뒤 완전히 어두워지기까지 여름 1시간 30분, 겨울 1시간 20분가량 걸립니다(위도·계절에 따라 다름). 출발 시각은 "일몰 + 1시간 30분"을 기준으로 잡으면 헛걸음이 없습니다.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>장비 단계 — 지금 가진 것으로</h2><span class="panel-note">위에서 아래로 확장하면 됩니다</span></div>
+      <div class="equip-ladder" id="equipLadder"></div>
+    </div>
+
+    <!-- 스마트폰 촬영 -->
+    <div class="panel" id="phonePhoto">
+      <div class="panel-head"><h2>스마트폰으로 은하수·성운 찍기</h2><span class="panel-note">삼각대와 30분만 있으면 됩니다</span></div>
+      <div class="photo-grid">
+        <div class="photo-col">
+          <h3>1. 준비물</h3>
+          <ul class="tick-list">
+            <li>삼각대 + 휴대폰 거치대 (없으면 돌 위에 고정)</li>
+            <li>셔터 지연 3초 또는 블루투스 리모컨 — 손떨림이 최대 적</li>
+            <li>보조배터리 (겨울엔 배터리가 1시간 만에 닳습니다)</li>
+            <li>망원경 촬영이라면 스마트폰 어댑터</li>
+          </ul>
+          <h3>2. 카메라 설정</h3>
+          <ul class="tick-list">
+            <li><b>RAW(ProRAW)</b> — JPEG은 별이 뭉개집니다</li>
+            <li><b>ISO 1600~3200</b>, 은하수는 20~30초, 오리온 성운은 3~10초</li>
+            <li><b>초점 고정</b> — 밝은 별에 맞춘 뒤 수동 고정(자동초점은 밤에 헤맵니다)</li>
+            <li><b>야간 모드 OFF</b> — 자동 합성은 별을 지웁니다. 수동(Pro) 모드 사용</li>
+            <li>화이트밸런스 3800~4200K, 노이즈 감소 OFF</li>
+          </ul>
+        </div>
+        <div class="photo-col">
+          <h3>3. 스태킹 (핵심)</h3>
+          <p class="small">같은 구도를 20~100장 찍어 무료 앱(Sequator·DeepSkyStacker)으로 평균하면 잡음이 1/√N로 줄어 별이 살아납니다. 30장이면 약 5.5배 깨끗해집니다.</p>
+          <h3>4. 망원경 + 스마트폰 어댑터</h3>
+          <ul class="tick-list">
+            <li>접안렌즈에 어댑터를 물리고 <b>화면 중앙에 상을 맞춘 뒤</b> 조이세요</li>
+            <li>저배율(25mm) 접안렌즈가 다루기 쉽습니다</li>
+            <li>초점은 어댑터 장착 후 다시 맞춥니다(무게로 틀어짐)</li>
+            <li>2초 타이머 + 10장 연사로 한 세트</li>
+          </ul>
+          <h3>5. 실패하는 이유</h3>
+          <ul class="tick-list">
+            <li>달이 떠 있음 → 은하수는 포기하고 달·행성으로</li>
+            <li>도심 광공해 → Bortle 5 이하로 이동</li>
+            <li>이슬 → 렌즈 히터 또는 보온팩</li>
+            <li>바람 → 삼각대에 가방을 매달아 무게 중심 낮추기</li>
+          </ul>
+        </div>
+      </div>
+      <details class="explain">
+        <summary>원리 자세히 보기 — 왜 여러 장을 겹치면 깨끗해지나</summary>
+        <p>별빛(신호)은 매 프레임 같은 위치에 오지만 잡음은 매번 무작위입니다. N장을 평균하면 신호는 그대로, 잡음은 1/√N로 줄어 신호대잡음비가 √N배 좋아집니다. 30장이면 약 5.5배. 단, 한 장의 노출을 늘리는 것과 같지는 않습니다 — 한 장이 포화되면 정보가 사라지기 때문입니다. 그래서 “짧게 많이”가 스마트폰의 정답입니다.</p>
+      </details>
+    </div>
+
+    <!-- 적위 한계 계산 -->
+    <div class="panel" id="declPanel">
+      <div class="panel-head"><h2>내 위치에서 이 천체가 보일까?</h2><span class="panel-note">적위만 알면 바로 계산됩니다</span></div>
+      <div class="decl-layout">
+        <div class="decl-input">
+          <label class="field"><span class="field-label">천체의 적위 (°)</span>
+            <input type="number" id="decCheck" value="-62.7" min="-90" max="90" step="0.1">
+          </label>
+          <p class="small muted">예: 프록시마 센타우리 −62.7° · 리겔 −8.2° · 북극성 +89.3°</p>
+        </div>
+        <div class="decl-result" id="decResult"></div>
+      </div>
+      <p class="panel-foot">남중 최고 고도 = 90° − |위도 − 적위|. 적위가 (위도 − 90°)보다 남쪽이면 지평선 위로 전혀 올라오지 않습니다. 지평선 위 10° 이하는 대기 소광 때문에 실제로 보기 어렵습니다.</p>
+    </div>
+
+    <div class="panel" id="glossaryPanel">
+      <div class="panel-head"><h2>용어사전 <span class="count-pill" id="glossCount">89</span></h2><span class="panel-note">용어를 누르면 설명이 열립니다 · 본문의 점선 용어도 눌러 보세요</span></div>
+      <div class="gloss-tools">
+        <div class="search-box search-sm">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input type="search" id="glossSearch" placeholder="용어 검색 (예: 적위, Bortle, 시상)" aria-label="용어 검색">
+          <button class="clear-btn" id="glossClear" type="button" aria-label="검색어 지우기" hidden>×</button>
+        </div>
+        <div class="chip-row" id="glossGroups"></div>
+      </div>
+      <div class="glossary-list" id="glossaryList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 5. 관측 명소 ===================== -->
+<section class="section section-alt" id="sites">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">전국 관측 명소</p>
+      <h2>집에서 30분, <span class="grad">별이 쏟아지는 곳</span>까지</h2>
+      <p class="section-sub">수도권부터 제주까지 34곳. 광공해 등급·해발·운영시간·요금·예약 방식·오산 기준 차량 소요 시간까지, 공식 페이지와 지도 데이터로 확인한 실전 정보로 정리했습니다. <b>Bortle은 모두 추정값</b>입니다.</p>
+    </div>
+
+    <div class="panel bortle-panel">
+      <div class="panel-head"><h2><span class="term" data-tip="관측지 하늘의 어두움을 1(가장 어두움)~9(도심)로 나눈 국제적 기준. 낮을수록 은하수와 흐린 은하까지 보입니다.">Bortle 광공해 등급</span>이란</h2><span class="panel-note">1에 가까울수록 어둡습니다</span></div>
+      <div class="bortle-grid" id="bortleGrid"></div>
+    </div>
+
+    <div class="site-tools">
+      <div class="chip-row site-regions" id="siteRegions"></div>
+      <label class="check-inline"><input type="checkbox" id="onlyNoBooking"> 예약 없이 가는 곳만</label>
+      <button class="mini-btn" id="btnSortSites">현재 관측지에서 가까운 순</button>
+    </div>
+    <p class="site-warn-note">운영 시간과 요금, 예약 방식은 수시로 바뀝니다. 방문 전에 해당 시설 공식 홈페이지나 전화로 확인하세요. 야간 관측은 날씨에 따라 취소되며, 흐리면 관측 대신 영상·강의로 대체되는 경우가 많습니다. 산길 야간 운전과 결빙에 주의하세요.</p>
+    <div class="site-grid" id="siteGrid"></div>
+  </div>
+</section>
+
+<!-- ===================== 6. 체크리스트 · 로그 ===================== -->
+<section class="section" id="plan">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">준비와 기록</p>
+      <h2>체크리스트로 나가고, <span class="grad">로그</span>로 남기세요</h2>
+      <p class="section-sub">체크 상태와 관측 기록은 이 브라우저에 저장됩니다(localStorage). 서버로 전송되지 않습니다.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>관측 준비 체크리스트</h2>
+          <button class="mini-btn" id="btnResetCheck">초기화</button>
+        </div>
+        <div class="progress-line"><div class="progress-fill" id="checkProgress"></div></div>
+        <p class="panel-note" id="checkCount">0 / 0</p>
+        <div id="checklistList" class="checklist"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>관측 로그</h2>
+          <div class="btn-row">
+            <button class="mini-btn" id="btnExportLog">JSON 내보내기</button>
+            <button class="mini-btn" id="btnImportLog">가져오기</button>
+            <input type="file" id="importFile" accept="application/json,.json" hidden>
+          </div>
+        </div>
+        <form class="log-form" id="logForm">
+          <div class="log-row">
+            <label class="field"><span class="field-label">날짜</span><input type="date" id="logDate"></label>
+            <label class="field"><span class="field-label">장소</span><input type="text" id="logPlace" placeholder="예: 강릉 안반데기"></label>
+          </div>
+          <div class="log-row">
+            <label class="field"><span class="field-label">장비</span>
+              <select id="logEquip"><option>맨눈</option><option>쌍안경</option><option>망원경</option><option>스마트폰</option><option>카메라</option></select>
+            </label>
+            <label class="field"><span class="field-label">관측 대상</span><input type="text" id="logTarget" placeholder="예: M42, 목성"></label>
+          </div>
+          <div class="log-row">
+            <label class="field"><span class="field-label">시상 (1~5)</span><input type="range" id="logSeeing" min="1" max="5" value="3"></label>
+            <label class="field"><span class="field-label">투명도 (1~5)</span><input type="range" id="logTrans" min="1" max="5" value="3"></label>
+            <label class="field"><span class="field-label">결과</span>
+              <select id="logResult"><option>성공</option><option>부분 성공</option><option>실패</option></select>
+            </label>
+          </div>
+          <label class="field"><span class="field-label">메모</span><textarea id="logMemo" rows="2" placeholder="무엇이 보였나요?"></textarea></label>
+          <button class="btn btn-primary" type="submit">기록 저장</button>
+        </form>
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 7. 천문 캘린더 ===================== -->
+<section class="section section-alt" id="calendar">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">2026 ~ 2027</p>
+      <h2>놓치면 아쉬운 <span class="grad">하늘의 일정</span></h2>
+      <p class="section-sub">한국천문연구원(KASI) 월별 천문현상, IMO 유성우 달력, NASA 일식·월식 자료로 확인한 일정입니다. 시각은 한국 표준시(KST).</p>
+    </div>
+
+    <div class="panel lunar-note">
+      <div class="panel-head"><h2>⚠ 2027년에는 한국에서 볼 만한 월식이 없습니다</h2><span class="panel-note">NASA GSFC 월식 목록 확인</span></div>
+      <p>2027년 월식은 <b>3회 모두 반영식</b>입니다. 2/21 08:13(한국 일출 이후·달 진 뒤), 7/19 01:03(식분 0.002로 사실상 없음), 8/17 16:14(한낮). 부분식·개기식은 한 번도 없습니다.</p>
+      <p><b>다음 기회:</b> 2028-07-06 부분식(한국 2028-07-07 03:20 최대) → <b>2028-12-31 개기월식</b>(최대 16:53 UT = <b>2029-01-01 01:53 KST</b>, 개기 1시간 11분).</p>
+    </div>
+
+    <div class="event-tools">
+      <div class="chip-row" id="eventFilters"></div>
+      <label class="check-inline"><input type="checkbox" id="hidePast" checked> 지난 일정 숨기기</label>
+    </div>
+    <div class="event-list" id="eventList"></div>
+
+    <div class="panel source-panel">
+      <div class="panel-head"><h2>자료 출처와 오차</h2></div>
+      <ul class="source-list">
+        <li>한국천문연구원(KASI) 월별 천문현상·「2026년도 주목할 천문현상」·「2027년 주목할 천문현상」 — 유성우 극대, 월식·일식, 보름달 시각</li>
+        <li>국제유성기구(IMO) 2027 Meteor Shower Calendar — 극대 시각(UT), ZHR, 달 조건</li>
+        <li>NASA GSFC Eclipse Web Site / NASA Science — 2026~2027 일식·월식 종류와 가시 지역</li>
+        <li>NAOJ 2027 천문현상 표 — 행성 충·최대이각 시각</li>
+        <li>행성 위치는 사이트 내 VSOP87 계열 근사 계산(Schlyter)으로, 실제와 ±1~2′ 차이가 날 수 있습니다.</li>
+        <li>일출·일몰·박명·월출·월몰은 2분 간격 고도 표본화로 계산해 ±1~2분 오차가 있습니다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 8. 원리 ===================== -->
+<section class="section" id="science">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">원리 깊이 보기</p>
+      <h2>왜 그렇게 되는지 <span class="grad">알면</span> 훨씬 잘 보입니다</h2>
+      <p class="section-sub">암순응, 노출 법칙, 구경과 분해능, 스태킹, 시상, 달빛. 각 항목은 접혀 있으니 필요한 것만 펼쳐 보세요.</p>
+    </div>
+    <div class="principles" id="principlesList"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== 푸터 ===================== -->
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <strong>오늘밤별</strong>
+      <p>대한민국 천체관측 가이드 · 설치 없이 브라우저에서 바로</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://stellarium-web.org/" target="_blank" rel="noopener">Stellarium Web (정밀 성도)</a>
+      <a href="https://astro.kasi.re.kr/" target="_blank" rel="noopener">KASI 천문우주정보</a>
+      <a href="https://www.imo.net/" target="_blank" rel="noopener">IMO 유성우 자료</a>
+      <a href="https://eclipse.gsfc.nasa.gov/" target="_blank" rel="noopener">NASA Eclipse</a>
+    </div>
+    <p class="footer-note">이 파일(<b>별밤지도.html</b>)은 외부 파일 없이 혼자 동작하는 단일 HTML입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
+  </div>
+</footer>
+
+<!-- 천체 상세 모달 -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-backdrop" data-close="1"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="닫기">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div class="noscript-warn">이 사이트는 달 위상·행성 위치·박명 시각을 브라우저에서 직접 계산합니다. JavaScript를 켜야 모든 기능이 동작합니다.</div>
+</noscript>
+<script src="data.js"></script>
+<script src="data-extra.js"></script>
+<script src="astro.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
