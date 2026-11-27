@@ -451,6 +451,7 @@
       if (chip) {
         $$('#saChips .chip').forEach(function (b) { b.classList.toggle('is-active', b === chip); });
         renderGallery(chip.getAttribute('data-sa'));
+        saFillTag(chip.getAttribute('data-sa'), 0);
         return;
       }
       if (e.target.closest('#saMore')) { saLoadMore(); return; }
@@ -488,12 +489,20 @@
     }
   }
 
+  // 고른 기관의 사진이 아직 안 불러와졌으면, 나올 때까지 다음 묶음을 이어서 받습니다.
+  function saFillTag(tag, tries) {
+    if (!tag || tries >= 8) return;
+    if (SA.busy || !SA.pages || SA.page >= SA.pages) return;
+    if (SD.GALLERY.some(function (g) { return instMatch(g, tag); })) return;
+    saLoadMore().then(function () { saFillTag(tag, tries + 1); }, function () { });
+  }
+
   function saLoadMore() {
     if (SA.busy || SA.page >= SA.pages) return;
     SA.busy = true;
     saPaintMore();
     var n = SA.page;
-    fetchJSON(SA_BASE + 'p' + n + '.json').then(function (arr) {
+    return fetchJSON(SA_BASE + 'p' + n + '.json').then(function (arr) {
       (arr || []).forEach(function (e) {
         var id = e.id || ('p' + n + '-' + SD.GALLERY.length);
         if (SA.seen[id]) return;
@@ -952,6 +961,15 @@
     else if (C2.sort === 'mag') out.sort(function (a, b) { return magOf(a) - magOf(b); });
     else if (C2.sort === 'name') out.sort(function (a, b) { return a.i.localeCompare(b.i, 'ko'); });
     else out.sort(function (a, b) { return (b.s || 0) - (a.s || 0); });
+    // 정확히 일치하는 번호(예: IC 434, HIP 32349)는 부분 일치보다 앞에
+    if (q) {
+      var nq = q.replace(/\s+/g, '');
+      out.sort(function (a, b) {
+        var ax = String(a.i).replace(/\s+/g, '').toLowerCase() === nq ? 0 : 1;
+        var bx = String(b.i).replace(/\s+/g, '').toLowerCase() === nq ? 0 : 1;
+        return ax - bx;
+      });
+    }
     return out;
   }
 

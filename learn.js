@@ -1465,6 +1465,18 @@
               '<p class="lux-text">' + esc(r.text) + '</p>' +
               (r.eq ? '<code>' + esc(r.eq) + '</code>' : '') + '</li>';
           }).join('') + '</ol></div>' : '') +
+          (u.detail ? '<div class="lu-block lu-deep"><h5>더 깊이 — 원리와 계산</h5>' +
+            u.detail.map(function (d) { return '<div class="lux-deep"><p class="lux-h">' + esc(d.h) + '</p><p>' + esc(d.p) + '</p></div>'; }).join('') +
+            '</div>' : '') +
+          (u.table ? '<div class="lu-block lu-table"><h5>' + esc(u.table.title || '핵심 수치 비교') + '</h5>' +
+            '<div class="lux-table-wrap"><table class="lux-table"><thead><tr>' +
+            u.table.head.map(function (h) { return '<th scope="col">' + esc(h) + '</th>'; }).join('') +
+            '</tr></thead><tbody>' +
+            u.table.rows.map(function (r) { return '<tr>' + r.map(function (c, ci) { return (ci === 0 ? '<th scope="row">' : '<td>') + esc(c) + (ci === 0 ? '</th>' : '</td>'); }).join('') + '</tr>'; }).join('') +
+            '</tbody></table></div>' + (u.table.cap ? '<p class="lux-cap">' + esc(u.table.cap) + '</p>' : '') +
+            '</div>' : '') +
+          (u.exam ? '<div class="lu-block lu-exam"><h5>내신·수능 포인트</h5><ul>' +
+            (Array.isArray(u.exam) ? u.exam : [u.exam]).map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></div>' : '') +
           '<div class="lu-grid">' +
           '<div class="lu-block"><h5>자주 하는 오개념</h5><ul>' + u.misconcept.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
           '<div class="lu-block"><h5>탐구 질문</h5><ul>' + u.question.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' +
@@ -1477,7 +1489,7 @@
           body.hidden = !open;
           head.setAttribute('aria-expanded', String(open));
           card.classList.toggle('is-open', open);
-          if (open && u.sim) ensureSim(u.sim);
+          if (open && u.sim) ensureSim(u.sim, card);
         });
         card.classList.toggle('is-open', false);
         });
@@ -1485,8 +1497,8 @@
       // 단원은 모두 접힌 채로 시작합니다. 펼칠 때 실험을 만듭니다.
     }
 
-    function ensureSim(key) {
-      var host = $('[data-sim-host="' + key + '"]');
+    function ensureSim(key, card) {
+      var host = (card || document).querySelector('[data-sim-host="' + key + '"]');
       if (!host || host.getAttribute('data-made')) return;
       host.setAttribute('data-made', '1');
       if (key === 'moon') simMoon(host);
@@ -1560,6 +1572,10 @@
   }
 
   function init() {
+    if (window.__LEARN_PLUS && !window.__LEARN_PLUS_DONE) {
+      try { window.__LEARN_PLUS(CURRICULUM); window.__LEARN_PLUS_DONE = true; }
+      catch (e) { if (window.console) console.warn('learn-plus', e); }
+    }
     var cur = $('#learnCurriculumBody');
     var his = $('#learnHistoryBody');
     if (cur) buildCurriculum(cur);
