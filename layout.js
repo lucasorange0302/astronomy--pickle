@@ -166,6 +166,34 @@
     }, true);
   }
 
+  /* 8) 라이브 하늘 무대 높이 보정 ----------------------------------------
+     무대 위에 첫 방문 지역 안내(높이가 글자 크기·줄바꿈에 따라 달라짐)가 떠 있으면
+     그만큼 무대가 아래로 밀려 하단 ⚙ 조작·🎯 방향 맞추기 줄이 탭 바 뒤로 들어갑니다.
+     무대가 실제로 시작하는 위치를 재어 CSS 변수 --live-top 으로 넘기면,
+     layout-mobile.css 가 '화면 높이 - 탭 바 - 여유 - --live-top' 으로 높이를 잡아
+     조작 버튼이 늘 탭 바 위로 올라옵니다. */
+  if (mode === 'mobile') {
+    var syncLiveTop = function () {
+      var stage = document.getElementById('liveStage');
+      var sec = document.querySelector('main > section[data-view="live"]');
+      if (!stage || !sec || sec.hidden) return;   // 다른 화면을 보는 중에는 잴 수 없습니다
+      var top = Math.max(0, Math.round(stage.getBoundingClientRect().top + window.pageYOffset));
+      document.documentElement.style.setProperty('--live-top', top + 'px');
+    };
+    var fv = document.getElementById('firstVisit');
+    if (fv && window.MutationObserver) {
+      new MutationObserver(syncLiveTop).observe(fv, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    var fvWrap = document.querySelector('.first-visit-wrap');
+    if (fvWrap && window.ResizeObserver) {
+      try { new ResizeObserver(syncLiveTop).observe(fvWrap); } catch (e) { }
+    }
+    window.addEventListener('resize', syncLiveTop);   // 화면 전환(views.js)도 resize 를 쏩니다
+    window.addEventListener('orientationchange', function () { setTimeout(syncLiveTop, 200); });
+    window.addEventListener('load', function () { syncLiveTop(); setTimeout(syncLiveTop, 900); });
+    syncLiveTop();
+  }
+
   /* 5) 인쇄할 때는 지금 판 이름을 남깁니다 -------------------------------- */
   document.body.setAttribute('data-version', me.label);
 

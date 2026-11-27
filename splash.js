@@ -140,12 +140,26 @@
     if (!reduced && t > 0.95 && t < 1.6) {
       var p = (t - 0.95) / 0.65;
       var sx = W * (0.78 - 0.22 * p), sy = H * (0.12 + 0.18 * p);
-      var lx = sx - W * 0.11, ly = sy - H * 0.075;
+      // 머리는 왼쪽 아래로 흐릅니다(dx = -0.22W, dy = +0.18H).
+      // 꼬리는 진행 방향의 정반대 — 즉 오른쪽 위로, 진행 벡터와 '같은 기울기'로 뻗어야 합니다.
+      var vx = -0.22 * W, vy = 0.18 * H;
+      var vl = Math.sqrt(vx * vx + vy * vy) || 1;
+      var tailLen = Math.min(W, H) * 0.22;              // 화면 크기에 비례한 꼬리 길이
+      var lx = sx - (vx / vl) * tailLen, ly = sy - (vy / vl) * tailLen;
+      var fade = Math.sin(Math.PI * p);                  // 0 → 1 → 0
       var mg = ctx.createLinearGradient(sx, sy, lx, ly);
-      mg.addColorStop(0, 'rgba(255,255,255,' + (0.85 * Math.sin(Math.PI * p)).toFixed(3) + ')');
-      mg.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.strokeStyle = mg; ctx.lineWidth = 1.6;
+      mg.addColorStop(0, 'rgba(255,255,255,' + (0.85 * fade).toFixed(3) + ')');
+      mg.addColorStop(0.35, 'rgba(214,232,255,' + (0.32 * fade).toFixed(3) + ')');
+      mg.addColorStop(1, 'rgba(186,208,255,0)');
+      ctx.strokeStyle = mg; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(lx, ly); ctx.stroke();
+      // 머리 끝의 은은한 빛점 — 꼬리 축의 끝에 아주 작게
+      var hg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 6.5);
+      hg.addColorStop(0, 'rgba(255,255,255,' + (0.9 * fade).toFixed(3) + ')');
+      hg.addColorStop(0.32, 'rgba(210,228,255,' + (0.34 * fade).toFixed(3) + ')');
+      hg.addColorStop(1, 'rgba(170,200,255,0)');
+      ctx.fillStyle = hg;
+      ctx.beginPath(); ctx.arc(sx, sy, 6.5, 0, Math.PI * 2); ctx.fill();
     }
 
     if (!leaving) raf = window.requestAnimationFrame(draw);
