@@ -904,6 +904,7 @@
     return exactHit || near;
   }
   function skyMapTap(ev) {
+    if (Date.now() < (smz.suppressUntil || 0)) return;   // 확대·이동 제스처 뒤의 click 은 무시
     const svg = ev.currentTarget;
     const count = svg._skyHitCount || 0;
     const hits = svg._skyHits;
@@ -936,6 +937,157 @@
       return;
     }
     if (star) showInspector('star', star.name);
+  }
+
+  /* ======================================================================
+     전천 지도 — 두 손가락 핀치 확대·축소 (1× ~ 3.5×) + 한 손가락 이동
+     · 지도(svg)에 CSS transform(translate·scale)만 겁니다. getBoundingClientRect 가
+       변환된 크기를 돌려주므로, 기존 skyMapTap 의 좌표 계산도 확대 상태에서 그대로 맞습니다.
+     · 확대한 뒤 한 손가락으로 끌면 지도를 옮기고, 그때는 탭(정보 열기)으로 보지 않습니다.
+     · 1× 아래로는 줄지 않고, 「원래대로」 버튼으로 언제든 되돌립니다.
+     ====================================================================== */
+  const SKYMAP_ZOOM_MAX = 3.5;
+  const smz = {
+    s: 1, applied: 1, tx: 0, ty: 0, ptrs: new Map(), on: false, d0: 0, s0: 1,
+    pan: null, B: null, u: { x: 0, y: 0 }, suppressUntil: 0
+  };
+
+  function skyMapEl() { return $('#skyMap'); }
+  function skyMapBaseCenter() {
+    const el = skyMapEl();
+    if (!el) return { x: 0, y: 0 };
+    const r = el.getBoundingClientRect();
+    // 중심은 확대해도 제자리이므로, 지금 중심에서 이동분을 빼면 '변환 전' 지도 중심입니다.
+    return { x: r.left + r.width / 2 - smz.tx, y: r.top + r.height / 2 - smz.ty };
+  }
+  function skyMapClampT() {
+    const el = skyMapEl();
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const bw = r.width / (smz.applied || 1), bh = r.height / (smz.applied || 1);
+    const mx = Math.max(0, (bw * smz.s - bw) / 2), my = Math.max(0, (bh * smz.s - bh) / 2);
+    smz.tx = mx ? clamp(smz.tx, -mx, mx) : 0;
+    smz.ty = my ? clamp(smz.ty, -my, my) : 0;
+  }
+  function skyMapApply() {
+    const el = skyMapEl();
+    if (!el) return;
+    if (smz.s <= 1.001) { smz.s = 1; smz.tx = 0; smz.ty = 0; }
+    el.style.transform = (smz.s === 1 && !smz.tx && !smz.ty) ? ''
+      : 'translate(' + smz.tx.toFixed(1) + 'px,' + smz.ty.toFixed(1) + 'px) scale(' + smz.s.toFixed(3) + ')';
+    smz.applied = smz.s;
+    const wrap = el.parentNode;
+    if (wrap && wrap.classList) wrap.classList.toggle('is-zoomed', smz.s > 1.001);
+    el.style.touchAction = smz.s > 1.001 ? 'none' : 'pan-y';
+    const btn = $('#skyMapReset');
+    if (btn) {
+      btn.hidden = smz.s <= 1.001;
+      btn.textContent = smz.s.toFixed(1) + '× · 원래대로';
+    }
+  }
+  function skyMapReset(animate) {
+    const el = skyMapEl();
+    if (!el) return;
+    if (animate) {
+      el.style.transition = 'transform .2s ease';
+      setTimeout(function () { el.style.transition = ''; }, 230);
+    }
+    smz.s = 1; smz.tx = 0; smz.ty = 0;
+    skyMapApply();
+  }
+  function skyMapZoomTo(newS, mid) {
+    const s = clamp(newS, 1, SKYMAP_ZOOM_MAX);
+    if (!smz.B) smz.B = skyMapBaseCenter();
+    smz.s = s;
+    if (mid) {
+      // 손가락 사이 지점(mid) 아래의 지도 내용이 그 자리에 머물게 이동을 맞춥니다.
+      smz.tx = (mid.x - smz.B.x) - s * smz.u.x;
+      smz.ty = (mid.y - smz.B.y) - s * smz.u.y;
+    }
+    skyMapClampT();
+    skyMapApply();
+  }
+  function skyMapZoomAtPoint(cx, cy, newS) {
+    smz.B = skyMapBaseCenter();
+    smz.u = { x: (cx - smz.B.x - smz.tx) / smz.s, y: (cy - smz.B.y - smz.ty) / smz.s };
+    skyMapZoomTo(newS, { x: cx, y: cy });
+  }
+
+  function initSkyMapZoom() {
+    const el = skyMapEl();
+    if (!el || el._zoomInit) return;
+    el._zoomInit = true;
+    smz.applied = 1;
+    skyMapApply();
+    const wrap = el.parentNode;
+    const btn = $('#skyMapReset');
+    if (btn) btn.addEventListener('click', function () { skyMapReset(true); });
+    if (!wrap) return;
+    // iOS 사파리의 페이지 확대 제스처를 지도 위에서만 막습니다.
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
+      wrap.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false });
+    });
+    // 트랙패드·마우스 핀치(ctrl+휠)도 같은 확대·축소로 (평소 휠 스크롤은 그대로).
+    wrap.addEventListener('wheel', function (e) {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const s = clamp(smz.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 1, SKYMAP_ZOOM_MAX);
+      skyMapZoomAtPoint(e.clientX, e.clientY, s);
+    }, { passive: false });
+
+    wrap.addEventListener('pointerdown', function (ev) {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      smz.ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (smz.ptrs.size === 2) {
+        const a = Array.from(smz.ptrs.values());
+        smz.on = true;
+        smz.pan = null;
+        smz.d0 = Math.max(12, Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y));
+        smz.s0 = smz.s;
+        smz.B = skyMapBaseCenter();
+        const mid = { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 };
+        smz.u = { x: (mid.x - smz.B.x - smz.tx) / smz.s, y: (mid.y - smz.B.y - smz.ty) / smz.s };
+        return;
+      }
+      if (smz.ptrs.size > 2) return;
+      smz.pan = { x: ev.clientX, y: ev.clientY, tx: smz.tx, ty: smz.ty, moved: false };
+    });
+
+    window.addEventListener('pointermove', function (ev) {
+      if (!smz.ptrs.has(ev.pointerId)) return;
+      smz.ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (smz.on && smz.ptrs.size >= 2) {
+        const a = Array.from(smz.ptrs.values());
+        const d = Math.max(12, Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y));
+        const mid = { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 };
+        skyMapZoomTo(smz.s0 * (d / smz.d0), mid);
+        return;
+      }
+      if (!smz.pan || smz.s <= 1.001) return;
+      const dx = ev.clientX - smz.pan.x, dy = ev.clientY - smz.pan.y;
+      if (!smz.pan.moved && Math.abs(dx) + Math.abs(dy) < 6) return;
+      smz.pan.moved = true;
+      smz.tx = smz.pan.tx + dx;
+      smz.ty = smz.pan.ty + dy;
+      skyMapClampT();
+      skyMapApply();
+    });
+
+    const up = function (ev) {
+      if (!smz.ptrs.has(ev.pointerId)) return;
+      smz.ptrs.delete(ev.pointerId);
+      if (smz.on) {
+        if (smz.ptrs.size < 2) smz.on = false;
+        // 핀치/이동 뒤의 click 은 '탭'이 아니므로 잠깐 막습니다(정보 창이 엉뚱하게 열리지 않게).
+        smz.suppressUntil = Date.now() + 400;
+        if (smz.ptrs.size === 0) smz.pan = null;
+        return;
+      }
+      if (smz.pan && smz.pan.moved) smz.suppressUntil = Date.now() + 400;
+      if (smz.ptrs.size === 0) smz.pan = null;
+    };
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
   }
 
   function renderSkyMap(c) {
@@ -1151,7 +1303,6 @@
       s += '<circle cx="' + q.x.toFixed(1) + '" cy="' + q.y.toFixed(1) + '" r="14" fill="transparent" data-sky="moon:" style="cursor:pointer"/>';
     }
     svg.innerHTML = s;
-    svg.style.touchAction = 'manipulation';
     // 그려진 별 전체를 터치 판정 대상으로 넘긴다(위임 리스너는 한 번만 붙인다).
     svg._skyHits = hitPool;
     svg._skyHitCount = hitN;
@@ -2199,6 +2350,7 @@
   const live = {
     az: 180, alt: 32, fov: 65, targetAz: 180, targetAlt: 32,
     labels: true, deep: true, sensor: false, gotEvent: false,
+    grid: true, gridA: 0.55, gridLast: 0.55,   // 격자 표시 · 진하기(0~1) · 끄기 전 값
     w: 0, h: 0, dpr: 1, canvas: null, ctx: null,
     raf: null, hits: [], starHitPool: [], lastIv: 0, lastCenter: '', selected: null
   };
@@ -2261,6 +2413,8 @@
 
   // 라이브 뷰가 다루는 고도 범위 — 지평선 아래 30°부터 천정 89°까지
   const ALT_MIN = -30, ALT_MAX = 89;
+  // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계
+  const LIVE_FOV_MIN = 15, LIVE_FOV_MAX = 115;
 
   // deviceorientation 의 beta·gamma 만으로 카메라(-Z)의 고도를 계산합니다.
   //   카메라의 지구 z성분 = −cosβ·cosγ  →  고도 = asin(−cosβ·cosγ)
@@ -2495,14 +2649,16 @@
     if (isRed()) {
       return {
         bg1: '#1d0805', bg2: '#080101', grid: 'rgba(255,120,90,.13)', gridHi: 'rgba(255,150,110,.34)',
+        gridMain: 'rgba(255,160,124,.94)', gridSub: 'rgba(255,146,110,.5)',
         label: '#c1644a', star: '#ffb9a2', con: 'rgba(255,110,80,.22)', dso: '#ff8a5c',
-        horizon: 'rgba(255,130,95,.55)', ground: 'rgba(26,4,2,.88)', planet: '#ffd0b0'
+        horizon: 'rgba(255,150,112,.78)', ground: 'rgba(26,4,2,.55)', groundDeep: 'rgba(8,2,1,.88)', planet: '#ffd0b0'
       };
     }
     return {
       bg1: '#0d1c3e', bg2: '#010206', grid: 'rgba(150,180,255,.11)', gridHi: 'rgba(160,200,255,.34)',
+      gridMain: 'rgba(182,214,255,.94)', gridSub: 'rgba(162,198,255,.52)',
       label: '#93a9d4', star: '#ffffff', con: 'rgba(120,160,255,.24)', dso: '#7ee0c0',
-      horizon: 'rgba(150,190,255,.5)', ground: 'rgba(3,6,14,.92)', planet: '#ffe8c0'
+      horizon: 'rgba(158,198,255,.8)', ground: 'rgba(3,6,14,.55)', groundDeep: 'rgba(1,2,6,.88)', planet: '#ffe8c0'
     };
   }
 
@@ -2515,9 +2671,10 @@
     const jd = c.jd;
     const lat = state.site.lat, lon = state.site.lon;
     const pal = livePalette();
-    const fovDeg = clamp(live.fov, 20, 130);
+    const fovDeg = clamp(live.fov, LIVE_FOV_MIN, 130);
     const fov = fovDeg * RAD;
-    const stereo = fovDeg >= 90;
+    // 지평선 아래로도 이만큼은 그립니다 — 반투명 땅 너머로 별·별자리가 이어져 보이게.
+    const UNDER = -45;
 
     ctx.setTransform(live.dpr, 0, 0, live.dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
@@ -2545,22 +2702,21 @@
     const norm = function (a) { const l = Math.sqrt(dot(a, a)) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
     const right = norm(cross(fwd, upRef));
     const up = cross(right, fwd);
-    const kG = (H / 2) / Math.tan(fov / 2);
     const kS = (H / 2) / Math.tan(fov / 4);
 
+    /* 구면(입체, stereographic) 투영 — 모든 시야에서 기본으로 씁니다.
+       · 화면 거리 = tan(θ/2) 이라 시야 가장자리에서도 늘어짐이 완만하고,
+         지평선(대원)이 직선이 아니라 곡선으로 휘어 하늘 돔·지구의 둥근 느낌이 살아납니다.
+       · 시야 절반(fov/2)이 화면 가장자리에 정확히 오도록 kS 를 잡습니다(예전 90° 이상 전용 식 그대로).
+       · 시선 뒤(θ≳152°)는 값이 무한대로 발산하므로 그리지 않습니다(끊김 없이 사라짐). */
     function project(alt, az) {
       const al = alt * RAD, z = az * RAD;
       const d = [Math.cos(al) * Math.sin(z), Math.cos(al) * Math.cos(z), Math.sin(al)];
       const dy = dot(d, fwd);
       const dx = dot(d, right), dz = dot(d, up);
-      if (stereo) {
-        const den = 1 + dy;
-        if (den < 0.12) return null;
-        const k = kS / den;
-        return { x: cx + dx * k, y: cy - dz * k };
-      }
-      if (dy <= 0.08) return null;
-      const k = kG / dy;
+      const den = 1 + dy;
+      if (den < 0.12) return null;
+      const k = kS / den;
       return { x: cx + dx * k, y: cy - dz * k };
     }
     function inBox(p, m) { return p && p.x > -(m || 40) && p.x < W + (m || 40) && p.y > -(m || 40) && p.y < H + (m || 40); }
@@ -2581,21 +2737,68 @@
       ctx.restore();
     }
 
-    /* 땅(지평선 아래) */
-    const horizon = [];
-    for (let az = 0; az <= 360; az += 3) horizon.push(project(0, az % 360));
-    const hValid = horizon.filter(function (p) { return !!p; });
-    if (hValid.length > 1) {
-      ctx.beginPath();
-      ctx.moveTo(hValid[0].x, hValid[0].y);
-      for (let i = 1; i < hValid.length; i++) ctx.lineTo(hValid[i].x, hValid[i].y);
-      ctx.lineTo(hValid[hValid.length - 1].x, H + 20);
-      ctx.lineTo(hValid[0].x, H + 20);
-      ctx.closePath();
-      ctx.fillStyle = dayF > 0.02 ? mixHex(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayF * 0.7) : pal.ground;
-      ctx.fill();
+    /* 땅(지평선 아래) — 화면 '행'마다 지평선(고도 0°)과 만나는 x 를 정확히 풀어 그 아래를 칠합니다.
+       · u=(x−cx)/kS, w=(cy−y)/kS 로 두면 고도 0° 조건이 u 에 대한 2차식이 됩니다.
+         (입체 투영의 역변환 dx=2u/(1+t), dy=(1−t)/(1+t), dz=2w/(1+t), t=u²+w²)
+       · 그래서 지평선이 곡선이 되고, 보는 방향에 따라 아래쪽 호·위쪽 호 어느 쪽에 와도,
+         위를 보아 화면 한 행이 지평선을 두 번 지나는 경우까지 빠짐없이 맞습니다.
+       · 천체를 먼저 그린 뒤 반투명하게 덮어 지평선 아래 별·별자리가 땅 너머로 은은히 비칩니다. */
+    const hzPts = [];
+    for (let a = 0; a < 360; a += 2) {
+      const p = project(0, a);
+      if (p) hzPts.push(p);
     }
-    strokePts(horizon, pal.horizon, 1.6);
+    function groundSpans(y) {
+      const w = (cy - y) / kS;
+      const a2 = -fwd[2], b2 = 2 * right[2], c2 = fwd[2] * (1 - w * w) + 2 * up[2] * w;
+      const toX = function (u) { return cx + u * kS; };
+      if (Math.abs(a2) < 1e-9) {              // 지평선 높이를 정확히 보고 있을 때(2차항 소멸)
+        if (Math.abs(b2) < 1e-9) return c2 < 0 ? [[-Infinity, Infinity]] : [];
+        const u = -c2 / b2;
+        return b2 > 0 ? [[-Infinity, toX(u)]] : [[toX(u), Infinity]];
+      }
+      const disc = b2 * b2 - 4 * a2 * c2;
+      if (disc <= 0) return a2 < 0 ? [[-Infinity, Infinity]] : [];   // 행 전체가 땅 또는 하늘
+      const sq = Math.sqrt(disc);
+      const u1 = (-b2 - sq) / (2 * a2), u2 = (-b2 + sq) / (2 * a2);
+      if (a2 > 0) return [[toX(u1), toX(u2)]];                       // 두 근 사이가 땅
+      return [[-Infinity, toX(u1)], [toX(u2), Infinity]];            // 두 근 바깥이 땅
+    }
+    function drawGround() {
+      const stepY = 3;
+      const rows = [];
+      let top = Infinity;
+      for (let y = -stepY; y <= H + stepY; y += stepY) {
+        const sp = groundSpans(y);
+        const keep = [];
+        for (let i = 0; i < sp.length; i++) {
+          const x1 = Math.max(-2, sp[i][0]), x2 = Math.min(W + 2, sp[i][1]);
+          if (x2 - x1 > 0.3) keep.push([x1, x2]);
+        }
+        if (keep.length) {
+          rows.push({ y: y, sp: keep });
+          if (y < top) top = y;
+        }
+      }
+      if (!rows.length) return;
+      const base = dayF > 0.02
+        ? mixHex(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayF * 0.7)
+        : pal.ground;
+      const gr = ctx.createLinearGradient(0, clamp(top, -H, H), 0, H);
+      gr.addColorStop(0, base);
+      gr.addColorStop(1, dayF > 0.02 ? base : pal.groundDeep);
+      ctx.save();
+      ctx.fillStyle = gr;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        for (let k = 0; k < r.sp.length; k++) {
+          ctx.fillRect(r.sp[k][0], r.y - 0.5, r.sp[k][1] - r.sp[k][0], stepY + 1);   // 줄 사이 틈 방지
+        }
+      }
+      ctx.restore();
+      // 지평선 경계는 또렷하게 — 위(하늘)·아래(땅) 구분이 한눈에 남습니다.
+      strokePts(hzPts, pal.horizon, 2);
+    }
 
     // 라벨 충돌 방지용
     const labelBoxes = [];
@@ -2615,19 +2818,47 @@
       return true;
     }
 
-    /* 고도·방위 눈금 */
-    [15, 30, 45, 60, 75].forEach(function (alt) {
-      const pts = [];
-      for (let az = 0; az <= 360; az += 4) pts.push(project(alt, az % 360));
-      strokePts(pts, pal.grid, 1, alt % 30 === 0 ? null : [3, 5]);
-    });
-    for (let az = 0; az < 360; az += 30) {
-      const pts = [];
-      for (let alt = 0; alt <= 88; alt += 3) pts.push(project(alt, az));
-      strokePts(pts, az % 90 === 0 ? pal.gridHi : pal.grid, 1);
+    /* 고도·방위 격자 — 켜면 구면 투영을 따라 휘어진 선과 각도 레이블이 또렷하게,
+       끄면(진하기 0%) 완전히 사라집니다. 진하기는 ⚙ 조작의 「격자 진하기」로 조절합니다. */
+    if (live.grid && live.gridA > 0.01) {
+      const ga = clamp(live.gridA, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = ga;
+      // 고도 30° · 60° 고리
+      [30, 60].forEach(function (alt) {
+        const pts = [];
+        for (let a = 0; a <= 360; a += 2) pts.push(project(alt, a % 360));
+        strokePts(pts, pal.gridMain, 1.3 + ga * 0.9);
+      });
+      // 진할 때는 15°·45°·75° 보조선도 (점선)
+      if (ga >= 0.4) {
+        [15, 45, 75].forEach(function (alt) {
+          const pts = [];
+          for (let a = 0; a <= 360; a += 4) pts.push(project(alt, a % 360));
+          strokePts(pts, pal.gridSub, 1, [3, 5]);
+        });
+      }
+      // 방위 30° 간격 세로선 (북·동·남·서는 더 밝게)
+      for (let a = 0; a < 360; a += 30) {
+        const pts = [];
+        for (let alt = 0; alt <= 88; alt += 2) pts.push(project(alt, a));
+        strokePts(pts, a % 90 === 0 ? pal.gridMain : pal.gridSub, a % 90 === 0 ? 1.3 + ga * 0.7 : 1 + ga * 0.4);
+      }
+      ctx.restore();
+      // 고도 각도 레이블 (30° · 60°) — 화면 가운데를 지나는 자리에 하나씩
+      if (ga >= 0.15) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, ga + 0.15);
+        [30, 60].forEach(function (alt) {
+          const p = project(alt, live.az);
+          if (!inBox(p, 8)) return;
+          drawLabel(alt + '°', p.x + 7, p.y - 5, pal.gridMain, '700 10px system-ui, sans-serif');
+        });
+        ctx.restore();
+      }
     }
 
-    /* 방위 글자 */
+    /* 방위 글자 — 격자와 상관없이 늘 또렷하게(방위 각도 함께) */
     ctx.font = '700 12px system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -2635,7 +2866,7 @@
       const p = project(1.2, d[1]);
       if (!inBox(p, 6)) return;
       ctx.fillStyle = pal.gridHi;
-      ctx.fillText(d[0], p.x + 4, p.y - 8);
+      ctx.fillText(d[0] + ' ' + d[1] + '°', p.x + 4, p.y - 8);
     });
 
     /* 은하수 — IAU 은하좌표계 극·중심으로 계산한 실제 은하면 경로 */
@@ -2704,11 +2935,11 @@
     const starFade = 1 - dayF * 0.92;
     D.stars.forEach(function (st, i) {
       const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
-      if (h.alt < -2) return;
+      if (h.alt < UNDER) return;
       const p = project(h.alt, h.az);
       if (!inBox(p, 10)) return;
       starPts[i] = p;
-      starByName[st[0]] = p;
+      if (h.alt >= 0) starByName[st[0]] = p;   // 이름표는 지평선 위 별만
       if (starFade < 0.06) return;
       const mag = st[3];
       const r = mag <= 2.0 ? 2.6 : mag <= 3.2 ? 1.8 : mag <= 4.2 ? 1.3 : 0.9;
@@ -2834,7 +3065,7 @@
       saturn: '#f0e2ad', uranus: '#9fe8e0', neptune: '#9db8ff'
     };
     c.planets.forEach(function (pl) {
-      if (pl.hor.alt < -1) return;
+      if (pl.hor.alt < UNDER) return;
       const p = project(pl.hor.alt, pl.hor.az);
       if (!inBox(p, 14)) return;
       const r = clamp(6.2 - pl.mag * 0.9, 3.2, 8);
@@ -2863,7 +3094,7 @@
     /* 달 (위상까지) */
     const moonP = A.moonPos(jd), moonPh = A.moonPhase(jd);
     const moonH = A.equatorialToHorizontal(moonP.raH, moonP.decD, lat, lon, jd);
-    const moonPt = moonH.alt > -1 ? project(moonH.alt, moonH.az) : null;
+    const moonPt = moonH.alt >= UNDER ? project(moonH.alt, moonH.az) : null;
     if (inBox(moonPt, 30)) {
       const pxDeg = H / fovDeg;
       const r = clamp(pxDeg * 0.26, 5, Math.min(W, H) * 0.22);
@@ -2925,6 +3156,10 @@
         inView.push({ kind: 'sun', key: '', name: '태양', alt: sunH.alt, az: sunH.az, d: Math.hypot(p.x - cx, p.y - cy) });
       }
     }
+
+    /* 땅과 지평선은 천체를 다 그린 뒤에 덮습니다 — 지평선 아래 천체가 반투명 땅 너머로
+       은은하게 비치고, 지평선 경계선은 그 위에 또렷하게 그어집니다. */
+    drawGround();
 
     /* 선택한 천체 표시 링 */
     if (live.selected) {
@@ -3403,6 +3638,8 @@
     info: function (kind, key) { openLiveInfo({ kind: kind, key: key }); },
     aim: function (kind, key) { aimAt(kind, key); },
     sensorOn: function () { return live.sensor; },
+    grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
+    fov: function () { return live.fov; },
     enableSensor: enableSensor,
     disableSensor: disableSensor
   };
@@ -3594,10 +3831,62 @@
     syncLiveTimeCard();
   }
 
+  /* ======================================================================
+     격자 표시·진하기 — ⚙ 조작의 「🌐 격자」 버튼 + 「격자 진하기」 슬라이더
+     · 0%면 완전히 가리고 100%면 아주 선명합니다. 기기(localStorage)에 저장됩니다.
+     ====================================================================== */
+  function applyLiveGrid(pref) {
+    const p = pref || { on: live.grid, a: live.gridA };
+    const a = clamp(typeof p.a === 'number' && isFinite(p.a) ? p.a : 0.55, 0, 1);
+    live.gridA = a;
+    live.grid = p.on !== false && a > 0.001;
+    if (a > 0.001) live.gridLast = a;
+    const btn = $('#liveGridBtn'), rng = $('#liveGrid'), val = $('#liveGridVal');
+    if (rng && document.activeElement !== rng) rng.value = String(Math.round(a * 100));
+    if (val) val.textContent = Math.round(a * 100) + '%';
+    if (btn) {
+      btn.textContent = live.grid ? '🌐 격자 숨기기' : '🌐 격자 보이기';
+      btn.setAttribute('aria-pressed', String(live.grid));
+      if (btn.parentNode && btn.parentNode.classList) btn.parentNode.classList.toggle('is-off', !live.grid);
+    }
+  }
+  function saveLiveGrid() {
+    store.set('liveGrid', { on: live.grid, a: live.gridA, last: live.gridLast });
+  }
+
   function initLive() {
     if (!$('#liveStage')) return;
     wireLiveInfo();
     initLiveTime();
+    (function initLiveGrid() {
+      const pref = store.get('liveGrid', { on: true, a: 0.55, last: 0.55 });
+      live.gridLast = clamp(Number(pref && pref.last) || 0.55, 0.05, 1);
+      applyLiveGrid(pref);
+      const btn = $('#liveGridBtn'), rng = $('#liveGrid');
+      if (btn) btn.addEventListener('click', function () {
+        if (live.grid) {
+          if (live.gridA > 0.001) live.gridLast = live.gridA;
+          live.grid = false; live.gridA = 0;
+          toast('격자를 가렸습니다 — 「🌐 격자 보이기」로 다시 켤 수 있어요.');
+        } else {
+          live.gridA = clamp(live.gridLast || 0.55, 0.05, 1);
+          live.grid = true;
+        }
+        applyLiveGrid({ on: live.grid, a: live.gridA });
+        saveLiveGrid();
+        liveDirty = true; kickLive();
+      });
+      if (rng) {
+        rng.addEventListener('input', function () {
+          const a = clamp(Number(rng.value) / 100, 0, 1);
+          live.gridA = a;
+          live.grid = a > 0.001;
+          applyLiveGrid({ on: live.grid, a: a });
+          liveDirty = true; kickLive();
+        });
+        rng.addEventListener('change', saveLiveGrid);
+      }
+    })();
     liveResize();
     pickStartView();
     window.addEventListener('resize', function () { liveResize(); });
@@ -3611,15 +3900,47 @@
 
     const stage = $('#liveStage');
     let drag = null;
+    /* 두 손가락 핀치 — 손가락 사이 거리로 시야(화각)를 바꿉니다.
+       · 벌리면 확대(시야 좁힘), 오므리면 축소(시야 넓힘).
+       · 핀치 중에는 한 손가락 드래그 회전을 멈추고, 끝나도 화각(LIVE_FOV_MIN~MAX)은 그대로 유지합니다.
+       · 핀치가 끝난 터치를 '탭'으로 보지 않으므로 엉뚱한 천체 정보가 열리지 않습니다. */
+    const ptrs = new Map();
+    const pinch = { on: false, d0: 0, fov0: 0 };
+    function pinchDist() {
+      const a = Array.from(ptrs.values());
+      return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+    }
     stage.addEventListener('pointerdown', function (ev) {
       if (ev.button != null && ev.button !== 0) return;
       // 확대/축소·HUD 등 스테이지 위 버튼은 드래그 캡처에서 제외 (클릭이 죽지 않게)
       if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card, .live-time-card')) return;
+      ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      try { stage.setPointerCapture(ev.pointerId); } catch (e) { }
+      if (ptrs.size === 2) {
+        drag = null;
+        stage.classList.remove('is-dragging');
+        stage.classList.add('is-pinching');
+        pinch.on = true;
+        pinch.d0 = Math.max(12, pinchDist());
+        pinch.fov0 = live.fov;
+        return;
+      }
+      if (ptrs.size > 2) return;
       drag = { x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false, t: performance.now() };
       stage.classList.add('is-dragging');
-      try { stage.setPointerCapture(ev.pointerId); } catch (e) { }
     });
     stage.addEventListener('pointermove', function (ev) {
+      if (ptrs.has(ev.pointerId)) ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pinch.on && ptrs.size >= 2) {
+        const d = Math.max(12, pinchDist());
+        const fov = clamp(pinch.fov0 * (pinch.d0 / d), LIVE_FOV_MIN, LIVE_FOV_MAX);
+        if (Math.abs(fov - live.fov) > 0.01) {
+          live.fov = fov;
+          liveDirty = true;
+          kickLive();
+        }
+        return;
+      }
       if (!drag) return;
       const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
       if (!drag.moved && Math.abs(dx) + Math.abs(dy) > 8) {
@@ -3637,6 +3958,14 @@
       kickLive();
     });
     const end = function (ev) {
+      if (ev && ev.pointerId != null) ptrs.delete(ev.pointerId);
+      if (pinch.on) {
+        if (ptrs.size < 2) { pinch.on = false; stage.classList.remove('is-pinching'); }
+        drag = null;
+        stage.classList.remove('is-dragging');
+        syncLiveInputs();      // 핀치로 바뀐 시야(화각)를 슬라이더·값에 바로 반영
+        return;                // 핀치 뒤에는 탭으로 보지 않습니다
+      }
       if (!drag) return;
       const moved = drag.moved;
       drag = null;
@@ -3644,8 +3973,17 @@
       if (!moved) liveHandleClick(ev);
     };
     stage.addEventListener('pointerup', end);
-    stage.addEventListener('pointercancel', function () { drag = null; stage.classList.remove('is-dragging'); });
-    stage.addEventListener('pointerleave', function () { if (drag) { drag = null; stage.classList.remove('is-dragging'); } });
+    stage.addEventListener('pointercancel', function (ev) {
+      if (ev && ev.pointerId != null) ptrs.delete(ev.pointerId);
+      drag = null;
+      if (ptrs.size < 2) { pinch.on = false; stage.classList.remove('is-pinching'); }
+      stage.classList.remove('is-dragging');
+    });
+    stage.addEventListener('pointerleave', function (ev) {
+      if (ev && ev.pointerId != null) ptrs.delete(ev.pointerId);
+      if (pinch.on && ptrs.size < 2) { pinch.on = false; stage.classList.remove('is-pinching'); }
+      if (drag) { drag = null; stage.classList.remove('is-dragging'); }
+    });
 
     $$('.pad-btn').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -3672,11 +4010,11 @@
     bindRange('#liveAlt', function (v) { live.alt = v; live.targetAlt = v; });
     bindRange('#liveFov', function (v) { live.fov = v; });
     $('#liveZoomIn').addEventListener('click', function () {
-      live.fov = clamp(live.fov - 10, 25, 120);
+      live.fov = clamp(live.fov - 10, LIVE_FOV_MIN, LIVE_FOV_MAX);
       liveDirty = true; kickLive();
     });
     $('#liveZoomOut').addEventListener('click', function () {
-      live.fov = clamp(live.fov + 10, 25, 120);
+      live.fov = clamp(live.fov + 10, LIVE_FOV_MIN, LIVE_FOV_MAX);
       liveDirty = true; kickLive();
     });
     $('#liveLabelsBtn').addEventListener('click', function () {
@@ -5492,6 +5830,7 @@
     renderSites();
     renderEvents();
     initConGrid();
+    initSkyMapZoom();
     renderChecklist();
     renderLogs();
     renderAll();

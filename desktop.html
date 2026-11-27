@@ -563,13 +563,18 @@
           <label class="live-field"><span>고도 <b id="liveAltVal">30°</b></span>
             <input type="range" id="liveAlt" min="-30" max="89" step="1" value="30"></label>
           <label class="live-field"><span>시야 <b id="liveFovVal2">65°</b></span>
-            <input type="range" id="liveFov" min="25" max="120" step="5" value="65"></label>
+            <input type="range" id="liveFov" min="15" max="120" step="5" value="65"></label>
         </div>
 
         <div class="live-actions">
           <button class="btn btn-primary btn-sm" id="liveSensorBtn" type="button" aria-pressed="false">🧭 센서로 하늘 비추기</button>
           <button class="mini-btn" id="liveLabelsBtn" type="button" aria-pressed="true">🏷 이름 표시</button>
           <button class="mini-btn" id="liveDeepBtn" type="button" aria-pressed="true">✨ 딥스카이</button>
+          <div class="live-grid-ctl" role="group" aria-label="격자 표시">
+            <button class="mini-btn" id="liveGridBtn" type="button" aria-pressed="true" title="고도·방위 격자를 보이거나 숨깁니다">🌐 격자 숨기기</button>
+            <label class="live-grid-range"><span>격자 진하기 <b id="liveGridVal">55%</b></span>
+              <input type="range" id="liveGrid" min="0" max="100" step="5" value="55" aria-label="격자 진하기"></label>
+          </div>
           <button class="mini-btn" id="liveResetBtn" type="button">↺ 처음 시선</button>
           <button class="mini-btn" id="liveCalBtn" type="button" title="지금 보는 방향을 기준으로 나침반 오차를 0으로 맞춥니다">🎯 방향 맞추기</button>
           <div class="live-sens" role="group" aria-label="센서 따라오는 정도">
@@ -607,7 +612,9 @@
         </div>
         <div class="skymap-wrap">
           <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도 — 별을 누르면 그 별의 정보가 열립니다"></svg>
+          <button class="skymap-zoom-reset" id="skyMapReset" type="button" hidden aria-label="지도 확대를 원래대로 되돌립니다">1× · 원래대로</button>
         </div>
+        <p class="skymap-hint">두 손가락으로 확대·축소 · 확대한 뒤에는 한 손가락으로 이동</p>
         <div class="tm-dock" data-tm>
           <button class="tm-play" data-tm-play type="button" aria-pressed="false" aria-label="밤하늘 타임랩스 재생">▶</button>
           <div class="tm-readout">

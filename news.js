@@ -205,6 +205,85 @@
     });
   }
 
+  /* ------------------------------------------------------------- 번역 */
+  /* Google 번역의 무료 공개 엔드포인트(키 없이 쓰는 경로)로 제목·요약을 한국어로 바꿉니다.
+     · 기사 객체에 번역 결과를 붙여 두어, 분류 칩을 눌러 다시 그려도 번역이 유지됩니다.
+     · 네트워크·CORS·한도 문제로 실패하면 Google 번역 페이지를 새 창으로 열게 안내합니다. */
+  var TR_API = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=';
+
+  function hasHangul(s) { return /[가-힣]/.test(String(s || '')); }
+  function needsTranslation(a) {
+    if (!a || a.ko) return false;                 // 이미 한국어로 정리한 소식
+    var t = a.title || '';
+    return !(hasHangul(t) && hasHangul(a.summary || ''));
+  }
+
+  function gtranslate(text) {
+    var q = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!q) return Promise.resolve('');
+    return fetch(TR_API + encodeURIComponent(q.slice(0, 1800)), { mode: 'cors' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        var out = '';
+        var seg = (d && d[0]) || [];
+        for (var i = 0; i < seg.length; i++) if (seg[i] && seg[i][0]) out += seg[i][0];
+        out = out.trim();
+        if (!out || !hasHangul(out)) throw new Error('빈 번역');
+        return out;
+      });
+  }
+
+  function translateUrl(a) {
+    return 'https://translate.google.com/translate?sl=en&tl=ko&u=' + encodeURIComponent(a.url || '');
+  }
+
+  function translateCard(a) {
+    if (!a) return;
+    if (a.koTitle) {            // 이미 번역됨 → 원문/번역 토글
+      a.showKo = a.showKo === false;
+      render();
+      return;
+    }
+    if (a.trBusy) return;
+    a.trBusy = true;
+    a.trFail = false;
+    render();
+    Promise.all([
+      gtranslate(a.title),
+      a.summary ? gtranslate(a.summary) : Promise.resolve('')
+    ]).then(function (res) {
+      a.trBusy = false;
+      a.koTitle = res[0] || a.title;
+      a.koSum = res[1] || '';
+      a.showKo = true;
+      render();
+    }).catch(function () {
+      a.trBusy = false;
+      a.trFail = true;
+      render();
+      var w = null;
+      try { w = window.open(translateUrl(a), '_blank', 'noopener'); } catch (e) { w = null; }
+      // 팝업이 막혔으면 카드에 '새 창에서 번역' 링크가 남습니다(render 가 그려 줍니다).
+      void w;
+    });
+  }
+
+  function trButtonHtml(a, i) {
+    if (!needsTranslation(a)) return '';
+    if (a.koTitle) {
+      return '<button class="nc-tr" type="button" data-news-tr="' + i + '" aria-pressed="' + (a.showKo !== false) + '">' +
+        (a.showKo !== false ? '🌐 원문 보기' : '🌐 한국어로 보기') + '</button>';
+    }
+    if (a.trFail) {
+      return '<a class="nc-tr nc-tr-link" href="' + esc(translateUrl(a)) + '" target="_blank" rel="noopener noreferrer">🌐 새 창에서 번역 ↗</a>';
+    }
+    return '<button class="nc-tr" type="button" data-news-tr="' + i + '"' + (a.trBusy ? ' disabled' : '') + '>' +
+      (a.trBusy ? '번역 중…' : '🌐 번역') + '</button>';
+  }
+
   function listFor() {
     var list = N.items;
     if (N.cat) list = list.filter(function (x) { return x.cat === N.cat; });
@@ -244,20 +323,37 @@
       var img = a.image
         ? '<img class="nc-img" src="' + esc(a.image) + '" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">'
         : '';
-      return '<button type="button" class="news-card" data-news="' + i + '" aria-label="' + esc(a.title) + ' 상세 보기">' +
+      var ko = !!a.koTitle && a.showKo !== false;    // 지금 한국어 번역을 보여 주는 중
+      var title = ko ? a.koTitle : a.title;
+      var sum = ko ? (a.koSum || a.summary) : a.summary;
+      var badge = a.ko ? '<span class="nc-ko">한국어 요약</span>'
+        : (ko ? '<span class="nc-ko nc-ko-mt">🌐 기계 번역</span>' : '');
+      return '<div class="news-card" role="button" tabindex="0" data-news="' + i + '" aria-label="' + esc(title) + ' 상세 보기">' +
         img +
         '<span class="nc-body">' +
         '<span class="nc-meta"><span class="nc-cat">' + (CAT_LABEL[a.cat] || '') + '</span>' +
         '<span>' + esc(a.site) + '</span><span>' + esc(fmtDate(a.date)) + '</span></span>' +
-        '<span class="nc-title">' + esc(a.title) + '</span>' +
-        (a.ko ? '<span class="nc-ko">한국어 요약</span>' : '') +
-        (a.summary ? '<span class="nc-sum">' + esc(a.summary) + '</span>' : '') +
-        '</span></button>';
+        '<span class="nc-title">' + esc(title) + '</span>' +
+        badge +
+        (sum ? '<span class="nc-sum">' + esc(sum) + '</span>' : '') +
+        '</span>' +
+        '<span class="nc-actions">' + trButtonHtml(a, i) +
+        '<span class="nc-open">자세히 ›</span></span>' +
+        '</div>';
     }).join('');
     grid.querySelectorAll('.news-card').forEach(function (b) {
-      b.addEventListener('click', function () {
+      b.addEventListener('click', function (ev) {
+        var tr = ev.target && ev.target.closest ? ev.target.closest('[data-news-tr]') : null;
+        if (tr) { ev.preventDefault(); ev.stopPropagation(); translateCard(list[+tr.getAttribute('data-news-tr')]); return; }
+        if (ev.target && ev.target.closest && ev.target.closest('a')) return;   // 번역 실패 링크는 그대로 엽니다
         var idx = +b.getAttribute('data-news');
         openDetail(list[idx]);
+      });
+      b.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Enter' && ev.key !== ' ' && ev.key !== 'Spacebar') return;
+        if (ev.target !== b) return;      // 안쪽 번역 버튼은 자기 키 입력을 쓺니다
+        ev.preventDefault();
+        openDetail(list[+b.getAttribute('data-news')]);
       });
     });
   }
@@ -268,13 +364,15 @@
     if (!m) return;
     m.hidden = false;
     document.body.classList.add('space-lock');
+    var ko = !!a.koTitle && a.showKo !== false;
     $('#newsModalBody').innerHTML =
       '<p class="nd-meta"><span class="nc-cat">' + (CAT_LABEL[a.cat] || '') + '</span>' +
       '<span>' + esc(a.site) + '</span><span>' + esc(fmtDate(a.date)) + '</span></p>' +
-      '<h3 id="newsModalTitle">' + esc(a.title) + '</h3>' +
-      '<p class="nd-sum">' + esc(a.summary || '이 기사에는 요약이 없습니다. 원문에서 확인해 주세요.') + '</p>' +
+      '<h3 id="newsModalTitle">' + esc(ko ? a.koTitle : a.title) + '</h3>' +
+      '<p class="nd-sum">' + esc(ko ? (a.koSum || a.summary) : (a.summary || '이 기사에는 요약이 없습니다. 원문에서 확인해 주세요.')) + '</p>' +
       (a.ko ? '<p class="nd-note">한국어 요약은 공식 자료를 바탕으로 이 사이트에서 정리한 것입니다.</p>'
-        : '<p class="nd-note">요약은 Spaceflight News가 제공한 원문 요약(영어)입니다. 자세한 내용은 원문에서 확인하세요.</p>') +
+        : ko ? '<p class="nd-note">제목·요약의 한국어는 Google 번역의 기계 번역입니다. 정확한 내용은 원문에서 확인하세요.</p>'
+          : '<p class="nd-note">요약은 Spaceflight News가 제공한 원문 요약(영어)입니다. 자세한 내용은 원문에서 확인하세요.</p>') +
       '<div class="nd-links"><a class="btn btn-primary btn-sm" href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">원문 열기 ↗</a>' +
       '<button class="btn btn-ghost btn-sm" type="button" data-news-close="1">닫기</button></div>';
     var c = $('.modal-close', m);
@@ -302,7 +400,7 @@
       '</div>' +
       '<p class="news-status" id="newsStatus"><span class="dot"></span>최신 소식을 불러오는 중…</p>' +
       '<div class="news-grid" id="newsGrid"></div>' +
-      '<p class="news-sub-note">기사는 Spaceflight News에서 실시간으로 받아옵니다. 요약은 영어 원문이며, 원문 링크에서 전체 내용을 볼 수 있습니다. 한국어 소식은 공식 기관 자료를 바탕으로 정리했습니다.</p>';
+      '<p class="news-sub-note">기사는 Spaceflight News에서 실시간으로 받아옵니다. 카드의 <b>🌐 번역</b>을 누르면 제목·요약을 한국어로 바로 볼 수 있습니다(원문 보기로 되돌리기). 한국어 소식은 공식 기관 자료를 바탕으로 정리했습니다.</p>';
 
     var chips = $('#newsChips');
     chips.addEventListener('click', function (e) {

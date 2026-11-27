@@ -384,8 +384,21 @@ body.red #btnNow[aria-pressed="true"] { background: rgba(255, 106, 61, .18); col
 .dot-dark { background: #02040a; border: 1px solid #333; } .dot-moon { background: rgba(255, 236, 180, .5); }
 
 /* ------------------------------------------------------------- 전천 지도 */
-.skymap-wrap { display: grid; place-items: center; }
-#skyMap { width: 100%; max-width: 430px; height: auto; display: block; }
+.skymap-wrap { position: relative; display: grid; place-items: center; touch-action: pan-y; overflow: hidden; border-radius: 12px; }
+#skyMap {
+  width: 100%; max-width: 430px; height: auto; display: block;
+  touch-action: pan-y; transform-origin: 50% 50%; will-change: transform;
+}
+.skymap-wrap.is-zoomed #skyMap { touch-action: none; cursor: grab; }
+.skymap-wrap.is-zoomed #skyMap:active { cursor: grabbing; }
+.skymap-zoom-reset {
+  position: absolute; right: 8px; top: 8px; z-index: 3;
+  font-size: .72rem; font-weight: 800; padding: 6px 11px; border-radius: 99px;
+  background: rgba(4, 8, 16, .84); border: 1px solid var(--border-hi); color: var(--text);
+  cursor: pointer; backdrop-filter: blur(6px); font-variant-numeric: tabular-nums;
+}
+.skymap-zoom-reset:hover { background: rgba(255, 255, 255, .16); }
+.skymap-hint { font-size: .7rem; color: var(--faint); text-align: center; margin: 8px 0 0; }
 .sky-label { font-size: 9px; fill: var(--faint); font-family: var(--font); }
 .sky-cardinal { font-size: 12px; font-weight: 800; fill: var(--muted); font-family: var(--font); }
 .sky-star-label { font-size: 8.5px; fill: rgba(255, 255, 255, .55); font-family: var(--font); }
@@ -1177,6 +1190,18 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
 }
 .live-actions { display: flex; flex-direction: column; gap: 6px; min-width: 172px; }
 .live-actions .mini-btn[aria-pressed="true"] { color: var(--accent-2); border-color: rgba(126, 224, 192, .4); background: var(--accent-2-soft); }
+/* 격자 — 보이기/숨기기 버튼 + 진하기 슬라이더(0~100%) */
+.live-grid-ctl {
+  display: grid; gap: 4px; padding: 6px 8px 7px;
+  border: 1px solid var(--border); border-radius: 10px; background: rgba(255, 255, 255, .03);
+}
+.live-grid-ctl .mini-btn { width: 100%; }
+.live-grid-range { display: grid; gap: 3px; font-size: .68rem; color: var(--faint); }
+.live-grid-range span { display: flex; justify-content: space-between; gap: 8px; }
+.live-grid-range b { color: var(--text); font-variant-numeric: tabular-nums; }
+.live-grid-range input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent-2); }
+.live-grid-ctl.is-off .live-grid-range b { color: var(--faint); }
+body.red .live-grid-range input[type="range"] { accent-color: #ff8a5c; }
 .live-foot { display: grid; gap: 8px; margin-top: 10px; }
 .live-inview { display: flex; gap: 6px; flex-wrap: wrap; }
 .live-inview .iv-item {
@@ -2885,6 +2910,21 @@ html[data-redlight="1"] .lux-table thead th { background: rgba(255,120,80,.06); 
   color: var(--text); cursor: pointer; transition: all .16s; padding: 0;
 }
 .news-card:hover, .news-card:focus-visible { border-color: var(--border-hi); transform: translateY(-2px); }
+.news-card:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+/* 카드 아래 액션 줄 — 「🌐 번역」 / 「자세히 ›」 */
+.nc-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 14px 12px; margin-top: auto; }
+.nc-tr {
+  font-size: .72rem; font-weight: 700; padding: 5px 11px; border-radius: 99px;
+  border: 1px solid var(--border-hi); background: rgba(255, 255, 255, .05); color: var(--muted);
+  cursor: pointer; touch-action: manipulation; text-decoration: none;
+}
+.nc-tr:hover, .nc-tr:focus-visible { color: var(--text); border-color: var(--accent-2); }
+.nc-tr[disabled] { opacity: .65; cursor: default; }
+.nc-tr[aria-pressed="false"] { border-color: rgba(255, 212, 121, .45); color: var(--accent); }
+.nc-tr-link { display: inline-flex; align-items: center; color: var(--accent); border-color: rgba(255, 212, 121, .45); }
+.nc-open { font-size: .7rem; color: var(--faint); }
+.nc-ko-mt { border-color: rgba(126, 224, 192, .4); color: var(--accent-2); }
+body.red .nc-tr-link, body.red .nc-ko-mt { border-color: rgba(255, 130, 95, .45); }
 .nc-img { aspect-ratio: 16 / 9; width: 100%; object-fit: cover; background: rgba(255, 255, 255, .04); display: block; }
 .nc-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .nc-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: .72rem; color: var(--faint); }
