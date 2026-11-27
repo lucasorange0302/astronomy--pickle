@@ -11018,17 +11018,21 @@ window.Astro = (function () {
     const y = (ev.clientY - rect.top) * sy;
     const scale = Math.max(sx, sy);
     const star = skyMapPickStar(x, y, hits, count, scale);
+    const starD = star ? Math.sqrt((star.x - x) * (star.x - x) + (star.y - y) * (star.y - y)) : Infinity;
     const el = ev.target && ev.target.closest ? ev.target.closest('[data-sky]') : null;
     if (el) {
       const v = el.getAttribute('data-sky').split(':');
       const kind = v[0], key = v.slice(1).join(':');
-      if (kind === 'star') { showInspector('star', key); return; }
+      // 대표 별의 투명 원(반경 11)은 옆 별을 덮으므로, 좌표로 찾은 별을 우선한다.
+      if (kind === 'star') { showInspector('star', star ? star.name : key); return; }
       // 별자리 선은 별 위를 지나므로, 별을 정확히 짚었을 때만 별이 우선한다.
-      // 그 밖의 달·행성·딥스카이·별자리 동작은 예전 그대로 둔다.
-      if (kind === 'con' && star) {
-        const dx = star.x - x, dy = star.y - y;
-        if (Math.sqrt(dx * dx + dy * dy) <= 8 * scale) { showInspector('star', star.name); return; }
+      if (kind === 'con') {
+        if (star && starD <= 8 * scale) { showInspector('star', star.name); return; }
+        showInspector('con', key);
+        return;
       }
+      // 달·행성·딥스카이는 기존대로 우선하되, 별 점 위를 5px 이내로 정확히 짚었으면 그 별.
+      if (star && starD <= 5 * scale) { showInspector('star', star.name); return; }
       showInspector(kind, key);
       return;
     }
