@@ -9990,14 +9990,26 @@ window.Astro = (function () {
   }
 
   /* ------------------------------------------------------------ 계산기 */
+  // 숫자 입력칸의 min/max 범위로 값을 다듬습니다 — 0·음수·빈칸을 직접 입력해도 계산이 깨지지 않게.
+  function inputNum(el, fallback) {
+    if (!el) return fallback;
+    let v = Number(el.value);
+    if (!isFinite(v) || v === 0) return fallback;
+    const mn = el.min !== '' ? Number(el.min) : NaN;
+    const mx = el.max !== '' ? Number(el.max) : NaN;
+    if (isFinite(mn) && v < mn) v = mn;
+    if (isFinite(mx) && v > mx) v = mx;
+    return v;
+  }
+
   function calcExposure() {
-    const f = Number($('#exFocal').value) || 24;
-    const N = Number($('#exAperture').value) || 2.8;
+    const f = inputNum($('#exFocal'), 24);
+    const N = inputNum($('#exAperture'), 2.8);
     const sensor = ($('#exSensor').value || '9.6,7.2').split(',').map(Number);
     if (!sensor[0] || !sensor[1]) { sensor[0] = 9.6; sensor[1] = 7.2; }
     const w = sensor[0], h = sensor[1];
-    const mp = Number($('#exMp').value) || 12;
-    const dec = Number($('#exDec').value) || 0;
+    const mp = inputNum($('#exMp'), 12);
+    const dec = clamp(Number($('#exDec').value) || 0, -90, 90);
 
     const hPix = Math.sqrt(mp * 1e6 * (w / h));   // 가로 화소 수
     const pitch = (w / hPix) * 1000;              // µm
@@ -10032,10 +10044,10 @@ window.Astro = (function () {
   }
 
   function calcOptics() {
-    const Dm = Number($('#opAperture').value) || 130;
-    const F = Number($('#opFocal').value) || 650;
-    const eFL = Number($('#opEyepiece').value) || 25;
-    const afov = Number($('#opAfov').value) || 50;
+    const Dm = inputNum($('#opAperture'), 130);
+    const F = inputNum($('#opFocal'), 650);
+    const eFL = inputNum($('#opEyepiece'), 25);
+    const afov = inputNum($('#opAfov'), 50);
 
     const mag = F / eFL;
     const tfov = afov / mag;
@@ -10099,7 +10111,7 @@ window.Astro = (function () {
     const unit = $('#mgUnit').value;
     const m = mRaw === '' ? null : Number(mRaw);
     const M = MRaw === '' ? null : Number(MRaw);
-    const dIn = dRaw === '' ? null : Number(dRaw);
+    const dIn = dRaw === '' ? null : (Number(dRaw) > 0 ? Number(dRaw) : null);
 
     let toPc = 1;
     if (unit === 'ly') toPc = 1 / 3.26156;
@@ -12157,9 +12169,9 @@ window.Astro = (function () {
     const scope = state.fovMode === 'scope';
     let tfovW, tfovH, sizeLabel, sizeNote, frameText;
     if (scope) {
-      const f = Number($('#fovFocal').value) || 1300;
-      const ep = Number($('#fovEyepiece').value) || 25;
-      const afov = Number($('#fovAfov').value) || 52;
+      const f = inputNum($('#fovFocal'), 1300);
+      const ep = inputNum($('#fovEyepiece'), 25);
+      const afov = inputNum($('#fovAfov'), 52);
       const mag = f / ep;
       const tfov = afov / mag;
       tfovW = tfov; tfovH = tfov;
@@ -12167,7 +12179,7 @@ window.Astro = (function () {
       sizeNote = '초점거리 ÷ 아이피스';
       frameText = '원형 시야 ' + nf(tfov, 2) + '°';
     } else {
-      const f = Number($('#fovCamFocal').value) || 200;
+      const f = inputNum($('#fovCamFocal'), 200);
       const sensor = ($('#fovSensor').value || '9.6,7.2').split(',').map(Number);
       const sw = sensor[0], sh = sensor[1];
       tfovW = 2 * Math.atan(sw / (2 * f)) * 180 / Math.PI;

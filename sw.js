@@ -9,7 +9,7 @@
    배포할 때마다 아래 VERSION 을 올리세요. 올리면 install 에서 코어 캐시를 새로 받습니다.
    ========================================================================= */
 
-var VERSION = '2026-11-27.5';
+var VERSION = '2026-11-27.6';
 var CORE_CACHE = 'byeolneoul-core-' + VERSION;
 var ASSET_CACHE = 'byeolneoul-assets-v1';
 var ASSET_LIMIT = 160;                     // 사진 캐시 최대 개수(무한정 커지지 않게)
