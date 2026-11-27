@@ -2125,6 +2125,10 @@ html.has-views { scroll-padding-top: 84px; }
   font: 700 .74rem var(--font); white-space: nowrap;
 }
 .live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* 낮에만 뜨는 '밤 22시' 칩 — 지금 하늘이 밤이 아니어도 밤하늘을 볼 수 있게 */
+.live-quick .lq-night { color: var(--accent); border-color: rgba(255, 212, 121, .45); background: rgba(255, 212, 121, .1); }
+.live-quick .lq-night[hidden] { display: none; }
+html[data-layout="desktop"] .live-quick .lq-night { display: none; }
 #liveSensorChip { cursor: pointer; pointer-events: auto; }
 #liveSensorChip:hover { border-color: var(--accent-2); color: var(--accent-2); }
 

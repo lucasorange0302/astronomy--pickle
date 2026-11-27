@@ -2622,6 +2622,14 @@
     }
     const hint = $('#liveDayHint');
     if (hint) hint.hidden = !(dayF > 0.02);
+    const hintQ = $('#liveNightBtnQ');
+    if (hintQ) {
+      /* 낮에는 '밤 22시'로 넘기는 칩, 시뮬레이션(밤) 중에는 '지금'으로 돌아오는 칩 */
+      const sim = state.simJd != null;
+      hintQ.hidden = !(sim || dayF > 0.02);
+      const lbl = sim ? '☀️ 지금' : '🌙 밤 22시';
+      if (hintQ.textContent !== lbl) hintQ.textContent = lbl;
+    }
     const now = Date.now();
     if (now - live.lastIv > 350) {
       live.lastIv = now;
@@ -3176,14 +3184,22 @@
         toast(b.textContent + ' 모드 — ' + (track.sens < 1 ? '빠르게 따라옵니다.' : track.sens > 1.2 ? '나침반 보정을 천천히 합니다.' : '기본 추적입니다.'));
       });
     });
-    const nightBtn = $('#liveNightBtn');
-    if (nightBtn) nightBtn.addEventListener('click', function () {
+    function goNightSky() {
       const w = nightWindow();
       const jd22 = A.jdFromDate(A.localToDate(state.dateStr, '22:00'));
       const frac = (jd22 > w.start && jd22 < w.end) ? (jd22 - w.start) / (w.end - w.start) : 0.55;
       stopPlay();
       setSimFrac(frac);
-      toast('밤 22시 하늘로 이동했습니다. ▶ 재생으로 밤새 움직임을 볼 수 있습니다.');
+      toast(document.documentElement.getAttribute('data-layout') === 'mobile'
+        ? '밤 22시 하늘로 이동했습니다. ⚙ 조작에서 방위를 돌려 보세요.'
+        : '밤 22시 하늘로 이동했습니다. ▶ 재생으로 밤새 움직임을 볼 수 있습니다.');
+    }
+    const nightBtn = $('#liveNightBtn');
+    if (nightBtn) nightBtn.addEventListener('click', goNightSky);
+    const nightBtnQ = $('#liveNightBtnQ');
+    if (nightBtnQ) nightBtnQ.addEventListener('click', function () {
+      if (state.simJd != null) { clearSim(); setViewDate(todayKST(), ''); toast('지금 시각 하늘로 돌아왔습니다.'); }
+      else goNightSky();
     });
     $('#liveSensorBtn').addEventListener('click', function () {
       if (live.sensor) disableSensor(false);

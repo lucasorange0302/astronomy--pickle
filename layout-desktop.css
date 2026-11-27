@@ -62,6 +62,8 @@ html[data-layout="desktop"] #today .panel[data-dash="planet"] { grid-column: 1 /
 html[data-layout="desktop"] #today .panel[data-dash="hourly"] { grid-column: 1 / 7; }
 html[data-layout="desktop"] #today .panel[data-dash="best"] { grid-column: 7 / -1; }
 html[data-layout="desktop"] #today .panel[data-dash="targets"] { grid-column: 1 / -1; }
+/* 달·태양 상세 패널 — 12단 격자에서 폭 지정이 빠져 한 칸(≈65px)으로 찌그러져 있었습니다 */
+html[data-layout="desktop"] #today .moon-row { grid-column: 1 / -1; }
 html[data-layout="desktop"] #today .panel { margin-top: 0; }
 
 html[data-layout="desktop"] .summary-card { grid-template-columns: minmax(0, 1fr) 316px; }
@@ -257,3 +259,70 @@ html[data-layout="desktop"] .li-card {
   padding: 20px 20px 18px;
 }
 html[data-layout="desktop"] .li-head h3 { font-size: 1.35rem; }
+
+/* =========================================================================
+   좁은 데스크톱 화면 (태블릿 가로 · 작은 노트북 창)
+   index.html은 폭 769px부터 데스크톱판으로 보냅니다. 1280px 기준 2단 대시보드를
+   그대로 두면 769~1150px 창에서 요약 카드·관측지 컨트롤·라이브 하늘이 눌려
+   글자가 세로로 쪼개지고 입력칸이 잘렸습니다. 이 폭에서는 한 단으로 쌓습니다.
+   ========================================================================= */
+@media (max-width: 1150px) {
+  /* 10초 요약 카드: 오른쪽 정보 열을 아래 줄로 내리고 두 칸씩 펼칩니다 */
+  html[data-layout="desktop"] .summary-card { grid-template-columns: minmax(0, 1fr); }
+  html[data-layout="desktop"] .summary-main { padding: 22px 22px 20px; }
+  html[data-layout="desktop"] .summary-grid { gap: 18px; }
+  html[data-layout="desktop"] .summary-side {
+    border-left: 0; border-top: 1px solid var(--border);
+    flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 20px;
+    padding: 16px 20px;
+  }
+  html[data-layout="desktop"] .summary-side .sum-side-row { flex: 1 1 44%; min-width: 168px; }
+  html[data-layout="desktop"] .summary-side .btn { flex: 1 1 100%; margin-top: 4px; }
+  html[data-layout="desktop"] .summary-side .side-hint { flex: 1 1 100%; text-align: left; }
+
+  /* 관측지 컨트롤: 5칸 → 3줄 (시·도 / 시·군·구 + 내 위치 / 날짜 + 시각) */
+  html[data-layout="desktop"] .control-row-region {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "prov dist" "geo date" "time time";
+    gap: 10px 12px;
+  }
+  html[data-layout="desktop"] .control-row-region > .field-prov { grid-area: prov; }
+  html[data-layout="desktop"] .control-row-region > .field-dist { grid-area: dist; }
+  html[data-layout="desktop"] .control-row-region > #btnGeo { grid-area: geo; width: 100%; justify-self: stretch; }
+  html[data-layout="desktop"] .control-row-region > .field-date { grid-area: date; }
+  html[data-layout="desktop"] .control-row-region > .field-time { grid-area: time; }
+
+  /* 라이브 하늘: 컨트롤 열을 아래로 내려 하늘 그림을 넓게 */
+  html[data-layout="desktop"] .live-panel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "stage" "dock" "controls" "foot";
+  }
+  html[data-layout="desktop"] .live-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-areas: "pad sliders" "actions actions";
+    gap: 12px;
+  }
+  html[data-layout="desktop"] .live-pad { grid-area: pad; }
+  html[data-layout="desktop"] .live-sliders { grid-area: sliders; }
+  html[data-layout="desktop"] .live-actions { grid-area: actions; }
+
+  /* 오늘 밤 대시보드: 반 폭 패널들을 한 줄씩 */
+  html[data-layout="desktop"] #today .timeline-panel,
+  html[data-layout="desktop"] #today .cloud-panel,
+  html[data-layout="desktop"] #today .panel[data-dash="hourly"],
+  html[data-layout="desktop"] #today .panel[data-dash="best"] { grid-column: 1 / -1; }
+  html[data-layout="desktop"] .grid-2 { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 1000px) {
+  /* 왼쪽 바로가기 레일을 접어 본문 폭을 확보 (상단 메뉴·☰ 더보기로 모두 갈 수 있음) */
+  html[data-layout="desktop"] body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "head" "main" "foot";
+  }
+  html[data-layout="desktop"] .app-side { display: none; }
+  html[data-layout="desktop"] .wrap { padding: 0 20px; }
+  /* 상단 메뉴가 잘리지 않게 한 줄 아래로 내립니다 */
+  html[data-layout="desktop"] .site-header .header-inner { flex-wrap: wrap; row-gap: 4px; }
+  html[data-layout="desktop"] .main-nav { order: 3; flex: 1 1 100%; justify-content: center; }
+}
