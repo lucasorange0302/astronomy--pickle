@@ -8,6 +8,8 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 사진이 없을 때 <img> 에 남겨 두는 1×1 투명 GIF — 빈 src(깨진 이미지) 대신 씁니다.
+  var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -356,7 +358,7 @@
       '  <button class="sm-close" data-close="1" aria-label="닫기">×</button>' +
       '  <button class="sm-nav prev" data-lb="prev" aria-label="이전 사진">‹</button>' +
       '  <button class="sm-nav next" data-lb="next" aria-label="다음 사진">›</button>' +
-      '  <div class="sm-media"><div class="sm-photo" id="smPhoto"></div><img id="smImg" alt=""><p class="sm-credit" id="smCredit"></p></div>' +
+      '  <div class="sm-media"><div class="sm-photo" id="smPhoto"></div><img id="smImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" hidden><p class="sm-credit" id="smCredit"></p></div>' +
       '  <div class="sm-info">' +
       '    <span class="sm-kind" id="smKind">NASA</span>' +
       '    <h3 id="smTitle">—</h3>' +
@@ -617,7 +619,7 @@
     $('.sm-media', m).classList.remove('is-text');
     var imgEl = $('#smImg');
     imgEl.hidden = true;
-    imgEl.removeAttribute('src');
+    imgEl.src = BLANK_IMG;   // 사진 자리를 비울 때도 빈 src(=깨진 이미지)를 남기지 않습니다
     var ph = $('#smPhoto');
     if (ph) {
       ph.hidden = false;

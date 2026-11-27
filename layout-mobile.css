@@ -420,6 +420,8 @@ html[data-layout="mobile"] body.red #live .live-panel.is-controls-open .live-con
 }
 html[data-layout="mobile"] #live .live-quick .lq-btn { min-height: 40px; font-size: .76rem; }
 html[data-layout="mobile"] #live .live-hud-top { top: 10px; left: 10px; right: 10px; }
+/* 시야 중앙 카드 — ⚙ 조작·🎯 방향 맞추기 버튼 줄 바로 위, 확대/축소 열과는 옆으로 비켜 놓습니다 */
+html[data-layout="mobile"] #live .live-center-card { bottom: 58px; max-width: calc(100% - 104px); }
 
 /* 조작 시트가 열리면 확대/축소 버튼은 시트 위(오른쪽 위)로 올립니다 */
 html[data-layout="mobile"] #live .live-panel.is-controls-open .live-zoom {
@@ -427,6 +429,7 @@ html[data-layout="mobile"] #live .live-panel.is-controls-open .live-zoom {
 }
 html[data-layout="mobile"] #live .live-panel.is-controls-open .live-hud-top { right: 58px; }
 html[data-layout="mobile"] #live .live-panel.is-controls-open .live-quick { display: none; }
+html[data-layout="mobile"] #live .live-panel.is-controls-open .live-center-card { display: none; }
 html[data-layout="mobile"] .lc-close {
   width: 100%; min-height: 36px; margin-bottom: 4px; border-radius: 10px;
   border: 1px solid var(--border); background: rgba(255, 255, 255, .05);

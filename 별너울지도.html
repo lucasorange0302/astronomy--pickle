@@ -1104,8 +1104,10 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
 .live-chip-sensor.is-on { color: #0e2418; background: var(--accent-2); border-color: var(--accent-2); }
 .live-chip-sensor.is-error { color: var(--danger); border-color: rgba(255, 122, 110, .5); }
 .live-center-card {
-  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
-  max-width: calc(100% - 24px); text-align: center;
+  /* 하단 ⚙ 조작 · 🎯 방향 맞추기 버튼 줄과 확대/축소 열 위에 따로 앉힙니다.
+     (버튼과 같은 높이에 두면 폰·작은 노트북에서 카드 글자가 버튼에 가립니다) */
+  position: absolute; left: 50%; bottom: 58px; transform: translateX(-50%);
+  max-width: calc(100% - 120px); text-align: center;
   font-size: .78rem; padding: 6px 12px; border-radius: 10px;
   background: rgba(4, 8, 16, .7); border: 1px solid var(--border); color: var(--text);
   backdrop-filter: blur(6px); pointer-events: none;
@@ -1286,7 +1288,7 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
   .live-actions { flex-direction: row; }
   .live-actions .btn, .live-actions .mini-btn { flex: 1 1 46%; }
   .live-chip { font-size: .66rem; padding: 3px 8px; }
-  .live-center-card { font-size: .72rem; bottom: 8px; }
+  .live-center-card { font-size: .72rem; bottom: 58px; }
   .live-zoom { bottom: 8px; }
   .summary-grid { grid-template-columns: 1fr; gap: 12px; }
   .sum-moon { justify-content: flex-start; }
@@ -13418,6 +13420,8 @@ window.Astro = (function () {
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 사진이 없을 때 <img> 에 남겨 두는 1×1 투명 GIF — 빈 src(깨진 이미지) 대신 씁니다.
+  var BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -13766,7 +13770,7 @@ window.Astro = (function () {
       '  <button class="sm-close" data-close="1" aria-label="닫기">×</button>' +
       '  <button class="sm-nav prev" data-lb="prev" aria-label="이전 사진">‹</button>' +
       '  <button class="sm-nav next" data-lb="next" aria-label="다음 사진">›</button>' +
-      '  <div class="sm-media"><div class="sm-photo" id="smPhoto"></div><img id="smImg" alt=""><p class="sm-credit" id="smCredit"></p></div>' +
+      '  <div class="sm-media"><div class="sm-photo" id="smPhoto"></div><img id="smImg" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" hidden><p class="sm-credit" id="smCredit"></p></div>' +
       '  <div class="sm-info">' +
       '    <span class="sm-kind" id="smKind">NASA</span>' +
       '    <h3 id="smTitle">—</h3>' +
@@ -14027,7 +14031,7 @@ window.Astro = (function () {
     $('.sm-media', m).classList.remove('is-text');
     var imgEl = $('#smImg');
     imgEl.hidden = true;
-    imgEl.removeAttribute('src');
+    imgEl.src = BLANK_IMG;   // 사진 자리를 비울 때도 빈 src(=깨진 이미지)를 남기지 않습니다
     var ph = $('#smPhoto');
     if (ph) {
       ph.hidden = false;
