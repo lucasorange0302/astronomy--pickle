@@ -3111,3 +3111,112 @@ body.red .next-event { background: linear-gradient(120deg, rgba(255, 106, 61, .1
   html[data-layout="mobile"] .first-visit-wrap { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
   html[data-layout="mobile"] .first-visit-wrap:has(.first-visit[hidden]) { padding-top: env(safe-area-inset-top, 0px); }
 }
+
+/* =========================================================================
+   학습관 2026-11-28 — 개념 검색 · 읽기 typography · 개념 도해 · 단원 링크
+   ========================================================================= */
+:root { --lu-fs: 16px; }
+
+.learn-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  margin: 0 0 14px;
+}
+.lu-search { display: flex; align-items: center; gap: 8px; flex: 1 1 260px; min-width: 0; }
+.lu-search-label { font-size: .78rem; color: var(--faint); font-weight: 700; white-space: nowrap; }
+.lu-search input[type="search"] {
+  flex: 1 1 auto; min-width: 0; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: rgba(255,255,255,.04);
+  color: var(--text); font-size: .9rem; font-family: inherit;
+}
+.lu-search input[type="search"]:focus { border-color: rgba(255,212,121,.55); outline: none; }
+.lu-fonts { display: flex; align-items: center; gap: 4px; }
+.lu-fonts span { font-size: .74rem; color: var(--faint); margin-right: 2px; }
+.lu-fonts button {
+  padding: 5px 9px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); font-size: .78rem; cursor: pointer;
+}
+.lu-fonts button[aria-pressed="true"] { color: var(--accent); border-color: rgba(255,212,121,.5); background: var(--accent-soft); }
+.lu-search-note { flex: 1 1 100%; margin: 0; font-size: .78rem; color: var(--faint); min-height: 1em; }
+.learn-levels[hidden], .learn-level-note[hidden] { display: none !important; }
+
+.lu-result {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; text-align: left;
+  width: 100%; padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255,255,255,.02); color: var(--text);
+}
+.lu-result:hover { border-color: var(--border-hi); background: rgba(255,255,255,.04); }
+.lu-res-lv { grid-row: span 2; align-self: center; font-size: .7rem; font-weight: 800; color: var(--accent);
+  border: 1px solid rgba(255,212,121,.35); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+.lu-res-title { font-size: .95rem; font-weight: 700; }
+.lu-res-sub { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+.learn-units .lu-result + .lu-result { margin-top: 0; }
+.lu-empty { color: var(--faint); font-size: .88rem; padding: 14px 4px; }
+
+/* 읽기 typography — 본문 16~17px, 행간 1.75, 줄 길이 제한 */
+.learn-unit-body { font-size: var(--lu-fs); line-height: 1.75; }
+.learn-unit-body .lu-block p,
+.learn-unit-body .lux-deep p { font-size: 1em; line-height: 1.75; max-width: 62ch; color: var(--text); }
+.learn-unit-body .lu-block ul,
+.learn-unit-body .lu-block li { font-size: .95em; line-height: 1.72; max-width: 62ch; }
+.learn-unit-body .lu-block h5 { font-size: .92em; }
+.learn-unit-body .lu-formula code {
+  display: block; font-size: .9em; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+  overflow-x: auto; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,.03); border: 1px solid var(--border);
+}
+.lu-oneliner {
+  margin: 2px 0 14px; padding: 12px 14px; border-radius: 12px;
+  border-left: 3px solid var(--accent); background: rgba(255,212,121,.07);
+  font-size: 1.06em; line-height: 1.7; color: var(--text); font-weight: 600;
+}
+.lu-tit { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.lu-badge {
+  font-size: .68rem; font-weight: 700; color: var(--accent-3);
+  border: 1px solid rgba(138,182,255,.35); border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+}
+.lu-observe { border-left: 3px solid rgba(126,224,192,.5); padding-left: 12px; }
+.lu-share-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 0; }
+.lu-share-note { font-size: .74rem; color: var(--faint); }
+.mini-btn.lu-share { font-size: .78rem; }
+
+/* 표: 모바일 가로 스크롤 + 첫 열 고정 */
+.lu-table .lux-table-wrap { -webkit-overflow-scrolling: touch; }
+.lux-table { font-size: .86em; }
+.lux-table th:first-child, .lux-table td:first-child {
+  position: sticky; left: 0; background: #0a101c; z-index: 1;
+}
+.lux-table thead th:first-child { background: #0d1422; }
+body.red .lux-table th:first-child, body.red .lux-table td:first-child { background: #150402; }
+body.red .lux-table thead th:first-child { background: #1a0503; }
+
+/* 개념 도해 (learn-figs.js) */
+.lu-figs { display: flex; flex-direction: column; gap: 14px; margin: 4px 0 18px; }
+.lu-figure { margin: 0; }
+.lu-figure svg {
+  display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto;
+  background: rgba(4,8,16,.5); border: 1px solid var(--border); border-radius: 12px;
+  box-sizing: border-box; padding: 8px;
+}
+.lu-figure figcaption, .lu-fig-cap {
+  display: block; margin: 8px auto 0; max-width: 60ch;
+  font-size: .84rem; line-height: 1.7; color: var(--muted);
+}
+.lu-figure figcaption b, .lu-fig-cap b { color: var(--text); }
+.lu-fig-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.lu-fig-grid > svg {
+  display: block; width: 100%; height: auto;
+  background: rgba(4,8,16,.5); border: 1px solid var(--border); border-radius: 12px;
+  box-sizing: border-box; padding: 6px;
+}
+@media (max-width: 640px) {
+  .lu-fig-grid { grid-template-columns: 1fr; }
+  .lu-figure figcaption { font-size: .8rem; }
+}
+body.red .lu-figure svg, body.red .lu-fig-grid > svg { background: rgba(14,2,0,.55); }
+
+/* 실험 조작부가 2px 넘치던 문제 — 그리드 자식의 최소 너비를 풀어 줍니다 */
+.sim-controls, .sim-ctrl, .sim-ctrl > * { min-width: 0; }
+.sim-ctrl input[type="range"] { min-width: 0; width: 100%; }
+.sim-ctrl-label, .sim-ctrl-val { overflow-wrap: anywhere; }
+/* range 입력의 브라우저 기본 바깥여백(2px)이 그리드 밖으로 2px 넘치던 문제 */
+.sim-ctrl input[type="range"] { margin: 0; }

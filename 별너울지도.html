@@ -3183,6 +3183,115 @@ body.red .next-event { background: linear-gradient(120deg, rgba(255, 106, 61, .1
   html[data-layout="mobile"] .first-visit-wrap:has(.first-visit[hidden]) { padding-top: env(safe-area-inset-top, 0px); }
 }
 
+/* =========================================================================
+   학습관 2026-11-28 — 개념 검색 · 읽기 typography · 개념 도해 · 단원 링크
+   ========================================================================= */
+:root { --lu-fs: 16px; }
+
+.learn-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  margin: 0 0 14px;
+}
+.lu-search { display: flex; align-items: center; gap: 8px; flex: 1 1 260px; min-width: 0; }
+.lu-search-label { font-size: .78rem; color: var(--faint); font-weight: 700; white-space: nowrap; }
+.lu-search input[type="search"] {
+  flex: 1 1 auto; min-width: 0; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: rgba(255,255,255,.04);
+  color: var(--text); font-size: .9rem; font-family: inherit;
+}
+.lu-search input[type="search"]:focus { border-color: rgba(255,212,121,.55); outline: none; }
+.lu-fonts { display: flex; align-items: center; gap: 4px; }
+.lu-fonts span { font-size: .74rem; color: var(--faint); margin-right: 2px; }
+.lu-fonts button {
+  padding: 5px 9px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); font-size: .78rem; cursor: pointer;
+}
+.lu-fonts button[aria-pressed="true"] { color: var(--accent); border-color: rgba(255,212,121,.5); background: var(--accent-soft); }
+.lu-search-note { flex: 1 1 100%; margin: 0; font-size: .78rem; color: var(--faint); min-height: 1em; }
+.learn-levels[hidden], .learn-level-note[hidden] { display: none !important; }
+
+.lu-result {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; text-align: left;
+  width: 100%; padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255,255,255,.02); color: var(--text);
+}
+.lu-result:hover { border-color: var(--border-hi); background: rgba(255,255,255,.04); }
+.lu-res-lv { grid-row: span 2; align-self: center; font-size: .7rem; font-weight: 800; color: var(--accent);
+  border: 1px solid rgba(255,212,121,.35); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+.lu-res-title { font-size: .95rem; font-weight: 700; }
+.lu-res-sub { font-size: .8rem; color: var(--muted); line-height: 1.5; }
+.learn-units .lu-result + .lu-result { margin-top: 0; }
+.lu-empty { color: var(--faint); font-size: .88rem; padding: 14px 4px; }
+
+/* 읽기 typography — 본문 16~17px, 행간 1.75, 줄 길이 제한 */
+.learn-unit-body { font-size: var(--lu-fs); line-height: 1.75; }
+.learn-unit-body .lu-block p,
+.learn-unit-body .lux-deep p { font-size: 1em; line-height: 1.75; max-width: 62ch; color: var(--text); }
+.learn-unit-body .lu-block ul,
+.learn-unit-body .lu-block li { font-size: .95em; line-height: 1.72; max-width: 62ch; }
+.learn-unit-body .lu-block h5 { font-size: .92em; }
+.learn-unit-body .lu-formula code {
+  display: block; font-size: .9em; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+  overflow-x: auto; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,.03); border: 1px solid var(--border);
+}
+.lu-oneliner {
+  margin: 2px 0 14px; padding: 12px 14px; border-radius: 12px;
+  border-left: 3px solid var(--accent); background: rgba(255,212,121,.07);
+  font-size: 1.06em; line-height: 1.7; color: var(--text); font-weight: 600;
+}
+.lu-tit { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.lu-badge {
+  font-size: .68rem; font-weight: 700; color: var(--accent-3);
+  border: 1px solid rgba(138,182,255,.35); border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+}
+.lu-observe { border-left: 3px solid rgba(126,224,192,.5); padding-left: 12px; }
+.lu-share-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 0; }
+.lu-share-note { font-size: .74rem; color: var(--faint); }
+.mini-btn.lu-share { font-size: .78rem; }
+
+/* 표: 모바일 가로 스크롤 + 첫 열 고정 */
+.lu-table .lux-table-wrap { -webkit-overflow-scrolling: touch; }
+.lux-table { font-size: .86em; }
+.lux-table th:first-child, .lux-table td:first-child {
+  position: sticky; left: 0; background: #0a101c; z-index: 1;
+}
+.lux-table thead th:first-child { background: #0d1422; }
+body.red .lux-table th:first-child, body.red .lux-table td:first-child { background: #150402; }
+body.red .lux-table thead th:first-child { background: #1a0503; }
+
+/* 개념 도해 (learn-figs.js) */
+.lu-figs { display: flex; flex-direction: column; gap: 14px; margin: 4px 0 18px; }
+.lu-figure { margin: 0; }
+.lu-figure svg {
+  display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto;
+  background: rgba(4,8,16,.5); border: 1px solid var(--border); border-radius: 12px;
+  box-sizing: border-box; padding: 8px;
+}
+.lu-figure figcaption, .lu-fig-cap {
+  display: block; margin: 8px auto 0; max-width: 60ch;
+  font-size: .84rem; line-height: 1.7; color: var(--muted);
+}
+.lu-figure figcaption b, .lu-fig-cap b { color: var(--text); }
+.lu-fig-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.lu-fig-grid > svg {
+  display: block; width: 100%; height: auto;
+  background: rgba(4,8,16,.5); border: 1px solid var(--border); border-radius: 12px;
+  box-sizing: border-box; padding: 6px;
+}
+@media (max-width: 640px) {
+  .lu-fig-grid { grid-template-columns: 1fr; }
+  .lu-figure figcaption { font-size: .8rem; }
+}
+body.red .lu-figure svg, body.red .lu-fig-grid > svg { background: rgba(14,2,0,.55); }
+
+/* 실험 조작부가 2px 넘치던 문제 — 그리드 자식의 최소 너비를 풀어 줍니다 */
+.sim-controls, .sim-ctrl, .sim-ctrl > * { min-width: 0; }
+.sim-ctrl input[type="range"] { min-width: 0; width: 100%; }
+.sim-ctrl-label, .sim-ctrl-val { overflow-wrap: anywhere; }
+/* range 입력의 브라우저 기본 바깥여백(2px)이 그리드 밖으로 2px 넘치던 문제 */
+.sim-ctrl input[type="range"] { margin: 0; }
+
 </style>
 <!-- 홈 화면 설치(PWA) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17937,6 +18046,803 @@ window.Astro = (function () {
 
 </script>
 <script>
+/* ===== learn-figs.js ===== */
+/* =========================================================================
+   learn-figs.js — 학습관 「개념 도해」 (2026-11-28)
+   · 교과서·자습서에 없는 눈으로 보는 설명을 직접 그린 인라인 SVG 로 넣습니다.
+     (외부 이미지 없음 → 오프라인·저작권 안전, SW 캐시는 JS 파일만 받으면 됨)
+   · 모든 그림은 role="img" + aria-label, 아래에 figcaption.
+   · 색은 CSS 변수(var(--text) 등)를 쓰므로 레드라이트 모드에서도 대비가 유지됩니다.
+   · 수치는 tools/sky_motion_check.py · tools/audit_lab.py 로 독립 검증했습니다.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var C = {
+    text: 'var(--text, #eef2fb)',
+    mut: 'var(--muted, #9aa6c0)',
+    faint: 'var(--faint, #7c88a3)',
+    acc: 'var(--accent, #ffd479)',
+    acc2: 'var(--accent-2, #7ee0c0)',
+    acc3: 'var(--accent-3, #8ab6ff)',
+    line: 'rgba(255,255,255,.20)',
+    grid: 'rgba(255,255,255,.10)',
+    warm: '#ff8a5c',
+    white: '#e9eef8'
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function n(v) { return Math.round(v * 10) / 10; }
+
+  /* ---------------------------------------------------------------- 그리기 */
+  function T(x, y, s, o) {
+    o = o || {};
+    return '<text x="' + n(x) + '" y="' + n(y) + '" fill="' + (o.c || C.mut) + '"' +
+      ' font-size="' + (o.s || 10.5) + '" font-weight="' + (o.w || 500) + '"' +
+      ' text-anchor="' + (o.a || 'middle') + '"' +
+      (o.r ? ' transform="rotate(' + o.r + ' ' + n(x) + ' ' + n(y) + ')"' : '') + '>' + esc(s) + '</text>';
+  }
+  function L(x1, y1, x2, y2, o) {
+    o = o || {};
+    return '<line x1="' + n(x1) + '" y1="' + n(y1) + '" x2="' + n(x2) + '" y2="' + n(y2) + '"' +
+      ' stroke="' + (o.c || C.line) + '" stroke-width="' + (o.w || 1) + '"' +
+      (o.d ? ' stroke-dasharray="' + o.d + '"' : '') + ' stroke-linecap="round"/>';
+  }
+  function CIR(x, y, r, o) {
+    o = o || {};
+    return '<circle cx="' + n(x) + '" cy="' + n(y) + '" r="' + n(r) + '" fill="' + (o.f || 'none') + '"' +
+      (o.s ? ' stroke="' + o.s + '" stroke-width="' + (o.w || 1) + '"' : '') + '/>';
+  }
+  function P(d, o) {
+    o = o || {};
+    return '<path d="' + d + '" fill="' + (o.f || 'none') + '" stroke="' + (o.c || 'none') + '"' +
+      ' stroke-width="' + (o.w || 1) + '"' + (o.d ? ' stroke-dasharray="' + o.d + '"' : '') +
+      ' stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+  function ARR(x1, y1, x2, y2, o) {
+    o = o || {};
+    var a = Math.atan2(y2 - y1, x2 - x1), h = o.h || 5.5, c = o.c || C.acc2;
+    return L(x1, y1, x2, y2, { c: c, w: o.w || 1.4 }) +
+      P('M' + n(x2) + ' ' + n(y2) + 'L' + n(x2 - h * Math.cos(a - 0.45)) + ' ' + n(y2 - h * Math.sin(a - 0.45)) +
+        'L' + n(x2 - h * Math.cos(a + 0.45)) + ' ' + n(y2 - h * Math.sin(a + 0.45)) + 'Z', { f: c });
+  }
+  function ARC(cx, cy, r, a1, a2, o) {
+    o = o || {};
+    var r1 = a1 * Math.PI / 180, r2 = a2 * Math.PI / 180;
+    var x1 = cx + r * Math.cos(r1), y1 = cy + r * Math.sin(r1);
+    var x2 = cx + r * Math.cos(r2), y2 = cy + r * Math.sin(r2);
+    var large = Math.abs(a2 - a1) > 180 ? 1 : 0;
+    return P('M' + n(x1) + ' ' + n(y1) + 'A' + n(r) + ' ' + n(r) + ' 0 ' + large + ' 1 ' + n(x2) + ' ' + n(y2),
+      { c: o.c || C.acc, w: o.w || 1.2, d: o.d });
+  }
+  function BOX(x, y, w, h, o) {
+    o = o || {};
+    return '<rect x="' + n(x) + '" y="' + n(y) + '" width="' + n(w) + '" height="' + n(h) + '" rx="' + (o.r || 6) +
+      '" fill="' + (o.f || 'rgba(255,255,255,.035)') + '"' + (o.s ? ' stroke="' + o.s + '" stroke-width="1"' : '') + '/>';
+  }
+  function starPath(x, y, r) {
+    var d = '';
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.42 : r;
+      d += (i ? 'L' : 'M') + n(x + Math.cos(a) * rr) + ' ' + n(y + Math.sin(a) * rr);
+    }
+    return d + 'Z';
+  }
+  function STAR(x, y, r, c) { return P(starPath(x, y, r), { f: c || C.acc }); }
+
+  function wrap(key, w, h, label, caption, inner, cls) {
+    return '<figure class="lu-figure ' + (cls || '') + '" data-fig-key="' + key + '">' +
+      '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + esc(label) + '"' +
+      ' preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">' + inner + '</svg>' +
+      (caption ? '<figcaption>' + caption + '</figcaption>' : '') + '</figure>';
+  }
+  /** 여러 장을 격자로 (모바일 1열 · 넓은 화면 2열) */
+  function grid(cells, key, caption) {
+    return '<div class="lu-fig-grid" data-fig-key="' + key + '">' + cells.join('') + '</div>' +
+      (caption ? '<p class="lu-fig-cap">' + caption + '</p>' : '');
+  }
+  function mini(w, h, label, inner) {
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + esc(label) + '"' +
+      ' preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">' + inner + '</svg>';
+  }
+
+  /* ====================================================================
+     1. 연주시차 — 1 AU 기선과 p 의 정의
+     ==================================================================== */
+  function figParallax() {
+    var S = { x: 160, y: 30 };            // 별
+    var sun = { x: 160, y: 172 };
+    var jan = { x: 258, y: 172 }, jul = { x: 62, y: 172 };
+    var g = '';
+    // 지구 궤도
+    g += P('M62 172A98 30 0 0 0 258 172', { c: C.grid, w: 1, d: '3 4' });
+    g += P('M62 172A98 30 0 0 1 258 172', { c: 'rgba(255,255,255,.05)', w: 1 });
+    // 시선
+    g += L(S.x, S.y, sun.x, sun.y, { c: C.faint, w: 1, d: '4 4' });
+    g += L(jan.x, jan.y, S.x, S.y, { c: C.acc3, w: 1.3 });
+    g += L(jul.x, jul.y, S.x, S.y, { c: C.acc, w: 1.3 });
+    // 별
+    g += STAR(S.x, S.y, 8, C.white);
+    g += T(S.x + 16, S.y - 2, '별', { c: C.text, a: 'start', w: 700 });
+    g += T(S.x + 16, S.y + 11, '아주 멀리 있음', { c: C.faint, a: 'start', s: 9 });
+    // 태양·지구
+    g += CIR(sun.x, sun.y, 8, { f: C.acc });
+    g += T(sun.x, sun.y + 20, '태양', { c: C.mut, s: 9.5 });
+    g += CIR(jan.x, jan.y, 6, { f: C.acc3 });
+    g += T(jan.x + 2, jan.y + 20, '1월의 지구', { c: C.acc3, s: 9.5 });
+    g += CIR(jul.x, jul.y, 6, { f: C.acc });
+    g += T(jul.x - 2, jul.y + 20, '7월의 지구', { c: C.acc, s: 9.5 });
+    // 기선: 태양~1월 지구 = 1 AU (지구 지름 2 AU)
+    g += L(sun.x, 196, jan.x, 196, { c: C.acc2, w: 1.4 });
+    g += L(sun.x, 192, sun.x, 200, { c: C.acc2, w: 1.4 });
+    g += L(jan.x, 192, jan.x, 200, { c: C.acc2, w: 1.4 });
+    g += T((sun.x + jan.x) / 2, 209, '기선 1 AU', { c: C.acc2, s: 9.5, w: 700 });
+    // 별에서 두 시선이 만드는 각 2p
+    g += ARC(S.x, S.y, 58, 74, 106, { c: C.acc2, w: 1.3 });
+    g += T(S.x + 2, S.y + 50, '2p', { c: C.acc2, s: 11, w: 800 });
+    g += T(S.x, 132, '두 시선 사이 각 = 2p', { c: C.mut, s: 9.5 });
+    // 수식 상자
+    g += BOX(6, 6, 150, 40);
+    g += T(13, 22, 'd[pc] = 1 / p[″]', { c: C.acc, a: 'start', s: 11, w: 700 });
+    g += T(13, 37, '1 pc = 3.26광년 = 206,265 AU', { c: C.mut, a: 'start', s: 8.5 });
+    g += T(160, 222, '각도는 크게 과장했습니다 (실제 p는 1″ 이하)', { c: C.faint, s: 8.5 });
+    return wrap('parallax', 320, 230,
+      '연주시차 도해. 태양을 가운데 두고 1월과 7월의 지구 위치가 1 AU 기선을 이루며, 별에서 두 시선이 만드는 각의 절반이 연주시차 p 입니다.',
+      '<b>연주시차의 정의</b> — 6개월 간격으로 별을 보면 방향이 조금 달라집니다. 그 차이의 절반이 p이고, 기선은 1 AU(지구–태양 거리)입니다. 두 지구 사이는 2 AU(약 3억 km)라서 별은 1년에 <b>2p</b> 만큼 왕복합니다. p를 각초로 재면 거리는 d[pc] = 1/p[″]. 그림의 각도는 아주 크게 과장했습니다.',
+      g);
+  }
+
+  /* ====================================================================
+     2. 일·월식이 드문 까닭 — 궤도 경사 5.145° 와 교점
+     ==================================================================== */
+  function figEclipse() {
+    var W = 320, H = 268;
+    var g = '';
+    // 세 장면을 가로 띠로: (1) 교점의 삭 → 일식 (2) 교점에서 벗어난 삭 → 식 없음 (3) 망 → 월식
+    function strip(y0, kind) {
+      var ex = 236, ey = y0 + 34;        // 지구 중심
+      var sun = { x: 24, y: ey };
+      var o = '';
+      o += L(8, ey, 312, ey, { c: C.grid, w: 1, d: '5 4' });
+      o += CIR(sun.x, sun.y, 9, { f: C.acc });
+      o += T(sun.x, sun.y + 18, '태양', { c: C.mut, s: 8 });
+      o += CIR(ex, ey, 7, { f: C.acc3 });
+      o += T(ex, ey + 20, '지구', { c: C.acc3, s: 8.5 });
+      if (kind !== 'lunar') {
+        // 삭: 달이 태양 쪽(왼쪽)
+        var mx = ex - 78, dy = kind === 'solar' ? 0 : -13;   // 5.1° 를 과장
+        o += CIR(mx, ey + dy, 5, { f: C.white });
+        o += T(mx, ey + dy - 9, '삭의 달', { c: C.white, s: 8 });
+        // 그림자: 달에서 지구 쪽으로
+        var hit = kind === 'solar';
+        o += P('M' + (mx + 4) + ' ' + (ey + dy) + 'L' + (ex + 34) + ' ' + (ey + dy + (hit ? 0 : dy * 0.5)) +
+          'L' + (ex + 34) + ' ' + (ey + dy + (hit ? 0 : dy * 0.5) + 9) + 'L' + (mx + 4) + ' ' + (ey + dy + 9) + 'Z',
+          { f: hit ? 'rgba(255,255,255,.22)' : 'rgba(255,255,255,.10)', c: 'rgba(255,255,255,.30)', w: 0.8 });
+        if (hit) {
+          o += T(300, ey - 30, '일식', { c: C.acc2, a: 'end', s: 10, w: 800 });
+          o += T(300, ey - 18, '그림자가 지구를 덮음', { c: C.acc2, a: 'end', s: 8 });
+        } else {
+          o += T(300, ey - 30, '식 없음', { c: C.mut, a: 'end', s: 10, w: 800 });
+          o += T(300, ey - 18, '그림자가 지구 위로 빗나감', { c: C.mut, a: 'end', s: 8 });
+          o += L(mx + 4, ey + dy + 4, ex + 20, ey + dy * 0.5 + 4, { c: 'rgba(255,122,110,.6)', w: 1, d: '3 3' });
+        }
+      } else {
+        // 망: 달이 지구 반대쪽(오른쪽) — 지구 그림자 속으로
+        var mx2 = ex + 62;
+        o += P('M' + (ex + 7) + ' ' + (ey - 3) + 'L' + (ex + 74) + ' ' + (ey - 12) + 'L' + (ex + 74) + ' ' + (ey + 12) + 'L' + (ex + 7) + ' ' + (ey + 3) + 'Z',
+          { f: 'rgba(120,140,190,.20)', c: 'rgba(150,170,210,.35)', w: 0.8 });
+        o += CIR(mx2, ey, 4.5, { f: C.white, s: C.acc2, w: 1 });
+        o += T(300, ey - 30, '월식', { c: C.acc2, a: 'end', s: 10, w: 800 });
+        o += T(300, ey - 18, '망의 달이 지구 그림자에 들어감', { c: C.acc2, a: 'end', s: 8 });
+        o += T(mx2, ey - 14, '망의 달', { c: C.white, s: 8 });
+      }
+      return o;
+    }
+    g += T(8, 14, '① 교점 근처의 삭 — 세 천체가 거의 일직선', { c: C.text, a: 'start', s: 9, w: 700 });
+    g += strip(22, 'solar');
+    g += T(8, 106, '② 교점에서 벗어난 삭 — 달이 황도면 위로 5.1°(과장)', { c: C.text, a: 'start', s: 9, w: 700 });
+    g += strip(114, 'none');
+    g += T(8, 198, '③ 망 — 달이 지구 그림자 속으로 들어가면 월식', { c: C.text, a: 'start', s: 9, w: 700 });
+    g += strip(206, 'lunar');
+    g += T(160, 262, '달 궤도는 황도면에서 5.145° 기울어 → 교점의 삭·망에서만 식이 생깁니다', { c: C.mut, s: 8.5 });
+    return wrap('eclipse', W, H,
+      '일식과 월식이 드문 이유 도해. 교점 근처의 삭에서는 달 그림자가 지구를 덮어 일식이 되고, 교점에서 벗어난 삭에서는 그림자가 지구 위로 빗나갑니다. 망에는 달이 지구 그림자에 들어가면 월식이 됩니다.',
+      '<b>왜 매달 식이 생기지 않을까</b> — 달 궤도는 황도면에서 5.145° 기울어져 있습니다. 그림의 1번처럼 교점 근처에서 삭이 되면 그림자가 지구를 덮어 일식이 되지만, 2번처럼 교점에서 벗어나면 달이 황도면 위나 아래로 최대 5.1° 떨어져 그림자가 빗나갑니다. 망에는 달이 지구 그림자 속으로 들어갈 때 월식이 됩니다. 그림의 기울기는 보기 쉽게 과장했습니다.',
+      g);
+  }
+
+  /* ====================================================================
+     3. 계절과 황도 경사 23.44°
+     ==================================================================== */
+  function figSeasons() {
+    var g = '', cx = 160, cy = 104, R = 96;
+    g += CIR(cx, cy, 10, { f: C.acc });
+    g += T(cx, cy + 24, '태양', { c: C.mut, s: 9 });
+    g += P('M' + (cx - R) + ' ' + cy + 'A' + R + ' ' + (R * 0.42) + ' 0 1 0 ' + (cx + R) + ' ' + cy +
+      'A' + R + ' ' + (R * 0.42) + ' 0 1 0 ' + (cx - R) + ' ' + cy + 'Z', { c: C.grid, w: 1, d: '4 5' });
+    var pos = [
+      { m: '6월 하지', dec: '+23.44°', x: cx - R, y: cy },
+      { m: '12월 동지', dec: '−23.44°', x: cx + R, y: cy },
+      { m: '3월 춘분', dec: '0°', x: cx, y: cy + R * 0.42 },
+      { m: '9월 추분', dec: '0°', x: cx, y: cy - R * 0.42 }
+    ];
+    pos.forEach(function (p) {
+      var ax = Math.sin(23.44 * Math.PI / 180) * 15, ay = -Math.cos(23.44 * Math.PI / 180) * 15;
+      g += L(p.x - ax, p.y - ay, p.x + ax, p.y + ay, { c: C.text, w: 1.3 });
+      g += CIR(p.x + ax, p.y + ay, 2.4, { f: C.acc3 });
+      g += CIR(p.x, p.y, 7, { f: 'rgba(138,182,255,.28)', s: C.acc3, w: 1 });
+      var below = p.y >= cy;
+      g += T(p.x, p.y + (below ? 30 : -16), p.m, { c: C.text, s: 9.5, w: 700 });
+      g += T(p.x, p.y + (below ? 41 : -5), '태양 적위 ' + p.dec, { c: C.acc2, s: 8.5 });
+    });
+    g += T(cx, 12, '지구 자전축은 우주 공간에서 방향이 일정 (23.44° 기울어짐)', { c: C.mut, s: 9 });
+    var bars = [['6월 하지', 14.6], ['춘·추분', 12.0], ['12월 동지', 9.6]];
+    var bx = 16, by = 178, bw = 288;
+    g += T(bx, by - 6, '북위 37°(오산)의 낮 길이 — 위도에 따라 이 값이 달라집니다', { c: C.faint, a: 'start', s: 8.5 });
+    bars.forEach(function (b, i) {
+      var y = by + i * 13, w = b[1] / 24 * (bw - 62);
+      g += T(bx, y + 7, b[0], { c: C.mut, a: 'start', s: 8.5 });
+      g += '<rect x="' + (bx + 54) + '" y="' + y + '" width="' + n(w) + '" height="7" rx="3.5" fill="' +
+        (i === 0 ? C.acc : i === 1 ? C.acc2 : C.acc3) + '" opacity=".55"/>';
+      g += T(bx + 58 + w, y + 7, b[1].toFixed(1) + '시간', { c: C.text, a: 'start', s: 8.5, w: 700 });
+    });
+    return wrap('seasons', 320, 224,
+      '계절이 생기는 까닭 도해. 지구가 공전해도 자전축 방향은 일정해, 6월에는 북반구가 태양 쪽으로 기울어 태양 적위가 +23.44도, 12월에는 -23.44도가 됩니다.',
+      '<b>축의 방향은 변하지 않습니다</b> — 지구가 공전해도 자전축은 같은 방향을 가리키므로, 6월에는 북반구가 태양 쪽으로 기울어 태양 적위가 +23.44°(정오 고도 최대), 12월에는 −23.44°가 됩니다. 낮 길이도 함께 달라집니다.',
+      g);
+  }
+
+  /* ====================================================================
+     4. H-R도 위의 별의 진화 경로
+     ==================================================================== */
+  function figHrEvolution() {
+    var W = 320, H = 240, x0 = 40, x1 = 306, y0 = 22, y1 = 202;
+    var g = '';
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    function px(T) { return x0 + (Math.log10(40000 / Math.max(2500, T)) / Math.log10(40000 / 2500)) * (x1 - x0); }
+    function py(Lg) { return y1 - (Math.log10(Math.max(1e-4, Lg)) + 4) / 10 * (y1 - y0); }
+    [30000, 10000, 6000, 3000].forEach(function (t) {
+      g += L(px(t), y0, px(t), y1, { c: 'rgba(255,255,255,.06)', w: 1 });
+      g += T(px(t), y1 + 11, (t / 1000) + 'k', { c: C.faint, s: 8.5 });
+    });
+    g += T((x0 + x1) / 2, 230, '표면 온도 (K) — 왼쪽이 뜨겁고 오른쪽이 차갑습니다', { c: C.mut, s: 9 });
+    [1e-3, 1, 1e3, 1e6].forEach(function (l) {
+      g += L(x0, py(l), x1, py(l), { c: 'rgba(255,255,255,.06)', w: 1 });
+      g += T(x0 - 4, py(l) + 3, l === 1 ? '1' : (l === 1e-3 ? '10⁻³' : l === 1e3 ? '10³' : '10⁶'), { c: C.faint, s: 8.5, a: 'end' });
+    });
+    g += T(4, y0 - 8, '광도(태양=1)', { c: C.mut, a: 'start', s: 9 });
+    // 주계열 (L = M^3.5, T = 5772 M^0.55 와 같은 근사를 씁니다)
+    var ms = '';
+    for (var m = 0.1; m <= 32; m *= 1.12) {
+      var q = px(5772 * Math.pow(m, 0.55)), r = py(Math.pow(m, 3.5));
+      ms += (ms ? 'L' : 'M') + n(q) + ' ' + n(r);
+    }
+    g += P(ms, { c: C.acc, w: 3.4 });
+    g += T(px(9000), py(120), '주계열', { c: C.acc, s: 9.5, w: 700, a: 'start' });
+    var sun = [px(5772), py(1)];
+    g += CIR(sun[0], sun[1], 3.4, { f: C.white });
+    g += T(sun[0] + 4, sun[1] + 13, '태양 5,772K', { c: C.text, a: 'start', s: 8.5 });
+    var rg = [px(3500), py(1200)];
+    g += CIR(rg[0], rg[1], 3.4, { f: C.warm });
+    g += ARR(sun[0] + 3, sun[1] - 3, rg[0] + 2, rg[1] + 6, { c: C.warm, w: 1.2, h: 4.5 });
+    g += T(rg[0] - 6, rg[1] - 6, '적색거성', { c: C.warm, a: 'end', s: 8.5, w: 700 });
+    var wd = [px(15000), py(0.004)];
+    g += ARR(rg[0] - 8, rg[1] + 2, wd[0] + 12, wd[1] - 6, { c: C.acc3, w: 1.2, h: 4.5 });
+    g += CIR(wd[0], wd[1], 3, { f: C.acc3 });
+    g += T(wd[0] + 6, wd[1] - 4, '백색왜성', { c: C.acc3, a: 'start', s: 8.5 });
+    g += T(px(9000), py(0.02), '행성상 성운', { c: C.faint, s: 7.5 });
+    var big = [px(30000), py(2e4)];
+    g += CIR(big[0], big[1], 3.4, { f: C.acc2 });
+    g += T(big[0] + 5, big[1] + 3, '15 M☉ 별', { c: C.acc2, a: 'start', s: 8.5, w: 700 });
+    var sg = [px(3800), py(1.2e5)];
+    g += ARR(big[0] - 2, big[1] - 3, sg[0] + 6, sg[1] + 4, { c: C.acc2, w: 1.2, h: 4.5 });
+    g += CIR(sg[0], sg[1], 3.4, { f: C.warm });
+    g += T(sg[0] - 5, sg[1] - 5, '초거성', { c: C.warm, a: 'end', s: 8.5 });
+    g += T(px(2200), py(1.2e5) + 15, '→ 초신성 → 중성자별·블랙홀', { c: C.acc2, a: 'end', s: 8 });
+    return wrap('hr-evolution', W, H,
+      'H-R도 위의 별의 진화 경로. 태양 같은 별은 주계열에서 적색거성, 행성상 성운, 백색왜성으로 가고, 15태양질량 별은 청색 주계열에서 초거성, 초신성, 중성자별이나 블랙홀로 갑니다.',
+      '<b>별의 생은 질량이 정합니다</b> — 태양(1 M☉)은 주계열에서 100억 년을 보낸 뒤 적색거성 → 행성상 성운 → 백색왜성으로 조용히 끝납니다. 8 M☉보다 무거운 별은 철 핵까지 만들어 초신성으로 폭발하고 중성자별이나 블랙홀을 남깁니다.',
+      g);
+  }
+
+  /* ====================================================================
+     5. 허블-르메트르 법칙 그래프
+     ==================================================================== */
+  function figHubble() {
+    var W = 320, H = 214, x0 = 44, x1 = 300, y0 = 20, y1 = 176;
+    var g = '';
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    var dmax = 500;
+    function px(d) { return x0 + d / dmax * (x1 - x0); }
+    function py(v) { return y1 - v / 35000 * (y1 - y0); }
+    [0, 100, 200, 300, 400, 500].forEach(function (d) {
+      g += T(px(d), y1 + 11, d, { c: C.faint, s: 8.5 });
+      g += L(px(d), y1, px(d), y1 + 3, { c: C.line, w: 1 });
+    });
+    [0, 10000, 20000, 30000].forEach(function (v) {
+      g += T(x0 - 4, py(v) + 3, (v / 1000) + '천', { c: C.faint, s: 8.5, a: 'end' });
+    });
+    g += T((x0 + x1) / 2, 202, '거리 d (Mpc)', { c: C.mut, s: 9 });
+    g += T(4, y0 - 6, '후퇴 속도 (km/s)', { c: C.mut, a: 'start', s: 9 });
+    g += L(px(0), py(0), px(dmax), py(70 * dmax), { c: C.acc, w: 2 });
+    g += T(px(430), py(70 * 430) - 7, 'v = H₀d  (H₀ = 70)', { c: C.acc, a: 'end', s: 9, w: 700 });
+    [[16, 1100, '처녀자리'], [60, 4000, '바다뱀자리'], [100, 6900, '머리털자리'], [250, 17500, ''], [400, 28500, '']].forEach(function (p) {
+      g += CIR(px(p[0]), py(p[1]), 2.6, { f: C.acc2 });
+      if (p[2]) g += T(px(p[0]) + 5, py(p[1]) - 5, p[2], { c: C.acc2, a: 'start', s: 8 });
+    });
+    g += T(px(120), py(70 * 120) + 16, '기울기 = 허블 상수 H₀', { c: C.acc, a: 'start', s: 9 });
+    return wrap('hubble', W, H,
+      '허블-르메트르 법칙 그래프. 가로축 거리, 세로축 후퇴 속도에서 은하들이 기울기 70킬로미터 매 초 매 메가파섹의 직선을 따라 놓입니다.',
+      '<b>속도는 거리에 비례합니다</b> — 가까운 은하일수록 천천히, 먼 은하일수록 빠르게 멀어집니다. 직선의 기울기가 허블 상수 H₀이며, 100 Mpc 떨어진 은하의 후퇴 속도는 약 7,000 km/s입니다. 실제 은하들은 고유 운동 때문에 직선에서 조금씩 흩어집니다(그림의 점은 대표값).',
+      g);
+  }
+
+  /* ====================================================================
+     6. 분광형 OBAFGKM 색-온도 띠
+     ==================================================================== */
+  function figSpectral() {
+    var g = '', W = 320;
+    var cols = ['#9db4ff', '#aecaff', '#e8eefc', '#fff4e2', '#ffe9a8', '#ffc27a', '#ff9a6a'];
+    var names = ['O', 'B', 'A', 'F', 'G', 'K', 'M'];
+    var temps = ['≥30,000', '10,000~30,000', '7,500~10,000', '6,000~7,500', '5,200~6,000', '3,700~5,200', '2,400~3,700'];
+    var ex = ['10 라켈타이', '리겔', '시리우스·베가', '프로키온', '태양·카펠라', '아르크투루스', '베텔게우스'];
+    var bw = (W - 28) / 7;
+    names.forEach(function (nm, i) {
+      var x = 14 + i * bw;
+      g += '<rect x="' + n(x) + '" y="18" width="' + n(bw - 1.5) + '" height="34" rx="4" fill="' + cols[i] +
+        '" opacity="' + (nm === 'G' ? '.98' : '.85') + '"/>';
+      g += T(x + bw / 2, 40, nm, { c: '#141a28', s: 15, w: 800 });
+      g += T(x + bw / 2, 66, temps[i], { c: C.mut, s: 7.5 });
+      g += T(x + bw / 2, 80, ex[i], { c: C.faint, s: 7.5 });
+    });
+    g += T(14, 12, '뜨거움 (파랑)', { c: C.acc3, a: 'start', s: 8.5, w: 700 });
+    g += T(W - 14, 12, '차가움 (빨강)', { c: C.warm, a: 'end', s: 8.5, w: 700 });
+    g += T(14, 100, '표면 온도(K)', { c: C.faint, a: 'start', s: 8 });
+    g += T(14, 114, '태양은 G2V — 최대 복사 파장 502 nm(초록빛)이지만 눈에는 흰색으로 보입니다.', { c: C.mut, a: 'start', s: 8.5 });
+    function planck(l, Tk) {
+      var Lm = l * 1e-9, h = 6.62607015e-34, c = 2.99792458e8, k = 1.380649e-23;
+      return (2 * h * c * c) / (Math.pow(Lm, 5) * (Math.exp(h * c / (Lm * k * Tk)) - 1));
+    }
+    var bx0 = 24, bx1 = W - 20, by0 = 128, by1 = 170;
+    g += L(bx0, by1, bx1, by1, { c: C.line, w: 1 });
+    g += L(bx0, by0, bx0, by1, { c: C.line, w: 1 });
+    var nmMax = 1400;
+    [[30000, C.acc3], [5800, C.white], [3000, C.warm]].forEach(function (it) {
+      var Tk = it[0], col = it[1], pk = planck(2.898e6 / Tk, Tk), d = '';
+      for (var nm = 20; nm <= nmMax; nm += 8) {
+        var v = planck(nm, Tk) / pk;
+        var x = bx0 + (nm - 20) / (nmMax - 20) * (bx1 - bx0);
+        var y = by1 - v * (by1 - by0) * 0.94;
+        d += (d ? 'L' : 'M') + n(x) + ' ' + n(y);
+      }
+      g += P(d, { c: col, w: 1.6 });
+      g += T(bx0 + (2.898e6 / Tk - 20) / (nmMax - 20) * (bx1 - bx0), by1 + 10,
+        n(2.898e6 / Tk) + 'nm', { c: col, s: 7.5 });
+    });
+    g += T(bx0 + 3, by0 + 8, '복사 세기(곡선마다 최대=1)', { c: C.faint, a: 'start', s: 7.5 });
+    g += T(bx1, by1 + 10, '파장(nm) →', { c: C.faint, a: 'end', s: 7.5 });
+    return wrap('spectral', W, 186,
+      '분광형 OBAFGKM 색과 온도 띠, 그리고 30,000켈빈, 5,800켈빈, 3,000켈빈 흑체복사 곡선. 온도가 높을수록 최대 복사 파장이 짧아집니다.',
+      '<b>색은 온도입니다</b> — 분광형 O·B·A·F·G·K·M은 알파벳 순서가 아니라 표면 온도 순서입니다. 온도가 높을수록 최대 복사 파장이 짧아져 파랗게, 낮을수록 길어져 붉게 보입니다(빈의 법칙).',
+      g);
+  }
+
+  /* ====================================================================
+     7. 세페이드 변광성의 주기-광도 관계
+     ==================================================================== */
+  function figCepheid() {
+    var W = 320, H = 208, x0 = 46, x1 = 300, y0 = 24, y1 = 158;
+    var g = '';
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    var LP0 = 0.4, LP1 = 2.1;                       // log P 0.4 ~ 2.1 (2.5일 ~ 126일)
+    function px(lp) { return x0 + (lp - LP0) / (LP1 - LP0) * (x1 - x0); }
+    function py(M) { return y0 + (M + 7) / 5.5 * (y1 - y0); }   // M -7 ~ -1.5
+    [[1, '1'], [3, '3'], [10, '10'], [30, '30'], [100, '100']].forEach(function (it) {
+      var lp = Math.log10(it[0]);
+      g += T(px(lp), y1 + 11, it[1], { c: C.faint, s: 8.5 });
+      g += L(px(lp), y1, px(lp), y1 + 3, { c: C.line, w: 1 });
+    });
+    [-6, -5, -4, -3, -2].forEach(function (M) {
+      g += T(x0 - 4, py(M) + 3, M, { c: C.faint, s: 8.5, a: 'end' });
+      g += L(x0, py(M), x1, py(M), { c: 'rgba(255,255,255,.06)', w: 1 });
+    });
+    g += T((x0 + x1) / 2, 196, '변광 주기 P (일, 로그 눈금)', { c: C.mut, s: 9 });
+    g += T(6, y0 - 9, '절대등급 M (작을수록 밝음)', { c: C.mut, a: 'start', s: 8.5 });
+    // M_V = −2.81 log P − 1.43 (고전적 세페이드)
+    var d = '';
+    for (var lp = LP0; lp <= LP1; lp += 0.05) {
+      var M = -2.81 * lp - 1.43;
+      d += (d ? 'L' : 'M') + n(px(lp)) + ' ' + n(py(M));
+    }
+    g += P(d, { c: C.acc, w: 2.2 });
+    g += T(px(1.95), py(-2.81 * 1.95 - 1.43) + 14, 'M = −2.81 log P − 1.43', { c: C.acc, a: 'end', s: 9, w: 700 });
+    [[5.37, 'δ 세페이'], [35.5, 'l 용골']].forEach(function (p) {
+      var M = -2.81 * Math.log10(p[0]) - 1.43;
+      g += CIR(px(Math.log10(p[0])), py(M), 2.8, { f: C.acc2 });
+      g += T(px(Math.log10(p[0])) + 5, py(M) - 5, p[1], { c: C.acc2, a: 'start', s: 8 });
+    });
+    g += T(16, 176, '주기가 길수록 실제 밝기가 큽니다 → 겉보기 등급만 재면 거리를 알 수 있습니다', { c: C.mut, a: 'start', s: 8 });
+    return wrap('cepheid', W, H,
+      '세페이드 변광성의 주기-광도 관계 그래프. 주기가 길수록 절대등급이 밝아지는 직선 관계를 보여 줍니다.',
+      '<b>우주의 자(ruler)</b> — 세페이드의 밝기 변화 주기를 재면 절대등급 M을 알 수 있습니다. 겉보기 등급 m과 비교해 d = 10^((m−M+5)/5) pc 로 거리를 구합니다. 1908년 헨리에타 리비트가 발견했고, 허블이 안드로메다까지의 거리를 재는 데 썼습니다.',
+      g);
+  }
+
+  /* ====================================================================
+     8. 남·북·동·서 하늘의 별 이동 — 실제 계산으로 그립니다
+        (위도 37°, 적경·적위 → 방위·고도 변환, 시간당 위치 변화)
+     ==================================================================== */
+  var LAT37 = 37.0;
+  function altaz(ra, dec, lst) {
+    var H = ((lst - ra) % 360 + 360) % 360 * Math.PI / 180;
+    var d = dec * Math.PI / 180, p = LAT37 * Math.PI / 180;
+    var sh = Math.sin(d) * Math.sin(p) + Math.cos(d) * Math.cos(p) * Math.cos(H);
+    var h = Math.asin(Math.max(-1, Math.min(1, sh))) * 180 / Math.PI;
+    var az = Math.atan2(-Math.cos(d) * Math.sin(H),
+      Math.sin(d) * Math.cos(p) - Math.cos(d) * Math.sin(p) * Math.cos(H)) * 180 / Math.PI;
+    return { az: (az + 360) % 360, alt: h };
+  }
+  function skyPanel(o) {
+    var W = 320, H = 158, HZ = 128, R = 104;    // 지평선 y, 천구 반지름(px)
+    var g = '';
+    // 지면
+    g += '<rect x="0" y="' + HZ + '" width="' + W + '" height="' + (H - HZ) + '" fill="rgba(255,255,255,.035)"/>';
+    // 천구 돔 반원
+    g += P('M' + (160 - R) + ' ' + HZ + 'A' + R + ' ' + R + ' 0 0 1 ' + (160 + R) + ' ' + HZ,
+      { c: 'rgba(255,255,255,.12)', w: 1, d: '3 5' });
+    [30, 60].forEach(function (a2) {
+      var y = HZ - R * Math.sin(a2 * Math.PI / 180);
+      g += L(160 - R * Math.cos(a2 * Math.PI / 180), y, 160 + R * Math.cos(a2 * Math.PI / 180), y,
+        { c: 'rgba(255,255,255,.06)', w: 1, d: '2 5' });
+      g += T(160 + R * Math.cos(a2 * Math.PI / 180) + 4, y + 3, a2 + '°', { c: C.faint, a: 'start', s: 7 });
+    });
+    g += L(0, HZ, W, HZ, { c: C.line, w: 1.2 });
+    o.labels.forEach(function (lb) {
+      g += T(160 + R * Math.sin(lb[1] * Math.PI / 180), HZ + 13, lb[0], { c: C.mut, s: 9, w: 700 });
+    });
+    function proj(az, alt) {
+      var daz = ((az - o.az0 + 540) % 360) - 180;
+      var r = R * Math.cos(alt * Math.PI / 180);
+      return { x: 160 + r * Math.sin(daz * Math.PI / 180), y: HZ - R * Math.sin(alt * Math.PI / 180), daz: daz };
+    }
+    o.tracks.forEach(function (tk) {
+      var d = '', pts = [];
+      for (var t = -780; t <= 780; t += 2.5) {
+        var lst = t / 60 * 15.041;
+        var v = altaz(tk.ra, tk.dec, lst);
+        var q = (v.alt < 0.5 || v.alt > 88.5) ? null : proj(v.az, v.alt);
+        if (q && Math.abs(q.daz) > 88) q = null;
+        if (q) {
+          d += (pts.length && pts[pts.length - 1] ? 'L' : 'M') + n(q.x) + ' ' + n(q.y);
+          pts.push(q);
+        } else pts.push(null);
+      }
+      g += P(d, { c: tk.c || 'rgba(200,215,240,.42)', w: 1.6 });
+      // 시야 밖으로 이어지는 궤적은 점선으로 이어 줍니다 (잘린 느낌 방지)
+      var real = pts.filter(function (q) { return !!q; });
+      [[pts.indexOf(real[0]), -1], [pts.indexOf(real[real.length - 1]), 1]].forEach(function (pair) {
+        var i0 = pair[0], dir = pair[1];
+        if (i0 < 0 || real.length < 6) return;
+        var q1 = pts[i0], q2 = pts[i0 + dir * 4];
+        if (!q2) return;
+        if (Math.abs(q1.y - HZ) < 6) return;             // 지평선에서 시작·종료한 궤적은 그대로
+        var ang = Math.atan2(q1.y - q2.y, q1.x - q2.x);
+        var ex2 = q1.x + Math.cos(ang) * 12, ey2 = q1.y + Math.sin(ang) * 12;
+        g += L(q1.x, q1.y, ex2, ey2, { c: tk.c || C.mut, w: 1.1, d: '1 3' });
+      });
+      [0.12, 0.3, 0.5, 0.7, 0.88].forEach(function (f) {
+        var i = Math.max(1, Math.floor(pts.length * f));
+        var a1 = pts[i], b1 = pts[i + 5];
+        if (!a1 || !b1) return;
+        var ang = Math.atan2(b1.y - a1.y, b1.x - a1.x);
+        g += ARR(a1.x - Math.cos(ang) * 4, a1.y - Math.sin(ang) * 4,
+          a1.x + Math.cos(ang) * 10, a1.y + Math.sin(ang) * 10, { c: tk.c2 || C.acc2, w: 1.4, h: 5.2 });
+      });
+      if (tk.name) {
+        var mid = pts[Math.floor(pts.length * 0.5)];
+        if (mid) g += T(mid.x, mid.y - 9, tk.name, { c: tk.c || C.mut, s: 7.5, w: 700 });
+      }
+      if (tk.endLabel) {
+        var lastQ = null;
+        for (var z = pts.length - 1; z >= 0; z--) { if (pts[z]) { lastQ = pts[z]; break; } }
+        if (lastQ) g += T(lastQ.x + (tk.endDx || 0), lastQ.y + (tk.endDy || -8), tk.endLabel,
+          { c: tk.c2 || C.acc2, s: 7.5, w: 700, a: tk.endAnchor || 'middle' });
+      }
+    });
+    if (o.polaris) {
+      var q2 = proj(360, LAT37);
+      g += STAR(q2.x, q2.y, 3.8, C.acc);
+      g += T(8, 26, '★ 북극성 — 고도 37° (관측 위도와 같음)', { c: C.acc, a: 'start', s: 7.5, w: 700 });
+    }
+    g += T(8, 12, o.title, { c: C.text, a: 'start', s: 9.5, w: 800 });
+    g += T(W - 8, 12, o.note || '', { c: C.acc2, a: 'end', s: 7.5, w: 700 });
+    return mini(W, H, o.title + ' 하늘의 별 이동 도해 (위도 37도)', g);
+  }
+  function figSky4() {
+    var panels = [
+      { key: 'south', title: '남쪽 하늘 (방위 180°)', az0: 180,
+        labels: [['동', -90], ['남', 0], ['서', 90]], note: '동 → 서 (왼 → 오)',
+        tracks: [{ ra: 0, dec: 0, c: '#c9d6ef', c2: C.acc2 }, { ra: 0, dec: -22, c: '#8ab6ff', c2: C.acc3 }] },
+      { key: 'north', title: '북쪽 하늘 (방위 0°)', az0: 0, polaris: true,
+        labels: [['서', -90], ['북', 0], ['동', 90]], note: '북극성 둘레 반시계',
+        tracks: [{ ra: 0, dec: 75, c: '#ffd479', c2: C.acc }, { ra: 180, dec: 66, c: '#8ab6ff', c2: C.acc3 }] },
+      { key: 'east', title: '동쪽 하늘 (방위 90°)', az0: 90,
+        labels: [['북', -90], ['동', 0], ['남', 90]], note: '떠올라 남(오른쪽)으로',
+        tracks: [{ ra: 0, dec: 0, c: '#c9d6ef', c2: C.acc2, endLabel: '→ 남쪽 하늘로', endDx: 16, endDy: 2, endAnchor: 'start' }, { ra: 350, dec: -22, c: '#8ab6ff', c2: C.acc3 }] },
+      { key: 'west', title: '서쪽 하늘 (방위 270°)', az0: 270,
+        labels: [['남', -90], ['서', 0], ['북', 90]], note: '북(오른쪽)으로 지며',
+        tracks: [{ ra: 0, dec: 0, c: '#c9d6ef', c2: C.acc2, endLabel: '→ 북쪽 하늘로', endDx: 16, endDy: -8, endAnchor: 'start' }, { ra: 10, dec: -22, c: '#8ab6ff', c2: C.acc3 }] }
+    ];
+    var cells = panels.map(skyPanel);
+    return grid(cells, 'sky-motion',
+      '<b>남쪽은 왼쪽(동)에서 오른쪽(서)으로, 북쪽은 북극성 둘레를 반시계로</b> — 모두 지구가 서에서 동으로 자전하기 때문에 생기는 겉보기 운동입니다. ' +
+      '동쪽 하늘에서는 별이 지평선에서 떠올라 오른쪽(남쪽)으로 기울며 올라가고, 서쪽 하늘에서는 오른쪽(북쪽)으로 기울며 내려갑니다. ' +
+      '화살표는 위도 37°(오산)에서 별의 적경·적위를 방위·고도로 바꿔 계산한 실제 이동 방향입니다.');
+  }
+
+  /* ====================================================================
+     9. 우주배경복사 — 재결합과 지평선
+     ==================================================================== */
+  function figCmbRecomb() {
+    var W = 320, H = 196;
+    var g = '';
+    g += T(8, 14, '빅뱅 뒤 우주는 뜨겁고 불투명 → 38만 년에 처음 투명해졌습니다', { c: C.mut, a: 'start', s: 8.5 });
+    // 두 구간 상자
+    g += BOX(10, 24, 130, 48, { f: 'rgba(255,138,92,.13)', s: 'rgba(255,138,92,.40)' });
+    g += T(16, 40, '① 플라스마 우주 (불투명)', { c: C.warm, a: 'start', s: 8.5, w: 700 });
+    g += T(16, 54, '자유 전자가 빛을 계속 튕겨', { c: C.mut, a: 'start', s: 7.5 });
+    g += T(16, 65, '빛이 곧바로 나아가지 못함', { c: C.mut, a: 'start', s: 7.5 });
+    g += BOX(170, 24, 140, 48, { f: 'rgba(126,224,192,.14)', s: 'rgba(126,224,192,.40)' });
+    g += T(176, 40, '② 투명해진 우주', { c: C.acc2, a: 'start', s: 8.5, w: 700 });
+    g += T(176, 54, '빛이 자유롭게 날아가', { c: C.mut, a: 'start', s: 7.5 });
+    g += T(176, 65, '오늘 2.7255 K로 관측', { c: C.mut, a: 'start', s: 7.5 });
+    g += ARR(142, 48, 168, 48, { c: C.acc, w: 1.4, h: 5 });
+    g += T(155, 88, '재결합 — 38만 년 · z ≈ 1,100 · 약 3,000 K', { c: C.acc, s: 8.5, w: 700 });
+    // 온도 곡선
+    var x0 = 20, x1 = 306, y0 = 104, y1 = 142;
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    var d = '';
+    for (var i = 0; i <= 120; i++) {
+      var f = i / 120;
+      var temp = 3000 * Math.pow(1 / 1101, f);        // 크기가 1/a 로 늘며 T ∝ 1/a
+      var y = y0 + (1 - Math.log(temp / 2.7255) / Math.log(3000 / 2.7255)) * (y1 - y0);
+      var x = x0 + f * (x1 - x0);
+      d += (i ? 'L' : 'M') + n(x) + ' ' + n(y);
+    }
+    g += P(d, { c: C.acc3, w: 1.6 });
+    g += T(x0 + 3, y0 + 9, '3,000 K', { c: C.acc3, a: 'start', s: 8 });
+    g += T(x1 - 2, y1 - 4, '2.7255 K', { c: C.acc3, a: 'end', s: 8, w: 700 });
+    g += L(151, 96, 151, y1, { c: 'rgba(255,212,121,.5)', w: 1, d: '2 3' });
+    // 시간축
+    [[16, '빅뱅'], [70, '3분'], [151, '38만 년'], [222, '1억 년'], [302, '138억 년']].forEach(function (t) {
+      g += L(t[0], y1, t[0], y1 + 4, { c: C.line, w: 1 });
+      g += T(Math.max(20, Math.min(300, t[0])), y1 + 15, t[1], { c: C.text, s: 8, w: 700 });
+    });
+    g += T(160, 184, '우주가 식으면서(T ∝ 1/크기) 빛의 파장도 함께 늘어났습니다', { c: C.mut, s: 8 });
+    return wrap('cmb-recomb', W, H,
+      '우주배경복사가 생긴 순간 도해. 빅뱅 뒤 38만 년, 온도가 약 3000켈빈으로 내려가 전자가 원자핵에 붙자 빛이 처음 자유롭게 날아갔고, 그 빛이 팽창하며 파장이 늘어 오늘 2.7255켈빈의 마이크로파로 온 하늘을 채웁니다.',
+      '<b>우주가 처음 투명해진 순간</b> — 재결합 전의 우주는 자유 전자가 빛을 계속 흩뿌리는 안개였습니다. 38만 년(적색편이 z≈1,100)에 전자가 양성자에 붙어 중성 수소가 되자 빛이 곧바로 날아갈 수 있게 되었고, 그 빛이 138억 년 동안 팽창하며 파장이 약 1,100배 늘어 오늘 2.7255 K로 관측됩니다. 이 빛이 오는 마지막 산란면이 우주배경복사의 “지평선”입니다.',
+      g);
+  }
+  /* ====================================================================
+     10. CMB 흑체 스펙트럼 — 2.7255 K 과 완벽한 일치
+     ==================================================================== */
+  function figCmbSpectrum() {
+    var W = 320, H = 208, x0 = 44, x1 = 306, y0 = 26, y1 = 148;
+    var g = '';
+    function planck(mm, Tk) {
+      var l = mm * 1e-3, h = 6.62607015e-34, c = 2.99792458e8, k = 1.380649e-23;
+      return (2 * h * c * c) / (Math.pow(l, 5) * (Math.exp(h * c / (l * k * Tk)) - 1));
+    }
+    var Tk = 2.7255, peak = 2.897771955 / Tk;
+    var pk = planck(peak, Tk);
+    function px(mm) { return x0 + mm / 3 * (x1 - x0); }
+    function py(v) { return y1 - v / pk / 1.08 * (y1 - y0); }
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    [0, 1, 2, 3].forEach(function (mm) {
+      g += T(px(mm), y1 + 12, mm, { c: C.faint, s: 8.5 });
+    });
+    g += T((x0 + x1) / 2, 176, '파장 (mm)', { c: C.mut, s: 9 });
+    g += T(6, y0 - 8, '복사 세기', { c: C.mut, a: 'start', s: 8.5 });
+    var d = '';
+    for (var mm = 0.05; mm <= 3; mm += 0.02) {
+      d += (d ? 'L' : 'M') + n(px(mm)) + ' ' + n(py(planck(mm, Tk)));
+    }
+    g += P(d, { c: C.acc, w: 2 });
+    g += L(px(peak), y0, px(peak), y1, { c: C.acc2, w: 1, d: '3 3' });
+    g += T(px(peak) + 7, y0 + 12, '최대 1.06 mm', { c: C.acc2, a: 'start', s: 8.5, w: 700 });
+    g += T(px(peak) + 7, y0 + 23, '= 2.898 mm·K ÷ 2.7255 K', { c: C.mut, a: 'start', s: 7.5 });
+    // 측정점 — 곡선 위에 찍습니다(흑체와 10⁻⁴ 까지 일치)
+    [0.45, 0.65, 0.85, 1.06, 1.35, 1.7, 2.1, 2.55].forEach(function (mm) {
+      g += CIR(px(mm), py(planck(mm, Tk)), 2.4, { f: C.acc2 });
+    });
+    g += T(8, 190, '● COBE/FIRAS 측정값 — 2.7255 K 흑체곡선과 1만 분의 1까지 일치', { c: C.acc2, a: 'start', s: 8 });
+    return wrap('cmb-spectrum', W, H,
+      '우주배경복사의 흑체 스펙트럼. 2.7255켈빈 흑체곡선의 최대가 1.06밀리미터에 있고, 측정점이 곡선 위에 정확히 놓입니다.',
+      '<b>우주에서 가장 완벽한 흑체</b> — 우주배경복사의 스펙트럼은 2.7255 K 흑체복사와 10⁻⁴ 수준까지 일치합니다(COBE/FIRAS, 1990년). 최대 세기 파장은 빈의 법칙으로 2.898 mm·K ÷ 2.7255 K = 1.06 mm — 전파와 적외선 사이의 마이크로파 영역입니다.',
+      g);
+  }
+  /* ====================================================================
+     11. CMB 온도 요동의 음향 피크 — 우주가 평탄하다는 증거
+     ==================================================================== */
+  function figCmbPeaks() {
+    var W = 320, H = 218, x0 = 40, x1 = 306, y0 = 24, y1 = 148;
+    var g = '';
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    function px(l) { return x0 + (Math.log10(l) - Math.log10(2)) / (Math.log10(2500) - Math.log10(2)) * (x1 - x0); }
+    function py(d) { return y1 - d / 6200 * (y1 - y0); }
+    [10, 100, 500, 1000, 2000].forEach(function (l) {
+      g += T(px(l), y1 + 12, l, { c: C.faint, s: 8 });
+      g += L(px(l), y1, px(l), y1 + 3, { c: C.line, w: 1 });
+    });
+    [2000, 4000, 6000].forEach(function (d) {
+      g += T(x0 - 4, py(d) + 3, d, { c: C.faint, s: 8, a: 'end' });
+      g += L(x0, py(d), x1, py(d), { c: 'rgba(255,255,255,.06)', w: 1 });
+    });
+    g += T((x0 + x1) / 2, 176, '하늘 위 각도의 크기 ℓ (클수록 작은 각)', { c: C.mut, s: 9 });
+    g += T(6, y0 - 8, '온도 요동 (µK²)', { c: C.mut, a: 'start', s: 8.5 });
+    var d = '';
+    for (var l = 2; l <= 2500; l += 4) {
+      function bump(c, w, a) { return a * Math.exp(-Math.pow((l - c) / w, 2)); }
+      var v = 2400 + bump(2, 220, -2200) + bump(220, 95, 3400) + bump(540, 110, 500) +
+        bump(810, 130, 400) + bump(1120, 160, 200) + bump(1420, 190, 120);
+      v *= (1 - 0.25 * Math.exp(-Math.pow((l - 60) / 90, 2))) * (1 / (1 + Math.pow(l / 1400, 2)));
+      if (v < 0) v = 0;
+      d += (d ? 'L' : 'M') + n(px(l)) + ' ' + n(py(v));
+    }
+    g += P(d, { c: C.acc, w: 1.8 });
+    g += CIR(px(220), py(5745), 2.8, { f: C.acc2 });
+    g += T(px(220) + 6, py(5745) - 6, '1. 제1피크 ℓ≈220', { c: C.acc2, a: 'start', s: 7.5, w: 700 });
+    g += CIR(px(540), py(2500), 2.4, { f: C.acc2 });
+    g += CIR(px(810), py(2450), 2.4, { f: C.acc2 });
+    g += T(px(810) + 5, py(2450) - 8, '2·3 피크', { c: C.acc2, a: 'start', s: 7.5, w: 700 });
+    g += L(px(180), y0, px(180), y1, { c: C.acc3, w: 1, d: '3 3' });
+    g += T(px(180), y0 - 8, '≈1°', { c: C.acc3, s: 8.5, w: 700 });
+    g += T(8, 196, '첫 피크가 하늘의 약 1°(ℓ≈220) → 우주 공간이 평탄(곡률 0)', { c: C.mut, a: 'start', s: 8 });
+    g += T(8, 208, '2·3 피크의 높이비 → 보통 물질과 암흑물질의 비', { c: C.mut, a: 'start', s: 8 });
+    return wrap('cmb-peaks', W, H,
+      '우주배경복사의 온도 요동 파워 스펙트럼. 첫 번째 음향 피크가 다중극 220 근처, 하늘의 약 1도 각도에 있습니다.',
+      '<b>우주의 모양을 재는 자</b> — 재결합 당시 물질과 빛이 함께 만든 음파가 남긴 요동의 세기 분포입니다. 첫 피크가 하늘의 약 1°(ℓ≈220)에 있다는 것은, 그 음파가 지나온 우주 공간이 평탄(곡률 0)하다는 뜻입니다. 둘째·셋째 피크의 높이비는 보통 물질과 암흑물질의 비를 알려 줍니다.',
+      g);
+  }
+  /* ====================================================================
+     12. 우주 거리 사다리
+     ==================================================================== */
+  function figLadder() {
+    var W = 320, H = 210;
+    var g = '';
+    var rows = [
+      ['연주시차', '1 pc ~ 10 kpc', '가이아 위성', 0.22],
+      ['세페이드 변광성', '1 kpc ~ 40 Mpc', '주기-광도 관계', 0.40],
+      ['Ia형 초신성', '10 Mpc ~ 1 Gpc', '같은 밝기의 폭발', 0.58],
+      ['적색편이 + H₀', '1 Gpc ~ 우주 끝', '우주 팽창', 0.76]
+    ];
+    g += L(24, 186, 300, 186, { c: C.grid, w: 1 });
+    rows.forEach(function (r, i) {
+      var y = 40 + i * 38;
+      var w = 40 + i * 26;
+      g += '<rect x="' + (24 + i * 12) + '" y="' + y + '" width="' + w + '" height="20" rx="4" fill="' +
+        (i % 2 ? 'rgba(126,224,192,.18)' : 'rgba(255,212,121,.18)') + '" stroke="' +
+        (i % 2 ? 'rgba(126,224,192,.5)' : 'rgba(255,212,121,.5)') + '"/>';
+      g += T(28 + i * 12, y + 14, (i + 1) + '. ' + r[0], { c: C.text, a: 'start', s: 9, w: 700 });
+      g += T(30 + i * 12 + w, y + 14, r[1], { c: C.mut, a: 'start', s: 8 });
+      g += T(26 + i * 12, y - 4, r[2], { c: C.faint, a: 'start', s: 7.5 });
+    });
+    g += ARR(28, 178, 296, 178, { c: C.acc3, w: 1.2, h: 5 });
+    g += T(160, 200, '아래 칸은 위 칸에서 잰 거리를 기준으로 삼습니다 — 사다리를 오르듯 먼 우주로', { c: C.mut, s: 8 });
+    return wrap('ladder', W, H,
+      '우주 거리 사다리 도해. 연주시차, 세페이드 변광성, Ia형 초신성, 적색편이 순으로 더 먼 거리를 재며 각 단계가 다음 단계의 기준이 됩니다.',
+      '<b>한 자로는 우주를 다 잴 수 없습니다</b> — 연주시차는 가까운 별까지, 세페이드는 그보다 먼 은하까지, Ia형 초신성은 수십억 광년까지 잽니다. 각 단계는 앞 단계로 보정한 “표준 광원”을 디딤돌로 삼습니다.',
+      g);
+  }
+
+  /* ====================================================================
+     13. 태양 흑점 주기 — 11년 활동과 극소기
+     ==================================================================== */
+  function figSunspot() {
+    var W = 320, H = 178, x0 = 44, x1 = 306, y0 = 26, y1 = 142;
+    var g = '';
+    g += L(x0, y1, x1, y1, { c: C.line, w: 1 });
+    g += L(x0, y0, x0, y1, { c: C.line, w: 1 });
+    function px(yr) { return x0 + (yr - 1975) / (2026 - 1975) * (x1 - x0); }
+    function py(v) { return y1 - v / 260 * (y1 - y0); }
+    [1980, 1990, 2000, 2010, 2020].forEach(function (yr) {
+      g += T(px(yr), y1 + 11, yr, { c: C.faint, s: 8 });
+      g += L(px(yr), y1, px(yr), y1 + 3, { c: C.line, w: 1 });
+    });
+    g += T(4, y0 - 9, '흑점 상대수 (연평균)', { c: C.mut, a: 'start', s: 8.5 });
+    // 실제 태양 활동 주기의 모양(근사) — 주기 약 11년, 24-25주기 최대는 낮았습니다
+    var d = '', v;
+    for (var yr = 1975; yr <= 2026; yr += 0.25) {
+      v = 150 * Math.pow(Math.max(0, Math.sin((yr - 1976.0) / 11.0 * Math.PI)), 2) + 6;
+      if (yr > 2008 && yr < 2020) v *= 0.72;        // 24주기(극소기)
+      d += (d ? 'L' : 'M') + n(px(yr)) + ' ' + n(py(v));
+    }
+    g += P(d, { c: C.acc, w: 1.6 });
+    [[1989, '22주기'], [2000, '23주기'], [2013, '24주기'], [2024, '25주기']].forEach(function (p) {
+      g += CIR(px(p[0]), py(150 * Math.pow(Math.max(0, Math.sin((p[0] - 1976.0) / 11.0 * Math.PI)), 2) * (p[0] > 2008 && p[0] < 2020 ? 0.72 : 1) + 6), 2.4, { f: C.acc2 });
+      g += T(px(p[0]), py(150 * Math.pow(Math.max(0, Math.sin((p[0] - 1976.0) / 11.0 * Math.PI)), 2) * (p[0] > 2008 && p[0] < 2020 ? 0.72 : 1) + 6) - 7, p[1], { c: C.acc2, s: 7.5 });
+    });
+    g += T(160, 168, '흑점 수는 약 11년 주기로 늘고 줄며, 극소기에는 거의 사라집니다 (모양은 개략도)', { c: C.mut, s: 8 });
+    return wrap('sunspot', W, H,
+      '태양 흑점 수의 11년 주기 도해. 흑점 수가 늘었다 줄었다를 반복하고 극소기에는 거의 사라집니다.',
+      '<b>태양은 일정하지 않습니다</b> — 흑점 수는 약 11년 주기로 늘고 줄며, 두 극소기를 거치면 자기장 극성이 뒤바뀝니다(22년 헤일 주기). 흑점이 많은 극대기에는 플레어·코로나 질량 방출이 잦아 오로라와 통신 장애가 늘어납니다. 흑점은 주변보다 약 1,500 K 낮아 어둡게 보이는 영역입니다.',
+      g);
+  }
+
+  /* ====================================================================
+     14. 중력렌즈 — 은하단이 만드는 확대 거울
+     ==================================================================== */
+  function figGravLens() {
+    var W = 320, H = 186;
+    var g = '';
+    // 은하단(앞)
+    g += CIR(160, 96, 26, { f: 'rgba(255,212,121,.12)', s: 'rgba(255,212,121,.4)', w: 1.2 });
+    for (var i = 0; i < 9; i++) {
+      var a = i / 9 * Math.PI * 2, rr = 8 + (i % 3) * 6;
+      g += CIR(160 + Math.cos(a) * rr, 96 + Math.sin(a) * rr * 0.8, 2.6, { f: 'rgba(255,212,121,.55)' });
+    }
+    g += T(160, 136, '앞쪽 은하단(질량)', { c: C.acc, s: 8.5, w: 700 });
+    // 먼 은하
+    g += '<ellipse cx="288" cy="46" rx="9" ry="3" fill="rgba(138,182,255,.55)"/>';
+    g += T(288, 34, '먼 은하', { c: C.acc3, s: 8 });
+    // 휘어진 빛
+    g += P('M288 46Q210 60 174 86', { c: 'rgba(138,182,255,.5)', w: 1.2, d: '3 3' });
+    g += P('M288 46Q236 46 186 96', { c: 'rgba(138,182,255,.5)', w: 1.2, d: '3 3' });
+    g += P('M288 46Q212 34 150 88', { c: 'rgba(138,182,255,.5)', w: 1.2, d: '3 3' });
+    // 관측자
+    g += CIR(28, 96, 7, { f: C.acc2 });
+    g += T(28, 114, '지구', { c: C.acc2, s: 8.5 });
+    g += ARR(36, 96, 130, 96, { c: 'rgba(126,224,192,.5)', w: 1.1 });
+    // 휘어진 상
+    g += P('M110 40A62 62 0 0 1 196 30', { c: C.warm, w: 1.6 });
+    g += P('M116 150A62 62 0 0 0 200 152', { c: C.warm, w: 1.6 });
+    g += T(120, 24, '휘어진 상(호)', { c: C.warm, a: 'start', s: 8 });
+    g += T(160, 176, '은하단 질량이 시공간을 휘게 해 빛이 굽습니다 — 질량을 재는 방법', { c: C.mut, s: 8 });
+    return wrap('gravlens', W, H,
+      '중력렌즈 도해. 앞쪽 은하단의 질량이 시공간을 휘게 해 뒤쪽 은하의 빛이 굽어 호 모양의 상으로 보입니다.',
+      '<b>질량이 만드는 거울</b> — 은하단처럼 큰 질량은 시공간을 휘게 하고, 그 뒤에서 오는 빛의 경로도 휩니다. 그래서 같은 은하의 상이 여러 개 또는 호 모양으로 보입니다(중력렌즈). 휘는 정도로 은하단의 질량을 재면, 보이는 별·가스보다 훨씬 큰 질량이 필요해 암흑물질의 증거가 됩니다.',
+      g);
+  }
+
+  /* ====================================================================
+     내보내기
+     ==================================================================== */
+  var FIG = {
+    parallax: figParallax,
+    eclipse: figEclipse,
+    seasons: figSeasons,
+    'hr-evolution': figHrEvolution,
+    hubble: figHubble,
+    spectral: figSpectral,
+    cepheid: figCepheid,
+    'sky-motion': figSky4,
+    'cmb-recomb': figCmbRecomb,
+    'cmb-spectrum': figCmbSpectrum,
+    'cmb-peaks': figCmbPeaks,
+    ladder: figLadder,
+    sunspot: figSunspot,
+    gravlens: figGravLens
+  };
+  window.LearnFigs = {
+    has: function (k) { return !!FIG[k]; },
+    html: function (k) { try { return FIG[k] ? FIG[k]() : ''; } catch (e) { return ''; } },
+    keys: Object.keys(FIG)
+  };
+})();
+
+</script>
+<script>
 /* ===== learn-plus.js ===== */
 /* =========================================================================
    learn-plus.js — 천문 학습관 심화 콘텐츠 (2026-11-27)
@@ -18355,6 +19261,193 @@ window.Astro = (function () {
     if (m1) {
       m1.detail = [{ h: '연주 운동과 계절 별자리', p: '같은 시각 같은 방향을 보면 한 달에 약 30°씩 하늘이 서쪽으로 밀려 보입니다. 그래서 저녁 9시에 보이는 별자리가 한 달 뒤에는 30° 서쪽(더 일찍 뜸)으로 옮겨 갑니다. 1년이 지나면 같은 자리로 돌아옵니다. 이 규칙으로 계절별 별자리를 예측할 수 있습니다.' }];
     }
+    /* ==================================================================
+       (2026-11-28 보강) 새 단원 — 우주배경복사 · 태양 활동 · 은하와 암흑물질 · 중력파
+       ================================================================== */
+
+    var cmb = {
+      title: '우주배경복사 — 빅뱅이 남긴 첫 빛',
+      badge: '고1 통합과학 · 심화',
+      keywords: ['CMB', '우주배경복사', '재결합', '2.7255 K', '흑체복사', '음향 피크', '플랑크', 'COBE', 'WMAP', 'z=1100', '38만 년'],
+      oneliner: '우주가 처음 투명해진 38만 년에 사방으로 빠져나간 빛이, 팽창하며 1,100배 늘어나 오늘 2.7255 K의 마이크로파로 온 하늘을 채우고 있습니다.',
+      principle: '빅뱅 직후 우주는 너무 뜨거워 전자가 원자핵에 붙지 못한 플라스마였고, 자유 전자가 빛을 계속 흩뿌려 우주는 안개처럼 불투명했습니다. 약 38만 년(적색편이 z≈1,100)에 온도가 3,000 K로 내려가자 전자가 양성자에 붙어 중성 수소가 되었고(재결합), 빛은 물질과 거의 부딪히지 않고 곧바로 날아갈 수 있게 되었습니다. 그 빛이 138억 년 동안 우주 팽창과 함께 파장이 늘어나 오늘 2.7255 K의 마이크로파로 관측됩니다. 온 하늘에서 같은 온도로 들어오며, 10만 분의 1(10⁻⁵) 수준의 아주 작은 온도 차이가 재결합 당시 물질과 빛이 함께 일으킨 음파의 흔적입니다.',
+      formula: 'T₀ = 2.7255 K · z재결합 ≈ 1,100 · T ∝ 1/우주 크기 → 3,000 K ÷ 1,100 ≈ 2.7 K · λmax = 2.898 mm·K / 2.7255 K ≈ 1.06 mm · 광자 수밀도 ≈ 411 cm⁻³',
+      detail: [
+        { h: '왜 하늘 어디를 봐도 같은 온도일까', p: '우주배경복사가 나온 마지막 산란면은 지금 우리로부터 약 460억 광년 떨어져 있습니다. 서로 다른 방향의 두 점은 빛이 오는 동안 인과적으로 연결될 수 없었는데도 온도가 10⁻⁵ 수준까지 같습니다(지평선 문제). 이를 설명하는 것이 인플레이션 — 빅뱅 직후 우주가 급격히 팽창해 작은 영역이 온 하늘로 늘어났다는 이론입니다.' },
+        { h: '요동 10⁻⁵ 을 읽는 법', p: '평균 2.7255 K에서 방향마다 ±수십 µK 차이가 있습니다. 이 요동을 구면 조화 함수로 분해하면 모노폴(평균), 다이폴(지구 운동에 의한 3.4 mK), 사중극 이상의 무늬가 나옵니다. 다이폴은 지구가 초속 370 km로 움직이기 때문이라 우주론 계산에서는 빼야 합니다.' },
+        { h: '음향 피크가 알려 준 것', p: '재결합 전 플라스마에서 중력(수축)과 복사압(팽창)이 되돌림을 만들며 음파가 진행했습니다. 그 파장의 분포가 요동 스펙트럼의 피크로 나타나고, 첫 피크가 하늘의 약 1°(ℓ≈220)에 있다는 사실이 우주 공간의 곡률이 0(평탄)임을 보여 줍니다. 둘째·셋째 피크의 높이비는 보통 물질과 암흑물질의 비를 정합니다.' }
+      ],
+      table: {
+        title: '우주배경복사를 정밀하게 잰 위성들',
+        head: ['위성', '관측 기간', '각분해능', '대표 결과'],
+        rows: [
+          ['COBE (FIRAS)', '1989~1993', '7°', '흑체 스펙트럼 확인, 요동 첫 검출(1992), T = 2.725 K'],
+          ['WMAP', '2001~2010', '0.2°', '우주 나이 137억 년, ΩΛ ≈ 0.72, 평탄 우주 확립'],
+          ['Planck', '2009~2013', '5′', 'T = 2.72548 K, ΩΛ = 0.685, H₀ = 67.4 km/s/Mpc']
+        ],
+        cap: '각분해능이 좋아질수록 더 작은 각도의 요동까지 볼 수 있어, 우주론 매개변수가 정밀해졌습니다.'
+      },
+      misconcept: [
+        '우주배경복사는 빅뱅 순간 폭발한 빛이 아니라, 38만 년 뒤 우주가 처음 투명해지며 빠져나간 빛입니다.',
+        '우주배경복사의 온도가 2.7 K인 것은 우주가 그 온도로 식었기 때문이 아니라, 3,000 K였던 빛의 파장이 팽창으로 1,100배 늘어났기 때문입니다(에너지가 줄어든 것과 같은 효과).',
+        '온 하늘에서 같은 온도로 보이는 것을 “우리가 우주의 중심에 있다”는 증거로 읽으면 안 됩니다. 어느 은하에서 보아도 똑같이 보입니다.'
+      ],
+      question: [
+        '재결합 당시 온도 3,000 K와 오늘 2.7255 K의 비로 우주 크기가 몇 배 늘었는지 계산해 보세요.',
+        '첫 음향 피크가 1°에 있다는 사실이 왜 “우주가 평탄하다”는 뜻이 될까요?',
+        '우주배경복사가 없다면 빅뱅 우주론을 지금처럼 확신할 수 있었을까요?'
+      ],
+      observe: '전파 망원경을 마이크로파 대역(약 160 GHz)에 맞추면 하늘 전체에서 2.7255 K에 해당하는 잡음이 들어옵니다. 1965년 펜지어스와 윌슨이 비둘기 똥을 치우다가 발견한 이 “설명되지 않는 잡음”이 지금은 우주론의 가장 정밀한 측정값입니다.',
+      figs: ['cmb-recomb', 'cmb-spectrum', 'cmb-peaks']
+    };
+    pushGroup(H, 0, cmb);
+    H.groups[0].badge = '5단원';
+
+    push(F, {
+      title: '태양 활동과 흑점 주기 — 우리 별의 변덕',
+      badge: '융합 · 관측',
+      keywords: ['흑점', '태양 활동', '11년 주기', '헤일 주기', '플레어', '코로나', '태양풍', '오로라', '마운더 극소기', '핵융합'],
+      oneliner: '태양 흑점 수는 약 11년 주기로 늘었다 줄며, 그 극대기에는 플레어와 코로나 질량 방출이 잦아져 지구의 통신·전력·위성에 영향을 줍니다.',
+      principle: '태양 표면(광구)은 약 5,772 K인데, 자기장이 강하게 묶인 흑점은 대류를 막아 3,800~4,500 K로 낮아져 어둡게 보입니다. 태양 내부의 대류와 자전이 만드는 발전기 효과로 자기장이 꼬이고, 그 자기장이 표면으로 떠오르는 양이 11년 주기로 늘었다 줄어듭니다. 흑점이 많은 극대기에는 자기장이 재결합하며 플레어와 코로나 질량 방출이 잦아지고, 이때 나온 입자가 지구 자기장에 부딪혀 오로라를 만들고 위성·전력망·통신에 장애를 줄 수 있습니다. 두 극소기를 지나면 자기극성이 뒤바뀌므로 진짜 주기는 22년(헤일 주기)입니다.',
+      formula: '흑점 온도 ≈ 3,800~4,500 K, 광구 5,772 K · 흑점 상대수 R = k(10g + s) · 주기 ≈ 11년(헤일 주기 22년) · 플레어 에너지 10²⁹~10³² J · 태양 활동 극소기(1645~1715)는 마운더 극소기',
+      detail: [
+        { h: '흑점이 어두운 이유', p: '흑점은 자기장이 대류를 억제해 아래 열이 올라오지 못하는 영역입니다. 온도가 1,500 K가량 낮아 표면 밝기가 약 1/4로 줄지만, 주변 광구가 워낙 밝아 전체 광도에 미치는 영향은 0.1% 수준입니다. 흑점 하나의 크기는 지구보다 큰 것이 보통입니다.' },
+        { h: '우리 생활과의 연결', p: '1859년 캐링턴 사건에서는 태양 플레어가 전신기를 태웠습니다. 오늘은 같은 규모의 폭풍이 위성 항법·전력망·항공 통신에 수조 원대 피해를 줄 수 있어, NOAA는 우주 날씨 등급을 매일 발표합니다. 국내에서도 강한 지자기 폭풍 때 오로라가 관측된 기록이 있습니다.' },
+        { h: '극소기가 길어지면', p: '1645~1715년 마운더 극소기에는 흑점이 거의 사라졌고, 유럽은 소빙하기로 불리는 추위를 겪었습니다. 태양 활동 변화가 지구 기후에 미치는 영향은 온실가스 효과보다는 작지만, 장기 기후 변동을 이해하려면 함께 고려해야 합니다.' }
+      ],
+      misconcept: [
+        '흑점이 많으면 태양이 더 밝아진다? 극대기에는 밝은 플레이라주가 함께 늘어 전체 광도는 오히려 조금 커지지만, 흑점만 보면 어두운 영역이 늘어나는 것입니다.',
+        '태양은 매년 똑같이 밝은 별이 아닙니다. 11년 주기와 수십 년 규모의 변동이 있습니다.'
+      ],
+      question: ['흑점 수가 늘면 지구에 어떤 세 가지 영향이 생길까요?', '흑점이 어두운데도 태양 전체 광도가 0.1% 정도만 변하는 이유를 설명해 보세요.'],
+      observe: '태양 필터를 단 망원경으로 관측하면 흑점이 며칠에 걸쳐 서쪽으로 움직입니다(자전 주기 25일, 적도 기준). NASA SDO 위성은 24시간 태양 영상을 공개하므로, 흑점 수의 변화를 직접 확인할 수 있습니다.',
+      figs: ['sunspot']
+    });
+
+    push(U, {
+      title: '은하의 구조와 암흑물질 — 중력렌즈로 재는 질량',
+      badge: '대학 · 심화',
+      keywords: ['은하', '나선은하', '타원은하', '회전곡선', '암흑물질', '중력렌즈', '은하단', '즈비키', '시공간', '일반상대성'],
+      oneliner: '은하의 별은 바깥에서도 케플러 법칙이 예측하는 것보다 빠르게 돌고, 은하단은 보이는 질량보다 훨씬 크게 빛을 휘게 합니다 — 둘 다 암흑물질을 가리킵니다.',
+      principle: '은하 원반의 별과 가스가 은하 중심 둘레를 도는 속도를 재면 안쪽 질량을 알 수 있습니다(v²r/G). 중심 질량이 안쪽에 모여 있다면 바깥에서 속도가 줄어야 하지만, 실제 나선은하는 바깥에서도 200 km/s 안팎으로 일정합니다. 퍼져 있는 보이지 않는 질량이 있다는 뜻입니다. 은하단 규모에서는 앞쪽 은하단의 질량이 시공간을 휘게 해 뒤 은하의 빛이 호나 여러 개의 상으로 보이는 중력렌즈가 관측되고, 휘는 정도로 잰 질량도 별과 가스로 센 질량의 수 배입니다.',
+      formula: 'v(r) = √(GM(<r)/r) · 편평한 회전곡선 → M(<r) ∝ r, ρ ∝ r⁻² · 아인슈타인 반지름 θE ≈ √(4GM/c² · DLS/(DL·DS)) · 은하 전체 질량의 약 85%가 암흑물질',
+      detail: [
+        { h: '세 가지 독립 증거', p: '① 은하 회전곡선(베라 루빈, 1970년대) ② 은하단의 은하 속도 분포(즈비키) ③ 중력렌즈로 잰 질량 분포. 방법이 전혀 다른데 같은 결론에 이르며, 우주배경복사의 음향 피크와 은하 형성 시뮬레이션도 이를 지지합니다.' },
+        { h: '중력렌즈의 종류', p: '은하단이 만드는 강한 렌즈는 호·다중상·아인슈타인 고리를 만들고, 은하 하나가 별을 잠깐 밝히는 미세중력렌즈는 외계행성을 찾는 데도 쓰입니다. 약한 렌즈는 은하의 모양이 아주 조금 찌그러지는 통계로 우주의 대규모 구조를 지도로 만듭니다.' },
+        { h: '아직 모르는 것', p: '암흑물질 입자는 아직 직접 검출되지 않았습니다. WIMP, 액시온, 원시 블랙홀 등이 후보이며, 회전곡선을 암흑물질 없이 설명하려는 수정 뉴턴 역학(MOND)도 있지만 은하단 충돌(총알 은하단) 관측처럼 설명이 어려운 사례가 있습니다.' }
+      ],
+      misconcept: [
+        '암흑물질은 “어두운 별”이나 “블랙홀 덩어리”가 아닙니다. 그런 보통 물체는 관측으로 상당 부분 배제되었습니다.',
+        '중력렌즈는 빛이 거울에 반사되는 것이 아니라, 시공간이 휘어 빛의 경로가 굽는 현상입니다.'
+      ],
+      question: ['회전속도 220 km/s, 반지름 8.2 kpc에서 안쪽 질량을 계산해 보세요.', '중력렌즈로 잰 질량과 빛으로 센 질량의 차이가 왜 암흑물질의 증거가 될까요?'],
+      observe: '안드로메다은하(M31)는 맨눈으로도 보이는 나선은하이고, 처녀자리 은하단은 작은 망원경으로 여러 은하가 모인 모습을 볼 수 있습니다. 허블·제임스 웹의 중력렌즈 사진에서는 먼 은하가 호 모양으로 늘어나 보입니다.',
+      figs: ['gravlens']
+    });
+
+    push(U, {
+      title: '중력파 천문학 — 시공간의 물결로 우주를 듣다',
+      badge: '대학 · 심화',
+      keywords: ['중력파', 'LIGO', '블랙홀', '중성자별', 'GW150914', 'GW170817', '다중대역', '변형률', '일반상대성'],
+      oneliner: '두 블랙홀이 합쳐질 때 시공간이 늘었다 줄어드는 물결이 지구까지 오고, LIGO는 10⁻²¹ 수준의 길이 변화를 재서 그 사건을 확인했습니다.',
+      principle: '일반상대성이론에서 가속하는 질량은 시공간의 물결인 중력파를 냅니다. 두 블랙홀이 나선을 그리며 가까워지다 하나가 되면, 마지막 순간에 강한 중력파가 나와 지구를 지나며 공간을 아주 조금 늘이고 줄입니다. LIGO는 길이 4 km인 두 팔을 가진 간섭계로 이 변화를 잽니다. 2015년 GW150914는 태양 질량 36과 29의 블랙홀이 13억 광년 밖에서 합쳐진 사건이었고, 3태양질량이 중력파 에너지로 바뀌었습니다. 2017년 GW170817은 중성자별 두 개의 합체로, 중력파와 감마선·가시광을 동시에 관측해 금 같은 무거운 원소의 기원을 보여 주었습니다.',
+      formula: '변형률 h = ΔL/L ≈ 10⁻²¹ (4 km 팔에서 10⁻¹⁸ m, 양성자 지름의 1/1000) · 처프 질량 M = (m₁m₂)^(3/5)/(m₁+m₂)^(1/5) · GW150914: 36 + 29 M☉ → 62 M☉, 3 M☉이 중력파로',
+      detail: [
+        { h: '왜 이렇게 어려운가', p: 'h ≈ 10⁻²¹은 4 km를 10⁻¹⁸ m까지 재는 정밀도입니다. 그래서 진공관, 거울의 열진동 억제, 레이저 안정화, 지진·차량 진동 제거가 모두 필요합니다. 미국 두 곳(LIGO)과 이탈리아(Virgo), 일본(KAGRA)이 동시에 관측해 하늘의 위치를 좁힙니다.' },
+        { h: '무엇을 새로 보았나', p: '블랙홀 합체의 질량 분포, 중성자별 상태방정식, 쌍성의 형성 경로를 알게 되었고, GW170817에서는 중력파가 빛보다 1.7초 먼저 도착해 중력의 전파 속도가 광속과 같다는 것을 확인했습니다.' },
+        { h: '다중대역 천문학', p: '같은 사건을 전파·가시광·X선·중력파로 함께 관측하면 하나의 방법으로는 알 수 없는 것을 알 수 있습니다. 이것이 지금 천문학의 표준 방식입니다.' }
+      ],
+      misconcept: [
+        '중력파는 공간을 통과하는 “힘”의 파동이 아니라, 시공간 자체의 변형이 전달되는 것입니다.',
+        '중력파는 아인슈타인이 예측한 지 100년 뒤에 처음 검출되었습니다. 예측과 검출 사이의 긴 시간은 이론의 정확성과 기술의 난이도를 함께 보여 줍니다.'
+      ],
+      question: ['h = 10⁻²¹일 때 4 km 팔의 길이 변화는 몇 m인가요?', '중력파와 빛을 동시에 관측하면 어떤 점이 더 알 수 있을까요?'],
+      observe: 'LIGO·Virgo는 검출 사건을 공개 목록(GWTC)으로 공개하며, 국내에서도 KAGRA·중력파 연구단이 참여하고 있습니다. 2017년 GW170817 때는 전 세계 망원경이 같은 사건을 동시에 관측했습니다.'
+    });
+
+    /* ==================================================================
+       기존 단원에 도해 연결 (직접 그린 SVG — learn-figs.js)
+       ================================================================== */
+    function findUnit(level, title) {
+      if (!level) return null;
+      var all = level.units || [];
+      (level.groups || []).forEach(function (g) { all = all.concat(g.units || []); });
+      for (var i = 0; i < all.length; i++) if (all[i].title === title) return all[i];
+      return null;
+    }
+    var FIGMAP = {
+      '별의 연주 운동은 지구의 공전 때문입니다': ['sky-motion'],
+      '연주시차로 별까지의 거리를 잽니다': ['parallax'],
+      '달의 위상과 일식·월식': ['eclipse'],
+      '계절이 생기는 까닭': ['seasons'],
+      '별빛을 읽는 법 — 흑체복사와 스펙트럼': ['spectral'],
+      'H-R도와 별의 진화': ['hr-evolution'],
+      '허블-르메트르 법칙과 우주 팽창': ['hubble'],
+      '우주 거리 사다리': ['ladder', 'cepheid']
+    };
+    var LEVELS = [E, M, H, F, U];
+    Object.keys(FIGMAP).forEach(function (title) {
+      for (var i = 0; i < LEVELS.length; i++) {
+        var u = findUnit(LEVELS[i], title);
+        if (u) { u.figs = FIGMAP[title]; break; }
+      }
+    });
+
+    /* ==================================================================
+       모든 단원에 한 줄 정의 · 관측 연결 · 난이도 표시를 붙입니다
+       (본문 첫 문단을 쉽게, 뒤로 갈수록 깊어지는 구조)
+       ================================================================== */
+    var META = {
+      '낮과 밤은 지구가 돌기 때문에 생깁니다': ['지구가 스스로 돌기 때문에 한쪽은 낮, 반대쪽은 밤이 됩니다.', '해가 뜨고 지는 시각을 기록하면 1시간에 태양이 하늘에서 15° 움직이는 것을 확인할 수 있습니다.', '초등 3~6'],
+      '달의 모양은 왜 매일 달라질까': ['달이 태양빛을 받는 면을 우리가 보는 각도가 매일 달라지기 때문입니다.', '매일 같은 시각에 달 사진을 찍어 이어 붙이면 한 달에 걸쳐 초승달→보름달→그믐달로 변하는 모습이 남습니다.', '초등 3~6'],
+      '계절이 생기는 까닭': ['계절은 지구와 태양의 거리가 아니라 자전축이 23.44° 기울어져 생깁니다.', '여름과 겨울에 같은 시각·같은 방향에서 해의 높이를 사진으로 비교해 보세요.', '초등 3~6'],
+      '태양계 가족 여행': ['태양 둘레를 도는 8개의 행성은 크기와 성질이 크게 다릅니다.', '밤하늘에서 행성은 별처럼 반짝이지 않고, 며칠 사이에 별자리 사이를 움직입니다.', '초등 3~6'],
+      '계절마다 보이는 별자리가 달라집니다': ['지구가 공전해 밤에 보는 하늘의 방향이 계절마다 바뀌기 때문입니다.', '1월 저녁 8시의 오리온자리와 4월 저녁 8시의 같은 자리를 비교해 보세요.', '초등 5~6 · 중1'],
+      '별의 연주 운동은 지구의 공전 때문입니다': ['같은 시각에 보는 하늘이 계절마다 조금씩 서쪽으로 밀려 보이는 현상입니다.', '카메라를 북극성에 고정하고 30분 이상 찍으면 별이 그린 동심원 궤적이 나옵니다.', '중1~2'],
+      '연주시차로 별까지의 거리를 잽니다': ['지구가 6개월 동안 움직인 거리를 기선으로 삼아 별까지의 거리를 재는 방법입니다.', '가장 가까운 별 프록시마의 연주시차는 0.77″로, 거리 1.30 pc(4.24광년)입니다.', '중2~3'],
+      '달의 위상과 일식·월식': ['달이 지구 둘레를 돌며 태양빛을 받는 면을 보는 각도가 달라져 위상이 변하고, 교점 근처에서만 식이 일어납니다.', '일식은 태양을 반드시 필터로 가려야 안전하게 볼 수 있고, 월식은 맨눈으로 봐도 됩니다.', '중1~3'],
+      '별의 밝기와 등급': ['별의 밝기를 등급으로 나타내며, 1등급 차이는 약 2.512배, 5등급 차이는 100배입니다.', '시리우스 −1.46등, 베가 0.03등, 북극성 약 2등 — 맨눈 한계는 6등급입니다.', '중2~3'],
+      '우주의 시작과 빅뱅 우주론': ['우주는 약 138억 년 전 아주 뜨겁고 빽빽한 상태에서 팽창을 시작했습니다.', '은하의 적색편이와 우주배경복사가 빅뱅을 가리키는 두 개의 큰 증거입니다.', '고1 통합과학'],
+      '별의 진화와 무거운 원소의 생성': ['별은 질량에 따라 진화 경로와 마지막 모습이 달라지고, 무거운 원소를 우주에 뿌립니다.', '우리 몸의 탄소·산소·철은 별 내부에서, 금은 초신성·중성자별 충돌에서 만들어졌습니다.', '고1 통합과학'],
+      '태양계와 지구의 형성': ['회전하는 성간 성운이 수축해 원반이 되고, 그 안에서 행성과 태양이 함께 자랐습니다.', '운석의 나이 45.7억 년과 지구 핵·맨틀 분화가 이 과정의 증거입니다.', '고1 통합과학'],
+      '별빛을 읽는 법 — 흑체복사와 스펙트럼': ['별의 색은 표면 온도이고, 스펙트럼의 흡수선은 별의 원소와 운동을 알려 줍니다.', '태양 스펙트럼의 검은 선(프라운호퍼선)으로 태양 대기의 원소를 확인합니다.', '고1 통합과학'],
+      '케플러 법칙과 행성의 운동': ['행성은 타원 궤도를 돌고, 같은 시간에 같은 면적을 지나며, T² = a³ 을 만족합니다.', '혜성의 궤도와 외계행성의 주기 계산에 그대로 쓰입니다.', '고2~3 지구과학'],
+      'H-R도와 별의 진화': ['별의 온도와 광도를 점으로 찍으면 주계열·거성·백색왜성 무리가 보입니다.', '성단의 H-R도를 그리면 그 성단의 나이를 알 수 있습니다.', '고2~3 지구과학'],
+      '허블-르메트르 법칙과 우주 팽창': ['멀리 있는 은하일수록 빠르게 멀어지며, 속도는 거리에 비례합니다.', 'Ia형 초신성의 거리와 적색편이를 비교하면 우주 팽창이 가속한다는 것도 알 수 있습니다.', '고2~3 지구과학'],
+      '우주 거리 사다리': ['가까운 거리는 시차로, 먼 거리는 표준 광원과 적색편이로 재며 각 단계가 다음 단계의 기준이 됩니다.', '세페이드의 주기를 재면 절대등급을 알고, 겉보기 등급과 비교해 거리를 구합니다.', '고2~3 · 대학'],
+      '빛과 원자의 스펙트럼 — 별의 원소를 읽다': ['원자의 에너지 준위 차이에 해당하는 빛만 흡수·방출되어 스펙트럼에 선이 생깁니다.', '태양 흡수선, 성운의 방출선, 외계행성 대기의 흡수선을 모두 이 원리로 읽습니다.', '융합 · 물리·화학'],
+      '항성 핵융합과 원소의 탄생 — E=mc²': ['별은 질량 결손을 에너지로 바꾸며 수소를 무거운 원소로 융합합니다.', '태양은 1초에 약 426만 톤을 에너지로 바꾸고, 그 빛이 8분 20초 만에 지구에 닿습니다.', '융합 · 물리·화학'],
+      '흑체복사·도플러 효과와 궤도 역학': ['흑체복사와 도플러 이동, 궤도 역학이 별과 행성의 물리량을 재는 도구입니다.', '외계행성의 질량·반지름·온도를 각각 시선속도·트랜짓·흑체복사로 구합니다.', '융합 · 물리'],
+      '우주의 시작 — 입자·핵·원자가 만들어지기까지': ['빅뱅 뒤 우주가 식으며 입자·원자핵·원자가 차례로 만들어졌습니다.', '빅뱅 핵합성이 예측한 수소 75%·헬륨 25%는 실제 별과 성간 물질에서 관측됩니다.', '융합 · 화학'],
+      '태양계와 성간분자운의 우주화학': ['성간 구름에서 분자가 만들어지고, 그 화학이 행성의 대기와 표면을 정합니다.', '전파 망원경으로 성간 CO·H₂O·CH₃OH 분자의 스펙트럼을 실제로 관측합니다.', '융합 · 화학'],
+      '생명가능지대와 액체 물의 생화학': ['중심별 복사와 행성 거리 사이에서 액체 물이 존재할 수 있는 구간입니다.', 'TRAPPIST-1 계의 행성들은 모두 항성에 가깝지만, 어두운 별이라 생명가능지대가 안쪽에 형성됩니다.', '융합 · 생명'],
+      '극한생물과 얼음 위성의 바다': ['빛 없이 화학 반응으로 에너지를 얻는 생명이 있다는 것은 우주 생명 탐사의 근거가 됩니다.', '유로파·엔셀라두스의 얼음 아래 바다는 탐사선이 조사할 주요 목표입니다.', '융합 · 생명'],
+      '자기장·오존층과 바이오시그니처': ['행성의 대기와 자기장은 생명을 보호하고, 그 흔적은 스펙트럼에서 찾습니다.', '제임스 웹이 외계행성 대기의 물·이산화탄소 흡수선을 관측하고 있습니다.', '융합 · 생명'],
+      '플랑크 흑체복사와 빈의 법칙': ['흑체복사의 분포는 플랑크 함수로 정해지고, 최대 파장은 온도에 반비례합니다.', '별의 색지수와 온도를 잇는 기준이 되며, 성간 적색화를 보정해야 정확해집니다.', '대학 · 천문학 개론'],
+      '외계행성 트랜짓 광도곡선': ['행성이 별 앞을 지날 때의 광도 감소로 행성 크기와 궤도를 잽니다.', '케플러·TESS가 이 방법으로 수천 개의 행성을 발견했습니다.', '대학 · 천문학 개론'],
+      '시선속도법과 도플러 효과': ['별이 행성에 끌려 흔들리는 시선 속도를 스펙트럼 선의 이동으로 잽니다.', 'HARPS·ESPRESSO 같은 분광기가 1 m/s 이하의 흔들림을 측정합니다.', '대학 · 천문학 개론'],
+      '분광 관측과 별의 물리량': ['흡수선의 세기와 폭으로 온도·중력·조성·자전을 읽습니다.', '같은 분광형이라도 광도 계급이 다르면 반지름이 크게 다릅니다.', '대학 · 천문학 개론'],
+      '21cm 중성수소선과 은하의 구조': ['중성 수소가 내는 21cm 전파로 먼지에 가린 은하 안쪽까지 봅니다.', '은하 회전곡선과 우주 암흑 시대 탐사의 핵심 도구입니다.', '대학 · 심화'],
+      '은하 회전곡선과 암흑물질': ['은하 바깥에서도 회전 속도가 줄지 않는 것은 보이지 않는 질량 때문입니다.', '베라 루빈의 회전곡선 측정이 암흑물질의 결정적 증거가 되었습니다.', '대학 · 심화'],
+      'ΛCDM 우주 모형': ['차가운 암흑물질과 우주 상수로 우주를 설명하는 표준 모형입니다.', 'Planck 위성의 우주배경복사 관측이 매개변수를 가장 정밀하게 정했습니다.', '대학 · 심화']
+    };
+    LEVELS.forEach(function (lv) {
+      if (!lv) return;
+      var all = (lv.units || []).slice();
+      (lv.groups || []).forEach(function (g) { all = all.concat(g.units || []); });
+      all.forEach(function (u) {
+        var m = META[u.title];
+        if (m) {
+          if (!u.oneliner) u.oneliner = m[0];
+          if (!u.observe) u.observe = m[1];
+          if (!u.badge) u.badge = m[2];
+        }
+        if (!u.keywords) {
+          u.keywords = (u.title + ' ' + (u.formula || '')).split(/[\s,·()]+/).filter(function (w) { return w.length > 1; });
+        }
+      });
+    });
+
   };
 })();
 
@@ -18507,7 +19600,7 @@ window.Astro = (function () {
 
     function sizeCanvas() {
       var rect = canvas.parentNode.getBoundingClientRect();
-      var W = Math.max(260, Math.round(rect.width));
+      var W = Math.max(200, Math.round(rect.width));
       var H = cfg.height || 320;
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(W * dpr);
@@ -18637,249 +19730,335 @@ window.Astro = (function () {
   }
 
   /* ======================================================================
-     실험 1 — 달의 위상과 일·월식
+     실험 1 — 달의 위상과 일·월식 (초등)
+        삭망월 29.53일, 달 궤도 기울기 → 황위 β = i · sin(교점에서의 각)
      ====================================================================== */
+  var SYNODIC = 29.530589;
+
   function simMoon(host) {
     createSim(host, {
-      id: 'moon', title: '🌙 달의 위상과 일·월식', height: 340,
+      id: 'moon', title: '🌙 달의 위상과 일·월식', height: 300,
       controls: [
         { k: 'day', label: '삭망 주기', min: 0, max: 29.5, step: 0.1, value: 7.4, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
-        { k: 'tilt', label: '달 궤도 기울기', min: 0, max: 12, step: 0.5, value: 5.1, fmt: function (v) { return v.toFixed(1) + '°'; } }
+        { k: 'tilt', label: '달 궤도 기울기', min: 0, max: 8, step: 0.145, value: 5.1, fmt: function (v) { return v.toFixed(2) + '°'; } }
       ],
       buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
-      state: { orbit: 0 },
-      onPlay: function () { },
+      state: { orbit: 0, node: 18 },
       tick: function (S, dt) {
         S.day = (S.day + dt * 2.2) % 29.5;
         return true;
       },
       draw: function (ctx, W, H, S, T) {
-        var cx = W * 0.30, cy = H * 0.52;
-        var R = Math.min(W * 0.24, H * 0.36);
+        var node = S.node;                         // 이번 달 교점과 태양 방향의 각(도)
+        var cx = W * 0.29, cy = H * 0.40, R = Math.min(W * 0.23, 92);
+        // 태양빛 (왼쪽에서)
+        label(ctx, '☀ 태양빛', 10, 16, T.accent, 12, 'left');
+        for (var i = 0; i < 3; i++) arrow(ctx, 14, 38 + i * 15, cx - R - 20, 38 + i * 15, 'rgba(255,212,121,0.30)', 1);
         // 궤도
         ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
-        // 태양 방향 (왼쪽)
-        label(ctx, '☀ 태양빛', 12, 16, T.accent, 12, 'left');
-        for (var i = 0; i < 3; i++) arrow(ctx, 16, 40 + i * 16, W * 0.30 - R - 26, 40 + i * 16, 'rgba(255,212,121,0.35)', 1);
         // 지구
         circle(ctx, cx, cy, 13, T.accent3, null);
-        label(ctx, '지구', cx, cy + 26, T.muted, 11);
+        label(ctx, '지구', cx, cy + 27, T.muted, 11);
         // 달 위치: day 0 = 태양 쪽(왼쪽)
-        var ang = Math.PI + (S.day / 29.5) * Math.PI * 2;
-        var mx = cx + Math.cos(ang) * R, my = cy + Math.sin(ang) * R * 0.92;
-        // 기울기만큼 위아래로 (식이 드물게 일어나는 이유)
-        var ty = Math.sin(ang) * (S.tilt / 12) * R * 0.30;
-        my += ty * 0;
-        circle(ctx, mx, my, 9, '#cfd6e4', null);
-        // 빛을 받는 쪽 표시
-        ctx.fillStyle = 'rgba(20,20,30,0.72)';
-        ctx.beginPath();
-        ctx.arc(mx, my, 9, -Math.PI / 2, Math.PI / 2, false);
-        ctx.fill();
-        label(ctx, '달', mx, my - 18, T.muted, 11);
-
-        // 지구에서 본 달
-        var vx = W * 0.70, vy = H * 0.44, vr = Math.min(W * 0.15, 60);
-        var k = (1 - Math.cos(S.day / 29.5 * Math.PI * 2)) / 2;
-        var waxing = S.day < 14.75;
-        label(ctx, '지구에서 본 모양', vx, vy - vr - 18, T.text, 12);
-        circle(ctx, vx, vy, vr, '#0a0f1c', T.grid);
-        // 밝은 부분
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(vx, vy, vr, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.fillStyle = '#e8e4d6';
-        ctx.beginPath();
-        var start = -Math.PI / 2, end = Math.PI / 2;
-        if (waxing) { ctx.arc(vx, vy, vr, start, end, false); }
-        else { ctx.arc(vx, vy, vr, end, start, false); }
-        var rx = Math.abs(1 - 2 * k) * vr;
-        if (waxing) {
-          ctx.ellipse(vx, vy, Math.max(0.01, rx), vr, 0, Math.PI / 2, -Math.PI / 2, k > 0.5);
+        var ang = Math.PI + (S.day / SYNODIC) * Math.PI * 2;
+        var u = (S.day / SYNODIC) * 360 + node;      // 교점에서 잰 각
+        var beta = S.tilt * Math.sin(u * Math.PI / 180);
+        var mx = cx + Math.cos(ang) * R, my = cy + Math.sin(ang) * R * 0.9;
+        // 황도면(수평 기준선)
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(cx - R - 18, cy); ctx.lineTo(cx + R + 18, cy); ctx.stroke();
+        ctx.setLineDash([]);
+        label(ctx, '황도면', cx + R + 16, cy - 6, T.faint, 9, 'right');
+        // 달 (기울기만큼 화면 위아래로)
+        var dy = beta * 2.4;
+        if (Math.abs(dy) > 1) {
+          // 황도면 위로 떠 있는 달 — 기준 위치는 흐린 원, 실제 달은 그 위
+          circle(ctx, mx, my, 9, 'rgba(207,214,228,0.22)', null);
+          ctx.strokeStyle = 'rgba(126,224,192,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx, my - dy); ctx.stroke(); ctx.setLineDash([]);
+          circle(ctx, mx, my - dy, 9, '#cfd6e4', null);
+          label(ctx, '위 ' + Math.abs(beta).toFixed(1) + '°', mx, my - dy - 17, T.accent2, 9);
         } else {
-          ctx.ellipse(vx, vy, Math.max(0.01, rx), vr, 0, -Math.PI / 2, Math.PI / 2, k > 0.5);
+          circle(ctx, mx, my, 9, '#cfd6e4', null);
         }
-        ctx.closePath();
-        ctx.fill();
+        // 빛을 받는 쪽(왼쪽) 표시
+        ctx.fillStyle = 'rgba(16,18,26,0.70)';
+        ctx.beginPath(); ctx.arc(mx, my - dy, 9, -Math.PI / 2, Math.PI / 2, false); ctx.fill();
+        // 그림자: 삭 무렵에만 지구 쪽으로
+        var elong = (S.day / SYNODIC) * 360;
+        var nearNew = elong < 13 || elong > 347;
+        var nearFull = Math.abs(elong - 180) < 13;
+        if (nearNew || nearFull) {
+          var k8 = 13 / 1.5;                        // 1.5° = 지구 반지름(그리기 배율)
+          var off = beta * k8;
+          var hit = Math.abs(beta) < 1.5;
+          ctx.strokeStyle = hit ? 'rgba(255,212,121,0.85)' : 'rgba(255,255,255,0.28)';
+          ctx.lineWidth = hit ? 2 : 1.2;
+          ctx.setLineDash(hit ? [] : [4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(mx + (nearNew ? 6 : -6), my - dy);
+          ctx.lineTo(cx + (nearNew ? 0 : 0) + 26, cy - off);
+          ctx.stroke(); ctx.setLineDash([]);
+          label(ctx, hit ? '그림자가 지구를 맞음 → 식' : '그림자가 빗나감 (β ' + Math.abs(beta).toFixed(1) + '° > 1.5°)',
+            cx + 4, cy + 34, hit ? T.accent : T.muted, 9.5, 'left');
+        }
+        // 지구에서 본 모양
+        var vx = W * 0.73, vy = H * 0.36, vr = Math.min(W * 0.14, 58);
+        var k = (1 - Math.cos(S.day / SYNODIC * Math.PI * 2)) / 2;
+        var waxing = S.day < 14.75;
+        label(ctx, '지구에서 본 모양', vx, vy - vr - 16, T.text, 11.5);
+        circle(ctx, vx, vy, vr, '#0a0f1c', T.grid);
+        ctx.save();
+        ctx.beginPath(); ctx.arc(vx, vy, vr, 0, Math.PI * 2); ctx.clip();
+        ctx.fillStyle = '#e8e4d6';
+        var rx = Math.abs(1 - 2 * k) * vr;
+        if (k > 0.001) {
+          ctx.beginPath();
+          if (waxing) {
+            ctx.arc(vx, vy, vr, -Math.PI / 2, Math.PI / 2, false);
+            ctx.ellipse(vx, vy, Math.max(0.01, rx), vr, 0, Math.PI / 2, -Math.PI / 2, k > 0.5);
+          } else {
+            ctx.arc(vx, vy, vr, Math.PI / 2, -Math.PI / 2, false);
+            ctx.ellipse(vx, vy, Math.max(0.01, rx), vr, 0, -Math.PI / 2, Math.PI / 2, k > 0.5);
+          }
+          ctx.closePath(); ctx.fill();
+        }
         ctx.restore();
         circle(ctx, vx, vy, vr, null, T.grid);
-
-        // 이름
         var names = ['삭(신월)', '초승달', '상현달', '차오르는 달', '보름달', '기우는 달', '하현달', '그믐달'];
         var idx = Math.round((S.day / 29.5) * 8) % 8;
-        label(ctx, names[idx], vx, vy + vr + 20, T.accent2, 13);
-
-        // 일·월식 조건
-        var nearNode = (S.day < 1.6 || S.day > 27.9 || Math.abs(S.day - 14.75) < 1.6);
-        var canEclipse = nearNode && S.tilt < 1.5;
-        var note = S.tilt >= 1.5
-          ? '달 궤도가 5.1° 기울어 있어 대부분의 삭·망에서 그림자가 빗나갑니다.'
-          : (canEclipse ? '교점 근처 + 기울기 0° → 이때 일식·월식이 가능합니다.' : '기울기가 0이어도 달이 교점 근처에 있어야 식이 일어납니다.');
+        label(ctx, names[idx], vx, vy + vr + 18, T.accent2, 12.5);
+        // 아래 안내
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.fillRect(10, H - 46, W - 20, 36);
-        label(ctx, note, 18, H - 28, S.tilt < 1.5 && nearNode ? T.accent : T.muted, 11, 'left');
+        ctx.fillRect(8, H - 44, W - 16, 36);
+        labelFit(ctx, '기울기 0° → 매달 식 · 5.1° → 교점 근처에서만 (이번 달 교점은 태양에서 ' + node + '°)',
+          14, H - 26, S.tilt < 5 ? T.accent : T.muted, 10.5, W - 24, 'left');
       },
       readout: function (S) {
-        var k = (1 - Math.cos(S.day / 29.5 * Math.PI * 2)) / 2;
-        var phase = (S.day / 29.5 * 360);
+        var k = (1 - Math.cos(S.day / SYNODIC * Math.PI * 2)) / 2;
+        var elong = (S.day / SYNODIC) * 360;
+        var phase = (180 - elong + 360) % 360;      // 태양–달–지구 각(위상각): 삭에서 180°
+        var u = (S.day / SYNODIC) * 360 + (S.node || 18);
+        var beta = S.tilt * Math.sin(u * Math.PI / 180);
         return [
-          ['삭망 주기', '삭에서 ' + S.day.toFixed(1) + '일 지남 · 29.5일 주기'],
+          ['삭망 주기', '삭에서 ' + S.day.toFixed(1) + '일 지남 · 29.53일 주기'],
           ['지구에서 보이는 밝은 비율', Math.round(k * 100) + '%'],
           ['위상각(태양–달–지구)', phase.toFixed(0) + '°'],
+          ['달의 황위 β', beta.toFixed(2) + '°'],
           ['한 달(삭망월)', '29.53일']
         ];
       },
-      hint: '달은 스스로 빛나지 않고 태양빛을 반사합니다. 지구에서 보는 각도가 달라지면서 밝은 부분의 모양이 바뀝니다. 기울기를 0으로 줄여도 달이 교점(궤도가 만나는 곳) 근처에 있을 때만 식이 일어납니다.'
+      hint: '달은 스스로 빛나지 않고 태양빛을 반사합니다. 지구에서 보는 각도가 달라지면서 밝은 부분의 모양이 바뀝니다. 달 궤도가 기울어져 있어 그림자가 지구를 빗나가는 달이 훨씬 많고, 교점 근처에서 기울기가 작을 때만 식이 일어납니다.'
     });
   }
 
   /* ======================================================================
      실험 2 — 계절과 태양 고도
+        태양 적위는 월 중순의 황경으로 계산: δ = asin(sin ε · sin λ)
+        오른쪽 그림은 위도에 따른 하루 태양 고도 곡선(낮 길이·정오 고도)
      ====================================================================== */
+  var MONTH_DAY = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+
+  /** 그 달 15일의 태양 적위(도) — ε = 23.4393°, λ = 0 은 춘분(3월 20일경) */
+  function solarDec(month) {
+    var day = MONTH_DAY[Math.max(1, Math.min(12, month)) - 1] + 15;
+    var lam = (day - 80) / 365.2422 * 2 * Math.PI;
+    var e = 23.4393 * Math.PI / 180;
+    return Math.asin(Math.sin(e) * Math.sin(lam)) * 180 / Math.PI;
+  }
+  /** 태양 고도(도) — 시각 t(시), 위도 lat, 적위 dec */
+  function sunAlt(t, lat, dec) {
+    var H = (t - 12) * 15 * Math.PI / 180;
+    var p = lat * Math.PI / 180, d = dec * Math.PI / 180;
+    var s = Math.sin(p) * Math.sin(d) + Math.cos(p) * Math.cos(d) * Math.cos(H);
+    return Math.asin(Math.max(-1, Math.min(1, s))) * 180 / Math.PI;
+  }
+  /** 낮 길이(시간). cos H0 = −tan φ tan δ */
+  function dayLength(lat, dec) {
+    var p = lat * Math.PI / 180, d = dec * Math.PI / 180;
+    var c = -Math.tan(p) * Math.tan(d);
+    if (c <= -1) return 24;
+    if (c >= 1) return 0;
+    return Math.acos(c) / Math.PI * 24;
+  }
+
   function simSeasons(host) {
     createSim(host, {
-      id: 'seasons', title: '🌍 계절은 지구의 기울기 때문에 생깁니다', height: 330,
+      id: 'seasons', title: '🌍 계절은 지구의 기울기 때문에 생깁니다', height: 312,
       controls: [
         { k: 'month', label: '지구의 공전 위치', min: 1, max: 12, step: 1, value: 6, cycle: true, sub: '12개월', fmt: function (v) { return v + '월'; } },
         { k: 'lat', label: '관측 위도', min: -66, max: 66, step: 1, value: 37, fmt: function (v) { return (v >= 0 ? '북위 ' : '남위 ') + Math.abs(v) + '°'; } }
       ],
       draw: function (ctx, W, H, S, T) {
-        var cx = W * 0.26, cy = H * 0.5;
-        circle(ctx, cx, cy, 22, T.accent, null);
-        label(ctx, '태양', cx, cy + 38, T.muted, 11);
-        var R = Math.min(W * 0.19, H * 0.34);
+        var dec = solarDec(S.month);
+        // ---------- 왼쪽: 공전 궤도와 자전축
+        var cx = W * 0.21, cy = H * 0.33;
+        circle(ctx, cx, cy, 17, T.accent, null);
+        label(ctx, '태양', cx, cy + 30, T.muted, 10.5);
+        var R = Math.min(W * 0.17, H * 0.23);
         ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.52, 0, 0, Math.PI * 2); ctx.stroke();
         var ang = Math.PI + ((S.month - 1) / 12) * Math.PI * 2;
-        var ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R * 0.55;
-        // 자전축 (23.5° 기울어짐, 방향 고정)
+        var ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R * 0.52;
         var tilt = 23.44 * Math.PI / 180;
-        var ax = Math.sin(tilt) * 22, ay = -Math.cos(tilt) * 22;
+        var ax = Math.sin(tilt) * 16, ay = -Math.cos(tilt) * 16;
         ctx.strokeStyle = T.text; ctx.lineWidth = 1.4;
         ctx.beginPath(); ctx.moveTo(ex - ax, ey - ay); ctx.lineTo(ex + ax, ey + ay); ctx.stroke();
-        circle(ctx, ex + ax, ey + ay, 3, T.accent3, null);   // 북극
-        circle(ctx, ex - ax, ey - ay, 3, T.accent2, null);
-        circle(ctx, ex, ey, 11, T.accent3, null);
-        label(ctx, '지구', ex, ey + 30, T.muted, 11);
+        circle(ctx, ex + ax, ey + ay, 2.6, T.accent3, null);
+        circle(ctx, ex, ey, 10, T.accent3, null);
+        label(ctx, S.month + '월', ex, ey + 24, T.text, 11, 'center');
+        labelFit(ctx, '자전축은 23.44° 기울어진 채 방향 일정', 6, H * 0.90, T.muted, 10, W * 0.46, 'left');
 
-        // 태양 적위: δ = -23.44° × cos(2π(month-6.5)/12) 근사 (6월 하지 +23.4)
-        var dec = 23.44 * Math.cos((S.month - 6.5) / 12 * Math.PI * 2);
-        var phi = S.lat * Math.PI / 180, d = dec * Math.PI / 180;
-        var cosH = -Math.tan(phi) * Math.tan(d);
-        var dayLen;
-        if (cosH <= -1) dayLen = 24;
-        else if (cosH >= 1) dayLen = 0;
-        else dayLen = Math.acos(cosH) / Math.PI * 24;
-
-        // 오른쪽: 지평선과 태양 고도
-        var bx = W * 0.62, by = H - 52, bw = W * 0.33, bh = H * 0.58;
-        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(bx - 10, by); ctx.lineTo(bx + bw, by); ctx.stroke();
-        label(ctx, '지평선', bx + bw - 4, by + 14, T.faint, 10, 'right');
-        var noonAlt = 90 - Math.abs(S.lat - dec);
-        var hx = bx + bw * 0.5, hy = by - Math.max(0, noonAlt) / 90 * bh;
-        ctx.strokeStyle = 'rgba(255,212,121,0.4)'; ctx.setLineDash([4, 4]);
-        ctx.beginPath(); ctx.moveTo(hx, by); ctx.lineTo(hx, hy); ctx.stroke(); ctx.setLineDash([]);
-        circle(ctx, hx, hy, 9, T.accent, null);
-        label(ctx, '정오 태양', hx, hy - 18, T.accent, 11);
-        label(ctx, '고도 ' + Math.round(noonAlt) + '°', hx, by + 14, T.text, 11);
-        label(ctx, '북쪽', bx - 3, by + 14, T.faint, 10, 'left');
-
-        ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.fillRect(10, 8, W - 20, 30);
-        labelFit(ctx, '지구 자전축은 공전 궤도에 대해 23.44° 기울어진 채 방향이 일정합니다.', W / 2, 23, T.muted, 11, W - 24);
+        // ---------- 오른쪽: 그 위도에서 하루 동안의 태양 고도
+        var bx = W * 0.50, bw = W * 0.47, by = H * 0.12, bh = H * 0.66;
+        function px(t) { return bx + t / 24 * bw; }
+        function py(a) { return by + bh - (a + 30) / 120 * bh; }
+        // 밤 영역(고도 0 아래)
+        ctx.fillStyle = 'rgba(10,16,30,0.55)';
+        ctx.fillRect(bx, py(0), bw, bh - (py(0) - by));
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+        [0, 30, 60, 90].forEach(function (a) {
+          ctx.beginPath(); ctx.moveTo(bx, py(a)); ctx.lineTo(bx + bw, py(a)); ctx.stroke();
+          label(ctx, a + '°', bx - 4, py(a), T.faint, 8.5, 'right');
+        });
+        [0, 6, 12, 18, 24].forEach(function (t) {
+          label(ctx, t + '시', Math.max(bx + 8, Math.min(bx + bw - 8, px(t))), by + bh + 12, T.faint, 8.5);
+        });
+        ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(bx, py(0)); ctx.lineTo(bx + bw, py(0)); ctx.stroke();
+        label(ctx, '지평선', bx + bw - 2, py(0) - 5, T.faint, 8.5, 'right');
+        // 태양 고도 곡선
+        ctx.strokeStyle = T.accent; ctx.lineWidth = 2;
+        ctx.beginPath();
+        var started = false;
+        for (var t = 0; t <= 24.001; t += 0.25) {
+          var a = sunAlt(t, S.lat, dec);
+          var y = py(Math.max(-30, a));
+          if (!started) { ctx.moveTo(px(t), y); started = true; } else ctx.lineTo(px(t), y);
+        }
+        ctx.stroke();
+        // 정오 표시
+        var noon = sunAlt(12, S.lat, dec);
+        ctx.strokeStyle = 'rgba(255,212,121,0.35)'; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(px(12), py(0)); ctx.lineTo(px(12), py(noon)); ctx.stroke();
+        ctx.setLineDash([]);
+        circle(ctx, px(12), py(noon), 5, T.accent, null);
+        label(ctx, '정오 ' + Math.round(noon) + '°', px(12), py(noon) - 12, T.text, 10);
+        // 낮 길이
+        var dl = dayLength(S.lat, dec);
+        var dlTxt = dl >= 24 ? '백야 (24시간)' : dl <= 0 ? '극야 (0시간)' :
+          Math.floor(dl) + '시간 ' + Math.round((dl % 1) * 60) + '분';
+        label(ctx, '낮 ' + dlTxt, bx + bw / 2, by - 10, T.accent2, 10.5, 'center');
+        label(ctx, (S.lat >= 0 ? '북위 ' : '남위 ') + Math.abs(S.lat) + '°에서 본 태양의 하루', bx + bw / 2, by + bh + 26, T.muted, 9.5);
       },
       readout: function (S) {
-        var dec = 23.44 * Math.cos((S.month - 6.5) / 12 * Math.PI * 2);
-        var phi = S.lat * Math.PI / 180, d = dec * Math.PI / 180;
-        var cosH = -Math.tan(phi) * Math.tan(d);
-        var dayLen = cosH <= -1 ? 24 : cosH >= 1 ? 0 : Math.acos(cosH) / Math.PI * 24;
+        var dec = solarDec(S.month);
+        var dl = dayLength(S.lat, dec);
         var alt = 90 - Math.abs(S.lat - dec);
+        var season;
+        if (S.lat >= 0) season = dec > 15 ? '북반구 여름' : dec < -15 ? '북반구 겨울' : (S.month >= 4 && S.month <= 8 ? '북반구 봄~여름 사이' : '북반구 가을~겨울 사이');
+        else season = dec > 15 ? '남반구 겨울' : dec < -15 ? '남반구 여름' : (S.month >= 4 && S.month <= 8 ? '남반구 가을~겨울 사이' : '남반구 봄~여름 사이');
         return [
           ['태양 적위', (dec >= 0 ? '+' : '') + dec.toFixed(1) + '°'],
           ['정오 태양 고도', Math.round(alt) + '°'],
-          ['낮 길이', Math.floor(dayLen) + '시간 ' + Math.round((dayLen % 1) * 60) + '분'],
-          ['계절', dec > 15 ? '북반구 여름 (남반구 겨울)' : dec < -15 ? '북반구 겨울 (남반구 여름)' : (S.month > 6 ? '북반구 가을' : '북반구 봄')]
+          ['낮 길이', dl >= 24 ? '24시간 (백야)' : dl <= 0 ? '0시간 (극야)' : Math.floor(dl) + '시간 ' + Math.round((dl % 1) * 60) + '분'],
+          ['계절', season]
         ];
       },
-      hint: '계절이 생기는 까닭은 지구와 태양 사이 거리가 아니라 자전축의 기울기입니다. 축이 기울어 태양빛이 비스듬히 들어오는 곳은 같은 빛을 넓게 받아 덜 데워집니다.'
+      hint: '계절이 생기는 까닭은 지구와 태양 사이 거리가 아니라 자전축의 기울기입니다. 축이 기울어 태양빛이 비스듬히 들어오는 곳은 같은 빛을 넓게 받아 덜 데워집니다. 위도를 바꾸면 정오 고도와 낮 길이가 함께 달라집니다.'
     });
   }
 
   /* ======================================================================
-     실험 3 — 연주시차 (중학교 2-2 '별과 우주')
+     실험 3 — 연주시차 (중학교 '별과 우주')
+        6개월 사이 지구 이동 = 2 AU, 별에서 두 시선이 만드는 각 = 2p
      ====================================================================== */
   function simParallax(host) {
     createSim(host, {
-      id: 'parallax', title: '📐 연주시차로 별까지 거리 재기', height: 350,
+      id: 'parallax', title: '📐 연주시차로 별까지 거리 재기', height: 356,
       controls: [
         { k: 'dpc', label: '별까지 거리', min: 0.2, max: 10, step: 0.05, value: 1.3, fmt: function (v) { return v.toFixed(2) + ' pc'; } },
-        { k: 'month', label: '지구의 공전 위치', min: 0, max: 12, step: 0.5, value: 0, cycle: true, sub: '1년 12개월', fmt: function (v) { return (v === 0 || v === 12 ? '1월' : v === 6 ? '7월' : (v < 6 ? '1월 +' : '7월 +') + Math.abs(v - (v < 6 ? 0 : 6)).toFixed(1) + '개월'); } }
+        { k: 'month', label: '지구의 공전 위치', min: 0, max: 12, step: 0.5, value: 0, cycle: true, sub: '1년 12개월', fmt: function (v) {
+          if (v === 0 || v === 12) return '1월';
+          if (v === 6) return '7월';
+          return (v < 6 ? '1월+' : '7월+') + Math.abs(v - (v < 6 ? 0 : 6)).toFixed(1) + '개월';
+        } }
       ],
       buttons: [{ k: 'play', label: '▶ 6개월 이동' }, { k: 'reset', label: '1월로' }],
-      onPlay: function (S) { S._dir = 1; },
       tick: function (S, dt) {
         S.month = (S.month + dt * 3) % 12;
         return true;
       },
       draw: function (ctx, W, H, S, T) {
-        var p = 1 / S.dpc;                    // 각초
-        var cx = W * 0.26, cy = H * 0.55, R = Math.min(W * 0.16, 70);
-        // 태양과 지구 궤도
+        var p = 1 / S.dpc;                            // 각초
+        var cx = W * 0.24, cy = H * 0.40, R = Math.min(W * 0.15, 62);
         circle(ctx, cx, cy, R, null, T.grid);
-        circle(ctx, cx, cy, 12, T.accent, null);
-        label(ctx, '태양', cx, cy + 26, T.muted, 11);
-        // 지구 (1월 = 오른쪽, 7월 = 왼쪽)
+        circle(ctx, cx, cy, 10, T.accent, null);
+        label(ctx, '태양', cx, cy + 22, T.muted, 10.5);
         var a = (S.month / 12) * Math.PI * 2;
         var ex = cx + Math.cos(a) * R, ey = cy + Math.sin(a) * R;
-        circle(ctx, ex, ey, 8, T.accent3, null);
-        label(ctx, '지구', ex, ey - 16, T.accent3, 10);
-        // 6개월 전 위치
         var a2 = a + Math.PI;
         var e2x = cx + Math.cos(a2) * R, e2y = cy + Math.sin(a2) * R;
-        circle(ctx, e2x, e2y, 6, 'rgba(138,182,255,0.4)', null);
+        // 기선 2 AU
+        ctx.strokeStyle = 'rgba(126,224,192,0.55)'; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(e2x, e2y); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx, '6개월 사이 이동 = 2 AU', cx, cy + R + 30, T.accent2, 9.5);
+        circle(ctx, e2x, e2y, 5, 'rgba(138,182,255,0.40)', null);
+        circle(ctx, ex, ey, 7, T.accent3, null);
+        label(ctx, '지구', ex, ey - 14, T.accent3, 9.5);
 
-        // 별 위치 (화면 오른쪽) — 거리는 로그로 압축
-        var sx = W * 0.62 + Math.log10(S.dpc / 0.2) * (W * 0.10);
-        var sy = cy;
-        star(ctx, sx, sy, 9, T.accent);
-        label(ctx, '가까운 별', sx, sy - 20, T.accent, 11);
+        // 별
+        var sx = W * 0.60 + Math.log10(S.dpc / 0.2) * (W * 0.09);
+        var sy = H * 0.40;
         // 배경 별
         var seed = 7;
         function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
-        for (var i = 0; i < 26; i++) {
-          var bx = W * 0.58 + rnd() * W * 0.40, by = 30 + rnd() * (H - 80);
-          if (Math.abs(bx - sx) < 14 && Math.abs(by - sy) < 14) continue;
-          circle(ctx, bx, by, 1.4, 'rgba(200,210,230,0.7)', null);
+        for (var i = 0; i < 24; i++) {
+          var bxp = W * 0.50 + rnd() * W * 0.46, byp = 30 + rnd() * (H * 0.52);
+          if (Math.abs(bxp - sx) < 16 && Math.abs(byp - sy) < 16) continue;
+          circle(ctx, bxp, byp, 1.3, 'rgba(200,210,230,0.55)', null);
         }
+        star(ctx, sx, sy, 9, T.accent);
+        label(ctx, '가까운 별', sx + 12, sy - 12, T.accent, 10.5, 'left');
+        // 두 시선
+        arrow(ctx, ex, ey, sx, sy, 'rgba(126,224,192,0.75)', 1.2);
+        arrow(ctx, e2x, e2y, sx, sy, 'rgba(255,212,121,0.55)', 1.2);
+        // 별에서의 각 2p
+        var a1 = Math.atan2(ey - sy, ex - sx), a2b = Math.atan2(e2y - sy, e2x - sx);
+        var r0 = 52;
+        ctx.strokeStyle = T.accent2; ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r0, a1, a2b, false);
+        ctx.stroke();
+        label(ctx, '2p = ' + (2 * p).toFixed(2) + '″', sx - 26, sy + r0 + 12, T.accent2, 10.5);
+        label(ctx, '(과장)', sx - 26, sy + r0 + 24, T.faint, 8.5);
 
-        // 시선: 지구 → 별 (과장)
-        arrow(ctx, ex, ey, sx, sy, 'rgba(126,224,192,0.55)', 1);
-        arrow(ctx, e2x, e2y, sx, sy, 'rgba(255,180,120,0.35)', 1);
-        // 시차각 표시
-        label(ctx, '시선 방향 차이 = 연주시차 p', W * 0.60, H - 26, T.muted, 11);
-        label(ctx, 'p = ' + p.toFixed(2) + '″', sx + 4, sy + 22, T.accent2, 12);
+        // 망원경 시야: 배경에 대한 별의 이동
+        var vx = W * 0.20, vy = H - 54, vr = 36;
+        circle(ctx, vx, vy, vr, 'rgba(5,10,20,0.75)', T.grid);
+        ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(vx - vr, vy); ctx.lineTo(vx + vr, vy);
+        ctx.moveTo(vx, vy - vr); ctx.lineTo(vx, vy + vr); ctx.stroke();
+        var shiftX = Math.cos(a) * vr * 0.55, shiftY = -Math.sin(a) * vr * 0.55;
+        circle(ctx, vx - shiftX / 2, vy - shiftY / 2, 2.4, 'rgba(255,212,121,0.45)', null);
+        circle(ctx, vx + shiftX / 2, vy + shiftY / 2, 3.2, T.accent, null);
+        labelFit(ctx, '6개월 간격으로 본 별의 위치(과장)', W * 0.24, vy + vr + 14, T.faint, 8.5, W * 0.40);
 
-        // 망원경 시야: 배경에 대한 별의 이동 (과장)
-        var vx = W * 0.22, vy = H - 60, vr = 34;
-        circle(ctx, vx, vy, vr, 'rgba(5,10,20,0.8)', T.grid);
-        var shift = Math.sin(a) * vr * 0.55;    // 과장
-        circle(ctx, vx + shift, vy, 3, T.accent, null);
-        label(ctx, '망원경으로 본 별의 흔들림(과장)', vx, vy + vr + 16, T.faint, 10);
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.fillRect(10, 8, W - 20, 40);
-        labelFit(ctx, '그림은 이해를 위해 거리·각도를 과장했습니다.', W / 2, 19, T.muted, 11, W - 24);
-        labelFit(ctx, '실제 연주시차 각도는 아주 작습니다.', W / 2, 34, T.faint, 10, W - 24);
+        ctx.fillRect(8, 6, W - 16, 34);
+        labelFit(ctx, '지구가 6개월 동안 2 AU 움직여 생기는 시선 차이의 절반이 p입니다',
+          W / 2, 18, T.muted, 10, W - 20);
+        labelFit(ctx, 'd[pc] = 1 / p[″] · 1 pc = 3.26광년 = 206,265 AU', W / 2, 32, T.accent, 10, W - 24);
       },
       readout: function (S) {
         var p = 1 / S.dpc;
         return [
           ['연주시차 p', p.toFixed(2) + '″ (각초)'],
           ['거리 d = 1 / p', S.dpc.toFixed(2) + ' pc (파섹)'],
-          ['광년으로', (S.dpc * 3.2616).toFixed(2) + '광년'],
-          ['1 pc의 정의', '1 AU를 1″로 보는 거리 ≈ 3.26광년']
+          ['광년으로', (S.dpc * 3.26156).toFixed(2) + '광년'],
+          ['관측된 시선 이동', (2 * p).toFixed(2) + '″ (6개월 사이, 2p)'],
+          ['1 pc의 정의', '1 AU를 1″로 보는 거리 = 206,265 AU = 3.26광년']
         ];
       },
       hint: '지구가 6개월 동안 3억 km를 이동하기 때문에 가까운 별이 먼 배경 별에 대해 조금 움직여 보입니다. 이 각도(연주시차 p)의 역수가 거리입니다. p가 1각초이면 거리는 1파섹(3.26광년)입니다.'
@@ -18897,7 +20076,7 @@ window.Astro = (function () {
 
   function simKepler(host) {
     createSim(host, {
-      id: 'kepler', title: '🪐 케플러 3법칙 — 궤도와 공전 주기', height: 330,
+      id: 'kepler', title: '🪐 케플러 3법칙 — 궤도와 공전 주기', height: 300,
       controls: [
         { k: 'a', label: '궤도 장반경 a', min: 0.3, max: 40, step: 0.1, value: 1, fmt: function (v) { return v.toFixed(1) + ' AU'; } },
         { k: 'e', label: '이심률 e', min: 0, max: 0.85, step: 0.01, value: 0.25, fmt: function (v) { return v.toFixed(2); } },
@@ -18912,7 +20091,7 @@ window.Astro = (function () {
       },
       draw: function (ctx, W, H, S, T) {
         var cx = W / 2, cy = H / 2;
-        var A = Math.min(W * 0.36, H * 0.40) * (0.35 + 0.65 * Math.min(1, Math.log10(S.a + 1) / 1.6));
+        var A = Math.min(W * 0.40, H * 0.40) * (0.55 + 0.45 * Math.min(1, Math.log10(S.a + 1) / 1.6));
         var b = A * Math.sqrt(1 - S.e * S.e);
         var c = A * S.e;
         // 궤도
@@ -18958,36 +20137,47 @@ window.Astro = (function () {
 
   /* ======================================================================
      실험 5 — H-R도
+        질량–광도: M<0.43 → L=0.23M^2.3 / M<2 → L=M^4 / M≥2 → L=1.4M^3.5
+        반지름: R = M^0.8 (M<1), M^0.6 (M≥1) → T = 5772 (L/R²)^0.25
      ====================================================================== */
+  function msModel(M) {
+    var L = M < 0.43 ? 0.23 * Math.pow(M, 2.3) : (M < 2 ? Math.pow(M, 4) : 1.4 * Math.pow(M, 3.5));
+    var R = M < 1 ? Math.pow(M, 0.8) : Math.pow(M, 0.6);
+    var T = 5772 * Math.pow(L / (R * R), 0.25);
+    return { L: L, R: R, T: T, life: 1e10 * Math.pow(M, -2.5) };
+  }
+  function lifeText(yr) {
+    if (yr >= 1e12) return (yr / 1e12).toFixed(1) + '조 년';
+    if (yr >= 1e8) return Math.round(yr / 1e8) + '억 년';
+    return (yr / 1e6).toFixed(0) + '백만 년';
+  }
+
   function simHR(host) {
     createSim(host, {
-      id: 'hr', title: '⭐ H-R도 — 별의 밝기와 표면 온도', height: 360,
+      id: 'hr', title: '⭐ H-R도 — 별의 밝기와 표면 온도', height: 366,
       controls: [
         { k: 'mass', label: '별의 질량', min: 0.1, max: 30, step: 0.1, value: 1, fmt: function (v) { return v.toFixed(1) + ' × 태양'; } }
       ],
       draw: function (ctx, W, H, S, T) {
-        var L = 44, R = W - 16, TOP = 26, BOT = H - 34;
-        var x0 = L, x1 = R, y0 = TOP, y1 = BOT;
-        // 축
+        var L0 = 46, R1 = W - 14, TOP = 26, BOT = H - 36;
+        var x0 = L0, x1 = R1, y0 = TOP, y1 = BOT;
         ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.stroke();
-        // 온도 축 (왼쪽 뜨겁고 오른쪽 차갑게)
         var temps = [30000, 10000, 6000, 3000];
         temps.forEach(function (t) {
           var x = x0 + (Math.log10(40000 / t) / Math.log10(40000 / 2500)) * (x1 - x0);
           ctx.strokeStyle = 'rgba(255,255,255,0.07)';
           ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
-          label(ctx, t >= 1000 ? (t / 1000) + 'k' : t, x, y1 + 12, T.faint, 10);
+          label(ctx, (t / 1000) + 'k', x, y1 + 12, T.faint, 9.5);
         });
-        label(ctx, '표면 온도 (K)', (x0 + x1) / 2, H - 12, T.muted, 11);
-        // 광도 축
+        label(ctx, '표면 온도 (K) — 왼쪽이 뜨겁습니다', (x0 + x1) / 2, H - 12, T.muted, 10.5);
         [1e-3, 1, 1e3, 1e6].forEach(function (l) {
-          var y = y1 - (Math.log10(l) - (-4)) / 10 * (y1 - y0);
+          var y = y1 - (Math.log10(l) + 4) / 10 * (y1 - y0);
           ctx.strokeStyle = 'rgba(255,255,255,0.07)';
           ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
-          label(ctx, '10' + (l === 1 ? '⁰' : '^' + Math.log10(l)), x0 - 8, y, T.faint, 9, 'right');
+          label(ctx, l === 1 ? '1' : (l === 1e-3 ? '10⁻³' : l === 1e3 ? '10³' : '10⁶'), x0 - 6, y, T.faint, 9, 'right');
         });
-        label(ctx, '광도 (태양=1)', x0 + 6, y0 - 10, T.muted, 10, 'left');
+        label(ctx, '광도 (태양=1)', x0 + 2, y0 - 10, T.muted, 9.5, 'left');
 
         function pos(Tk, Lg) {
           var x = x0 + (Math.log10(40000 / Math.max(2500, Tk)) / Math.log10(40000 / 2500)) * (x1 - x0);
@@ -18997,47 +20187,42 @@ window.Astro = (function () {
         // 주계열
         ctx.strokeStyle = 'rgba(255,212,121,0.55)'; ctx.lineWidth = 3;
         ctx.beginPath();
-        for (var m = 0.08; m <= 40; m *= 1.18) {
-          var Lg = Math.pow(m, 3.5);
-          var Tk = 5772 * Math.pow(m, 0.55);
-          var q = pos(Tk, Lg);
-          if (m === 0.08) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+        var first = true;
+        for (var m = 0.08; m <= 40; m *= 1.1) {
+          var md = msModel(m);
+          var q = pos(md.T, md.L);
+          if (first) { ctx.moveTo(q.x, q.y); first = false; } else ctx.lineTo(q.x, q.y);
         }
         ctx.stroke();
         // 거성·백색왜성 무리
         ctx.fillStyle = 'rgba(255,140,90,0.35)';
         for (var i = 0; i < 26; i++) {
-          var gx = x0 + 0.18 * (x1 - x0) + (i % 7) * 9, gy = y0 + 0.18 * (y1 - y0) + Math.floor(i / 7) * 10;
+          var gx = x0 + 0.50 * (x1 - x0) + (i % 7) * 9, gy = y0 + 0.14 * (y1 - y0) + Math.floor(i / 7) * 10;
           ctx.beginPath(); ctx.arc(gx, gy, 3, 0, 6.28); ctx.fill();
         }
-        label(ctx, '거성', x0 + 0.24 * (x1 - x0), y0 + 0.12 * (y1 - y0), 'rgba(255,150,110,0.8)', 10);
+        label(ctx, '거성 · 초거성', x0 + 0.56 * (x1 - x0), y0 + 0.08 * (y1 - y0), 'rgba(255,150,110,0.9)', 9.5);
         ctx.fillStyle = 'rgba(140,200,255,0.35)';
         for (var j = 0; j < 12; j++) {
-          var wx = x0 + 0.30 * (x1 - x0) + (j % 6) * 9, wy = y1 - 0.12 * (y1 - y0) + Math.floor(j / 6) * -10;
+          var wx = x0 + 0.22 * (x1 - x0) + (j % 6) * 9, wy = y1 - 0.13 * (y1 - y0) + Math.floor(j / 6) * -10;
           ctx.beginPath(); ctx.arc(wx, wy, 2.4, 0, 6.28); ctx.fill();
         }
-        label(ctx, '백색왜성', x0 + 0.40 * (x1 - x0), y1 - 0.16 * (y1 - y0), 'rgba(150,205,255,0.8)', 10);
-        label(ctx, '주계열', x0 + 0.30 * (x1 - x0), y1 - 0.62 * (y1 - y0), T.accent, 11);
+        label(ctx, '백색왜성', x0 + 0.30 * (x1 - x0), y1 - 0.26 * (y1 - y0), 'rgba(150,205,255,0.9)', 9.5);
+        label(ctx, '주계열', x0 + 0.30 * (x1 - x0), y1 - 0.62 * (y1 - y0), T.accent, 10.5);
 
-        // 선택한 별
-        var mass = S.mass;
-        var lum = Math.pow(mass, 3.5);
-        var temp = 5772 * Math.pow(mass, 0.55);
-        var p = pos(temp, lum);
-        circle(ctx, p.x, p.y, 8, 'rgba(126,224,192,0.25)', T.accent2);
-        circle(ctx, p.x, p.y, 3.4, T.accent2, null);
-        var tag = mass < 0.5 ? '적색왜성' : mass < 1.5 ? '태양형' : mass < 4 ? '청색 주계열성' : '거대 청색별';
-        label(ctx, tag, p.x, p.y - 14, T.accent2, 10);
+        var md2 = msModel(S.mass);
+        var p2 = pos(md2.T, md2.L);
+        circle(ctx, p2.x, p2.y, 8, 'rgba(126,224,192,0.25)', T.accent2);
+        circle(ctx, p2.x, p2.y, 3.4, T.accent2, null);
+        var tag = S.mass < 0.5 ? '적색왜성' : S.mass < 1.5 ? '태양형' : S.mass < 4 ? '청색 주계열성' : '거대 청색별';
+        label(ctx, tag, p2.x, p2.y - 14, T.accent2, 10);
       },
       readout: function (S) {
-        var lum = Math.pow(S.mass, 3.5);
-        var temp = 5772 * Math.pow(S.mass, 0.55);
-        var rad = Math.sqrt(lum) / Math.pow(temp / 5772, 2);
+        var md = msModel(S.mass);
         return [
-          ['광도', nf(lum, 3) + ' × 태양'],
-          ['표면 온도', nf(temp, 0) + ' K'],
-          ['반지름', nf(rad, 2) + ' × 태양'],
-          ['수명(대략)', nf(10 / Math.pow(S.mass, 2.5), 1) + ' × 100억 년']
+          ['광도', nf(md.L, 3) + ' × 태양'],
+          ['표면 온도', nf(md.T, 0) + ' K'],
+          ['반지름', nf(md.R, 2) + ' × 태양'],
+          ['주계열 수명', lifeText(md.life)]
         ];
       },
       hint: '주계열성은 질량이 클수록 훨씬 밝고 뜨겁습니다(L ≈ M^3.5). 그래서 수명은 짧습니다. 별의 위치를 바꾸면 광도·온도·반지름이 함께 어떻게 변하는지 보세요.'
@@ -19046,60 +20231,87 @@ window.Astro = (function () {
 
   /* ======================================================================
      실험 6 — 적색편이와 허블-르메트르 법칙
+        v ≈ cz (작은 z), 거리는 평탄 ΛCDM(Ωm 0.3, ΩΛ 0.7, H₀ 70)로 계산
      ====================================================================== */
+  var C_KMS = 299792.458;
+  function comovingMpc(z) {
+    var N = 160, s = 0;
+    function E(zz) { return Math.sqrt(0.3 * Math.pow(1 + zz, 3) + 0.7); }
+    for (var i = 0; i < N; i++) {
+      var z1 = z * i / N, z2 = z * (i + 1) / N;
+      s += (1 / E(z1) + 1 / E(z2)) / 2 * (z2 - z1);
+    }
+    return 4282.749 * s;                 // c / H₀ (H₀ = 70 km/s/Mpc)
+  }
+  function redshiftInfo(z) {
+    var v = z < 0.3 ? z * C_KMS : C_KMS * ((1 + z) * (1 + z) - 1) / ((1 + z) * (1 + z) + 1);
+    var dL = (1 + z) * comovingMpc(z);
+    return { v: v, dMpc: dL };
+  }
+
   function simRedshift(host) {
     createSim(host, {
-      id: 'redshift', title: '🌈 적색편이와 허블-르메트르 법칙', height: 300,
+      id: 'redshift', title: '🌈 적색편이와 허블-르메트르 법칙', height: 268,
       controls: [
         { k: 'z', label: '적색편이 z', min: 0, max: 1, step: 0.005, value: 0.05, fmt: function (v) { return v.toFixed(3); } }
       ],
       draw: function (ctx, W, H, S, T) {
-        var x0 = 20, x1 = W - 20, y = H * 0.42;
-        var grad = ctx.createLinearGradient(x0, 0, x1, 0);
-        grad.addColorStop(0, '#4b1f8a'); grad.addColorStop(0.18, '#2244cc');
-        grad.addColorStop(0.36, '#22bbdd'); grad.addColorStop(0.5, '#44dd77');
-        grad.addColorStop(0.64, '#dde033'); grad.addColorStop(0.8, '#e08a22'); grad.addColorStop(1, '#b02a1a');
-        ctx.fillStyle = grad; ctx.fillRect(x0, y - 26, x1 - x0, 52);
-        // 파장 축 400~700nm
-        var lines = [434, 486, 656];  // 수소 발머선
-        ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 2;
-        lines.forEach(function (nm) {
-          var rest = (nm - 400) / 300;
-          var obs = (nm * (1 + S.z) - 400) / 300;
-          if (rest >= 0 && rest <= 1) {
-            ctx.beginPath(); ctx.moveTo(x0 + rest * (x1 - x0), y - 26); ctx.lineTo(x0 + rest * (x1 - x0), y + 26); ctx.stroke();
-          }
-          if (obs >= 0 && obs <= 1) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(x0 + obs * (x1 - x0), y - 26); ctx.lineTo(x0 + obs * (x1 - x0), y + 26); ctx.stroke();
-            ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 2;
+        var x0 = 22, x1 = W - 22, y = H * 0.40;
+        var NM0 = 400, NM1 = 1400;
+        function px(nm) { return x0 + (nm - NM0) / (NM1 - NM0) * (x1 - x0); }
+        // 스펙트럼 띠 (가시광 400~700 만 색으로, 그 밖은 회색)
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.fillRect(px(700), y - 22, px(NM1) - px(700), 44);
+        var grad = ctx.createLinearGradient(px(400), 0, px(700), 0);
+        grad.addColorStop(0, '#4b1f8a'); grad.addColorStop(0.22, '#2244cc');
+        grad.addColorStop(0.42, '#22bbdd'); grad.addColorStop(0.55, '#44dd77');
+        grad.addColorStop(0.68, '#dde033'); grad.addColorStop(0.84, '#e08a22'); grad.addColorStop(1, '#b02a1a');
+        ctx.fillStyle = grad; ctx.fillRect(px(400), y - 22, px(700) - px(400), 44);
+        label(ctx, '가시광', (px(400) + px(700)) / 2, y - 30, T.faint, 9);
+        label(ctx, '적외선', (px(700) + px(NM1)) / 2, y - 30, T.faint, 9);
+        [400, 700, 1000, 1400].forEach(function (nm) {
+          label(ctx, nm + 'nm', px(nm), y + 32, T.faint, 8.5);
+        });
+        // 수소 발머선: 기준선(검정) → 관측선(흰색)
+        [434, 486, 656].forEach(function (nm) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(px(nm), y - 22); ctx.lineTo(px(nm), y + 22); ctx.stroke();
+          var obs = nm * (1 + S.z);
+          if (obs <= NM1) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(px(obs), y - 22); ctx.lineTo(px(obs), y + 22); ctx.stroke();
+            if (S.z > 0.06) {
+              ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+              ctx.beginPath(); ctx.moveTo(px(nm) + 2, y - 26); ctx.lineTo(px(obs) - 2, y - 26); ctx.stroke(); ctx.setLineDash([]);
+            }
           }
         });
-        label(ctx, '400nm', x0, y + 40, T.faint, 10, 'left');
-        label(ctx, '700nm', x1, y + 40, T.faint, 10, 'right');
-        label(ctx, '검은 선 = 실험실에서 잰 기준선', x0, y - 40, T.muted, 11, 'left');
-        label(ctx, '흰 선 = 멀리서 온 빛(오른쪽으로 이동)', x0 + 6, y + 62, T.text, 11, 'left');
-        // 속도·거리
-        var v = S.z < 0.1 ? S.z * 299792.458 : 299792.458 * ((1 + S.z) ** 2 - 1) / ((1 + S.z) ** 2 + 1);
-        var d = v / 70;    // Mpc
-        label(ctx, '후퇴 속도 약 ' + nf(v, 0) + ' km/s  ·  거리 약 ' + nf(d, 1) + ' Mpc', W / 2, H - 18, T.accent2, 12);
+        label(ctx, '검은 선 = 실험실 기준선(수소)', x0, y - 44, T.muted, 10, 'left');
+        label(ctx, '흰 선 = 관측된 선 (오른쪽으로 이동 = 적색편이)', x0 + 4, y + 46, T.text, 10, 'left');
+        // 거리·속도
+        var info = redshiftInfo(S.z);
+        label(ctx, 'z = ' + S.z.toFixed(3) + '   ·   후퇴 속도 ≈ ' + nf(info.v, 0) + ' km/s',
+          W / 2, H - 34, T.accent2, 11.5);
+        label(ctx, '거리 ≈ ' + nf(info.dMpc, 0) + ' Mpc = ' + nf(info.dMpc * 3.2616 / 100, 1) + '억 광년',
+          W / 2, H - 16, T.text, 11);
       },
       readout: function (S) {
-        var v = S.z < 0.1 ? S.z * 299792.458 : 299792.458 * (Math.pow(1 + S.z, 2) - 1) / (Math.pow(1 + S.z, 2) + 1);
-        var d = v / 70;
+        var info = redshiftInfo(S.z);
         return [
           ['적색편이 z', S.z.toFixed(3)],
-          ['후퇴 속도', nf(v, 0) + ' km/s'],
-          ['거리 (H₀=70)', nf(d, 1) + ' Mpc = ' + nf(d * 3.2616, 0) + '백만 광년'],
-          ['수소 발머선 Hα', '656.3nm → ' + nf(656.3 * (1 + S.z), 1) + 'nm']
+          ['후퇴 속도 (v ≈ cz)', nf(info.v, 0) + ' km/s'],
+          ['거리 (평탄 ΛCDM)', nf(info.dMpc, 0) + ' Mpc = ' + nf(info.dMpc * 3.2616 / 100, 1) + '억 광년'],
+          ['수소 발머선 Hα', '656.3nm → ' + nf(656.3 * (1 + S.z), 1) + 'nm'],
+          ['작은 z에서', 'v/H₀ ≈ ' + nf(info.v / 70, 0) + ' Mpc (허블 법칙 근사)']
         ];
       },
-      hint: '멀리 있는 은하일수록 스펙트럼 선이 더 붉은 쪽으로 치우칩니다. 허블-르메트르 법칙 v = H₀d 는 우주가 팽창한다는 가장 직접적인 증거입니다.'
+      hint: '멀리 있는 은하일수록 스펙트럼 선이 더 붉은 쪽으로 치우칩니다. 허블-르메트르 법칙 v = H₀d 는 우주가 팽창한다는 가장 직접적인 증거입니다. 가까운 은하에서는 v/H₀ 로 거리를 어림할 수 있습니다.'
     });
   }
 
   /* ======================================================================
      실험 7 — 플랑크 흑체복사
+        Bλ(T) = 2hc²/λ⁵ · 1/(e^(hc/λkT) − 1), 최대 파장 λmax = 2.898×10⁻³/T
      ====================================================================== */
   function planck(lambdaNm, Tk) {
     var l = lambdaNm * 1e-9;
@@ -19109,44 +20321,56 @@ window.Astro = (function () {
 
   function simPlanck(host) {
     createSim(host, {
-      id: 'planck', title: '🔥 플랑크 흑체복사 곡선', height: 320,
+      id: 'planck', title: '🔥 플랑크 흑체복사 곡선', height: 324,
       controls: [
         { k: 'temp', label: '별의 표면 온도', min: 1000, max: 30000, step: 100, value: 5772, fmt: function (v) { return nf(v, 0) + ' K'; } }
       ],
       draw: function (ctx, W, H, S, T) {
-        var L = 46, R = W - 14, TOP = 24, BOT = H - 34;
+        var L = 48, R = W - 14, TOP = 24, BOT = H - 36;
         ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(L, BOT); ctx.lineTo(R, BOT); ctx.moveTo(L, TOP); ctx.lineTo(L, BOT); ctx.stroke();
-        var maxL = 2000;
-        var n = 160, pts = [], peak = 0;
-        for (var i = 0; i <= n; i++) {
-          var nm = 1 + (maxL - 1) * i / n;
-          var b = planck(nm, S.temp);
-          if (b > peak) peak = b;
-          pts.push([nm, b]);
-        }
         var peakNm = 2.898e6 / S.temp;
-        function px(nm) { return L + (nm / maxL) * (R - L); }
-        function py(b) { return BOT - (b / peak) * (BOT - TOP) * 0.92; }
+        var maxL = Math.max(900, peakNm * 2.3);
+        if (maxL > 20000) maxL = 20000;
+        function px(nm) { return L + nm / maxL * (R - L); }
+        var peakB = planck(peakNm, S.temp);
+        function py(b) { return BOT - (b / peakB) * (BOT - TOP) * 0.94; }
         // 가시광 영역
-        ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.fillRect(px(380), TOP, px(750) - px(380), BOT - TOP);
-        label(ctx, '가시광', (px(380) + px(750)) / 2, TOP + 10, T.faint, 10);
+        if (px(750) > L) {
+          ctx.fillStyle = 'rgba(255,255,255,0.05)';
+          ctx.fillRect(px(380), TOP, Math.max(0, px(750) - px(380)), BOT - TOP);
+          label(ctx, '가시광', (px(380) + px(750)) / 2, TOP + 10, T.faint, 9);
+        }
         // 곡선
         ctx.strokeStyle = T.accent; ctx.lineWidth = 2.4; ctx.beginPath();
-        pts.forEach(function (p, i) { if (i) ctx.lineTo(px(p[0]), py(p[1])); else ctx.moveTo(px(p[0]), py(p[1])); });
-        ctx.stroke();
-        // 채우기
-        ctx.lineTo(px(maxL), BOT); ctx.lineTo(px(1), BOT); ctx.closePath();
+        var started = false;
+        for (var i = 0; i <= 220; i++) {
+          var nm = 5 + (maxL - 5) * i / 220;
+          var b = planck(nm, S.temp);
+          if (!started) { ctx.moveTo(px(nm), py(b)); started = true; } else ctx.lineTo(px(nm), py(b));
+        }
+        ctx.lineTo(px(maxL), BOT); ctx.lineTo(px(5), BOT); ctx.closePath();
         ctx.fillStyle = 'rgba(255,212,121,0.10)'; ctx.fill();
+        ctx.strokeStyle = T.accent; ctx.lineWidth = 2.4; ctx.beginPath();
+        started = false;
+        for (var j = 0; j <= 220; j++) {
+          var nm2 = 5 + (maxL - 5) * j / 220;
+          if (!started) { ctx.moveTo(px(nm2), py(planck(nm2, S.temp))); started = true; }
+          else ctx.lineTo(px(nm2), py(planck(nm2, S.temp)));
+        }
+        ctx.stroke();
         // 최대 파장
         var pk = px(peakNm);
         ctx.strokeStyle = T.accent2; ctx.setLineDash([4, 4]);
         ctx.beginPath(); ctx.moveTo(pk, TOP); ctx.lineTo(pk, BOT); ctx.stroke(); ctx.setLineDash([]);
-        label(ctx, '최대 ' + nf(peakNm, 0) + 'nm', Math.min(R - 40, pk + 6), TOP + 20, T.accent2, 11, 'left');
-        label(ctx, '파장 (nm)', (L + R) / 2, H - 12, T.muted, 11);
-        label(ctx, '복사 세기 (상대값)', L + 6, TOP - 10, T.muted, 10, 'left');
-        [0, 500, 1000, 1500, 2000].forEach(function (nm) { label(ctx, nm, px(nm), BOT + 12, T.faint, 9); });
+        label(ctx, '최대 ' + nf(peakNm, 0) + 'nm', pk + 6, TOP + 34, T.accent2, 10, 'left');
+        label(ctx, '파장 (nm)', (L + R) / 2, H - 12, T.muted, 10.5);
+        label(ctx, '복사 세기 (최대값=1)', L + 4, TOP - 10, T.muted, 9.5, 'left');
+        var step = maxL / 4, mag = Math.pow(10, Math.floor(Math.log10(step)));
+        step = Math.ceil(step / mag) * mag;
+        for (var tk = 0; tk <= maxL + 1; tk += step) {
+          label(ctx, nf(tk, 0), px(tk), BOT + 12, T.faint, 8.5);
+        }
       },
       readout: function (S) {
         var peakNm = 2.898e6 / S.temp;
@@ -19158,80 +20382,98 @@ window.Astro = (function () {
           ['단위면적당 복사 에너지 (σT⁴)', nf(total / 1e6, 1) + ' × 10⁶ W/m²']
         ];
       },
-      hint: '온도가 높아질수록 곡선 전체가 위로 올라가고(σT⁴), 최대 지점은 짧은 파장 쪽으로 이동합니다(빈의 법칙 λmax = 2.898×10⁶/T nm). 태양(5,772K)의 최대는 초록빛 근처입니다.'
+      hint: '온도가 높아질수록 곡선 전체가 위로 올라가고(σT⁴), 최대 지점은 짧은 파장 쪽으로 이동합니다(빈의 법칙 λmax = 2.898×10⁶/T nm). 태양(5,772 K)의 최대는 초록빛 근처(502 nm)입니다.'
     });
   }
 
   /* ======================================================================
      실험 8 — 외계행성 트랜짓
+        깊이 = 겹친 면적/πR² (그레이징이면 (Rp/Rs)² 보다 작음)
+        지속 = P/π · asin(√((1+k)²−b²)/(a/Rs))
      ====================================================================== */
+  function circleOverlap(r1, r2, d) {
+    if (d >= r1 + r2) return 0;
+    if (d <= Math.abs(r1 - r2)) return Math.PI * Math.min(r1, r2) * Math.min(r1, r2);
+    var a1 = Math.acos(Math.max(-1, Math.min(1, (d * d + r1 * r1 - r2 * r2) / (2 * d * r1))));
+    var a2 = Math.acos(Math.max(-1, Math.min(1, (d * d + r2 * r2 - r1 * r1) / (2 * d * r2))));
+    return r1 * r1 * (a1 - Math.sin(2 * a1) / 2) + r2 * r2 * (a2 - Math.sin(2 * a2) / 2);
+  }
+  function transitGeom(k, b, P) {
+    var aRs = 215.032 * Math.pow(P / 365.256, 2 / 3);      // 별 반지름 = 1 R☉ 가정
+    var dur = P / Math.PI * Math.asin(Math.min(1, Math.sqrt(Math.pow(1 + k, 2) - b * b) / aRs));
+    var depth = circleOverlap(1, k, b) / Math.PI;
+    return { aRs: aRs, dur: dur, depth: depth };
+  }
+
   function simTransit(host) {
     createSim(host, {
-      id: 'transit', title: '🪐 외계행성 트랜짓 광도곡선', height: 330,
+      id: 'transit', title: '🪐 외계행성 트랜짓 광도곡선', height: 300,
       controls: [
         { k: 'rp', label: '행성/항성 반지름 비 (Rp/Rs)', min: 0.01, max: 0.2, step: 0.005, value: 0.06, fmt: function (v) { return v.toFixed(3); } },
         { k: 'b', label: '충돌 계수 b', min: 0, max: 1, step: 0.01, value: 0.2, fmt: function (v) { return v.toFixed(2); } },
         { k: 'P', label: '공전 주기', min: 1, max: 60, step: 0.5, value: 10, fmt: function (v) { return v.toFixed(1) + '일'; } }
       ],
       draw: function (ctx, W, H, S, T) {
-        var k = S.rp, b = S.b, P = S.P;
-        // 태양형 별: a/Rs ≈ 215 (P/365)^(2/3)
-        var aRs = 215 * Math.pow(P / 365.25, 2 / 3) / (1);
-        var durDays = P / Math.PI * Math.asin(Math.min(1, Math.sqrt(Math.pow(1 + k, 2) - b * b) / aRs));
-        var depth = k * k;
-        // 곡선 영역
-        var L = 44, R = W - 14, TOP = 26, BOT = H - 46;
+        var g = transitGeom(S.rp, S.b, S.P);
+        var L = 46, R = W - 14, TOP = 30, BOT = H - 44;
         ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(L, BOT); ctx.lineTo(R, BOT); ctx.moveTo(L, TOP); ctx.lineTo(L, BOT); ctx.stroke();
-        var half = Math.max(0.02, durDays / P * 2.2);   // 화면에 보이는 위상 폭
-        function px(ph) { return L + ((ph + half) / (2 * half)) * (R - L); }
-        var y0 = BOT - (BOT - TOP) * 0.18;
-        var yDepth = BOT - (BOT - TOP) * (0.18 + 0.78 * (depth / 0.04));
-        ctx.strokeStyle = T.accent3; ctx.lineWidth = 2.2;
-        ctx.beginPath();
-        var N = 200;
-        for (var i = 0; i <= N; i++) {
-          var ph = -0.6 + 1.2 * i / N;
-          var t = Math.abs(ph) * P;            // 중심에서 떨어진 시간(일)
-          var inside = Math.abs(t) < durDays / 2;
-          var overlap = 1;
-          if (inside) {
-            var x = (t / (durDays / 2));       // -1..1
-            overlap = Math.min(1, Math.sqrt(Math.max(0, 1 - x * x)) * 1.05);
-            overlap = 1 - (1 - overlap) * 0.9;
-          }
-          var flux = 1 - depth * (inside ? overlap : 0);
-          var y = BOT - (BOT - TOP) * (0.18 + 0.78 * flux / Math.max(0.96, 1));
-          if (i) ctx.lineTo(px(ph), y); else ctx.moveTo(px(ph), y);
+        var win = Math.max(0.01, g.dur * 1.85);            // 보이는 시간 폭(일) — 입출을 함께
+        function px(t) { return L + (t + win) / (2 * win) * (R - L); }
+        var dipFrac = 0.20 + 0.45 * Math.min(1, Math.max(0, (Math.log10(g.depth) + 5) / (Math.log10(0.04) + 5)));
+        var full = TOP + (BOT - TOP) * 0.12;
+        function py(flux) { return full + (1 - flux) / Math.max(g.depth, 1e-9) * (BOT - TOP) * dipFrac; }
+        // 기준선
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(L, full); ctx.lineTo(R, full); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx, '광도 100%', L + 4, full - 8, T.faint, 9, 'left');
+        // 곡선
+        ctx.strokeStyle = T.accent3; ctx.lineWidth = 2.2; ctx.beginPath();
+        for (var i = 0; i <= 240; i++) {
+          var t = -win + 2 * win * i / 240;
+          var x = g.aRs * Math.sin(2 * Math.PI * t / S.P);
+          var sep = Math.sqrt(S.b * S.b + x * x);
+          var flux = 1 - circleOverlap(1, S.rp, sep) / Math.PI;
+          var y = py(flux);
+          if (i) ctx.lineTo(px(t), y); else ctx.moveTo(px(t), y);
         }
         ctx.stroke();
         // 깊이 표시
-        ctx.strokeStyle = 'rgba(255,122,110,0.7)'; ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo(L, y0); ctx.lineTo(R, y0); ctx.stroke(); ctx.setLineDash([]);
-        label(ctx, '광도 100%', L + 4, y0 - 8, T.faint, 9, 'left');
-        label(ctx, '−' + nf(depth * 100, 2) + '%', px(0) + 8, (y0 + yDepth) / 2, T.danger, 11, 'left');
-        label(ctx, '시간 (공전 위상)', (L + R) / 2, H - 12, T.muted, 11);
-        label(ctx, '식 지속 시간 ' + nf(durDays * 24, 1) + '시간', px(0), TOP + 10, T.accent2, 11);
+        ctx.strokeStyle = 'rgba(255,122,110,0.6)'; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(px(0), full); ctx.lineTo(px(0), py(1 - g.depth)); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx, '−' + nf(g.depth * 100, 3) + '%', px(0) + 6, (full + py(1 - g.depth)) / 2 + 3, T.danger, 10, 'left');
+        label(ctx, '시간 (공전 위상)', (L + R) / 2, H - 12, T.muted, 10.5);
+        label(ctx, '세로 과장(로그 눈금)', L + 4, TOP - 10, T.muted, 9, 'left');
+        label(ctx, '식 ' + nf(g.dur * 24, 1) + '시간', R - 4, TOP - 10, T.accent2, 10, 'right');
       },
       readout: function (S) {
-        var k = S.rp, b = S.b, P = S.P;
-        var aRs = 215 * Math.pow(P / 365.25, 2 / 3);
-        var dur = P / Math.PI * Math.asin(Math.min(1, Math.sqrt(Math.pow(1 + k, 2) - b * b) / aRs));
-        var depth = k * k;
+        var g = transitGeom(S.rp, S.b, S.P);
         return [
-          ['광도 감소 깊이 (Rp/Rs)²', nf(depth * 100, 2) + '% (' + nf(depth * 1e6, 0) + ' ppm)'],
-          ['식 지속 시간', nf(dur * 24, 2) + '시간'],
-          ['행성 반지름', nf(k * 696340 / 6371, 1) + ' × 지구 (태양형 별 기준)'],
-          ['공전 주기', nf(P, 1) + '일']
+          ['광도 감소 깊이', nf(g.depth * 100, 3) + '% (' + nf(g.depth * 1e6, 0) + ' ppm)'],
+          ['(Rp/Rs)² 근사값', nf(S.rp * S.rp * 100, 3) + '%'],
+          ['식 지속 시간', nf(g.dur * 24, 2) + '시간'],
+          ['행성 반지름', nf(S.rp * 696340 / 6371, 1) + ' × 지구 (태양형 별 기준)'],
+          ['공전 주기', nf(S.P, 1) + '일']
         ];
       },
-      hint: '행성이 별 앞을 지나면 별빛이 아주 조금 줄어듭니다. 감소 폭은 (Rp/Rs)², 지속 시간은 궤도 크기와 경로에 따라 달라집니다. 케플러·TESS가 이 방법으로 수천 개의 행성을 찾았습니다.'
+      hint: '행성이 별 앞을 지나면 별빛이 아주 조금 줄어듭니다. 감소 폭은 (Rp/Rs)², 지속 시간은 궤도 크기와 경로에 따라 달라집니다. 충돌 계수 b가 커지면(스치듯 지나면) 깊이가 얕아지고 지속 시간도 짧아집니다. 케플러·TESS가 이 방법으로 수천 개의 행성을 찾았습니다.'
     });
   }
 
   /* ======================================================================
      실험 9 — 시선속도법
+        v_r = K[cos(ν+ω) + e cos ω],  K = 28.4329 m/s · (Mp/MJ)(P/yr)^(−1/3)(M_star/M☉)^(−2/3)/√(1−e²)
      ====================================================================== */
+  function keplerNu(Mrad, e) {
+    var E = Mrad;
+    for (var i = 0; i < 8; i++) E = E - (E - e * Math.sin(E) - Mrad) / (1 - e * Math.cos(E));
+    return 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+  }
+  function rvK(mp, P, e) {
+    var a = Math.pow(P / 365.256, 2 / 3);
+    return 28.4329 * mp * Math.pow(a, -0.5) / Math.sqrt(1 - e * e);
+  }
+
   function simRV(host) {
     createSim(host, {
       id: 'rv', title: '📈 시선속도법 — 별이 흔들리는 정도', height: 320,
@@ -19241,40 +20483,45 @@ window.Astro = (function () {
         { k: 'e', label: '이심률', min: 0, max: 0.8, step: 0.01, value: 0.05, fmt: function (v) { return v.toFixed(2); } }
       ],
       draw: function (ctx, W, H, S, T) {
-        var a = Math.pow(S.P / 365.25, 2 / 3);           // AU
-        var K = 28.4329 * S.mp * Math.pow(a, -0.5) / Math.sqrt(1 - S.e * S.e);
-        var L = 44, R = W - 14, TOP = 30, BOT = H - 40;
+        var a = Math.pow(S.P / 365.256, 2 / 3);
+        var K = rvK(S.mp, S.P, S.e);
+        var L = 46, R = W - 16, TOP = 30, BOT = H - 40;
         var mid = (TOP + BOT) / 2;
         ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(L, mid); ctx.lineTo(R, mid); ctx.moveTo(L, TOP); ctx.lineTo(L, BOT); ctx.stroke();
-        var scale = Math.min(1, 60 / Math.max(1, K));
+        // ±K 눈금
+        ctx.strokeStyle = 'rgba(126,224,192,0.28)'; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(L, TOP + 8); ctx.lineTo(R, TOP + 8);
+        ctx.moveTo(L, BOT - 8); ctx.lineTo(R, BOT - 8); ctx.stroke(); ctx.setLineDash([]);
         ctx.strokeStyle = T.accent2; ctx.lineWidth = 2.2; ctx.beginPath();
-        var N = 200;
+        var N = 240;
         for (var i = 0; i <= N; i++) {
-          var ph = i / N * Math.PI * 2;
-          var rv = K * (Math.cos(ph + S.e * Math.sin(ph)));
-          var x = L + i / N * (R - L);
-          var y = mid - (rv / Math.max(K, 1)) * (BOT - TOP) / 2 * (K / Math.max(K, 1));
-          y = mid - (rv / Math.max(1, 60)) * (BOT - TOP) / 2 * 1;
+          var ph = i / N;
+          var Mrad = ph * Math.PI * 2;
+          var nu = keplerNu(Mrad, S.e);
+          var rv = -K * Math.sin(nu);          // ω = 90°
+          var x = L + ph * (R - L);
+          var y = mid - rv / Math.max(K, 1e-6) * (BOT - TOP) / 2 * 0.92;
           if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
         }
         ctx.stroke();
-        label(ctx, '+' + nf(K, 1) + ' m/s', R - 4, mid - (K / Math.max(1, 60)) * (BOT - TOP) / 2 - 8, T.accent2, 10, 'right');
-        label(ctx, '−' + nf(K, 1) + ' m/s', R - 4, mid + (K / Math.max(1, 60)) * (BOT - TOP) / 2 + 10, T.accent2, 10, 'right');
-        label(ctx, '한 공전 주기', (L + R) / 2, H - 12, T.muted, 11);
-        label(ctx, '시선속도 곡선 (도플러 이동)', L + 6, TOP - 12, T.muted, 10, 'left');
+        label(ctx, '+' + nf(K, nf(K, 1) < 1 ? 2 : 1) + ' m/s', R - 2, TOP + 14, T.accent2, 10, 'right');
+        label(ctx, '−' + nf(K, nf(K, 1) < 1 ? 2 : 1) + ' m/s', R - 2, BOT - 2, T.accent2, 10, 'right');
+        label(ctx, '0', L - 6, mid + 3, T.faint, 9, 'right');
+        label(ctx, '한 공전 주기 (' + nf(S.P, 0) + '일) →', (L + R) / 2, H - 12, T.muted, 10.5);
+        label(ctx, '별의 시선속도 (도플러 이동)', L + 4, TOP - 10, T.muted, 9.5, 'left');
       },
       readout: function (S) {
-        var a = Math.pow(S.P / 365.25, 2 / 3);
-        var K = 28.4329 * S.mp * Math.pow(a, -0.5) / Math.sqrt(1 - S.e * S.e);
+        var a = Math.pow(S.P / 365.256, 2 / 3);
+        var K = rvK(S.mp, S.P, S.e);
         return [
-          ['시선속도 반진폭 K', nf(K, 2) + ' m/s'],
+          ['시선속도 반진폭 K', nf(K, K < 1 ? 3 : 1) + ' m/s'],
           ['궤도 장반경 a', nf(a, 3) + ' AU'],
-          ['행성 질량 (최소)', nf(S.mp, 2) + ' × 목성'],
-          ['도플러 이동', 'Δλ/λ = v/c ≈ ' + nf(K / 299792458, 8)]
+          ['행성 최소 질량 (M sin i)', nf(S.mp, 2) + ' × 목성 = ' + nf(S.mp * 317.8, 1) + ' × 지구'],
+          ['도플러 이동 Δλ/λ', '≈ ' + (K / 299792458).toExponential(1)]
         ];
       },
-      hint: '행성이 별을 끌어당기면 별도 작은 원을 그리며 흔들립니다. 별빛의 스펙트럼 선이 주기적으로 움직이는 것을 재면 행성의 질량과 궤도를 알 수 있습니다. 지구를 도는 태양의 흔들림은 약 0.09 m/s입니다.'
+      hint: '행성이 별을 끌어당기면 별도 질량중심 둘레를 작은 원으로 돕니다. 별빛의 스펙트럼 선이 주기적으로 움직이는 것을 재면 행성의 질량과 궤도를 알 수 있습니다. 지구를 도는 태양의 흔들림은 약 0.09 m/s로, 현재 기술의 한계에 가깝습니다.'
     });
   }
 
@@ -19374,8 +20621,8 @@ window.Astro = (function () {
               : '중심은 핵융합이 점화된 원시 태양, 원반은 원시 행성으로 나뉩니다.';
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
         ctx.fillRect(8, H - 44, W - 16, 36);
-        label(ctx, note, 16, H - 26, t > 0.46 ? T.accent : T.muted, 11, 'left');
-        label(ctx, '안쪽 = 암석·금속 행성 · 바깥 = 얼음·가스 행성', W - 16, H - 60, T.faint, 10, 'right');
+        labelFit(ctx, note, 16, H - 26, t > 0.46 ? T.accent : T.muted, 11, W - 32, 'left');
+        label(ctx, '안쪽 = 암석·금속 행성 · 바깥 = 얼음·가스 행성', W - 16, H - 58, T.faint, 9.5, 'right');
       },
       readout: function (S) {
         var t = S.t / 100;
@@ -19391,6 +20638,110 @@ window.Astro = (function () {
         ];
       },
       hint: '성운설: 회전하는 성간 가스·먼지 구름이 중력으로 수축하면 각운동량 보존 때문에 회전이 빨라지고 납작한 원반이 됩니다. 원반 안쪽은 뜨거워 암석·금속만 응축되고 바깥은 얼음까지 응축되어 암석 행성과 가스 행성으로 나뉩니다. 미행성이 충돌해 원시 행성이 자라고, 원시 지구는 충돌 에너지와 방사성 붕괴열로 녹아 철·니켈 핵과 규산염 맨틀로 분화했습니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 11 — 중학교 심화: 달의 위상과 일식·월식 (삭망월·항성월·교점·사로스)
+        β = i · sin(교점에서의 각), 일식 한계 |β| < 1.5°, 월식 한계 |β| < 1.0°
+     ====================================================================== */
+  var SIDEREAL = 27.321661;
+  var SAROS_DAY = 6585.321;
+
+  function simMoonMid(host) {
+    createSim(host, {
+      id: 'moonMid', title: '🌗 달의 위상과 일식·월식 (중학 심화)', height: 316,
+      controls: [
+        { k: 'syn', label: '삭망월에서의 위치', min: 0, max: 29.5, step: 0.1, value: 2.0, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
+        { k: 'inc', label: '달 궤도 경사 i', min: 0, max: 10, step: 0.1, value: 5.1, fmt: function (v) { return v.toFixed(2) + '°'; } },
+        { k: 'node', label: '교점과 태양 방향', min: 0, max: 90, step: 1, value: 25, fmt: function (v) { return v + '°'; } }
+      ],
+      buttons: [{ k: 'node0', label: '교점 맞추기' }, { k: 'reset', label: '초기화' }],
+      onButton: function (k, S, render) {
+        if (k === 'node0') { S.node = 2; render(); }
+      },
+      draw: function (ctx, W, H, S, T) {
+        var SYN = 29.530589;
+        // ---------- 1) 한 달 동안 달의 황위 β
+        var x0 = 44, x1 = W - 16, y0 = 34, y1 = 138;
+        var lim = Math.max(2, S.inc) * 1.25;
+        function px(d) { return x0 + d / SYN * (x1 - x0); }
+        function py(b) { return y0 + (lim - b) / (2 * lim) * (y1 - y0); }
+        label(ctx, '달의 황위 β', x0 + 2, y0 - 12, T.muted, 9.5, 'left');
+        label(ctx, '+' + nf(lim / 1.25, 1) + '°', x0 - 6, y0 + 4, T.faint, 9, 'right');
+        label(ctx, '−', x0 - 6, y1 - 2, T.faint, 9, 'right');
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, py(0)); ctx.lineTo(x1, py(0)); ctx.stroke();
+        // 식 한계 띠
+        ctx.fillStyle = 'rgba(255,212,121,0.11)';
+        ctx.fillRect(x0, py(1.5), x1 - x0, py(-1.5) - py(1.5));
+        ctx.strokeStyle = 'rgba(255,212,121,0.45)'; ctx.setLineDash([4, 3]);
+        ctx.beginPath(); ctx.moveTo(x0, py(1.5)); ctx.lineTo(x1, py(1.5));
+        ctx.moveTo(x0, py(-1.5)); ctx.lineTo(x1, py(-1.5)); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx, '일식 한계 ±1.5°', x1, py(1.5) - 4, T.accent, 8.5, 'right');
+        // β 곡선
+        ctx.strokeStyle = T.accent2; ctx.lineWidth = 2; ctx.beginPath();
+        for (var i = 0; i <= 120; i++) {
+          var d = SYN * i / 120;
+          var b = S.inc * Math.sin((d / SYN * 360 + S.node) * Math.PI / 180);
+          if (i) ctx.lineTo(px(d), py(b)); else ctx.moveTo(px(d), py(b));
+        }
+        ctx.stroke();
+        // 삭·망
+        [[0, '삭'], [14.765, '망'], [SYN, '삭']].forEach(function (m) {
+          var xx = px(Math.min(m[0], SYN));
+          ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(xx, y0 - 4); ctx.lineTo(xx, y1); ctx.stroke();
+          label(ctx, m[1], xx, y1 + 13, T.muted, 9);
+        });
+        // 현재 위치
+        var beta = S.inc * Math.sin((S.syn / SYN * 360 + S.node) * Math.PI / 180);
+        circle(ctx, px(S.syn), py(beta), 4.5, T.accent, null);
+        var lx = Math.min(x1 - 52, Math.max(x0 + 52, px(S.syn)));
+        label(ctx, 'β ' + beta.toFixed(2) + '°', lx, Math.max(y0 + 4, py(beta) - 10), T.accent, 9.5);
+
+        // ---------- 2) 삭망월 vs 항성월
+        var ty = 176;
+        function tx(d) { return x0 + d / SYN * (x1 - x0); }
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x0, ty); ctx.lineTo(x1, ty); ctx.stroke();
+        ctx.strokeStyle = T.accent3; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x0, ty); ctx.lineTo(tx(SIDEREAL), ty); ctx.stroke();
+        ctx.strokeStyle = T.accent; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(tx(SIDEREAL), ty); ctx.lineTo(tx(SYN), ty); ctx.stroke();
+        label(ctx, '항성월 27.32일', x0, ty - 9, T.accent3, 9, 'left');
+        label(ctx, '삭망월 29.53일', x1, ty - 9, T.accent, 9, 'right');
+        label(ctx, '2.21일 더', x1, ty + 16, T.accent, 8.5, 'right');
+        labelFit(ctx, '지구가 공전해 태양 방향이 27° 움직이므로 달은 2.21일 더 돌아야 합니다',
+          (x0 + x1) / 2, ty + 34, T.muted, 9, x1 - x0);
+
+        // ---------- 3) 이번 달 식 여부
+        var bNew = S.inc * Math.sin(S.node * Math.PI / 180);
+        var solar = Math.abs(bNew) < 1.5, lunar = Math.abs(bNew) < 1.0;
+        var msg = solar && lunar ? '이번 달 삭·망 모두 식이 가능합니다 (경사가 작은 특별한 달)'
+          : solar ? '이번 달 삭에서 일식이 가능합니다 (교점 근처)'
+            : lunar ? '이번 달 망에서 월식이 가능합니다 (교점 근처)'
+              : '이번 달은 삭·망 모두 교점에서 ' + S.node + '° 벗어나 식이 없습니다';
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillRect(10, H - 52, W - 20, 30);
+        labelFit(ctx, msg, 16, H - 34, (solar || lunar) ? T.accent : T.muted, 10, W - 24, 'left');
+        label(ctx, '사로스 18년 11일 · 개기일식 최대 7분 32초 · 금환일식은 달이 멀 때', 16, H - 8, T.faint, 8.5, 'left');
+      },
+      readout: function (S) {
+        var SYN = 29.530589;
+        var beta = S.inc * Math.sin((S.syn / SYN * 360 + S.node) * Math.PI / 180);
+        var bNew = S.inc * Math.sin(S.node * Math.PI / 180);
+        var sid = S.syn * SIDEREAL / SYN;
+        return [
+          ['삭망월 경과', S.syn.toFixed(1) + '일 / 29.53일'],
+          ['항성월로 환산', sid.toFixed(1) + '일 / 27.32일'],
+          ['달의 황위 β', beta.toFixed(2) + '°'],
+          ['이번 삭의 식', Math.abs(bNew) < 1.5 ? '일식 가능 (|β| < 1.5°)' : '일식 없음 (|β| = ' + Math.abs(bNew).toFixed(1) + '°)'],
+          ['이번 망의 식', Math.abs(bNew) < 1.0 ? '월식 가능 (|β| < 1.0°)' : '월식 없음 (|β| = ' + Math.abs(bNew).toFixed(1) + '°)'],
+          ['사로스 주기', '18년 11일 = 6,585.3일']
+        ];
+      },
+      hint: '삭망월(29.53일)이 항성월(27.32일)보다 2.21일 긴 것은 그동안 지구도 공전해 태양 방향이 움직이기 때문입니다. 달 궤도가 5.145° 기울어 있어 삭·망마다 달은 황도면에서 최대 5.1° 벗어나고, 교점 근처에서 |β|가 1.5°(일식)·1.0°(월식)보다 작을 때만 식이 일어납니다.'
     });
   }
 
@@ -19454,11 +20805,11 @@ window.Astro = (function () {
         },
         {
           title: '달의 위상과 일식·월식',
-          principle: '삭(신월)에는 달이 태양 쪽에 있어 보이지 않고, 망(보름달)에는 지구 반대쪽에 있습니다. 일식은 달이 태양을 가리는 현상, 월식은 달이 지구 그림자에 들어가는 현상입니다. 달 궤도가 5.1° 기울어 있어 매달 일어나지는 않습니다.',
-          formula: '삭망월 29.53일 · 달 궤도 경사 5.1° · 개기일식은 지구 어딘가에서 약 1~2년에 한 번',
-          misconcept: ['일식은 달이 태양 앞을 지날 때, 월식은 달이 지구 그림자 속으로 들어갈 때 일어납니다.', '보름달마다 월식이 일어나지 않는 이유는 달 궤도가 기울어져 있기 때문입니다.'],
-          question: ['일식은 왜 낮에만 볼 수 있나요?', '개기일식 동안 코로나가 보이는 이유는 무엇일까요?'],
-          sim: 'moon'
+          principle: '삭(신월)에는 달이 태양 쪽에 있어 보이지 않고, 망(보름달)에는 지구 반대쪽에 있습니다. 일식은 달이 태양을 가리는 현상, 월식은 달이 지구 그림자에 들어가는 현상입니다. 달 궤도가 5.145° 기울어 있어 삭·망마다 달은 황도면에서 최대 5.1° 벗어나고, 교점 근처에서만 식이 일어납니다. 삭망월(29.53일)이 항성월(27.32일)보다 2.21일 긴 것은 그동안 지구가 공전해 태양 방향이 약 27° 움직이기 때문입니다. 같은 식 계열은 사로스 주기 18년 11일(6,585.3일)마다 반복됩니다.',
+          formula: '삭망월 29.53일 · 항성월 27.32일 · 경사 i = 5.145° · β = i·sin(교점에서의 각) · 일식 한계 |β| < 1.5° · 월식 한계 |β| < 1.0° · 사로스 6,585.3일',
+          misconcept: ['일식은 달이 태양 앞을 지날 때, 월식은 달이 지구 그림자 속으로 들어갈 때 일어납니다.', '보름달마다 월식이 일어나지 않는 이유는 달 궤도가 기울어져 있기 때문입니다.', '삭망월과 항성월을 같은 값으로 쓰면 안 됩니다. 달이 별에 대해 한 바퀴 도는 데는 27.32일, 같은 위상으로 돌아오는 데는 29.53일이 걸립니다.'],
+          question: ['일식은 왜 낮에만 볼 수 있나요?', '교점에서 90° 떨어진 달의 β는 얼마이며, 그때 식이 일어날 수 있나요?', '개기일식이 최대 7분 32초를 넘지 못하는 까닭은 무엇일까요?'],
+          sim: 'moonMid'
         },
         {
           title: '별의 밝기와 등급',
@@ -19776,6 +21127,16 @@ window.Astro = (function () {
     var levels = ['elementary', 'middle', 'high', 'fusion', 'college'];
     var currentLevel = 'elementary';
     root.innerHTML =
+      '<div class="learn-tools">' +
+      '<div class="lu-search"><label class="lu-search-label" for="luSearch">개념 검색</label>' +
+      '<input type="search" id="luSearch" autocomplete="off" placeholder="예: 연주시차, 적색편이, v = H₀d, 흑점" aria-label="학습관 개념 검색">' +
+      '<button type="button" class="mini-btn" id="luSearchClear" hidden>지우기</button></div>' +
+      '<div class="lu-fonts" role="group" aria-label="글자 크기">' +
+      '<span>글자</span><button type="button" data-luf="15" aria-pressed="false">작게</button>' +
+      '<button type="button" data-luf="16" aria-pressed="true">보통</button>' +
+      '<button type="button" data-luf="18" aria-pressed="false">크게</button></div>' +
+      '<p class="lu-search-note" id="luSearchNote" role="status" aria-live="polite"></p>' +
+      '</div>' +
       '<div class="learn-levels" role="tablist" aria-label="교육 단계"></div>' +
       '<div class="learn-level-note" id="learnLevelNote"></div>' +
       '<div class="learn-units" id="learnUnits"></div>';
@@ -19802,6 +21163,7 @@ window.Astro = (function () {
       var host = $('#learnUnits');
       host.innerHTML = '';
       var groups = data.groups || [{ units: data.units || [] }];
+      var seq = 0;
       groups.forEach(function (g) {
         if (g.title) {
           var ghead = document.createElement('div');
@@ -19814,13 +21176,24 @@ window.Astro = (function () {
         g.units.forEach(function (u, i) {
         var card = document.createElement('article');
         card.className = 'learn-unit';
+        card.id = 'lu-' + key + '-' + (++seq);
         var simHost = u.sim ? '<div class="learn-sim-host" data-sim-host="' + u.sim + '"></div>' : '';
+        var figs = '';
+        if (u.figs && u.figs.length && window.LearnFigs) {
+          figs = '<div class="lu-block lu-figs">' + u.figs.map(function (f) {
+            var html = window.LearnFigs.html(f);
+            return html || '';
+          }).join('') + '</div>';
+        }
         card.innerHTML =
           '<button type="button" class="learn-unit-head" aria-expanded="false">' +
           '<span class="lu-num">' + (i + 1) + '</span>' +
-          '<span class="lu-title">' + esc(u.title) + '</span>' +
+          '<span class="lu-tit"><span class="lu-title">' + esc(u.title) + '</span>' +
+          (u.badge ? '<span class="lu-badge">' + esc(u.badge) + '</span>' : '') + '</span>' +
           '<span class="lu-chev" aria-hidden="true">⌄</span></button>' +
           '<div class="learn-unit-body" hidden>' +
+          (u.oneliner ? '<p class="lu-oneliner">' + esc(u.oneliner) + '</p>' : '') +
+          figs +
           '<div class="lu-block"><h5>원리</h5><p>' + esc(u.principle) + '</p></div>' +
           '<div class="lu-block lu-formula"><h5>핵심 수식 · 비례 관계</h5><code>' + esc(u.formula) + '</code></div>' +
           (u.timeline ? '<div class="lu-block lu-timeline"><h5>시간대별로 보기</h5><ol>' + u.timeline.map(function (r) {
@@ -19841,10 +21214,14 @@ window.Astro = (function () {
             '</div>' : '') +
           (u.exam ? '<div class="lu-block lu-exam"><h5>내신·수능 포인트</h5><ul>' +
             (Array.isArray(u.exam) ? u.exam : [u.exam]).map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul></div>' : '') +
+          (u.observe ? '<div class="lu-block lu-observe"><h5>관측·생활 연결</h5><p>' + esc(u.observe) + '</p></div>' : '') +
           '<div class="lu-grid">' +
-          '<div class="lu-block"><h5>자주 하는 오개념</h5><ul>' + u.misconcept.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
-          '<div class="lu-block"><h5>탐구 질문</h5><ul>' + u.question.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' +
-          '</div>' + simHost + '</div>';
+          '<div class="lu-block"><h5>자주 하는 오개념</h5><ul>' + (u.misconcept || []).map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
+          '<div class="lu-block"><h5>탐구 질문</h5><ul>' + (u.question || []).map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' +
+          '</div>' + simHost +
+          '<p class="lu-share-row"><button type="button" class="mini-btn lu-share" data-share="' + card.id + '">🔗 이 단원 링크 복사</button>' +
+          '<span class="lu-share-note">단원 주소 #' + esc(u.title) + '</span></p>' +
+          '</div>';
         host.appendChild(card);
         var head = $('.learn-unit-head', card);
         head.addEventListener('click', function () {
@@ -19866,6 +21243,7 @@ window.Astro = (function () {
       if (!host || host.getAttribute('data-made')) return;
       host.setAttribute('data-made', '1');
       if (key === 'moon') simMoon(host);
+      else if (key === 'moonMid') simMoonMid(host);
       else if (key === 'seasons') simSeasons(host);
       else if (key === 'parallax') simParallax(host);
       else if (key === 'kepler') simKepler(host);
@@ -19877,12 +21255,166 @@ window.Astro = (function () {
       else if (key === 'nebula') simNebula(host);
     }
 
+    /* ---------- 개념 검색 색인 (제목·키워드·수식·본문) ---------- */
+    var INDEX = [];
+    levels.forEach(function (k) {
+      var d = CURRICULUM[k], sq = 0;
+      (d.groups || [{ units: d.units || [] }]).forEach(function (g) {
+        (g.units || []).forEach(function (u) {
+          sq++;
+          INDEX.push({
+            id: 'lu-' + k + '-' + sq, level: k, label: d.label, u: u,
+            text: [u.title, u.oneliner || '', u.principle || '', u.formula || '',
+              (u.keywords || []).join(' '),
+              (u.detail || []).map(function (x) { return x.h + ' ' + x.p; }).join(' '),
+              (u.misconcept || []).join(' '), (u.question || []).join(' '),
+              (u.table ? u.table.title + ' ' + u.table.rows.map(function (r) { return r.join(' '); }).join(' ') : '')
+            ].join(' ').toLowerCase()
+          });
+        });
+      });
+    });
+
+    function openUnit(id, scroll) {
+      var m = /^lu-([a-z]+)-\d+$/.exec(id || '');
+      if (!m) return false;
+      var lv = m[1];
+      if (!document.getElementById(id)) { renderLevel(lv); }
+      var card = document.getElementById(id);
+      if (!card) return false;
+      var body = $('.learn-unit-body', card);
+      if (body && body.hidden) $('.learn-unit-head', card).click();
+      if (scroll !== false) setTimeout(function () { card.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80);
+      return true;
+    }
+
+    /* ---------- 개념 검색 ---------- */
+    var box = $('#luSearch', root), clearBtn = $('#luSearchClear', root), note = $('#luSearchNote', root);
+    var levelsBar = $('.learn-levels', root), levelNote = $('#learnLevelNote');
+    function snippet(it, q) {
+      var src = it.u.oneliner || it.u.principle || '';
+      var i = src.toLowerCase().indexOf(q);
+      if (i < 0) return src.slice(0, 74) + (src.length > 74 ? '…' : '');
+      var s = Math.max(0, i - 18);
+      return (s > 0 ? '…' : '') + src.slice(s, s + 84) + '…';
+    }
+    function runSearch() {
+      var raw = (box.value || '').trim();
+      clearBtn.hidden = !raw;
+      if (!raw) {
+        note.textContent = '';
+        levelsBar.hidden = false;
+        levelNote.hidden = false;
+        renderLevel(currentLevel || 'elementary');
+        return;
+      }
+      var q = raw.toLowerCase();
+      var terms = q.split(/\s+/).filter(Boolean);
+      var hits = INDEX.filter(function (it) {
+        return terms.every(function (t) { return it.text.indexOf(t) >= 0; });
+      });
+      levelsBar.hidden = true;
+      levelNote.hidden = true;
+      note.textContent = '검색 결과 ' + hits.length + '개' + (hits.length ? ' · 단원을 누르면 바로 열립니다' : ' — 다른 낱말로 찾아보세요');
+      var host = $('#learnUnits');
+      host.innerHTML = hits.length ? hits.map(function (h) {
+        return '<button type="button" class="lu-result" data-open="' + h.id + '">' +
+          '<span class="lu-res-lv">' + esc(h.label) + '</span>' +
+          '<span class="lu-res-title">' + esc(h.u.title) + '</span>' +
+          '<span class="lu-res-sub">' + esc(snippet(h, terms[0])) + '</span></button>';
+      }).join('') : '<p class="lu-empty">찾는 개념이 없습니다. 예: "연주시차", "허블", "흑체", "트랜짓", "CMB".</p>';
+    }
+    box.addEventListener('input', function () { clearTimeout(box._t); box._t = setTimeout(runSearch, 140); });
+    box.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+      if (e.key === 'Escape') { box.value = ''; runSearch(); }
+    });
+    clearBtn.addEventListener('click', function () { box.value = ''; runSearch(); box.focus(); });
+
+    /* ---------- 글자 크기 · 링크 복사 · 단원 열기 ---------- */
+    function setFont(px) {
+      document.documentElement.style.setProperty('--lu-fs', px + 'px');
+      try { localStorage.setItem('lu.font', String(px)); } catch (e) { }
+      $$('[data-luf]', root).forEach(function (b) {
+        b.setAttribute('aria-pressed', String(+b.getAttribute('data-luf') === px));
+      });
+    }
+    function shareUnit(id, btn) {
+      var url;
+      try {
+        var u = new URL(location.href);
+        u.searchParams.set('lu', id);
+        u.hash = '#learn';
+        url = u.toString();
+      } catch (e) {
+        url = location.origin + location.pathname + '?lu=' + id + '#learn';
+      }
+      function done() {
+        var old = btn.textContent;
+        btn.textContent = '✓ 주소를 복사했습니다';
+        setTimeout(function () { btn.textContent = old; }, 1800);
+      }
+      function fallback() {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = url; ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); done();
+          document.body.removeChild(ta);
+        } catch (e) { if (window.prompt) window.prompt('이 주소를 복사하세요', url); }
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, fallback);
+        else fallback();
+      } catch (e) { fallback(); }
+    }
+    root.addEventListener('click', function (e) {
+      var r = e.target.closest('[data-open]');
+      if (r) {
+        var id = r.getAttribute('data-open');
+        box.value = ''; clearBtn.hidden = true; note.textContent = '';
+        levelsBar.hidden = false; levelNote.hidden = false;
+        renderLevel(id.split('-')[1]);
+        openUnit(id);
+        return;
+      }
+      var s = e.target.closest('[data-share]');
+      if (s) { shareUnit(s.getAttribute('data-share'), s); return; }
+      var f = e.target.closest('[data-luf]');
+      if (f) { setFont(+f.getAttribute('data-luf')); }
+    });
+
+    var savedFont = 16;
+    try { savedFont = +(localStorage.getItem('lu.font') || 16) || 16; } catch (e) { }
+    setFont(savedFont);
+
+    function fromHash() {
+      var h = (location.hash || '').replace(/^#/, '');
+      var unit = null;
+      try {
+        var q = new URLSearchParams(location.search);
+        if (q.get('lu')) unit = q.get('lu');
+      } catch (e) { }
+      if (!unit && /^lu-[a-z]+-\d+$/.test(h)) unit = h;
+      if (!unit || !/^lu-[a-z]+-\d+$/.test(unit)) return;
+      levelsBar.hidden = false; levelNote.hidden = false;
+      box.value = ''; clearBtn.hidden = true;
+      if (window.__views && window.__views.go) window.__views.go('learn');
+      renderLevel(unit.split('-')[1]);
+      openUnit(unit);
+    }
+    window.addEventListener('hashchange', fromHash);
+
     chips.addEventListener('click', function (e) {
       var b = e.target.closest('.learn-level');
       if (!b) return;
+      if (box.value) { box.value = ''; clearBtn.hidden = true; note.textContent = ''; }
+      levelsBar.hidden = false; levelNote.hidden = false;
       renderLevel(b.getAttribute('data-level'));
     });
     renderLevel(currentLevel);
+    fromHash();
   }
 
   function buildHistory(root) {
