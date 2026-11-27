@@ -2778,6 +2778,22 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
   border-radius: 10px; padding: 10px 13px; font-family: var(--mono); font-size: .84rem;
   color: var(--accent); overflow-x: auto; white-space: pre-wrap; word-break: break-word;
 }
+.lu-timeline ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lu-timeline li {
+  position: relative; padding: 10px 12px 10px 14px; border-radius: 12px;
+  background: rgba(255, 255, 255, .035); border: 1px solid var(--border);
+  border-left: 3px solid rgba(138, 182, 255, .55);
+}
+.lux-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.lux-when b { color: var(--accent); font-size: .86rem; font-variant-numeric: tabular-nums; }
+.lux-when span { color: var(--accent-2); font-size: .74rem; }
+.lux-title { margin: 0 0 4px; font-weight: 700; font-size: .9rem; color: var(--text); }
+.lux-text { margin: 0; color: var(--muted); font-size: .85rem; line-height: 1.65; }
+.lu-timeline code {
+  display: block; margin-top: 6px; padding: 6px 9px; border-radius: 8px;
+  background: rgba(255, 255, 255, .045); border: 1px solid var(--border);
+  color: var(--accent); font-family: var(--mono); font-size: .76rem; white-space: pre-wrap; word-break: break-word;
+}
 .lu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media (max-width: 700px) { .lu-grid { grid-template-columns: 1fr; gap: 12px; } }
 
