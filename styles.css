@@ -214,7 +214,9 @@ body.red .nav-link.is-active { color: #1a0402; }
 }
 .field select { min-width: 150px; }
 .field input[type="date"], .field input[type="time"] { min-width: 138px; }
-.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); outline: none; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+/* 키보드로 이동할 때는 테두리만이 아니라 뚜렸한 포커스 링도 보이게 (WCAG 2.4.7) */
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .field-date, .field-time { position: relative; }
 .field-time .mini-btn { position: absolute; right: 4px; top: 21px; }
 .field-time input { padding-right: 46px; }
@@ -259,6 +261,22 @@ body.red .nav-link.is-active { color: #1a0402; }
 .mini-btn:hover { color: var(--text); border-color: var(--border-hi); }
 
 /* ------------------------------------------------------- 10초 요약 카드 */
+/* 지금이 낮일 때만 보이는 안내 — 현재 하늘 기준 값임을 알리고 밤 22:00로 한 번에 바꾼다 */
+.day-note {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px 14px;
+  flex-wrap: wrap; margin: 0 0 12px; padding: 10px 14px;
+  border-radius: 14px; font-size: .82rem; line-height: 1.5; color: #ffe7b4;
+  background: linear-gradient(120deg, rgba(255, 200, 96, .13), rgba(255, 212, 121, .05));
+  border: 1px solid rgba(255, 212, 121, .34);
+}
+.day-note[hidden] { display: none; }
+.day-note .mini-btn { flex: none; color: #ffe7b4; border-color: rgba(255, 212, 121, .45); }
+.day-note .mini-btn:hover { color: #fff6df; border-color: rgba(255, 212, 121, .8); }
+@media (max-width: 520px) {
+  .day-note { font-size: .78rem; padding: 9px 12px; }
+  .day-note .mini-btn { width: 100%; padding: 7px 10px; }
+}
+
 .summary-card {
   position: relative; display: grid; grid-template-columns: 1fr 268px; gap: 0;
   background: linear-gradient(160deg, rgba(30, 42, 74, .92), rgba(10, 15, 28, .96));
@@ -477,6 +495,8 @@ body.red .nav-link.is-active { color: #1a0402; }
   border-radius: 12px; color: var(--faint); max-width: 440px;
 }
 .search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-size: .92rem; font-family: inherit; }
+.search-box:focus-within { border-color: var(--accent); }
+.search-box input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
   border: 1px solid var(--border); background: rgba(255, 255, 255, .035);

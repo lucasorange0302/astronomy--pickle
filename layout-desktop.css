@@ -54,6 +54,8 @@ html[data-layout="desktop"] #today > .wrap {
 html[data-layout="desktop"] #today > .wrap > * { margin-top: 0; }
 html[data-layout="desktop"] #today .hero-head { grid-column: 1 / -1; margin-bottom: 4px; }
 html[data-layout="desktop"] #today .control-panel { grid-column: 1 / -1; margin-bottom: 0; }
+/* 지금이 낮일 때 안내 — 12단 격자에서 한 칸으로 쪼그라들지 않게 전폭 */
+html[data-layout="desktop"] #today .day-note { grid-column: 1 / -1; margin-bottom: 0; }
 html[data-layout="desktop"] #today .summary-card { grid-column: 1 / -1; }
 html[data-layout="desktop"] #today .timeline-panel { grid-column: 1 / 6; }
 html[data-layout="desktop"] #today .cloud-panel { grid-column: 6 / -1; }

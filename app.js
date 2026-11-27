@@ -244,6 +244,13 @@
       Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') ' + timeLabel;
     $('#summaryPlace').textContent = site.name + ' · Bortle ' + (site.bortle || '?');
 
+    // 지금이 낮이면 아래 값들이 '지금 하늘' 기준임을 알리고, 한 번에 밤 22:00 기준으로 바꿀 수 있게 한다.
+    const dayNote = $('#dayNote');
+    if (dayNote) {
+      const liveNow = !state.timeStr && state.simJd == null && state.dateStr === todayKST();
+      dayNote.hidden = !(liveNow && c.sunHor.alt > 0);
+    }
+
     $('#heroMoonSvg').innerHTML = moonSvg(c.phase.illum, c.phase.waxing);
     $('#heroMoonName').textContent = c.phase.name;
     $('#heroMoonPct').textContent = '밝기 ' + nf(c.phase.illum * 100) + '% · ' + nf(c.phase.age, 1) + '일';
@@ -427,10 +434,13 @@
         (rainAgg && rainAgg.prob != null ? ' · 밤 평균 강수확률 ' + Math.round(rainAgg.prob) + '%' : '') + '</p>';
     }
     if (showBest && best) {
-      html += '<p class="cc-recommend">🎯 가장 맑은 관측 시간 <b>' + hh(best.from) + '시 – ' + hh(best.to) + '시</b>' +
+      html += '<p class="cc-recommend">🎯 가장 맑은 관측 시간 <b>' +
+        (best.from === best.to ? hh(best.from) + '시' : hh(best.from) + '시 – ' + hh(best.to) + '시') + '</b>' +
         '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
     } else if (best) {
-      html += '<p class="cc-recommend">🌙 밤새 구름이 적습니다 <b>18시 – 06시</b>' +
+      const firstH = wx.series.length ? wx.series[0].hour : 18;
+      const lastH = wx.series.length ? wx.series[wx.series.length - 1].hour : 6;
+      html += '<p class="cc-recommend">🌙 밤새 구름이 적습니다 <b>' + hh(firstH) + '시 – ' + hh(lastH) + '시</b>' +
         '<span>평균 구름 ' + Math.round(best.mean) + '%</span></p>';
     }
     chart.innerHTML = html;
@@ -584,7 +594,9 @@
       // 이유 표시
       const flags = [];
       if (pos.hor.alt >= 0 && pos.hor.alt < 15) flags.push('지평선 근처');
-      if (sunAlt > -12) flags.push('박명 중');
+      // 해가 떠 있으면 '박명 중'이 아니라 '낮'입니다. (정오에 모든 대상이 '박명 중'으로 표시되던 문제)
+      if (sunAlt > 0) flags.push('낮');
+      else if (sunAlt > -12) flags.push('박명 중');
       if (moonBright && isDeepSky(o)) { flags.push('달빛 주의'); if (!opts.ignoreMoon) value -= 14; }
       if (o.group === 'meteor') {
         const mi = meteorInfo(o, state.dateStr);
@@ -594,10 +606,10 @@
       if (moonBright && o.dynamic && pos.mag > 1) value -= 3;
 
       let why, stateLabel;
-      if (pos.hor.alt >= 25) { why = dirName(pos.hor.az) + ' ' + Math.round(pos.hor.alt) + '°'; stateLabel = '지금 좋음'; }
-      else if (pos.hor.alt >= 8) { why = dirName(pos.hor.az) + ' ' + Math.round(pos.hor.alt) + '°'; stateLabel = '낮은 하늘'; }
+      if (pos.hor.alt >= 25) { why = dirName(pos.hor.az) + ' ' + Math.round(pos.hor.alt) + '°'; stateLabel = sunAlt > 0 ? '낮 하늘' : '지금 좋음'; }
+      else if (pos.hor.alt >= 8) { why = dirName(pos.hor.az) + ' ' + Math.round(pos.hor.alt) + '°'; stateLabel = sunAlt > 0 ? '낮 하늘' : '낮은 하늘'; }
       else if (pos.hor.alt >= 0) { why = dirName(pos.hor.az) + ' ' + Math.round(pos.hor.alt) + '°'; stateLabel = '지평선'; }
-      else if (ni.riseJd && ni.riseJd > jd) { why = A.fmtClock(ni.riseJd) + ' 월출/출'; stateLabel = '곧 뜸'; }
+      else if (ni.riseJd && ni.riseJd > jd) { why = A.fmtClock(ni.riseJd) + ' 뜸'; stateLabel = '곧 뜸'; }
       else { why = '최고 ' + Math.round(ni.maxAlt) + '° · ' + A.fmtClock(ni.maxJd); stateLabel = '밤중'; }
       if (o.group === 'meteor') why = '복사점 ' + why;
 
@@ -713,12 +725,15 @@
   /* --------------------------------------------------------------- 행성표 */
   function renderPlanets(c) {
     const tb = $('#planetTable tbody');
+    const sunUp = c.sunHor && c.sunHor.alt > 0;
     const rows = c.planets.map(function (p) {
       const hor = p.hor, ni = p.nightInfo;
       let vis, cls;
       const riseHour = ni.riseJd ? Number(A.fmtClock(ni.riseJd).slice(0, 2)) : null;
       const setHour = ni.setJd ? Number(A.fmtClock(ni.setJd).slice(0, 2)) : null;
       if (ni.neverUp) { vis = '관측 불가'; cls = 'badge-bad'; }
+      // 해가 떠 있으면 '좋음'이 아니라 '낮'(맨눈으로는 안 보임)으로 표시합니다.
+      else if (sunUp && hor.alt >= 8) { vis = '낮'; cls = 'badge-mid'; }
       else if (hor.alt >= 20) { vis = '좋음'; cls = 'badge-good'; }
       else if (hor.alt >= 8) { vis = '낮음'; cls = 'badge-mid'; }
       else if (ni.maxAlt >= 15) {
@@ -741,7 +756,7 @@
         '<td>' + A.fmtClock(ni.riseJd) + '</td>' +
         '<td>' + A.fmtClock(ni.maxJd) + '</td>' +
         '<td>' + A.fmtClock(ni.setJd) + '</td>' +
-        '<td><span class="badge ' + cls + '">' + vis + '</span></td>' +
+        '<td><span class="badge ' + cls + '"' + (vis === '낮' ? ' title="지금은 해가 떠 있어 맨눈으로는 보기 어렵습니다. 시각을 밤으로 바꾸면 밤 기준으로 보여 드립니다."' : '') + '>' + vis + '</span></td>' +
         '<td><button class="aim-btn" data-aim-planet="' + p.key + '" title="라이브 하늘 뷰에서 이 방향으로 조준">🎯</button></td>' +
         '</tr>';
     });
@@ -4214,6 +4229,19 @@
       $('#timeInput').value = '';
       renderAll();
       toast('현재 시각으로 돌아왔습니다.');
+    });
+
+    // 낮에 열었을 때 "오늘 밤 22:00 기준으로 보기" — 시각 선택과 같은 경로로 계산한다.
+    const btn22 = $('#btnNight22');
+    if (btn22) btn22.addEventListener('click', function () {
+      state.dateStr = todayKST();
+      state.timeStr = '22:00';
+      state.simJd = null;
+      dropSim();
+      $('#dateInput').value = state.dateStr;
+      $('#timeInput').value = '22:00';
+      renderAll();
+      toast('오늘 밤 22:00 기준으로 바꿨습니다.');
     });
 
     $('#btnCustom').addEventListener('click', function () {

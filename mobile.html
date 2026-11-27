@@ -197,6 +197,12 @@
       </div>
     </div>
 
+    <!-- 지금이 낮일 때의 안내 (밤 기준으로 한 번에 바꾸기) -->
+    <div class="day-note" id="dayNote" role="status" hidden>
+      <span id="dayNoteText">☀️ 지금은 낮입니다 — 아래 고도·추천은 지금 하늘 기준이에요. 밤에 볼 대상을 보려면 시각을 바꿔 주세요.</span>
+      <button class="mini-btn" id="btnNight22" type="button">🌙 오늘 밤 22:00로 보기</button>
+    </div>
+
     <!-- 10초 요약 히어로 카드 -->
     <div class="summary-card" id="heroSummary" aria-live="polite">
       <div class="summary-main">
@@ -324,11 +330,11 @@
       <p class="panel-foot">각 시간은 정시 기준이며, 고도 20° 이상이고 달빛 영향을 덜 받는 대상을 우선 골랐습니다.</p>
     </div>
 
-    <!-- 이번 달 최고의 밤 -->
+    <!-- 앞으로 30일 최고의 밤 -->
     <div class="panel" data-dash="best">
       <div class="panel-head">
-        <h2>이번 달, 가장 어두운 밤</h2>
-        <span class="panel-note">같은 관측지 기준 · 달 밝기와 어두운 시간으로 계산</span>
+        <h2>앞으로 30일, 가장 어두운 밤</h2>
+        <span class="panel-note">오늘부터 30일 · 같은 관측지 기준 · 달 밝기와 어두운 시간으로 계산</span>
       </div>
       <div class="best-nights" id="bestNights"></div>
     </div>

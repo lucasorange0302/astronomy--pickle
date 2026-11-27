@@ -59,7 +59,9 @@
     });
     var tabs = document.querySelectorAll('#tabBar [data-nav]');
     Array.prototype.forEach.call(tabs, function (t) {
-      t.classList.toggle('is-active', t.getAttribute('data-nav') === name);
+      var on = t.getAttribute('data-nav') === name;
+      t.classList.toggle('is-active', on);
+      if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
     });
   }
 

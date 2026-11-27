@@ -579,7 +579,9 @@
         (canAim(o) ? '<button class="mini-btn c2-aim" data-c2aim="' + esc(o.i) + '" aria-label="' + esc(o.ko) + ' 조준">🎯</button>' : '') +
         '</article>';
     }).join('') || '<p class="cat2-empty">조건에 맞는 천체가 없습니다. 필터를 바꿔 보세요.</p>';
-    $('#c2count').textContent = list.length.toLocaleString('en-US') + '종 중 ' + (C2.page * C2.per + 1) + '–' + Math.min(list.length, (C2.page + 1) * C2.per) + ' 표시';
+    $('#c2count').textContent = list.length
+      ? list.length.toLocaleString('en-US') + '종 중 ' + (C2.page * C2.per + 1) + '–' + Math.min(list.length, (C2.page + 1) * C2.per) + ' 표시'
+      : '조건에 맞는 천체가 없습니다';
     $('#c2page').textContent = (C2.page + 1) + ' / ' + pages;
     $('#c2prev').disabled = C2.page === 0;
     $('#c2next').disabled = C2.page >= pages - 1;
@@ -1011,6 +1013,8 @@
       picks.sort(function (a, b) { return b.alt - a.alt; });
       parts.push('<div class="ai-bubble"><strong>' + esc(st.site.name) + ' ' + esc(st.dateStr) + ' ' + esc(st.timeStr || '지금') + '</strong> 기준입니다.<br>달은 <strong>' + esc(c.phase.name) + ' ' + Math.round(c.phase.illum * 100) + '%</strong>, 관측지수 <strong>' + c.score + '/100</strong>입니다.');
       var pl = (c.planets || []).filter(function (p) { return p.hor && p.hor.alt > 5 && p.mag != null && p.mag < 6.5; }).sort(function (a, b) { return a.mag - b.mag; }).slice(0, 3);
+      var sunUp = c.sunHor && c.sunHor.alt > 0;
+      if (sunUp) parts.push('<span class="ai-small">☀️ 지금은 해가 떠 있어 맨눈 관측은 어렵습니다. 아래는 ‘지금 하늘’의 위치이고, 밤에 볼 대상은 화면 위 시각을 22:00으로 바꾸면 보입니다.</span>');
       if (pl.length) parts.push('지금 떠 있는 행성: ' + pl.map(function (p) { return '<strong>' + esc(p.name) + '</strong> ' + p.hor.alt.toFixed(0) + '°'; }).join(', ') + '.');
       if (picks.length) {
         parts.push('지금 높이 있는 대표 천체:<div class="ai-chips">' + picks.slice(0, 4).map(function (x) {
