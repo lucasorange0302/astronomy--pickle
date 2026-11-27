@@ -158,6 +158,12 @@
       syncRed();
     });
     syncRed();
+    // 저장된 레드라이트 상태는 app.js가 화면 초기화 때 적용하므로, 로드가 끝난 뒤와
+    // 레드 버튼을 누를 때마다 메뉴 문구를 실제 상태에 맞춥니다.
+    window.addEventListener('load', function () { setTimeout(syncRed, 80); });
+    document.addEventListener('click', function (ev) {
+      if (ev.target && ev.target.closest && ev.target.closest('#btnRed')) setTimeout(syncRed, 0);
+    }, true);
   }
 
   /* 5) 인쇄할 때는 지금 판 이름을 남깁니다 -------------------------------- */
