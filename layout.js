@@ -189,9 +189,11 @@
       try { new ResizeObserver(syncLiveTop).observe(fvWrap); } catch (e) { }
     }
     window.addEventListener('resize', function () {
-      // 화면 전환(views.js)도 resize 를 쏩니다. 레이아웃·스크롤이 자리 잡은 다음 한 번 더 잽니다.
+      // 화면 전환(views.js)도 resize 를 쏩니다. 화면이 자리 잡는 동안 값이 조금씩 달라지므로
+      // 즉시 → 다음 프레임 → 0.25초 뒤 한 번 더 재어 마지막 값을 씁니다.
       syncLiveTop();
       window.requestAnimationFrame(syncLiveTop);
+      setTimeout(syncLiveTop, 250);
     });
     window.addEventListener('orientationchange', function () { setTimeout(syncLiveTop, 200); });
     window.addEventListener('load', function () { syncLiveTop(); setTimeout(syncLiveTop, 900); });
