@@ -396,9 +396,34 @@
         </div>
         <div class="live-quick" id="liveQuick">
           <button class="lq-btn" id="liveToolsBtn" type="button" aria-expanded="false" aria-controls="liveControls">⚙ 조작</button>
+          <button class="lq-btn lq-time" id="liveTimeBtn" type="button" aria-expanded="false" aria-controls="liveTimeCard" title="하늘 시각 바꾸기">🕒 —</button>
           <button class="lq-btn" id="liveCalBtnQ" type="button">🎯 방향 맞추기</button>
           <!-- 낮에 열었을 때 밤하늘로 넘길 길을 화면 안에 둡니다 (모바일은 아래 안내 줄이 숨겨져 있음) -->
           <button class="lq-btn lq-night" id="liveNightBtnQ" type="button" hidden>🌙 밤 22시</button>
+        </div>
+        <div class="live-time-card" id="liveTimeCard" hidden>
+          <div class="ltc-head">
+            <b>🕒 하늘 시각</b>
+            <span class="ltc-now" id="ltcNow">—</span>
+            <button class="ltc-x" id="ltcClose" type="button" aria-label="시간 조정 닫기">✕</button>
+          </div>
+          <div class="ltc-presets" id="ltcPresets" role="group" aria-label="빠른 시각">
+            <button class="ltc-chip" type="button" data-ltc="now">지금</button>
+            <button class="ltc-chip" type="button" data-ltc="sunset">일몰</button>
+            <button class="ltc-chip" type="button" data-ltc="20">20시</button>
+            <button class="ltc-chip" type="button" data-ltc="22">22시</button>
+            <button class="ltc-chip" type="button" data-ltc="0">자정</button>
+            <button class="ltc-chip" type="button" data-ltc="2">새벽 2시</button>
+          </div>
+          <div class="ltc-slider">
+            <input type="range" id="ltcRange" min="0" max="1435" step="5" value="1320" aria-label="하늘 시각 (0시~24시)">
+            <div class="ltc-scale" aria-hidden="true"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>24시</span></div>
+          </div>
+          <div class="ltc-row">
+            <label class="ltc-date"><span>날짜</span><input type="date" id="ltcDate"></label>
+            <label class="ltc-time"><span>시각</span><input type="time" id="ltcTime" step="300"></label>
+          </div>
+          <p class="ltc-note">0~11시는 그 밤의 다음 날 새벽으로 계산합니다.</p>
         </div>
       </div>
 
@@ -945,6 +970,11 @@
       <div class="chip-row site-regions" id="siteRegions"></div>
       <label class="check-inline"><input type="checkbox" id="onlyNoBooking"> 예약 없이 가는 곳만</label>
       <button class="mini-btn" id="btnSortSites">현재 관측지에서 가까운 순</button>
+    </div>
+    <div class="site-bortle-tools">
+      <span class="site-bortle-label" id="siteBortleLabel">광공해 등급</span>
+      <div class="chip-row site-bortles" id="siteBortles" role="group" aria-labelledby="siteBortleLabel"></div>
+      <span class="site-count" id="siteCount"></span>
     </div>
     <p class="site-warn-note">운영 시간과 요금, 예약 방식은 수시로 바뀝니다. 방문 전에 해당 시설 공식 홈페이지나 전화로 확인하세요. 야간 관측은 날씨에 따라 취소되며, 흐리면 관측 대신 영상·강의로 대체되는 경우가 많습니다. 산길 야간 운전과 결빙에 주의하세요.</p>
     <div class="site-grid" id="siteGrid"></div>

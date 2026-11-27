@@ -84,6 +84,7 @@
     equip: 1,
     filter: { type: 'all', equip: 'all', season: 'all', q: '' },
     siteRegion: '전체',
+    siteBortle: 'all',
     conSeason: '전체',
     conQuery: '',
     siteSortNear: false,
@@ -1743,6 +1744,18 @@
   }
 
   /* ------------------------------------------------------------- 명소 */
+  // 광공해(Bortle) 등급 구간 — data.js의 34곳 분포(2:1 · 3:7 · 4:9 · 4.5:2 · 5:5 · 6:6 · 7:1 · 8:3)에 맞춘 구간입니다.
+  const SITE_BORTLE = [
+    { key: 'all', label: '전체', note: '', test: function () { return true; } },
+    { key: 'b2-3', label: '2~3등급', note: '최상', test: function (b) { return b <= 3; } },
+    { key: 'b4', label: '4~4.5등급', note: '어두움', test: function (b) { return b > 3 && b < 5; } },
+    { key: 'b5', label: '5등급', note: '보통', test: function (b) { return b === 5; } },
+    { key: 'b6+', label: '6등급+', note: '도심권', test: function (b) { return b > 5; } }
+  ];
+  function siteBortleRule(key) {
+    return SITE_BORTLE.filter(function (g) { return g.key === key; })[0] || SITE_BORTLE[0];
+  }
+
   function renderSites() {
     const regions = ['전체'].concat(Array.from(new Set(D.sites.map(function (s) { return s.region; }))));
     $('#siteRegions').innerHTML = regions.map(function (r) {
@@ -1755,12 +1768,39 @@
       });
     });
 
-    let list = D.sites.filter(function (s) { return state.siteRegion === '전체' || s.region === state.siteRegion; });
+    // 권역·예약 필터를 먼저 적용한 목록으로 등급별 건수를 셈니다.
+    let pool = D.sites.filter(function (s) { return state.siteRegion === '전체' || s.region === state.siteRegion; });
     if ($('#onlyNoBooking') && $('#onlyNoBooking').checked) {
-      list = list.filter(function (s) { return !s.booking || /불필요|없/.test(s.booking); });
+      pool = pool.filter(function (s) { return !s.booking || /불필요|없/.test(s.booking); });
     }
+
+    const rule = siteBortleRule(state.siteBortle);
+    const box = $('#siteBortles');
+    if (box) {
+      box.innerHTML = SITE_BORTLE.map(function (g) {
+        const n = pool.filter(function (s) { return g.test(Number(s.bortle) || 9); }).length;
+        return '<button class="chip bortle-chip' + (state.siteBortle === g.key ? ' is-active' : '') +
+          (n ? '' : ' is-empty') + '" type="button" data-bortle="' + g.key + '" aria-pressed="' +
+          (state.siteBortle === g.key) + '">' + g.label +
+          (g.note ? ' <em>' + g.note + '</em>' : '') +
+          ' <b class="chip-num">' + n + '</b></button>';
+      }).join('');
+      $$('#siteBortles .chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.siteBortle = b.getAttribute('data-bortle');
+          renderSites();
+        });
+      });
+    }
+
+    let list = pool.filter(function (s) { return rule.test(Number(s.bortle) || 9); });
     if (state.siteSortNear) {
       list = list.slice().sort(function (a, b) { return distanceKm(a) - distanceKm(b); });
+    }
+    const cnt = $('#siteCount');
+    if (cnt) {
+      cnt.textContent = (rule.key === 'all' ? '전체 ' : 'Bortle ' + rule.label + ' · ') + list.length + '곳' +
+        (state.siteRegion !== '전체' ? ' · ' + state.siteRegion : '');
     }
     $('#siteGrid').innerHTML = list.length ? list.map(function (s, i) {
       const dk = distanceKm(s);
@@ -1855,6 +1895,7 @@
   function skyInfo(kind, key, jd) {
     const lat = state.site.lat, lon = state.site.lon;
     let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null, cells = null;
+    let conAbbr = '', members = null, fovDeg = null;
     if (kind === 'planet') {
       const p = A.planetPos(key, jd);
       raH = p.raH; decD = p.decD; mag = p.mag; name = p.name;
@@ -1892,6 +1933,7 @@
         ['잘 보이는 때', con.bestMonth + '월 · ' + con.season],
         ['연결선 별', con.lines.length + '구간']
       ];
+      conAbbr = con.abbr; members = conMembers(con); fovDeg = conFov(con);
     } else if (kind === 'sun') {
       const sp = A.sunPos(jd);
       raH = sp.raH; decD = sp.decD; name = '태양';
@@ -1903,7 +1945,8 @@
     const ni = A.objectNight(raH, decD, lat, lon, state.dateStr);
     return {
       kind: kind, key: key, name: name, sub: sub, note: note, objId: objId, cells: cells,
-      mag: mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni
+      mag: mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni,
+      conAbbr: conAbbr, members: members, fovDeg: fovDeg
     };
   }
 
@@ -1936,6 +1979,7 @@
       '<div class="si-actions">' +
       '<button class="aim-btn" type="button" data-si-aim="1">🎯 라이브 뷰로 조준</button>' +
       (info.objId ? '<button class="mini-btn" type="button" data-si-obj="' + esc(info.objId) + '">도감 상세 보기</button>' : '') +
+      (info.conAbbr ? '<button class="mini-btn" type="button" data-si-con="' + esc(info.conAbbr) + '">📷 사진 · 상세</button>' : '') +
       '<button class="mini-btn" type="button" data-si-close="1">닫기</button></div>';
   }
 
@@ -3202,9 +3246,151 @@
     live.fov = 70;
   }
 
+  /* ======================================================================
+     라이브 하늘 — 원하는 날짜·시각으로 바로 가는 시간 카드
+     · state.simJd(실제 관측 시각)를 바꾸고, 상단 카드·전천 지도·행성표·라이브
+       캔버스가 모두 같은 계산 경로(selectedJD)로 함께 갱신됩니다.
+     · 0~11시는 '그 밤의 다음 날 새벽'으로 계산합니다 — 일몰→일출 한 밤의
+       흐름과 같게 만들어, 새벽 2시를 골라도 바로 그 밤 새벽 하늘이 나옵니다.
+     ====================================================================== */
+  const ltc = { open: false };
+  function p2(n) { return String(n).padStart(2, '0'); }
+  function clockMinutes(jd) {
+    const s = A.fmtClock(jd);
+    if (!s || s === '—') return 0;
+    return Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
+  }
+  function ltcDateFor(hour, base) {
+    return hour < 12 ? addDays(base, 1) : base;
+  }
+  function applyLiveTime(minutes, opts) {
+    const mm = clamp(Math.round(minutes / 5) * 5, 0, 1435);
+    const h = Math.floor(mm / 60), m = mm % 60;
+    const dateStr = ltcDateFor(h, state.dateStr);
+    const jd = A.jdFromDate(A.localToDate(dateStr, p2(h) + ':' + p2(m)));
+    const w = nightWindow();
+    stopPlay();
+    state.simJd = jd;
+    state.tmFrac = clamp((jd - w.start) / (w.end - w.start), 0, 1);
+    renderAll(opts && opts.fast ? { fast: true } : undefined);
+  }
+  function paintLtcRange() {
+    const el = $('#ltcRange');
+    if (!el) return;
+    el.style.setProperty('--ltc-fill', ((Number(el.value) / 1435) * 100).toFixed(1) + '%');
+  }
+  function syncLiveTimeCard() {
+    const card = $('#liveTimeCard');
+    const c = state.last || (card ? computeNight() : null);
+    if (!c) return;
+    const jd = c.jd;
+    const mins = clockMinutes(jd);
+    const sim = state.simJd != null;
+    const btn = $('#liveTimeBtn');
+    if (btn) {
+      const lbl = '🕒 ' + A.fmtClock(jd);
+      if (btn.textContent !== lbl) btn.textContent = lbl;
+      btn.classList.toggle('is-on', !!ltc.open);
+      btn.setAttribute('aria-expanded', String(!!ltc.open));
+      btn.title = sim ? '하늘 시각 바꾸기 — ' + A.fmtClock(jd) + ' 기준' : '하늘 시각 바꾸기 (지금)';
+    }
+    if (!card) return;
+    const now = $('#ltcNow');
+    if (now) {
+      const txt = sim
+        ? A.fmtDateKorean(jd) + ' ' + A.fmtClock(jd) + ' · 시뮬레이션'
+        : '지금 · ' + A.fmtClock(jd);
+      if (now.textContent !== txt) now.textContent = txt;
+    }
+    const range = $('#ltcRange');
+    if (range && document.activeElement !== range) { range.value = String(mins); paintLtcRange(); }
+    const dateIn = $('#ltcDate');
+    if (dateIn && document.activeElement !== dateIn) dateIn.value = state.dateStr;
+    const timeIn = $('#ltcTime');
+    if (timeIn && document.activeElement !== timeIn) timeIn.value = A.fmtClock(jd);
+    $$('#ltcPresets [data-ltc]').forEach(function (b) {
+      const v = b.getAttribute('data-ltc');
+      let on = false;
+      if (v === 'now') on = !sim && state.dateStr === todayKST() && !state.timeStr;
+      else if (v === 'sunset') on = Math.abs(mins - clockMinutes(nightWindow().start + 0.25 / 24)) <= 5;
+      else on = Math.abs(mins - Number(v) * 60) <= 5;
+      b.classList.toggle('is-active', on);
+    });
+  }
+  function setLiveTimeCard(open) {
+    const card = $('#liveTimeCard');
+    if (!card) return;
+    ltc.open = !!open;
+    card.hidden = !ltc.open;
+    if (ltc.open) syncLiveTimeCard();
+    const btn = $('#liveTimeBtn');
+    if (btn) {
+      btn.setAttribute('aria-expanded', String(ltc.open));
+      btn.classList.toggle('is-on', ltc.open);
+    }
+  }
+  function initLiveTime() {
+    const card = $('#liveTimeCard');
+    if (!card) return;
+    const btn = $('#liveTimeBtn');
+    if (btn) btn.addEventListener('click', function () { setLiveTimeCard(card.hidden); });
+    const close = $('#ltcClose');
+    if (close) close.addEventListener('click', function () { setLiveTimeCard(false); });
+    const range = $('#ltcRange');
+    if (range) {
+      range.addEventListener('input', function () { applyLiveTime(Number(this.value), { fast: true }); paintLtcRange(); });
+      range.addEventListener('change', function () { applyLiveTime(Number(this.value)); });
+    }
+    const presets = $('#ltcPresets');
+    if (presets) presets.addEventListener('click', function (ev) {
+      const b = ev.target.closest('[data-ltc]');
+      if (!b) return;
+      const v = b.getAttribute('data-ltc');
+      if (v === 'now') {
+        setViewDate(todayKST(), '');
+        toast('지금 시각 하늘로 돌아왔습니다.');
+        return;
+      }
+      if (v === 'sunset') {
+        const w = nightWindow();
+        applyLiveTime(clockMinutes(w.start + 0.25 / 24));
+        toast('그 밤의 일몰 시각으로 옮겼습니다.');
+        return;
+      }
+      applyLiveTime(Number(v) * 60);
+      toast(v + '시 하늘로 옮겼습니다.');
+    });
+    const timeIn = $('#ltcTime');
+    if (timeIn) timeIn.addEventListener('change', function () {
+      const val = this.value;
+      if (!val) return;
+      const p = val.split(':').map(Number);
+      applyLiveTime((p[0] || 0) * 60 + (p[1] || 0));
+    });
+    const dateIn = $('#ltcDate');
+    if (dateIn) dateIn.addEventListener('change', function () {
+      const val = this.value;
+      if (!val) return;
+      const keep = clockMinutes((state.last || computeNight()).jd);
+      state.dateStr = val;
+      state.timeStr = '';
+      state.simJd = null;
+      stopPlay();
+      const di = $('#dateInput'), ti = $('#timeInput');
+      if (di) di.value = val;
+      if (ti) ti.value = '';
+      applyLiveTime(keep);   // 같은 시각을 새 날짜의 밤으로
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && ltc.open) setLiveTimeCard(false);
+    });
+    syncLiveTimeCard();
+  }
+
   function initLive() {
     if (!$('#liveStage')) return;
     wireLiveInfo();
+    initLiveTime();
     liveResize();
     pickStartView();
     window.addEventListener('resize', function () { liveResize(); });
@@ -3221,7 +3407,7 @@
     stage.addEventListener('pointerdown', function (ev) {
       if (ev.button != null && ev.button !== 0) return;
       // 확대/축소·HUD 등 스테이지 위 버튼은 드래그 캡처에서 제외 (클릭이 죽지 않게)
-      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card')) return;
+      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card, .live-time-card')) return;
       drag = { x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false, t: performance.now() };
       stage.classList.add('is-dragging');
       try { stage.setPointerCapture(ev.pointerId); } catch (e) { }
@@ -3354,6 +3540,10 @@
         }
         if (t.getAttribute('data-si-aim') && inspectorRef) {
           aimAt(inspectorRef.kind, inspectorRef.key);
+          return;
+        }
+        if (t.getAttribute('data-si-con')) {
+          openConstellation(t.getAttribute('data-si-con'));
           return;
         }
         const obj = t.getAttribute('data-si-obj');
@@ -4105,6 +4295,7 @@
     renderLiveSync(c);
     renderInspector();
     updateTmBar();
+    syncLiveTimeCard();
     if (fast) return;
     renderTargets(c);
     renderHourlyPlan(c);
@@ -4605,7 +4796,11 @@
     $('#modalClose').addEventListener('click', closeModal);
     $('#modalBody').addEventListener('click', function (ev) {
       const t = ev.target.closest ? ev.target.closest('[data-close]') : null;
-      if (t) closeModal();
+      if (t) { closeModal(); return; }
+      const conAim = ev.target.closest ? ev.target.closest('[data-con-aim]') : null;
+      if (conAim) { closeModal(); aimAt('con', conAim.getAttribute('data-con-aim')); return; }
+      const objOpen = ev.target.closest ? ev.target.closest('[data-obj-open]') : null;
+      if (objOpen) { openObject(objOpen.getAttribute('data-obj-open')); return; }
     });
     $$('#modal [data-close]').forEach(function (el) { el.addEventListener('click', closeModal); });
     document.addEventListener('keydown', function (e) {
@@ -4636,6 +4831,104 @@
   }
 
   /* ---------------------------------------------------------- 별자리 88종 도감 */
+  /* 별자리 안 대표 천체 — 사진 갤러리와 상세 모달이 함께 씁니다.
+     · 대표 도감(40여 종)은 한글 별자리 이름(con)으로, 하늘 전체 도감(2,571종)은 IAU 약자(c)로 묶여 있습니다.
+     · 밝은 순으로 정리해, 사진이 있는 천체(메시에·NGC·밝은 별)가 앞에 오게 합니다. */
+  function conMembers(con) {
+    const out = [], seen = {};
+    function add(o) {
+      const k = String(o.id || o.i || o.name || '').toLowerCase();
+      if (!k || seen[k]) return;
+      seen[k] = 1;
+      out.push(o);
+    }
+    D.catalog.forEach(function (o) {
+      if (!o.dynamic && o.con === con.name) add(o);
+    });
+    const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
+    items.forEach(function (it) {
+      if (it.c !== con.abbr) return;
+      if (typeof it.ra !== 'number' || typeof it.dec !== 'number') return;
+      add({ id: String(it.i), name: it.ko || it.i, sub: it.i, type: it.t, ra: it.ra, dec: it.dec, mag: it.m, size: it.s });
+    });
+    // 성운·성단·은하 같은 뚜렷한 대상(실제 망원경 사진이 있는 천체)을 먼저, 그다음 밝은 별.
+    function isDeep(o) {
+      const t = String(o.type || '');
+      if (/항성|변광|이중성|star|var|dstar/i.test(t)) return false;
+      if (/성운|성단|은하|초신성|Neb|OCl|GCl|Cl\+N|HII|SNR|PN|RfN|\*Ass|^G$/i.test(t)) return true;
+      return /(^|[^A-Za-z])(M|NGC|IC)\s*-?\d+/i.test(String(o.sub || '') + ' ' + String(o.id || ''));
+    }
+    const magOf = function (o) { return (typeof o.mag === 'number') ? o.mag : 99; };
+    const deep = out.filter(isDeep).sort(function (a, b) { return magOf(a) - magOf(b); });
+    const stars = out.filter(function (o) { return !isDeep(o); }).sort(function (a, b) { return magOf(a) - magOf(b); });
+    return deep.concat(stars).slice(0, 6);
+  }
+
+  // 별자리 크기(면적)에 맞춘 사진 시야 — 작은 별자리는 좁게, 큰 별자리는 넓게
+  function conFov(con) {
+    return Math.min(22, Math.max(8, Math.sqrt(con.area || 300) * 1.4));
+  }
+
+  function openConstellation(abbr) {
+    const con = D.constellations.find(function (x) { return x.abbr === abbr; });
+    if (!con) return;
+    const c = state.last || computeNight();
+    const hor = A.equatorialToHorizontal(con.raH, con.decD, state.site.lat, state.site.lon, c.jd);
+    const ni = A.objectNight(con.raH, con.decD, state.site.lat, state.site.lon, state.dateStr);
+    const members = conMembers(con);
+    const altTxt = hor.alt > 0 ? dirName(hor.az) + ' ' + nf(hor.alt, 0) + '°' : '지평선 아래 (' + nf(hor.alt, 0) + '°)';
+    const memberHtml = members.length ? '<ul class="con-member-list">' + members.map(function (m) {
+      const magTxt = (typeof m.mag === 'number') ? ((m.mag > 0 ? '+' : '') + nf(m.mag, 1) + '등') : '—';
+      const objId = D.catalog.some(function (o) { return o.id === m.id; }) ? m.id : '';
+      const inner = '<b>' + esc(m.name || m.id) + '</b>' +
+        (m.sub && m.sub !== m.name ? ' <span>' + esc(m.sub) + '</span>' : '') +
+        ' · ' + esc(magTxt);
+      return '<li>' + (objId
+        ? '<button type="button" class="con-member" data-obj-open="' + esc(objId) + '">' + inner + '</button>'
+        : '<span class="con-member is-plain">' + inner + '</span>') + '</li>';
+    }).join('') + '</ul>' : '<p class="small muted">이 별자리에 등록된 대표 천체가 없습니다.</p>';
+
+    $('#modalBody').innerHTML =
+      '<div class="md-head"><h2 id="modalTitle">' + esc(con.name) + '</h2>' +
+      '<div class="md-sub">' + esc(con.en) + ' (' + esc(con.abbr) + ') · IAU 88별자리 · ' + esc(con.season) + '</div></div>' +
+      '<div class="md-stats">' +
+      stat('가장 밝은 별', con.bright ? esc(con.bright) + ' (' + (con.brightMag > 0 ? '+' : '') + nf(con.brightMag, 2) + '등)' : '—', '별자리에서 가장 밝은 별입니다.') +
+      stat('면적', con.area.toLocaleString('en-US') + ' deg²', '하늘 전체에서 차지하는 넓이. 88개 중 ' + con.areaRank + '위입니다.') +
+      stat('중심 적경', fmtRA(con.raH), '별자리 중심의 가로 좌표(24시간 = 360°).') +
+      stat('중심 적위', fmtDec(con.decD), '별자리 중심의 세로 좌표. +90°가 북극성 방향입니다.') +
+      stat('잘 보이는 때', con.bestMonth + '월 · ' + con.season) +
+      stat('지금 하늘', altTxt, '선택한 관측지·시각 기준입니다. 시간 조정 카드로 바꿀 수 있습니다.') +
+      '</div>' +
+      '<div class="md-now"><span>연결선 ' + con.lines.length + '구간</span>' +
+      '<span>오늘 밤 최고: ' + (ni.neverUp ? '지평선 위로 안 오름' : nf(ni.maxAlt, 0) + '° (' + A.fmtClock(ni.maxJd) + ')') + '</span>' +
+      '<span>출/몰: ' + A.fmtClock(ni.riseJd) + ' / ' + A.fmtClock(ni.setJd) + '</span></div>' +
+      '<div class="md-section"><h3>별자리</h3><p>' + esc(con.desc) + '</p></div>' +
+      '<div class="md-section"><h3>이 별자리의 대표 천체</h3>' + memberHtml +
+      '<p class="small muted">천체 이름을 누르면 그 천체의 상세 정보가 열립니다.</p></div>' +
+      '<div class="md-section"><h3>사진</h3><p class="small muted">사진은 별자리 중심 좌표의 NASA SkyView 실제 하늘 탐사 사진(DSS2 등)과, 이 별자리에 속한 대표 천체의 NASA·허블·제임스웹 촬영본입니다. 일러스트·아티스트 컨셉·다른 이름의 천체 사진은 넣지 않습니다.</p></div>' +
+      '<div class="con-actions">' +
+      '<button class="btn btn-primary btn-sm" type="button" data-con-aim="' + esc(con.abbr) + '">🎯 라이브 뷰로 조준</button>' +
+      '<button class="mini-btn" type="button" data-close="1">닫기</button></div>';
+
+    // 상단 사진 갤러리 — 별자리 중심 실제 하늘 + 대표 천체 사진 5~8장
+    if (window.SkyGallery) {
+      const body = $('#modalBody');
+      const fig = SkyGallery.create({
+        kind: 'con', name: con.name, en: con.en, abbr: con.abbr,
+        raH: con.raH, decD: con.decD, members: members, fovDeg: conFov(con)
+      }, { variant: 'modal' });
+      const head = body.querySelector('.md-head');
+      if (head && head.nextSibling) body.insertBefore(fig, head.nextSibling);
+      else body.appendChild(fig);
+    }
+
+    const modal = $('#modal');
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    state._lastFocus = document.activeElement;
+    $('#modalClose').focus();
+  }
+
   function renderConGrid() {
     const grid = $('#conGrid');
     if (!grid) return;
@@ -4652,6 +4945,7 @@
         '<div class="con-head"><b>' + esc(c.name) + '</b><span class="con-abbr">' + esc(c.abbr) + '</span>' +
         '<span class="con-aim" role="button" tabindex="0" data-aim="' + esc(c.abbr) + '" title="라이브 하늘에서 보기" aria-label="' + esc(c.name) + ' 라이브 하늘에서 보기">🎯</span></div>' +
         '<span class="con-meta">' + esc(c.season) + ' · ' + (c.bestMonth || '—') + '월 · ' + esc(c.bright || '—') + mag + '</span>' +
+        '<span class="con-open-hint">📷 실제 사진 · 상세 보기 →</span>' +
         '<p class="con-desc">' + esc(c.desc) + '<br><span class="con-facts">영문 ' + esc(c.en) + ' · 면적 ' + c.areaRank + '위 · 연결선 ' + c.lines.length + '구간</span></p>' +
         '</article>';
     }).join('') : '<p class="con-empty">조건에 맞는 별자리가 없습니다. 검색어를 지워 보세요.</p>';
@@ -4679,9 +4973,7 @@
     const search = $('#conSearch');
     if (search) search.addEventListener('input', function () { state.conQuery = this.value; renderConGrid(); });
     function toggle(card) {
-      const open = !card.classList.contains('is-open');
-      card.classList.toggle('is-open', open);
-      card.setAttribute('aria-expanded', String(open));
+      openConstellation(card.getAttribute('data-con'));
     }
     grid.addEventListener('click', function (ev) {
       const aim = ev.target.closest('[data-aim]');

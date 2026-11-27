@@ -384,6 +384,22 @@
       var aim = e.target.closest('[data-lb-aim]');
       if (aim) aimAt(JSON.parse(aim.getAttribute('data-lb-aim')));
     });
+    /* 사진 영역을 좌우로 밀어도 이동 — 버튼이 가려지는 화면에서도 같은 동작 */
+    var media = m.querySelector('.sm-media');
+    var sw = { x: null, y: null };
+    if (media) {
+      media.addEventListener('touchstart', function (e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        sw.x = e.touches[0].clientX; sw.y = e.touches[0].clientY;
+      }, { passive: true });
+      media.addEventListener('touchend', function (e) {
+        if (sw.x == null || !e.changedTouches || !e.changedTouches.length) { sw.x = null; return; }
+        var dx = e.changedTouches[0].clientX - sw.x;
+        var dy = e.changedTouches[0].clientY - sw.y;
+        sw.x = null; sw.y = null;
+        if (Math.abs(dx) > 46 && Math.abs(dx) > Math.abs(dy) * 1.3) moveLightbox(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    }
   }
 
   function findCatalogByName(name) {
@@ -397,6 +413,7 @@
   function openLightbox() {
     var m = $('#spaceModal');
     if (!m) return;
+    lbPush();
     var list = STATE.lbList && STATE.lbList.length ? STATE.lbList : SD.GALLERY.map(function (g, i) { return i; });
     var gi = list[STATE.lbIndex];
     var g = SD.GALLERY[gi];
@@ -625,6 +642,7 @@
     STATE.lbList = []; STATE.lbIndex = 0;
     m.hidden = false;
     document.body.classList.add('space-lock');
+    lbPush();
     var h = altitudeOf(o);
     $('.sm-media', m).classList.remove('is-text');
     var imgEl = $('#smImg');
@@ -1226,11 +1244,34 @@
   /* ======================================================================
      공통 닫기 / 키보드
      ====================================================================== */
+  /* 사진 모달을 브라우저 기록에 한 칸 올려 둡니다.
+     아이폰 앱(standalone)에서 화면 왼쪽 가장자리를 밀거나 뒤로 가기를 누르면
+     페이지가 아니라 '보고 있던 사진 창'이 닫히게 됩니다. */
+  var LB_HIST = false;
+  function lbPush() {
+    if (LB_HIST) return;
+    try { history.pushState({ lb: 1 }, ''); LB_HIST = true; } catch (e) { }
+  }
+  function lbPop() {
+    if (!LB_HIST) return;
+    LB_HIST = false;
+    try { history.back(); } catch (e) { }
+  }
+  window.addEventListener('popstate', function () {
+    var m = document.getElementById('spaceModal');
+    if (m && !m.hidden) {
+      LB_HIST = false;
+      m.hidden = true;
+      document.body.classList.remove('space-lock');
+    }
+  });
+
   function closeAll() {
     ['cookieDrawer', 'aiDrawer', 'spaceModal'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.hidden = true;
     });
+    lbPop();
     document.body.classList.remove('space-lock');
     // 닫을 때 저장하지 않은 키가 입력칸에 남아 있지 않게 하고, 설정 패널·⚙ 상태를 접습니다.
     var key = document.getElementById('aiKey');

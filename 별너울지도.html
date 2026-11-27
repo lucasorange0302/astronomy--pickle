@@ -2501,6 +2501,138 @@ body.red input[type="checkbox"],
 body.red input[type="radio"],
 body.red input[type="range"] { filter: sepia(1) hue-rotate(-30deg) saturate(3) brightness(.7); }
 
+/* =========================================================================
+   2026-11-27 — 라이브 하늘 시간 카드 · 명소 광공해 필터 · 별자리 상세/사진
+   ========================================================================= */
+
+/* ------------------------------------------- 라이브 하늘 · 시간 카드 */
+.live-quick { flex-wrap: wrap; max-width: calc(100% - 52px); }
+.live-quick .lq-btn.is-on {
+  color: var(--accent); border-color: rgba(255, 212, 121, .55); background: rgba(255, 212, 121, .14);
+}
+.live-time-card {
+  position: absolute; left: 10px; right: 10px; bottom: 56px; z-index: 4;
+  max-width: 460px; max-height: calc(100% - 78px); overflow-y: auto;
+  padding: 10px 12px 11px; border-radius: 14px; cursor: default;
+  background: rgba(6, 10, 20, .93); border: 1px solid var(--border-hi);
+  box-shadow: 0 18px 40px -20px #000;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.live-time-card[hidden] { display: none; }
+.ltc-head { display: flex; align-items: center; gap: 8px; }
+.ltc-head b { font-size: .8rem; }
+.ltc-now {
+  flex: 1 1 auto; min-width: 0; text-align: right; font-size: .72rem; font-weight: 700;
+  color: var(--accent); font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ltc-x {
+  flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05);
+  color: var(--muted); font-size: .84rem; line-height: 1; display: grid; place-items: center;
+}
+.ltc-x:hover, .ltc-x:focus-visible { color: var(--text); border-color: var(--border-hi); }
+.ltc-presets {
+  display: flex; gap: 6px; margin: 8px 0 10px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.ltc-presets::-webkit-scrollbar { display: none; }
+.ltc-chip {
+  flex: 0 0 auto; min-height: 30px; padding: 0 11px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .04); color: var(--muted);
+  font: 700 .74rem var(--font); white-space: nowrap;
+}
+.ltc-chip:hover { color: var(--text); border-color: var(--border-hi); }
+.ltc-chip.is-active { color: var(--accent); border-color: rgba(255, 212, 121, .5); background: rgba(255, 212, 121, .13); }
+.ltc-slider input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 99px;
+  outline: none; cursor: pointer;
+  background: linear-gradient(90deg, var(--accent) 0 var(--ltc-fill, 0%), rgba(255, 255, 255, .13) var(--ltc-fill, 0%) 100%);
+}
+.ltc-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #1a1408; box-shadow: 0 0 10px rgba(255, 212, 121, .5);
+}
+.ltc-slider input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid #1a1408;
+}
+.ltc-scale {
+  display: flex; justify-content: space-between; margin-top: 3px;
+  font-size: .62rem; color: var(--faint); font-variant-numeric: tabular-nums;
+}
+.ltc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.ltc-row label { display: grid; gap: 3px; font-size: .64rem; color: var(--faint); }
+.ltc-row input {
+  width: 100%; min-width: 0; min-height: 32px; padding: 4px 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text);
+  font: 600 .76rem var(--font); font-variant-numeric: tabular-nums; color-scheme: dark;
+}
+.ltc-row input:focus-visible { border-color: var(--accent); outline: none; }
+.ltc-note { margin: 7px 0 0; font-size: .62rem; color: var(--faint); line-height: 1.5; }
+body.red .live-time-card { background: rgba(12, 2, 1, .94); }
+body.red .ltc-chip.is-active { border-color: rgba(255, 110, 80, .45); background: rgba(255, 106, 61, .14); color: #ffb59a; }
+body.red .ltc-slider input[type="range"] { filter: none; }
+
+/* ------------------------------------- 전국 관측 명소 · 광공해 등급 필터 */
+.site-bortle-tools {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: -2px 0 12px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, .03); border: 1px solid var(--border);
+}
+.site-bortle-label { font-size: .74rem; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.site-bortles { margin: 0; }
+.bortle-chip { display: inline-flex; align-items: center; gap: 5px; }
+.bortle-chip em { font-style: normal; font-weight: 600; color: var(--faint); font-size: .9em; }
+.bortle-chip .chip-num {
+  font-size: .68rem; font-weight: 800; padding: 1px 6px; border-radius: 99px;
+  background: rgba(255, 255, 255, .12); color: var(--text); font-variant-numeric: tabular-nums;
+}
+.bortle-chip.is-active em { color: inherit; opacity: .8; }
+.bortle-chip.is-active .chip-num { background: rgba(16, 19, 28, .22); }
+.bortle-chip.is-empty { opacity: .5; }
+.site-count { margin-left: auto; font-size: .72rem; font-weight: 700; color: var(--accent-2); font-variant-numeric: tabular-nums; }
+body.red .bortle-chip.is-active .chip-num { background: rgba(20, 3, 1, .3); }
+body.red .site-count { color: #ffb59a; }
+
+/* ----------------------------------- 별자리 카드 → 상세 · 실제 사진 갤러리 */
+.con-open-hint { display: block; margin-top: 5px; font-size: .66rem; font-weight: 700; color: var(--accent-2); }
+.con-card:hover .con-open-hint, .con-card:focus-visible .con-open-hint { color: var(--accent); }
+.con-member-list { list-style: none; margin: 8px 0 4px; padding: 0; display: grid; gap: 6px; }
+.con-member {
+  display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; font-size: .8rem;
+  padding: 7px 10px; border-radius: 9px; border: 1px solid var(--border);
+  background: rgba(255, 255, 255, .03); color: var(--muted);
+}
+.con-member b { color: var(--text); }
+.con-member span { color: var(--faint); font-size: .92em; }
+.con-member:hover, .con-member:focus-visible { border-color: var(--border-hi); color: var(--text); background: rgba(255, 255, 255, .06); }
+.con-member.is-plain { cursor: default; }
+.con-member.is-plain:hover { border-color: var(--border); background: rgba(255, 255, 255, .03); }
+.con-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59a; }
+
+/* =========================================================================
+   2026-11-27 — 사이트 전체 '이전/다음' 버튼 점검 (아이폰 손가락·가장자리 제스처)
+   · 아이폰은 화면 왼쪽 가장자리에서 조금만 끌어도 '뒤로 가기'로 처리해
+     가장자리에 붙은 ‹ 버튼의 탭을 삼킵니다. 버튼을 안쪽으로 들이고 크게 잡습니다.
+   ========================================================================= */
+.sg-arrow, .sm-nav, .li-arrow { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.sg-arrow { z-index: 6; background: rgba(4, 8, 16, .8); }
+.sm-nav { z-index: 8; background: rgba(5, 8, 16, .82); }
+.li-arrow { z-index: 6; }
+.sg-arrow[hidden], .sm-nav[hidden] { display: none; }
+@media (max-width: 860px) {
+  .sg-arrow { width: 44px; height: 44px; font-size: 1.35rem; }
+  .sg-prev { left: 12px; }
+  .sg-next { right: 12px; }
+  .li-arrow { width: 44px; height: 44px; }
+  .li-prev { left: 12px; }
+  .li-next { right: 12px; }
+  .sm-nav { width: 46px; height: 58px; }
+  .sm-nav.prev { left: 16px; }
+  .sm-nav.next { right: 16px; }
+}
+
 </style>
 <!-- 홈 화면 설치(PWA) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2867,9 +2999,34 @@ body.red input[type="range"] { filter: sepia(1) hue-rotate(-30deg) saturate(3) b
         </div>
         <div class="live-quick" id="liveQuick">
           <button class="lq-btn" id="liveToolsBtn" type="button" aria-expanded="false" aria-controls="liveControls">⚙ 조작</button>
+          <button class="lq-btn lq-time" id="liveTimeBtn" type="button" aria-expanded="false" aria-controls="liveTimeCard" title="하늘 시각 바꾸기">🕒 —</button>
           <button class="lq-btn" id="liveCalBtnQ" type="button">🎯 방향 맞추기</button>
           <!-- 낮에 열었을 때 밤하늘로 넘길 길을 화면 안에 둡니다 (모바일은 아래 안내 줄이 숨겨져 있음) -->
           <button class="lq-btn lq-night" id="liveNightBtnQ" type="button" hidden>🌙 밤 22시</button>
+        </div>
+        <div class="live-time-card" id="liveTimeCard" hidden>
+          <div class="ltc-head">
+            <b>🕒 하늘 시각</b>
+            <span class="ltc-now" id="ltcNow">—</span>
+            <button class="ltc-x" id="ltcClose" type="button" aria-label="시간 조정 닫기">✕</button>
+          </div>
+          <div class="ltc-presets" id="ltcPresets" role="group" aria-label="빠른 시각">
+            <button class="ltc-chip" type="button" data-ltc="now">지금</button>
+            <button class="ltc-chip" type="button" data-ltc="sunset">일몰</button>
+            <button class="ltc-chip" type="button" data-ltc="20">20시</button>
+            <button class="ltc-chip" type="button" data-ltc="22">22시</button>
+            <button class="ltc-chip" type="button" data-ltc="0">자정</button>
+            <button class="ltc-chip" type="button" data-ltc="2">새벽 2시</button>
+          </div>
+          <div class="ltc-slider">
+            <input type="range" id="ltcRange" min="0" max="1435" step="5" value="1320" aria-label="하늘 시각 (0시~24시)">
+            <div class="ltc-scale" aria-hidden="true"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>24시</span></div>
+          </div>
+          <div class="ltc-row">
+            <label class="ltc-date"><span>날짜</span><input type="date" id="ltcDate"></label>
+            <label class="ltc-time"><span>시각</span><input type="time" id="ltcTime" step="300"></label>
+          </div>
+          <p class="ltc-note">0~11시는 그 밤의 다음 날 새벽으로 계산합니다.</p>
         </div>
       </div>
 
@@ -3416,6 +3573,11 @@ body.red input[type="range"] { filter: sepia(1) hue-rotate(-30deg) saturate(3) b
       <div class="chip-row site-regions" id="siteRegions"></div>
       <label class="check-inline"><input type="checkbox" id="onlyNoBooking"> 예약 없이 가는 곳만</label>
       <button class="mini-btn" id="btnSortSites">현재 관측지에서 가까운 순</button>
+    </div>
+    <div class="site-bortle-tools">
+      <span class="site-bortle-label" id="siteBortleLabel">광공해 등급</span>
+      <div class="chip-row site-bortles" id="siteBortles" role="group" aria-labelledby="siteBortleLabel"></div>
+      <span class="site-count" id="siteCount"></span>
     </div>
     <p class="site-warn-note">운영 시간과 요금, 예약 방식은 수시로 바뀝니다. 방문 전에 해당 시설 공식 홈페이지나 전화로 확인하세요. 야간 관측은 날씨에 따라 취소되며, 흐리면 관측 대신 영상·강의로 대체되는 경우가 많습니다. 산길 야간 운전과 결빙에 주의하세요.</p>
     <div class="site-grid" id="siteGrid"></div>
@@ -7422,9 +7584,16 @@ window.PHOTO_SETS = {
     // 항성 여부 — type 이 비어 있는 라이브 하늘 객체(kind:'star')까지 잡습니다.
     var isStar = !!(o.kind === 'star' || o.group === 'star') || isStarType(type) ||
       starNameHit(keys) || starNameHit([base.name, base.ko, base.en, base.sub, base.id]);
+    // 별자리(kind:'con')는 별자리 자체를 NASA 텍스트 검색하지 않습니다.
+    // 'Orion'→오리온 우주선, 'Cygnus'→시그너스 화물선처럼 이름이 겹치는 자료가 섞입니다.
+    // 대신 별자리 안 대표 천체(members)의 사진과 중심 좌표의 SkyView 실제 하늘 사진을 씁니다.
+    if (o.kind === 'con') isStar = false;
     return {
       ko: ko, en: en, M: M, id: id, type: type, setKey: setKey,
       ra: ra, dec: dec, sizeArcmin: sizeArcmin, mag: mag, isStar: isStar, kind: o.kind || '',
+      con: o.kind === 'con',
+      fovDeg: typeof o.fovDeg === 'number' ? o.fovDeg : null,
+      members: Array.isArray(o.members) ? o.members : [],
       label: o.name || ko || en || '천체',
       sub: o.sub || '',
       keys: keys,
@@ -7456,7 +7625,8 @@ window.PHOTO_SETS = {
   function isBlueType(t) { return isStarType(t) || /OCl|GCl|Cl\+N|\*Ass|성단/.test(String(t || '')); }
 
   function fovFor(d) {
-    if (d.kind === 'con') return 4;           // 별자리는 4°(약 8°×8° 화면)까지
+    // 별자리는 중심 좌표에서 넓게(기본 16°) 잡아 별자리 모양이 한 장에 들어오게 합니다.
+    if (d.kind === 'con') return d.fovDeg ? Math.min(24, Math.max(6, d.fovDeg)) : 16;
     if (d.isStar || isStarType(d.type)) {
       if (d.mag != null && d.mag <= 1.6) return 3.0;
       if (d.mag != null && d.mag <= 3) return 1.6;
@@ -7485,6 +7655,47 @@ window.PHOTO_SETS = {
       '&Position=' + ra.toFixed(4) + ',' + Number(d.dec).toFixed(4) +
       '&Size=' + Number(size).toFixed(2) + '&Pixels=' + (px || 480) + '&Return=JPEG' +
       (extra || '');
+  }
+
+  /* ---------------------------------- 광시야 실제 하늘 (CDS HiPS) — 별자리용 */
+  // DSS2 컬러·Mellinger 광시야·DSS2 적색 판을 좌표로 잘라 옵니다.
+  // NASA SkyView 가 "Too Many Processes" 로 막혀도 별자리 사진이 나오도록 하는 두 번째 경로입니다.
+  function hipsUrl(d, hips, size, w, h) {
+    if (d.ra == null || d.dec == null || !isFinite(d.ra) || !isFinite(d.dec)) return null;
+    var ra = ((d.ra % 360) + 360) % 360;
+    return 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits' +
+      '?hips=' + encodeURIComponent(hips) +
+      '&width=' + (w || 480) + '&height=' + (h || 480) +
+      '&fov=' + Number(size).toFixed(2) + '&projection=TAN&coordsys=icrs' +
+      '&ra=' + ra.toFixed(4) + '&dec=' + Number(d.dec).toFixed(4) + '&format=jpg';
+  }
+
+  var HIPS = [
+    ['Mellinger/color', '은하수 광시야 · Mellinger', 'Mellinger All-Sky Panorama'],
+    ['DSS2/color', '가시광 컬러 · DSS2', 'Digitized Sky Survey 2 (STScI)'],
+    ['2MASS/K', '근적외선 · 2MASS K', '2MASS (UMass/IPAC)'],
+    ['DSS2/red', '가시광 적색판 · DSS2', 'Digitized Sky Survey 2 (STScI)'],
+    ['DSS2/blue', '가시광 청색판 · DSS2', 'Digitized Sky Survey 2 (STScI)']
+  ];
+
+  function hipsCandidates(d) {
+    if (d.kind !== 'con' || d.ra == null || d.dec == null) return [];
+    var size = fovFor(d);
+    var out = [];
+    HIPS.forEach(function (h, i) {
+      var u = hipsUrl(d, h[0], size, 480, 480);
+      if (!u) return;
+      out.push({
+        src: u, thumb: u,
+        title: d.label + ' · 실제 하늘 (' + h[1] + ')',
+        credit: 'CDS HiPS · ' + h[2] + ' · 좌표 기반 실제 촬영 이미지',
+        link: 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits?hips=' + encodeURIComponent(h[0]) +
+          '&ra=' + (((d.ra % 360) + 360) % 360).toFixed(3) + '&dec=' + Number(d.dec).toFixed(3) +
+          '&fov=' + size.toFixed(2) + '&projection=TAN&coordsys=icrs&format=jpg',
+        rank: 150 + i, hips: true, to: 16000
+      });
+    });
+    return out;
   }
 
   function surveyCandidates(d) {
@@ -7685,6 +7896,21 @@ window.PHOTO_SETS = {
   /* ------------------------------------------------------------ 후보 모으기 */
   function localCandidates(d) {
     var out = [];
+    // 별자리 — 별자리 안 대표 천체의 실제 사진(로컬 NASA·허블·제임스웹)을 먼저 모읍니다.
+    if (d.kind === 'con' && d.members.length) {
+      d.members.forEach(function (m) {
+        var md = describe(m);
+        localCandidates(md).slice(0, 2).forEach(function (c) {
+          out.push({
+            src: c.src, thumb: c.thumb,
+            title: (c.title && String(c.title).indexOf(md.label) === 0)
+              ? c.title : (md.label + ' — ' + (c.title || '사진')),
+            credit: c.credit, link: c.link, rank: 0
+          });
+        });
+      });
+      if (out.length) return out;
+    }
     var set = d.setKey && SETS[d.setKey];
     if (set) {
       set.forEach(function (p) {
@@ -7904,6 +8130,34 @@ window.PHOTO_SETS = {
 
       runQueue(local, 5, stop, addItem).then(function () {
         if (stop()) return null;
+        // 별자리 — 별자리 이름 대신, 별자리 안 대표 천체 이름으로만 NASA를 검색합니다.
+        if (d.kind === 'con' && d.members.length) {
+          var mems = d.members.slice(0, 2);
+          var chain = Promise.resolve();
+          mems.forEach(function (m) {
+            chain = chain.then(function () {
+              if (stop()) return null;
+              var md = describe(m);
+              if (md.isStar || md.ra == null) return null;   // 항성은 텍스트 검색 제외(이름 충돌)
+              var qs = nasaQueries(md);
+              if (!qs.length) return null;
+              return nasaSearch(qs[0], 6, md).then(function (list) {
+                var seen2 = {}, fresh = [];
+                list.forEach(function (c) {
+                  if (!c.src || seen2[c.src]) return;
+                  seen2[c.src] = 1; fresh.push(c);
+                });
+                fresh.forEach(function (c, i) { c.rank = 100 + i; });
+                return runQueue(fresh, 4, stop, addItem);
+              });
+            });
+          });
+          // NASA 검색이 느리거나 막혀도 6초 뒤에는 광시야 실제 하늘 사진을 이어서 받습니다.
+          return Promise.race([
+            chain,
+            new Promise(function (res) { setTimeout(function () { res(null); }, 6000); })
+          ]);
+        }
         // 항성은 NASA 텍스트 검색을 완전히 차단합니다. 'Vega' → 라스베가스,
         // 'Sirius' → 위성, 'Orion' → 오리온 우주선처럼 이름이 겹치는 자료가
         // 섞여 들어오기 때문입니다. 별은 실제 하늘 탐사 사진으로만 채웁니다.
@@ -7941,6 +8195,15 @@ window.PHOTO_SETS = {
         });
       }).then(function () {
         if (stop()) return null;
+        if (d.kind === 'con') {
+          var hc = hipsCandidates(d);
+          return runQueue(hc, 3, stop, addItem);
+        }
+        return null;
+      }).then(function () {
+        if (stop()) return null;
+        // 별자리는 이미 5장 이상이면 SkyView(느리고 가끔 막힘)를 건너뜁니다.
+        if (d.kind === 'con' && S.items.length >= 5) return null;
         var sv = surveyCandidates(d);
         sv.forEach(function (c, i) { c.rank = 200 + i; });
         return runQueue(sv, 3, stop, addItem);
@@ -7961,6 +8224,8 @@ window.PHOTO_SETS = {
     });
     var sx = null, sy = null;
     shot.addEventListener('touchstart', function (e) {
+      // 화살표를 누른 손가락은 스와이프로 보지 않습니다 (한 번에 두 칸 이동 방지)
+      if (e.target && e.target.closest && e.target.closest('.sg-arrow')) { sx = null; return; }
       if (!e.touches || e.touches.length !== 1) return;
       sx = e.touches[0].clientX; sy = e.touches[0].clientY;
     }, { passive: true });
@@ -8817,6 +9082,7 @@ window.Astro = (function () {
     equip: 1,
     filter: { type: 'all', equip: 'all', season: 'all', q: '' },
     siteRegion: '전체',
+    siteBortle: 'all',
     conSeason: '전체',
     conQuery: '',
     siteSortNear: false,
@@ -10476,6 +10742,18 @@ window.Astro = (function () {
   }
 
   /* ------------------------------------------------------------- 명소 */
+  // 광공해(Bortle) 등급 구간 — data.js의 34곳 분포(2:1 · 3:7 · 4:9 · 4.5:2 · 5:5 · 6:6 · 7:1 · 8:3)에 맞춘 구간입니다.
+  const SITE_BORTLE = [
+    { key: 'all', label: '전체', note: '', test: function () { return true; } },
+    { key: 'b2-3', label: '2~3등급', note: '최상', test: function (b) { return b <= 3; } },
+    { key: 'b4', label: '4~4.5등급', note: '어두움', test: function (b) { return b > 3 && b < 5; } },
+    { key: 'b5', label: '5등급', note: '보통', test: function (b) { return b === 5; } },
+    { key: 'b6+', label: '6등급+', note: '도심권', test: function (b) { return b > 5; } }
+  ];
+  function siteBortleRule(key) {
+    return SITE_BORTLE.filter(function (g) { return g.key === key; })[0] || SITE_BORTLE[0];
+  }
+
   function renderSites() {
     const regions = ['전체'].concat(Array.from(new Set(D.sites.map(function (s) { return s.region; }))));
     $('#siteRegions').innerHTML = regions.map(function (r) {
@@ -10488,12 +10766,39 @@ window.Astro = (function () {
       });
     });
 
-    let list = D.sites.filter(function (s) { return state.siteRegion === '전체' || s.region === state.siteRegion; });
+    // 권역·예약 필터를 먼저 적용한 목록으로 등급별 건수를 셈니다.
+    let pool = D.sites.filter(function (s) { return state.siteRegion === '전체' || s.region === state.siteRegion; });
     if ($('#onlyNoBooking') && $('#onlyNoBooking').checked) {
-      list = list.filter(function (s) { return !s.booking || /불필요|없/.test(s.booking); });
+      pool = pool.filter(function (s) { return !s.booking || /불필요|없/.test(s.booking); });
     }
+
+    const rule = siteBortleRule(state.siteBortle);
+    const box = $('#siteBortles');
+    if (box) {
+      box.innerHTML = SITE_BORTLE.map(function (g) {
+        const n = pool.filter(function (s) { return g.test(Number(s.bortle) || 9); }).length;
+        return '<button class="chip bortle-chip' + (state.siteBortle === g.key ? ' is-active' : '') +
+          (n ? '' : ' is-empty') + '" type="button" data-bortle="' + g.key + '" aria-pressed="' +
+          (state.siteBortle === g.key) + '">' + g.label +
+          (g.note ? ' <em>' + g.note + '</em>' : '') +
+          ' <b class="chip-num">' + n + '</b></button>';
+      }).join('');
+      $$('#siteBortles .chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.siteBortle = b.getAttribute('data-bortle');
+          renderSites();
+        });
+      });
+    }
+
+    let list = pool.filter(function (s) { return rule.test(Number(s.bortle) || 9); });
     if (state.siteSortNear) {
       list = list.slice().sort(function (a, b) { return distanceKm(a) - distanceKm(b); });
+    }
+    const cnt = $('#siteCount');
+    if (cnt) {
+      cnt.textContent = (rule.key === 'all' ? '전체 ' : 'Bortle ' + rule.label + ' · ') + list.length + '곳' +
+        (state.siteRegion !== '전체' ? ' · ' + state.siteRegion : '');
     }
     $('#siteGrid').innerHTML = list.length ? list.map(function (s, i) {
       const dk = distanceKm(s);
@@ -10588,6 +10893,7 @@ window.Astro = (function () {
   function skyInfo(kind, key, jd) {
     const lat = state.site.lat, lon = state.site.lon;
     let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null, cells = null;
+    let conAbbr = '', members = null, fovDeg = null;
     if (kind === 'planet') {
       const p = A.planetPos(key, jd);
       raH = p.raH; decD = p.decD; mag = p.mag; name = p.name;
@@ -10625,6 +10931,7 @@ window.Astro = (function () {
         ['잘 보이는 때', con.bestMonth + '월 · ' + con.season],
         ['연결선 별', con.lines.length + '구간']
       ];
+      conAbbr = con.abbr; members = conMembers(con); fovDeg = conFov(con);
     } else if (kind === 'sun') {
       const sp = A.sunPos(jd);
       raH = sp.raH; decD = sp.decD; name = '태양';
@@ -10636,7 +10943,8 @@ window.Astro = (function () {
     const ni = A.objectNight(raH, decD, lat, lon, state.dateStr);
     return {
       kind: kind, key: key, name: name, sub: sub, note: note, objId: objId, cells: cells,
-      mag: mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni
+      mag: mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni,
+      conAbbr: conAbbr, members: members, fovDeg: fovDeg
     };
   }
 
@@ -10669,6 +10977,7 @@ window.Astro = (function () {
       '<div class="si-actions">' +
       '<button class="aim-btn" type="button" data-si-aim="1">🎯 라이브 뷰로 조준</button>' +
       (info.objId ? '<button class="mini-btn" type="button" data-si-obj="' + esc(info.objId) + '">도감 상세 보기</button>' : '') +
+      (info.conAbbr ? '<button class="mini-btn" type="button" data-si-con="' + esc(info.conAbbr) + '">📷 사진 · 상세</button>' : '') +
       '<button class="mini-btn" type="button" data-si-close="1">닫기</button></div>';
   }
 
@@ -11935,9 +12244,151 @@ window.Astro = (function () {
     live.fov = 70;
   }
 
+  /* ======================================================================
+     라이브 하늘 — 원하는 날짜·시각으로 바로 가는 시간 카드
+     · state.simJd(실제 관측 시각)를 바꾸고, 상단 카드·전천 지도·행성표·라이브
+       캔버스가 모두 같은 계산 경로(selectedJD)로 함께 갱신됩니다.
+     · 0~11시는 '그 밤의 다음 날 새벽'으로 계산합니다 — 일몰→일출 한 밤의
+       흐름과 같게 만들어, 새벽 2시를 골라도 바로 그 밤 새벽 하늘이 나옵니다.
+     ====================================================================== */
+  const ltc = { open: false };
+  function p2(n) { return String(n).padStart(2, '0'); }
+  function clockMinutes(jd) {
+    const s = A.fmtClock(jd);
+    if (!s || s === '—') return 0;
+    return Number(s.slice(0, 2)) * 60 + Number(s.slice(3, 5));
+  }
+  function ltcDateFor(hour, base) {
+    return hour < 12 ? addDays(base, 1) : base;
+  }
+  function applyLiveTime(minutes, opts) {
+    const mm = clamp(Math.round(minutes / 5) * 5, 0, 1435);
+    const h = Math.floor(mm / 60), m = mm % 60;
+    const dateStr = ltcDateFor(h, state.dateStr);
+    const jd = A.jdFromDate(A.localToDate(dateStr, p2(h) + ':' + p2(m)));
+    const w = nightWindow();
+    stopPlay();
+    state.simJd = jd;
+    state.tmFrac = clamp((jd - w.start) / (w.end - w.start), 0, 1);
+    renderAll(opts && opts.fast ? { fast: true } : undefined);
+  }
+  function paintLtcRange() {
+    const el = $('#ltcRange');
+    if (!el) return;
+    el.style.setProperty('--ltc-fill', ((Number(el.value) / 1435) * 100).toFixed(1) + '%');
+  }
+  function syncLiveTimeCard() {
+    const card = $('#liveTimeCard');
+    const c = state.last || (card ? computeNight() : null);
+    if (!c) return;
+    const jd = c.jd;
+    const mins = clockMinutes(jd);
+    const sim = state.simJd != null;
+    const btn = $('#liveTimeBtn');
+    if (btn) {
+      const lbl = '🕒 ' + A.fmtClock(jd);
+      if (btn.textContent !== lbl) btn.textContent = lbl;
+      btn.classList.toggle('is-on', !!ltc.open);
+      btn.setAttribute('aria-expanded', String(!!ltc.open));
+      btn.title = sim ? '하늘 시각 바꾸기 — ' + A.fmtClock(jd) + ' 기준' : '하늘 시각 바꾸기 (지금)';
+    }
+    if (!card) return;
+    const now = $('#ltcNow');
+    if (now) {
+      const txt = sim
+        ? A.fmtDateKorean(jd) + ' ' + A.fmtClock(jd) + ' · 시뮬레이션'
+        : '지금 · ' + A.fmtClock(jd);
+      if (now.textContent !== txt) now.textContent = txt;
+    }
+    const range = $('#ltcRange');
+    if (range && document.activeElement !== range) { range.value = String(mins); paintLtcRange(); }
+    const dateIn = $('#ltcDate');
+    if (dateIn && document.activeElement !== dateIn) dateIn.value = state.dateStr;
+    const timeIn = $('#ltcTime');
+    if (timeIn && document.activeElement !== timeIn) timeIn.value = A.fmtClock(jd);
+    $$('#ltcPresets [data-ltc]').forEach(function (b) {
+      const v = b.getAttribute('data-ltc');
+      let on = false;
+      if (v === 'now') on = !sim && state.dateStr === todayKST() && !state.timeStr;
+      else if (v === 'sunset') on = Math.abs(mins - clockMinutes(nightWindow().start + 0.25 / 24)) <= 5;
+      else on = Math.abs(mins - Number(v) * 60) <= 5;
+      b.classList.toggle('is-active', on);
+    });
+  }
+  function setLiveTimeCard(open) {
+    const card = $('#liveTimeCard');
+    if (!card) return;
+    ltc.open = !!open;
+    card.hidden = !ltc.open;
+    if (ltc.open) syncLiveTimeCard();
+    const btn = $('#liveTimeBtn');
+    if (btn) {
+      btn.setAttribute('aria-expanded', String(ltc.open));
+      btn.classList.toggle('is-on', ltc.open);
+    }
+  }
+  function initLiveTime() {
+    const card = $('#liveTimeCard');
+    if (!card) return;
+    const btn = $('#liveTimeBtn');
+    if (btn) btn.addEventListener('click', function () { setLiveTimeCard(card.hidden); });
+    const close = $('#ltcClose');
+    if (close) close.addEventListener('click', function () { setLiveTimeCard(false); });
+    const range = $('#ltcRange');
+    if (range) {
+      range.addEventListener('input', function () { applyLiveTime(Number(this.value), { fast: true }); paintLtcRange(); });
+      range.addEventListener('change', function () { applyLiveTime(Number(this.value)); });
+    }
+    const presets = $('#ltcPresets');
+    if (presets) presets.addEventListener('click', function (ev) {
+      const b = ev.target.closest('[data-ltc]');
+      if (!b) return;
+      const v = b.getAttribute('data-ltc');
+      if (v === 'now') {
+        setViewDate(todayKST(), '');
+        toast('지금 시각 하늘로 돌아왔습니다.');
+        return;
+      }
+      if (v === 'sunset') {
+        const w = nightWindow();
+        applyLiveTime(clockMinutes(w.start + 0.25 / 24));
+        toast('그 밤의 일몰 시각으로 옮겼습니다.');
+        return;
+      }
+      applyLiveTime(Number(v) * 60);
+      toast(v + '시 하늘로 옮겼습니다.');
+    });
+    const timeIn = $('#ltcTime');
+    if (timeIn) timeIn.addEventListener('change', function () {
+      const val = this.value;
+      if (!val) return;
+      const p = val.split(':').map(Number);
+      applyLiveTime((p[0] || 0) * 60 + (p[1] || 0));
+    });
+    const dateIn = $('#ltcDate');
+    if (dateIn) dateIn.addEventListener('change', function () {
+      const val = this.value;
+      if (!val) return;
+      const keep = clockMinutes((state.last || computeNight()).jd);
+      state.dateStr = val;
+      state.timeStr = '';
+      state.simJd = null;
+      stopPlay();
+      const di = $('#dateInput'), ti = $('#timeInput');
+      if (di) di.value = val;
+      if (ti) ti.value = '';
+      applyLiveTime(keep);   // 같은 시각을 새 날짜의 밤으로
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && ltc.open) setLiveTimeCard(false);
+    });
+    syncLiveTimeCard();
+  }
+
   function initLive() {
     if (!$('#liveStage')) return;
     wireLiveInfo();
+    initLiveTime();
     liveResize();
     pickStartView();
     window.addEventListener('resize', function () { liveResize(); });
@@ -11954,7 +12405,7 @@ window.Astro = (function () {
     stage.addEventListener('pointerdown', function (ev) {
       if (ev.button != null && ev.button !== 0) return;
       // 확대/축소·HUD 등 스테이지 위 버튼은 드래그 캡처에서 제외 (클릭이 죽지 않게)
-      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card')) return;
+      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card, .live-time-card')) return;
       drag = { x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false, t: performance.now() };
       stage.classList.add('is-dragging');
       try { stage.setPointerCapture(ev.pointerId); } catch (e) { }
@@ -12087,6 +12538,10 @@ window.Astro = (function () {
         }
         if (t.getAttribute('data-si-aim') && inspectorRef) {
           aimAt(inspectorRef.kind, inspectorRef.key);
+          return;
+        }
+        if (t.getAttribute('data-si-con')) {
+          openConstellation(t.getAttribute('data-si-con'));
           return;
         }
         const obj = t.getAttribute('data-si-obj');
@@ -12838,6 +13293,7 @@ window.Astro = (function () {
     renderLiveSync(c);
     renderInspector();
     updateTmBar();
+    syncLiveTimeCard();
     if (fast) return;
     renderTargets(c);
     renderHourlyPlan(c);
@@ -13338,7 +13794,11 @@ window.Astro = (function () {
     $('#modalClose').addEventListener('click', closeModal);
     $('#modalBody').addEventListener('click', function (ev) {
       const t = ev.target.closest ? ev.target.closest('[data-close]') : null;
-      if (t) closeModal();
+      if (t) { closeModal(); return; }
+      const conAim = ev.target.closest ? ev.target.closest('[data-con-aim]') : null;
+      if (conAim) { closeModal(); aimAt('con', conAim.getAttribute('data-con-aim')); return; }
+      const objOpen = ev.target.closest ? ev.target.closest('[data-obj-open]') : null;
+      if (objOpen) { openObject(objOpen.getAttribute('data-obj-open')); return; }
     });
     $$('#modal [data-close]').forEach(function (el) { el.addEventListener('click', closeModal); });
     document.addEventListener('keydown', function (e) {
@@ -13369,6 +13829,104 @@ window.Astro = (function () {
   }
 
   /* ---------------------------------------------------------- 별자리 88종 도감 */
+  /* 별자리 안 대표 천체 — 사진 갤러리와 상세 모달이 함께 씁니다.
+     · 대표 도감(40여 종)은 한글 별자리 이름(con)으로, 하늘 전체 도감(2,571종)은 IAU 약자(c)로 묶여 있습니다.
+     · 밝은 순으로 정리해, 사진이 있는 천체(메시에·NGC·밝은 별)가 앞에 오게 합니다. */
+  function conMembers(con) {
+    const out = [], seen = {};
+    function add(o) {
+      const k = String(o.id || o.i || o.name || '').toLowerCase();
+      if (!k || seen[k]) return;
+      seen[k] = 1;
+      out.push(o);
+    }
+    D.catalog.forEach(function (o) {
+      if (!o.dynamic && o.con === con.name) add(o);
+    });
+    const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
+    items.forEach(function (it) {
+      if (it.c !== con.abbr) return;
+      if (typeof it.ra !== 'number' || typeof it.dec !== 'number') return;
+      add({ id: String(it.i), name: it.ko || it.i, sub: it.i, type: it.t, ra: it.ra, dec: it.dec, mag: it.m, size: it.s });
+    });
+    // 성운·성단·은하 같은 뚜렷한 대상(실제 망원경 사진이 있는 천체)을 먼저, 그다음 밝은 별.
+    function isDeep(o) {
+      const t = String(o.type || '');
+      if (/항성|변광|이중성|star|var|dstar/i.test(t)) return false;
+      if (/성운|성단|은하|초신성|Neb|OCl|GCl|Cl\+N|HII|SNR|PN|RfN|\*Ass|^G$/i.test(t)) return true;
+      return /(^|[^A-Za-z])(M|NGC|IC)\s*-?\d+/i.test(String(o.sub || '') + ' ' + String(o.id || ''));
+    }
+    const magOf = function (o) { return (typeof o.mag === 'number') ? o.mag : 99; };
+    const deep = out.filter(isDeep).sort(function (a, b) { return magOf(a) - magOf(b); });
+    const stars = out.filter(function (o) { return !isDeep(o); }).sort(function (a, b) { return magOf(a) - magOf(b); });
+    return deep.concat(stars).slice(0, 6);
+  }
+
+  // 별자리 크기(면적)에 맞춘 사진 시야 — 작은 별자리는 좁게, 큰 별자리는 넓게
+  function conFov(con) {
+    return Math.min(22, Math.max(8, Math.sqrt(con.area || 300) * 1.4));
+  }
+
+  function openConstellation(abbr) {
+    const con = D.constellations.find(function (x) { return x.abbr === abbr; });
+    if (!con) return;
+    const c = state.last || computeNight();
+    const hor = A.equatorialToHorizontal(con.raH, con.decD, state.site.lat, state.site.lon, c.jd);
+    const ni = A.objectNight(con.raH, con.decD, state.site.lat, state.site.lon, state.dateStr);
+    const members = conMembers(con);
+    const altTxt = hor.alt > 0 ? dirName(hor.az) + ' ' + nf(hor.alt, 0) + '°' : '지평선 아래 (' + nf(hor.alt, 0) + '°)';
+    const memberHtml = members.length ? '<ul class="con-member-list">' + members.map(function (m) {
+      const magTxt = (typeof m.mag === 'number') ? ((m.mag > 0 ? '+' : '') + nf(m.mag, 1) + '등') : '—';
+      const objId = D.catalog.some(function (o) { return o.id === m.id; }) ? m.id : '';
+      const inner = '<b>' + esc(m.name || m.id) + '</b>' +
+        (m.sub && m.sub !== m.name ? ' <span>' + esc(m.sub) + '</span>' : '') +
+        ' · ' + esc(magTxt);
+      return '<li>' + (objId
+        ? '<button type="button" class="con-member" data-obj-open="' + esc(objId) + '">' + inner + '</button>'
+        : '<span class="con-member is-plain">' + inner + '</span>') + '</li>';
+    }).join('') + '</ul>' : '<p class="small muted">이 별자리에 등록된 대표 천체가 없습니다.</p>';
+
+    $('#modalBody').innerHTML =
+      '<div class="md-head"><h2 id="modalTitle">' + esc(con.name) + '</h2>' +
+      '<div class="md-sub">' + esc(con.en) + ' (' + esc(con.abbr) + ') · IAU 88별자리 · ' + esc(con.season) + '</div></div>' +
+      '<div class="md-stats">' +
+      stat('가장 밝은 별', con.bright ? esc(con.bright) + ' (' + (con.brightMag > 0 ? '+' : '') + nf(con.brightMag, 2) + '등)' : '—', '별자리에서 가장 밝은 별입니다.') +
+      stat('면적', con.area.toLocaleString('en-US') + ' deg²', '하늘 전체에서 차지하는 넓이. 88개 중 ' + con.areaRank + '위입니다.') +
+      stat('중심 적경', fmtRA(con.raH), '별자리 중심의 가로 좌표(24시간 = 360°).') +
+      stat('중심 적위', fmtDec(con.decD), '별자리 중심의 세로 좌표. +90°가 북극성 방향입니다.') +
+      stat('잘 보이는 때', con.bestMonth + '월 · ' + con.season) +
+      stat('지금 하늘', altTxt, '선택한 관측지·시각 기준입니다. 시간 조정 카드로 바꿀 수 있습니다.') +
+      '</div>' +
+      '<div class="md-now"><span>연결선 ' + con.lines.length + '구간</span>' +
+      '<span>오늘 밤 최고: ' + (ni.neverUp ? '지평선 위로 안 오름' : nf(ni.maxAlt, 0) + '° (' + A.fmtClock(ni.maxJd) + ')') + '</span>' +
+      '<span>출/몰: ' + A.fmtClock(ni.riseJd) + ' / ' + A.fmtClock(ni.setJd) + '</span></div>' +
+      '<div class="md-section"><h3>별자리</h3><p>' + esc(con.desc) + '</p></div>' +
+      '<div class="md-section"><h3>이 별자리의 대표 천체</h3>' + memberHtml +
+      '<p class="small muted">천체 이름을 누르면 그 천체의 상세 정보가 열립니다.</p></div>' +
+      '<div class="md-section"><h3>사진</h3><p class="small muted">사진은 별자리 중심 좌표의 NASA SkyView 실제 하늘 탐사 사진(DSS2 등)과, 이 별자리에 속한 대표 천체의 NASA·허블·제임스웹 촬영본입니다. 일러스트·아티스트 컨셉·다른 이름의 천체 사진은 넣지 않습니다.</p></div>' +
+      '<div class="con-actions">' +
+      '<button class="btn btn-primary btn-sm" type="button" data-con-aim="' + esc(con.abbr) + '">🎯 라이브 뷰로 조준</button>' +
+      '<button class="mini-btn" type="button" data-close="1">닫기</button></div>';
+
+    // 상단 사진 갤러리 — 별자리 중심 실제 하늘 + 대표 천체 사진 5~8장
+    if (window.SkyGallery) {
+      const body = $('#modalBody');
+      const fig = SkyGallery.create({
+        kind: 'con', name: con.name, en: con.en, abbr: con.abbr,
+        raH: con.raH, decD: con.decD, members: members, fovDeg: conFov(con)
+      }, { variant: 'modal' });
+      const head = body.querySelector('.md-head');
+      if (head && head.nextSibling) body.insertBefore(fig, head.nextSibling);
+      else body.appendChild(fig);
+    }
+
+    const modal = $('#modal');
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    state._lastFocus = document.activeElement;
+    $('#modalClose').focus();
+  }
+
   function renderConGrid() {
     const grid = $('#conGrid');
     if (!grid) return;
@@ -13385,6 +13943,7 @@ window.Astro = (function () {
         '<div class="con-head"><b>' + esc(c.name) + '</b><span class="con-abbr">' + esc(c.abbr) + '</span>' +
         '<span class="con-aim" role="button" tabindex="0" data-aim="' + esc(c.abbr) + '" title="라이브 하늘에서 보기" aria-label="' + esc(c.name) + ' 라이브 하늘에서 보기">🎯</span></div>' +
         '<span class="con-meta">' + esc(c.season) + ' · ' + (c.bestMonth || '—') + '월 · ' + esc(c.bright || '—') + mag + '</span>' +
+        '<span class="con-open-hint">📷 실제 사진 · 상세 보기 →</span>' +
         '<p class="con-desc">' + esc(c.desc) + '<br><span class="con-facts">영문 ' + esc(c.en) + ' · 면적 ' + c.areaRank + '위 · 연결선 ' + c.lines.length + '구간</span></p>' +
         '</article>';
     }).join('') : '<p class="con-empty">조건에 맞는 별자리가 없습니다. 검색어를 지워 보세요.</p>';
@@ -13412,9 +13971,7 @@ window.Astro = (function () {
     const search = $('#conSearch');
     if (search) search.addEventListener('input', function () { state.conQuery = this.value; renderConGrid(); });
     function toggle(card) {
-      const open = !card.classList.contains('is-open');
-      card.classList.toggle('is-open', open);
-      card.setAttribute('aria-expanded', String(open));
+      openConstellation(card.getAttribute('data-con'));
     }
     grid.addEventListener('click', function (ev) {
       const aim = ev.target.closest('[data-aim]');
@@ -14131,6 +14688,22 @@ window.Astro = (function () {
       var aim = e.target.closest('[data-lb-aim]');
       if (aim) aimAt(JSON.parse(aim.getAttribute('data-lb-aim')));
     });
+    /* 사진 영역을 좌우로 밀어도 이동 — 버튼이 가려지는 화면에서도 같은 동작 */
+    var media = m.querySelector('.sm-media');
+    var sw = { x: null, y: null };
+    if (media) {
+      media.addEventListener('touchstart', function (e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        sw.x = e.touches[0].clientX; sw.y = e.touches[0].clientY;
+      }, { passive: true });
+      media.addEventListener('touchend', function (e) {
+        if (sw.x == null || !e.changedTouches || !e.changedTouches.length) { sw.x = null; return; }
+        var dx = e.changedTouches[0].clientX - sw.x;
+        var dy = e.changedTouches[0].clientY - sw.y;
+        sw.x = null; sw.y = null;
+        if (Math.abs(dx) > 46 && Math.abs(dx) > Math.abs(dy) * 1.3) moveLightbox(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    }
   }
 
   function findCatalogByName(name) {
@@ -14144,6 +14717,7 @@ window.Astro = (function () {
   function openLightbox() {
     var m = $('#spaceModal');
     if (!m) return;
+    lbPush();
     var list = STATE.lbList && STATE.lbList.length ? STATE.lbList : SD.GALLERY.map(function (g, i) { return i; });
     var gi = list[STATE.lbIndex];
     var g = SD.GALLERY[gi];
@@ -14372,6 +14946,7 @@ window.Astro = (function () {
     STATE.lbList = []; STATE.lbIndex = 0;
     m.hidden = false;
     document.body.classList.add('space-lock');
+    lbPush();
     var h = altitudeOf(o);
     $('.sm-media', m).classList.remove('is-text');
     var imgEl = $('#smImg');
@@ -14973,11 +15548,34 @@ window.Astro = (function () {
   /* ======================================================================
      공통 닫기 / 키보드
      ====================================================================== */
+  /* 사진 모달을 브라우저 기록에 한 칸 올려 둡니다.
+     아이폰 앱(standalone)에서 화면 왼쪽 가장자리를 밀거나 뒤로 가기를 누르면
+     페이지가 아니라 '보고 있던 사진 창'이 닫히게 됩니다. */
+  var LB_HIST = false;
+  function lbPush() {
+    if (LB_HIST) return;
+    try { history.pushState({ lb: 1 }, ''); LB_HIST = true; } catch (e) { }
+  }
+  function lbPop() {
+    if (!LB_HIST) return;
+    LB_HIST = false;
+    try { history.back(); } catch (e) { }
+  }
+  window.addEventListener('popstate', function () {
+    var m = document.getElementById('spaceModal');
+    if (m && !m.hidden) {
+      LB_HIST = false;
+      m.hidden = true;
+      document.body.classList.remove('space-lock');
+    }
+  });
+
   function closeAll() {
     ['cookieDrawer', 'aiDrawer', 'spaceModal'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.hidden = true;
     });
+    lbPop();
     document.body.classList.remove('space-lock');
     // 닫을 때 저장하지 않은 키가 입력칸에 남아 있지 않게 하고, 설정 패널·⚙ 상태를 접습니다.
     var key = document.getElementById('aiKey');

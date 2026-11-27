@@ -180,6 +180,10 @@ html[data-layout="desktop"] #modalBody > .md-head { grid-column: 1 / -1; }
 html[data-layout="desktop"] #modalBody > .catphoto {
   grid-column: 1; grid-row: 2; position: sticky; top: 0; margin-top: 0;
 }
+/* 사진 갤러리(.sg)도 왼쪽 사진 열에 놓습니다 — 예전 사진 카드(.catphoto)와 같은 자리 */
+html[data-layout="desktop"] #modalBody > .sg {
+  grid-column: 1; grid-row: 2; position: sticky; top: 0; margin-top: 0;
+}
 html[data-layout="desktop"] #modalBody > .catphoto .cp-media { aspect-ratio: 4 / 3; max-height: 46vh; }
 html[data-layout="desktop"] #modalBody > * { grid-column: 2; }
 html[data-layout="desktop"] .md-head h2 { font-size: 1.7rem; }

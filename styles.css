@@ -2489,3 +2489,135 @@ body.red .lc-close:hover { color: #ffb59a; }
 body.red input[type="checkbox"],
 body.red input[type="radio"],
 body.red input[type="range"] { filter: sepia(1) hue-rotate(-30deg) saturate(3) brightness(.7); }
+
+/* =========================================================================
+   2026-11-27 — 라이브 하늘 시간 카드 · 명소 광공해 필터 · 별자리 상세/사진
+   ========================================================================= */
+
+/* ------------------------------------------- 라이브 하늘 · 시간 카드 */
+.live-quick { flex-wrap: wrap; max-width: calc(100% - 52px); }
+.live-quick .lq-btn.is-on {
+  color: var(--accent); border-color: rgba(255, 212, 121, .55); background: rgba(255, 212, 121, .14);
+}
+.live-time-card {
+  position: absolute; left: 10px; right: 10px; bottom: 56px; z-index: 4;
+  max-width: 460px; max-height: calc(100% - 78px); overflow-y: auto;
+  padding: 10px 12px 11px; border-radius: 14px; cursor: default;
+  background: rgba(6, 10, 20, .93); border: 1px solid var(--border-hi);
+  box-shadow: 0 18px 40px -20px #000;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.live-time-card[hidden] { display: none; }
+.ltc-head { display: flex; align-items: center; gap: 8px; }
+.ltc-head b { font-size: .8rem; }
+.ltc-now {
+  flex: 1 1 auto; min-width: 0; text-align: right; font-size: .72rem; font-weight: 700;
+  color: var(--accent); font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ltc-x {
+  flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05);
+  color: var(--muted); font-size: .84rem; line-height: 1; display: grid; place-items: center;
+}
+.ltc-x:hover, .ltc-x:focus-visible { color: var(--text); border-color: var(--border-hi); }
+.ltc-presets {
+  display: flex; gap: 6px; margin: 8px 0 10px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.ltc-presets::-webkit-scrollbar { display: none; }
+.ltc-chip {
+  flex: 0 0 auto; min-height: 30px; padding: 0 11px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .04); color: var(--muted);
+  font: 700 .74rem var(--font); white-space: nowrap;
+}
+.ltc-chip:hover { color: var(--text); border-color: var(--border-hi); }
+.ltc-chip.is-active { color: var(--accent); border-color: rgba(255, 212, 121, .5); background: rgba(255, 212, 121, .13); }
+.ltc-slider input[type="range"] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 99px;
+  outline: none; cursor: pointer;
+  background: linear-gradient(90deg, var(--accent) 0 var(--ltc-fill, 0%), rgba(255, 255, 255, .13) var(--ltc-fill, 0%) 100%);
+}
+.ltc-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); border: 2px solid #1a1408; box-shadow: 0 0 10px rgba(255, 212, 121, .5);
+}
+.ltc-slider input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid #1a1408;
+}
+.ltc-scale {
+  display: flex; justify-content: space-between; margin-top: 3px;
+  font-size: .62rem; color: var(--faint); font-variant-numeric: tabular-nums;
+}
+.ltc-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.ltc-row label { display: grid; gap: 3px; font-size: .64rem; color: var(--faint); }
+.ltc-row input {
+  width: 100%; min-width: 0; min-height: 32px; padding: 4px 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text);
+  font: 600 .76rem var(--font); font-variant-numeric: tabular-nums; color-scheme: dark;
+}
+.ltc-row input:focus-visible { border-color: var(--accent); outline: none; }
+.ltc-note { margin: 7px 0 0; font-size: .62rem; color: var(--faint); line-height: 1.5; }
+body.red .live-time-card { background: rgba(12, 2, 1, .94); }
+body.red .ltc-chip.is-active { border-color: rgba(255, 110, 80, .45); background: rgba(255, 106, 61, .14); color: #ffb59a; }
+body.red .ltc-slider input[type="range"] { filter: none; }
+
+/* ------------------------------------- 전국 관측 명소 · 광공해 등급 필터 */
+.site-bortle-tools {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: -2px 0 12px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, .03); border: 1px solid var(--border);
+}
+.site-bortle-label { font-size: .74rem; font-weight: 800; color: var(--text); letter-spacing: -.01em; }
+.site-bortles { margin: 0; }
+.bortle-chip { display: inline-flex; align-items: center; gap: 5px; }
+.bortle-chip em { font-style: normal; font-weight: 600; color: var(--faint); font-size: .9em; }
+.bortle-chip .chip-num {
+  font-size: .68rem; font-weight: 800; padding: 1px 6px; border-radius: 99px;
+  background: rgba(255, 255, 255, .12); color: var(--text); font-variant-numeric: tabular-nums;
+}
+.bortle-chip.is-active em { color: inherit; opacity: .8; }
+.bortle-chip.is-active .chip-num { background: rgba(16, 19, 28, .22); }
+.bortle-chip.is-empty { opacity: .5; }
+.site-count { margin-left: auto; font-size: .72rem; font-weight: 700; color: var(--accent-2); font-variant-numeric: tabular-nums; }
+body.red .bortle-chip.is-active .chip-num { background: rgba(20, 3, 1, .3); }
+body.red .site-count { color: #ffb59a; }
+
+/* ----------------------------------- 별자리 카드 → 상세 · 실제 사진 갤러리 */
+.con-open-hint { display: block; margin-top: 5px; font-size: .66rem; font-weight: 700; color: var(--accent-2); }
+.con-card:hover .con-open-hint, .con-card:focus-visible .con-open-hint { color: var(--accent); }
+.con-member-list { list-style: none; margin: 8px 0 4px; padding: 0; display: grid; gap: 6px; }
+.con-member {
+  display: block; width: 100%; text-align: left; cursor: pointer; font: inherit; font-size: .8rem;
+  padding: 7px 10px; border-radius: 9px; border: 1px solid var(--border);
+  background: rgba(255, 255, 255, .03); color: var(--muted);
+}
+.con-member b { color: var(--text); }
+.con-member span { color: var(--faint); font-size: .92em; }
+.con-member:hover, .con-member:focus-visible { border-color: var(--border-hi); color: var(--text); background: rgba(255, 255, 255, .06); }
+.con-member.is-plain { cursor: default; }
+.con-member.is-plain:hover { border-color: var(--border); background: rgba(255, 255, 255, .03); }
+.con-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59a; }
+
+/* =========================================================================
+   2026-11-27 — 사이트 전체 '이전/다음' 버튼 점검 (아이폰 손가락·가장자리 제스처)
+   · 아이폰은 화면 왼쪽 가장자리에서 조금만 끌어도 '뒤로 가기'로 처리해
+     가장자리에 붙은 ‹ 버튼의 탭을 삼킵니다. 버튼을 안쪽으로 들이고 크게 잡습니다.
+   ========================================================================= */
+.sg-arrow, .sm-nav, .li-arrow { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.sg-arrow { z-index: 6; background: rgba(4, 8, 16, .8); }
+.sm-nav { z-index: 8; background: rgba(5, 8, 16, .82); }
+.li-arrow { z-index: 6; }
+.sg-arrow[hidden], .sm-nav[hidden] { display: none; }
+@media (max-width: 860px) {
+  .sg-arrow { width: 44px; height: 44px; font-size: 1.35rem; }
+  .sg-prev { left: 12px; }
+  .sg-next { right: 12px; }
+  .li-arrow { width: 44px; height: 44px; }
+  .li-prev { left: 12px; }
+  .li-next { right: 12px; }
+  .sm-nav { width: 46px; height: 58px; }
+  .sm-nav.prev { left: 16px; }
+  .sm-nav.next { right: 16px; }
+}

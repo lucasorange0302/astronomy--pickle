@@ -141,9 +141,16 @@
     // 항성 여부 — type 이 비어 있는 라이브 하늘 객체(kind:'star')까지 잡습니다.
     var isStar = !!(o.kind === 'star' || o.group === 'star') || isStarType(type) ||
       starNameHit(keys) || starNameHit([base.name, base.ko, base.en, base.sub, base.id]);
+    // 별자리(kind:'con')는 별자리 자체를 NASA 텍스트 검색하지 않습니다.
+    // 'Orion'→오리온 우주선, 'Cygnus'→시그너스 화물선처럼 이름이 겹치는 자료가 섞입니다.
+    // 대신 별자리 안 대표 천체(members)의 사진과 중심 좌표의 SkyView 실제 하늘 사진을 씁니다.
+    if (o.kind === 'con') isStar = false;
     return {
       ko: ko, en: en, M: M, id: id, type: type, setKey: setKey,
       ra: ra, dec: dec, sizeArcmin: sizeArcmin, mag: mag, isStar: isStar, kind: o.kind || '',
+      con: o.kind === 'con',
+      fovDeg: typeof o.fovDeg === 'number' ? o.fovDeg : null,
+      members: Array.isArray(o.members) ? o.members : [],
       label: o.name || ko || en || '천체',
       sub: o.sub || '',
       keys: keys,
@@ -175,7 +182,8 @@
   function isBlueType(t) { return isStarType(t) || /OCl|GCl|Cl\+N|\*Ass|성단/.test(String(t || '')); }
 
   function fovFor(d) {
-    if (d.kind === 'con') return 4;           // 별자리는 4°(약 8°×8° 화면)까지
+    // 별자리는 중심 좌표에서 넓게(기본 16°) 잡아 별자리 모양이 한 장에 들어오게 합니다.
+    if (d.kind === 'con') return d.fovDeg ? Math.min(24, Math.max(6, d.fovDeg)) : 16;
     if (d.isStar || isStarType(d.type)) {
       if (d.mag != null && d.mag <= 1.6) return 3.0;
       if (d.mag != null && d.mag <= 3) return 1.6;
@@ -204,6 +212,47 @@
       '&Position=' + ra.toFixed(4) + ',' + Number(d.dec).toFixed(4) +
       '&Size=' + Number(size).toFixed(2) + '&Pixels=' + (px || 480) + '&Return=JPEG' +
       (extra || '');
+  }
+
+  /* ---------------------------------- 광시야 실제 하늘 (CDS HiPS) — 별자리용 */
+  // DSS2 컬러·Mellinger 광시야·DSS2 적색 판을 좌표로 잘라 옵니다.
+  // NASA SkyView 가 "Too Many Processes" 로 막혀도 별자리 사진이 나오도록 하는 두 번째 경로입니다.
+  function hipsUrl(d, hips, size, w, h) {
+    if (d.ra == null || d.dec == null || !isFinite(d.ra) || !isFinite(d.dec)) return null;
+    var ra = ((d.ra % 360) + 360) % 360;
+    return 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits' +
+      '?hips=' + encodeURIComponent(hips) +
+      '&width=' + (w || 480) + '&height=' + (h || 480) +
+      '&fov=' + Number(size).toFixed(2) + '&projection=TAN&coordsys=icrs' +
+      '&ra=' + ra.toFixed(4) + '&dec=' + Number(d.dec).toFixed(4) + '&format=jpg';
+  }
+
+  var HIPS = [
+    ['Mellinger/color', '은하수 광시야 · Mellinger', 'Mellinger All-Sky Panorama'],
+    ['DSS2/color', '가시광 컬러 · DSS2', 'Digitized Sky Survey 2 (STScI)'],
+    ['2MASS/K', '근적외선 · 2MASS K', '2MASS (UMass/IPAC)'],
+    ['DSS2/red', '가시광 적색판 · DSS2', 'Digitized Sky Survey 2 (STScI)'],
+    ['DSS2/blue', '가시광 청색판 · DSS2', 'Digitized Sky Survey 2 (STScI)']
+  ];
+
+  function hipsCandidates(d) {
+    if (d.kind !== 'con' || d.ra == null || d.dec == null) return [];
+    var size = fovFor(d);
+    var out = [];
+    HIPS.forEach(function (h, i) {
+      var u = hipsUrl(d, h[0], size, 480, 480);
+      if (!u) return;
+      out.push({
+        src: u, thumb: u,
+        title: d.label + ' · 실제 하늘 (' + h[1] + ')',
+        credit: 'CDS HiPS · ' + h[2] + ' · 좌표 기반 실제 촬영 이미지',
+        link: 'https://alasky.cds.unistra.fr/hips-image-services/hips2fits?hips=' + encodeURIComponent(h[0]) +
+          '&ra=' + (((d.ra % 360) + 360) % 360).toFixed(3) + '&dec=' + Number(d.dec).toFixed(3) +
+          '&fov=' + size.toFixed(2) + '&projection=TAN&coordsys=icrs&format=jpg',
+        rank: 150 + i, hips: true, to: 16000
+      });
+    });
+    return out;
   }
 
   function surveyCandidates(d) {
@@ -404,6 +453,21 @@
   /* ------------------------------------------------------------ 후보 모으기 */
   function localCandidates(d) {
     var out = [];
+    // 별자리 — 별자리 안 대표 천체의 실제 사진(로컬 NASA·허블·제임스웹)을 먼저 모읍니다.
+    if (d.kind === 'con' && d.members.length) {
+      d.members.forEach(function (m) {
+        var md = describe(m);
+        localCandidates(md).slice(0, 2).forEach(function (c) {
+          out.push({
+            src: c.src, thumb: c.thumb,
+            title: (c.title && String(c.title).indexOf(md.label) === 0)
+              ? c.title : (md.label + ' — ' + (c.title || '사진')),
+            credit: c.credit, link: c.link, rank: 0
+          });
+        });
+      });
+      if (out.length) return out;
+    }
     var set = d.setKey && SETS[d.setKey];
     if (set) {
       set.forEach(function (p) {
@@ -623,6 +687,34 @@
 
       runQueue(local, 5, stop, addItem).then(function () {
         if (stop()) return null;
+        // 별자리 — 별자리 이름 대신, 별자리 안 대표 천체 이름으로만 NASA를 검색합니다.
+        if (d.kind === 'con' && d.members.length) {
+          var mems = d.members.slice(0, 2);
+          var chain = Promise.resolve();
+          mems.forEach(function (m) {
+            chain = chain.then(function () {
+              if (stop()) return null;
+              var md = describe(m);
+              if (md.isStar || md.ra == null) return null;   // 항성은 텍스트 검색 제외(이름 충돌)
+              var qs = nasaQueries(md);
+              if (!qs.length) return null;
+              return nasaSearch(qs[0], 6, md).then(function (list) {
+                var seen2 = {}, fresh = [];
+                list.forEach(function (c) {
+                  if (!c.src || seen2[c.src]) return;
+                  seen2[c.src] = 1; fresh.push(c);
+                });
+                fresh.forEach(function (c, i) { c.rank = 100 + i; });
+                return runQueue(fresh, 4, stop, addItem);
+              });
+            });
+          });
+          // NASA 검색이 느리거나 막혀도 6초 뒤에는 광시야 실제 하늘 사진을 이어서 받습니다.
+          return Promise.race([
+            chain,
+            new Promise(function (res) { setTimeout(function () { res(null); }, 6000); })
+          ]);
+        }
         // 항성은 NASA 텍스트 검색을 완전히 차단합니다. 'Vega' → 라스베가스,
         // 'Sirius' → 위성, 'Orion' → 오리온 우주선처럼 이름이 겹치는 자료가
         // 섞여 들어오기 때문입니다. 별은 실제 하늘 탐사 사진으로만 채웁니다.
@@ -660,6 +752,15 @@
         });
       }).then(function () {
         if (stop()) return null;
+        if (d.kind === 'con') {
+          var hc = hipsCandidates(d);
+          return runQueue(hc, 3, stop, addItem);
+        }
+        return null;
+      }).then(function () {
+        if (stop()) return null;
+        // 별자리는 이미 5장 이상이면 SkyView(느리고 가끔 막힘)를 건너뜁니다.
+        if (d.kind === 'con' && S.items.length >= 5) return null;
         var sv = surveyCandidates(d);
         sv.forEach(function (c, i) { c.rank = 200 + i; });
         return runQueue(sv, 3, stop, addItem);
@@ -680,6 +781,8 @@
     });
     var sx = null, sy = null;
     shot.addEventListener('touchstart', function (e) {
+      // 화살표를 누른 손가락은 스와이프로 보지 않습니다 (한 번에 두 칸 이동 방지)
+      if (e.target && e.target.closest && e.target.closest('.sg-arrow')) { sx = null; return; }
       if (!e.touches || e.touches.length !== 1) return;
       sx = e.touches[0].clientX; sy = e.touches[0].clientY;
     }, { passive: true });
