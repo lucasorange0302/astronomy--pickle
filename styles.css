@@ -259,6 +259,9 @@ body.red .nav-link.is-active { color: #1a0402; }
   font-size: .74rem; font-weight: 700; cursor: pointer;
 }
 .mini-btn:hover { color: var(--text); border-color: var(--border-hi); }
+/* '지금' 추적 중 — 시각 칸이 현재 시각을 따라가는 동안 버튼도 켜진 모양으로 */
+#btnNow[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: rgba(255, 212, 121, .4); }
+body.red #btnNow[aria-pressed="true"] { background: rgba(255, 106, 61, .18); color: #ffb08a; border-color: rgba(255, 120, 80, .4); }
 
 /* ------------------------------------------------------- 10초 요약 카드 */
 /* 지금이 낮일 때만 보이는 안내 — 현재 하늘 기준 값임을 알리고 밤 22:00로 한 번에 바꾼다 */

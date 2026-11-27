@@ -195,6 +195,69 @@
     return 22;
   }
 
+  /* ------------------------------------------------------- 시각 칸 표시값
+     시각 칸(input[type=time])을 비워 두면 iOS Safari에서는 아무 숫자도 보이지 않아
+     '지금' 버튼을 눌러도 시각이 사라진 것처럼 보입니다. 그래서 화면에는 실제로 쓰이는
+     시각(HH:MM)을 늘 채워 두고, state.timeStr · state.simJd 의 의미는 그대로 둡니다.
+     · state.timeStr === ''  → 오늘은 지금 추적(분이 바뀌면 칸도 함께 갱신), 다른 날은 22:00
+     · state.simJd != null   → 타임랩스·시간 조정 카드로 고른 시각 */
+  function nowClockStr() {
+    // JD 반올림(fmtClock)은 23:59:30을 00:00으로 보여 주므로, '지금'은 시계에서 바로 읽는다.
+    const d = new Date(Date.now() + 9 * 3600000);
+    return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+  }
+
+  function timeFieldValue() {
+    if (state.simJd != null) return A.fmtClock(state.simJd);
+    if (state.timeStr) return state.timeStr;
+    return state.dateStr === todayKST() ? nowClockStr() : '22:00';
+  }
+
+  // 시각 칸에 표시값을 채운다. 사용자가 칸을 만지고 있는 동안에는 건드리지 않는다.
+  function syncTimeField(force) {
+    const ti = $('#timeInput');
+    if (!ti) return;
+    if (!force && document.activeElement === ti) return;
+    const v = timeFieldValue();
+    if (ti.value !== v) ti.value = v;
+    updateNowBtn();
+  }
+
+  // '지금' 버튼이 지금 추적 중임을 색으로도 알린다.
+  function updateNowBtn() {
+    const b = $('#btnNow');
+    if (!b) return;
+    const live = !state.timeStr && state.simJd == null && state.dateStr === todayKST();
+    b.setAttribute('aria-pressed', live ? 'true' : 'false');
+  }
+
+  /* --------------------------------------------- '지금' 시각 분 단위 자동 갱신
+     시각 칸과 요약에 보이는 현재 시각을 분이 바뀔 때 함께 갱신합니다.
+     state.timeStr 는 계속 ''로 두므로 계산(selectedJD)은 그대로 '지금'을 씁니다. */
+  let liveDay = todayKST(), liveClock = nowClockStr();
+  function tickLiveClock() {
+    if (document.hidden) return;   // 화면을 보고 있을 때만 그린다(돌아오면 visibilitychange가 부릅니다)
+    const t = todayKST();
+    // 따라가던 '오늘'이 자정을 넘겨 새 날짜가 된 경우 — 날짜만 새 오늘로 옮긴다.
+    if (!state.timeStr && state.simJd == null && state.dateStr === liveDay && t !== liveDay) {
+      state.dateStr = t;
+      state.tmFrac = 0;
+      const di = $('#dateInput');
+      if (di) di.value = t;
+      liveDay = t;
+      liveClock = '';
+      renderAll({ fast: true });
+      return;
+    }
+    liveDay = t;
+    if (state.timeStr || state.simJd != null || state.dateStr !== t) return;
+    const clock = nowClockStr();
+    if (clock === liveClock) return;
+    liveClock = clock;
+    if (state.playing) { syncTimeField(true); return; }
+    renderAll({ fast: true });   // 시각 칸·요약·하늘을 같은 시각으로 맞춘다
+  }
+
   // 밤(어두운) 구간을 18~30시 정수 hour 범위로 (자정 넘김은 24+)
   function darkWindowHours(startJd, endJd) {
     if (startJd == null || endJd == null) return { start: 18, end: 30 };
@@ -260,7 +323,7 @@
     const n = c.night, site = state.site;
     const timeLabel = state.simJd != null
       ? A.fmtClock(state.simJd) + ' (타임랩스)'
-      : (state.timeStr || (state.dateStr === todayKST() ? '지금' : '22:00 기준'));
+      : (state.timeStr || (state.dateStr === todayKST() ? nowClockStr() + ' (지금)' : '22:00 기준'));
     $('#summaryDate').textContent = (Number(state.dateStr.slice(5, 7))) + '월 ' +
       Number(state.dateStr.slice(8, 10)) + '일 (' + weekdayKR(state.dateStr) + ') ' + timeLabel;
     $('#summaryPlace').textContent = site.name + ' · Bortle ' + (site.bortle || '?');
@@ -1098,7 +1161,8 @@
     }
     $('#skyMapNote').textContent = state.simJd != null
       ? A.fmtClock(state.simJd) + ' KST (타임랩스)'
-      : (state.timeStr ? state.timeStr + ' KST' : (state.dateStr === todayKST() ? '현재 시각' : '22:00 KST'));
+      : (state.timeStr ? state.timeStr + ' KST'
+        : (state.dateStr === todayKST() ? nowClockStr() + ' KST (지금)' : '22:00 KST'));
   }
 
   /* ------------------------------------------------------ 오늘 밤 추천 목록 */
@@ -1215,7 +1279,7 @@
         state.dateStr = b.getAttribute('data-date');
         state.timeStr = '';
         $('#dateInput').value = state.dateStr;
-        $('#timeInput').value = '';
+        syncTimeField(true);
         renderAll();
         toast(b.getAttribute('data-date') + ' 밤으로 날짜를 바꿨습니다.');
       });
@@ -3519,9 +3583,9 @@
       state.timeStr = '';
       state.simJd = null;
       stopPlay();
-      const di = $('#dateInput'), ti = $('#timeInput');
+      const di = $('#dateInput');
       if (di) di.value = state.dateStr;
-      if (ti) ti.value = '';
+      syncTimeField(true);
       applyLiveTime(keep);   // 같은 시각을 새 날짜의 밤으로
     });
     document.addEventListener('keydown', function (e) {
@@ -3744,11 +3808,7 @@
       paintDial(dock);
     });
     // 관측 시각 입력칸도 실제로 쓰이는 시각을 그대로 보여 준다(시뮬레이션 중이면 그 시각).
-    const ti = $('#timeInput');
-    if (ti && document.activeElement !== ti) {
-      if (sim && baseJd != null) ti.value = A.fmtClock(baseJd);
-      else ti.value = state.timeStr || (state.dateStr === todayKST() ? '' : '22:00');
-    }
+    syncTimeField();
   }
 
   /* ------------------------------------------------------------ 속도 다이얼 */
@@ -3909,8 +3969,7 @@
     state.simJd = null;
     state.tmFrac = 0;
     stopPlay();
-    const ti = $('#timeInput');
-    if (ti) ti.value = state.timeStr;
+    syncTimeField(true);
   }
 
   function playStep(ts) {
@@ -4203,9 +4262,9 @@
     state.tmFrac = 0;
     state.follow = null;
     stopPlay();
-    const di = $('#dateInput'), ti = $('#timeInput');
+    const di = $('#dateInput');
     if (di) di.value = dateStr;
-    if (ti) ti.value = state.timeStr;
+    syncTimeField(true);
     renderAll();
     updateTmBar();
   }
@@ -4702,6 +4761,7 @@
 
   function initControls() {
     $('#dateInput').value = state.dateStr;
+    syncTimeField(true);
     $('#dateInput').addEventListener('change', function () {
       state.dateStr = $('#dateInput').value || todayKST();
       dropSim();
@@ -4713,14 +4773,13 @@
       renderAll();
     });
     $('#btnNow').addEventListener('click', function () {
-      state.dateStr = todayKST();
-      state.timeStr = '';
+      state.dateStr = todayKST();      state.timeStr = '';
       state.simJd = null;
       state.tmFrac = 0;
       state.follow = null;
       stopPlay();
       $('#dateInput').value = state.dateStr;
-      $('#timeInput').value = '';
+      syncTimeField(true);
       renderAll();
       toast('현재 시각으로 돌아왔습니다.');
     });
@@ -5441,6 +5500,9 @@
     drawHeroStars();
     initTermTips();
     initExtra();
+    // '지금' 시각을 분 단위로 따라갑니다(탭으로 돌아오면 바로 한 번).
+    setInterval(tickLiveClock, 5000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) tickLiveClock(); });
     window.addEventListener('resize', function () {
       if ($('#skyMap')) {
         try { renderSkyMap(state.last); } catch (e) {}
