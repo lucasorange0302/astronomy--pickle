@@ -595,7 +595,8 @@
       const flags = [];
       if (pos.hor.alt >= 0 && pos.hor.alt < 15) flags.push('지평선 근처');
       // 해가 떠 있으면 '박명 중'이 아니라 '낮'입니다. (정오에 모든 대상이 '박명 중'으로 표시되던 문제)
-      if (sunAlt > 0) flags.push('낮');
+      // 지평선 위(alt ≥ 8°·25°) 대상은 상태 배지가 이미 '낮 하늘'이라 '낮'을 또 붙이지 않습니다.
+      if (sunAlt > 0) { if (pos.hor.alt < 8) flags.push('낮'); }
       else if (sunAlt > -12) flags.push('박명 중');
       if (moonBright && isDeepSky(o)) { flags.push('달빛 주의'); if (!opts.ignoreMoon) value -= 14; }
       if (o.group === 'meteor') {
