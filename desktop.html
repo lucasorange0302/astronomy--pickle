@@ -957,6 +957,7 @@
           <div class="btn-row">
             <button class="mini-btn" id="btnExportLog">JSON 내보내기</button>
             <button class="mini-btn" id="btnImportLog">가져오기</button>
+            <button class="mini-btn" id="btnClearLog">전체 삭제</button>
             <input type="file" id="importFile" accept="application/json,.json" hidden>
           </div>
         </div>
@@ -979,7 +980,10 @@
             </label>
           </div>
           <label class="field"><span class="field-label">메모</span><textarea id="logMemo" rows="2" placeholder="무엇이 보였나요?"></textarea></label>
-          <button class="btn btn-primary" type="submit">기록 저장</button>
+          <div class="log-actions">
+            <button class="btn btn-primary" type="submit" id="logSubmit">기록 저장</button>
+            <button class="btn btn-ghost" type="button" id="logCancelEdit" hidden>수정 취소</button>
+          </div>
         </form>
         <div class="log-list" id="logList"></div>
       </div>

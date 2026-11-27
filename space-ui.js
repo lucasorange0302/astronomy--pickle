@@ -19,7 +19,15 @@
   function nf(v, d) { return (v == null || !isFinite(v)) ? '—' : Number(v).toFixed(d == null ? 0 : d); }
   function store(k, v) {
     try {
-      if (v === undefined) { var s = localStorage.getItem('ob.' + k); return s == null ? null : JSON.parse(s); }
+      if (v === undefined) {
+        var s = localStorage.getItem('ob.' + k);
+        if (s == null) return null;
+        var parsed = JSON.parse(s);
+        // 이 저장소의 키(ai.provider·ai.model·ai.endpoint·ai.key.*)는 모두 문자열입니다.
+        // 손상되어 객체·배열이 들어 있으면 없는 값으로 봅니다.
+        if (parsed !== null && typeof parsed === 'object') return null;
+        return parsed;
+      }
       localStorage.setItem('ob.' + k, JSON.stringify(v));
     } catch (e) { }
     return null;
@@ -754,14 +762,37 @@
       $('#aiGear').setAttribute('aria-expanded', String(!s.hidden));
       if (!s.hidden) syncAISettings();
     });
-    $('#aiProvider').addEventListener('change', syncAIPanels);
+    $('#aiProvider').addEventListener('change', function () {
+      var p = $('#aiProvider').value;
+      var mi = $('#aiModel');
+      if (mi) {
+        // 다른 제공자의 기본 모델이 남아 있으면 그대로 저장되어 엉뚱한 모델명으로 요청됩니다.
+        var cur = mi.value.trim();
+        var otherDefault = ['gemini', 'openai', 'custom'].some(function (q) { return defaultModel(q) === cur; });
+        if (!cur || otherDefault) mi.value = defaultModel(p);
+      }
+      // 제공자를 바꾸면 그 제공자에 저장해 둔 키를 보여 줍니다(다른 제공자의 키가 남지 않도록).
+      var ki = $('#aiKey');
+      if (ki) ki.value = p === 'local' ? '' : (aiKey(p) || '');
+      syncAIPanels();
+    });
     $('#aiSave').addEventListener('click', saveAISettings);
     $('#aiClear').addEventListener('click', function () {
       var p = $('#aiProvider').value;
+      var had = p !== 'local' && !!aiKey(p);
       try { localStorage.removeItem('ob.' + aiKeyName(p)); } catch (e) { }
+      var others = ['gemini', 'openai', 'custom'].filter(function (q) { return q !== p && !!aiKey(q); });
+      // 지금 제공자에 저장된 키가 없으면 '키 삭제'는 남아 있는 모든 키를 지우는 뜻으로 봅니다.
+      if (!had) {
+        ['gemini', 'openai', 'custom'].forEach(function (q) { try { localStorage.removeItem('ob.' + aiKeyName(q)); } catch (e) { } });
+      }
       $('#aiKey').value = '';
-      $('#aiStatus').textContent = '키를 삭제했습니다. 로컬 도우미로 동작합니다.';
-      AI.provider = 'local'; store('ai.provider', 'local'); syncAI();
+      $('#aiStatus').textContent = had
+        ? '키를 삭제했습니다. 로컬 도우미로 동작합니다.'
+        : (others.length ? '저장된 API 키를 모두 삭제했습니다. 로컬 도우미로 동작합니다.' : '저장된 키가 없습니다. 로컬 도우미로 동작합니다.');
+      AI.provider = 'local'; store('ai.provider', 'local');
+      $('#aiProvider').value = 'local';
+      syncAIPanels(); syncAI();
     });
     $('#aiTest').addEventListener('click', testAI);
     $('#aiForm').addEventListener('submit', function (e) { e.preventDefault(); sendAI(); });
@@ -815,6 +846,8 @@
     if (p !== 'local' && !aiKey(p)) {
       $('#aiStatus').textContent = '키가 비어 있어 로컬 도우미로 동작합니다.';
       AI.provider = 'local'; store('ai.provider', 'local');
+      $('#aiProvider').value = 'local';
+      syncAIPanels();
     } else {
       $('#aiStatus').textContent = '저장했습니다. 이 브라우저에만 보관됩니다.';
     }
@@ -826,6 +859,14 @@
     var k = $('#aiKey').value.trim() || aiKey(p);
     if (p === 'local') { $('#aiStatus').textContent = '로컬 도우미는 키 없이 항상 동작합니다.'; return; }
     if (!k) { $('#aiStatus').textContent = 'API 키를 입력하세요.'; return; }
+    if (p === 'custom') {
+      var ep = $('#aiEndpoint').value.trim();
+      if (!ep) { $('#aiStatus').textContent = '엔드포인트 URL을 입력하세요.'; return; }
+      if (!/^https?:\/\/[^\s]+$/i.test(ep)) {
+        $('#aiStatus').textContent = '❌ 엔드포인트는 http:// 또는 https://로 시작하는 주소여야 합니다.';
+        return;
+      }
+    }
     $('#aiStatus').textContent = '연결 확인 중…';
     apiChat(p, k, $('#aiModel').value.trim() || defaultModel(p), $('#aiEndpoint').value.trim(),
       [{ role: 'user', text: '연결 확인. "연결됨"이라고만 답하세요.' }], '간단히 답하세요.')
@@ -945,6 +986,12 @@
       } else {
         url = provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : (endpoint || '');
         if (!url) { reject(new Error('엔드포인트 URL이 비어 있습니다')); return; }
+        // 주소를 확인하지 않으면 'not-a-url' 같은 입력이 이 사이트 주소로 요청되어
+        // API 키가 엉뚱한 곳으로 전송될 수 있습니다.
+        if (!/^https?:\/\/[^\s]+$/i.test(url)) {
+          reject(new Error('엔드포인트 주소가 올바르지 않습니다. http:// 또는 https://로 시작하는 주소를 넣어 주세요'));
+          return;
+        }
         if (location.protocol === 'https:' && url.indexOf('http://') === 0) {
           reject(new Error('HTTPS 페이지에서는 http:// 엔드포인트가 차단됩니다(혼합 콘텐츠). https 주소나 프록시를 쓰세요'));
           return;
@@ -965,8 +1012,9 @@
             var j;
             try { j = JSON.parse(t); } catch (e) { j = null; }
             if (!r.ok) {
-              var msg = (j && (j.error && (j.error.message || j.error)) ) || t.slice(0, 160);
-              throw new Error(r.status + ' ' + msg);
+              var msg = (j && (j.error && (j.error.message || j.error))) ||
+                (t ? '응답 본문: ' + t.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : '');
+              throw new Error(r.status + (msg ? ' ' + msg : ''));
             }
             if (!j) throw new Error('응답을 해석할 수 없습니다');
             var out = '';
@@ -1184,6 +1232,15 @@
       if (el) el.hidden = true;
     });
     document.body.classList.remove('space-lock');
+    // 닫을 때 저장하지 않은 키가 입력칸에 남아 있지 않게 하고, 설정 패널·⚙ 상태를 접습니다.
+    var key = document.getElementById('aiKey');
+    if (key && AI.provider !== 'local') key.value = aiKey(AI.provider);
+    else if (key) key.value = '';
+    var settings = document.getElementById('aiSettings');
+    if (settings) settings.hidden = true;
+    var gear = document.getElementById('aiGear');
+    if (gear) gear.setAttribute('aria-expanded', 'false');
+    if (document.getElementById('aiStatus')) $('#aiStatus').textContent = '';
   }
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {

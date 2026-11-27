@@ -20,10 +20,18 @@
 
   /* ------------------------------------------------------------- 저장소 */
   const store = {
+    // 저장 값이 깨졌거나(JSON 아님·null) 예전 버전과 모양이 다르면 기본값으로 되돌립니다.
+    // 한 키가 이상하다고 화면 전체가 멈추지 않게 하는 방어선입니다.
     get: function (k, fallback) {
       try {
-        const v = localStorage.getItem('ob.' + k);
-        return v == null ? fallback : JSON.parse(v);
+        const it = localStorage.getItem('ob.' + k);
+        if (it == null) return fallback;
+        const v = JSON.parse(it);
+        if (v === null || v === undefined) return fallback;
+        if (Array.isArray(fallback) && !Array.isArray(v)) return fallback;
+        if (fallback && typeof fallback === 'object' && !Array.isArray(fallback) &&
+            (typeof v !== 'object' || Array.isArray(v))) return fallback;
+        return v;
       } catch (e) { return fallback; }
     },
     set: function (k, v) {
@@ -57,8 +65,20 @@
 
   /* --------------------------------------------------------------- 상태 */
   const savedSite = store.get('site', null);
+  function usableSite(s) {
+    if (!s || typeof s !== 'object' || Array.isArray(s)) return false;
+    const la = Number(s.lat), lo = Number(s.lon);
+    return isFinite(la) && isFinite(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180;
+  }
+  const baseSite = Object.assign({}, D.meta.defaultSite);
+  if (usableSite(savedSite)) {
+    Object.keys(savedSite).forEach(function (k) { baseSite[k] = savedSite[k]; });
+    baseSite.lat = Number(savedSite.lat);
+    baseSite.lon = Number(savedSite.lon);
+    if (savedSite.bortle != null && isFinite(Number(savedSite.bortle))) baseSite.bortle = Number(savedSite.bortle);
+  }
   const state = {
-    site: savedSite && savedSite.lat != null ? savedSite : Object.assign({}, D.meta.defaultSite),
+    site: baseSite,
     dateStr: todayKST(),
     timeStr: '',
     equip: 1,
@@ -784,6 +804,16 @@
   function renderSkyMap(c) {
     const svg = $('#skyMap');
     const lat = state.site.lat, lon = state.site.lon, jd = c.jd;
+    // 레드라이트 모드: 파란 성도 색이 그대로 남으면 암순응이 깨지므로 그리는 색 자체를 적색 팔레트로 바꿉니다.
+    const red = isRed();
+    const RC = red ? {
+      sky0: 'rgba(74, 18, 11, .6)', sky1: 'rgba(9, 2, 1, .92)',
+      ring: 'rgba(255, 120, 90, .22)', grid: 'rgba(255, 120, 90, .09)', tick: 'rgba(255, 120, 90, .24)',
+      brightStar: '#ffb59a', dotCool: '#ff9d80', dotWarm: '#ffc0a0',
+      con: 'rgba(255, 120, 90,', dso: 'rgba(255, 140, 110, .8)',
+      planet: '#ffb08a', moon: 'rgba(255, 168, 132,', moonLabel: '#ffc0a4',
+      zenith: 'rgba(255, 140, 110, .55)'
+    } : null;
     const W = 420, cx = 210, cy = 206, R = 184;
     function proj(alt, az) {
       const r = R * (90 - alt) / 90;
@@ -792,18 +822,19 @@
     }
     let s = '';
     s += '<defs><radialGradient id="skyG" cx="50%" cy="45%" r="60%">' +
-      '<stop offset="0%" stop-color="rgba(30,48,90,.55)"/><stop offset="100%" stop-color="rgba(6,10,20,.9)"/>' +
+      '<stop offset="0%" stop-color="' + (red ? RC.sky0 : 'rgba(30,48,90,.55)') + '"/>' +
+      '<stop offset="100%" stop-color="' + (red ? RC.sky1 : 'rgba(6,10,20,.9)') + '"/>' +
       '</radialGradient></defs>';
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="url(#skyG)" stroke="rgba(255,255,255,.18)" stroke-width="1"/>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="url(#skyG)" stroke="' + (red ? RC.ring : 'rgba(255,255,255,.18)') + '" stroke-width="1"/>';
     [30, 60].forEach(function (alt) {
       const r = R * (90 - alt) / 90;
-      s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(1) + '" fill="none" stroke="rgba(255,255,255,.07)" stroke-dasharray="3 5"/>';
+      s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(1) + '" fill="none" stroke="' + (red ? RC.grid : 'rgba(255,255,255,.07)') + '" stroke-dasharray="3 5"/>';
       s += '<text x="' + (cx + 3) + '" y="' + (cy - r + 11) + '" class="sky-label" opacity=".55">' + alt + '°</text>';
     });
     // 방위 눈금
     for (let az = 0; az < 360; az += 30) {
       const p1 = proj(0, az), p2 = proj(3, az);
-      s += '<line x1="' + p1.x.toFixed(1) + '" y1="' + p1.y.toFixed(1) + '" x2="' + p2.x.toFixed(1) + '" y2="' + p2.y.toFixed(1) + '" stroke="rgba(255,255,255,.22)" stroke-width="1"/>';
+      s += '<line x1="' + p1.x.toFixed(1) + '" y1="' + p1.y.toFixed(1) + '" x2="' + p2.x.toFixed(1) + '" y2="' + p2.y.toFixed(1) + '" stroke="' + (red ? RC.tick : 'rgba(255,255,255,.22)') + '" stroke-width="1"/>';
     }
     [['북', 0], ['동', 90], ['남', 180], ['서', 270]].forEach(function (d) {
       const p = proj(-4.5, d[1]);
@@ -824,13 +855,17 @@
       if (mag <= 2.0) {
         const size = mag < 0.4 ? 2.9 : mag < 1.4 ? 2.3 : 1.9;
         s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + size +
-          '" fill="' + bvColor(st[4]) + '" opacity=".96"/>';
+          '" fill="' + (red ? RC.brightStar : bvColor(st[4])) + '" opacity=".96"/>';
         return;
       }
       const key = (mag <= 3.5 ? 'mid' : mag <= 4.5 ? 'faint' : 'dim') + (isWarm(st[4]) ? 'Warm' : 'Cool');
       (dots[key] = dots[key] || []).push(p);
     });
-    const DOT_STYLE = {
+    const DOT_STYLE = red ? {
+      midCool: [RC.dotCool, 1.8, 0.82], midWarm: [RC.dotWarm, 1.8, 0.82],
+      faintCool: [RC.dotCool, 1.35, 0.6], faintWarm: [RC.dotWarm, 1.35, 0.6],
+      dimCool: [RC.dotCool, 1, 0.4], dimWarm: [RC.dotWarm, 1, 0.4]
+    } : {
       midCool: ['#dbe6ff', 1.8, 0.82], midWarm: ['#fff0d8', 1.8, 0.82],
       faintCool: ['#cddcff', 1.35, 0.6], faintWarm: ['#ffe9cc', 1.35, 0.6],
       dimCool: ['#bccdf0', 1, 0.4], dimWarm: ['#ffdcbc', 1, 0.4]
@@ -858,7 +893,7 @@
       const frac = shown / total;
       const op = (0.08 + 0.12 * frac) * (con.rank === 1 ? 1.45 : con.rank === 2 ? 1.12 : 0.9);
       s += '<g data-sky="con:' + esc(con.abbr) + '" style="cursor:pointer">' +
-        '<path d="' + d + '" fill="none" stroke="rgba(140,175,255,' + Math.min(0.42, op).toFixed(2) + '" stroke-width="' +
+        '<path d="' + d + '" fill="none" stroke="' + (red ? RC.con + Math.min(0.5, op * 1.1).toFixed(2) + ')' : 'rgba(140,175,255,' + Math.min(0.42, op).toFixed(2) + ')') + '" stroke-width="' +
         (con.rank === 1 ? 1.15 : 0.85) + '" stroke-linecap="round"/>' +
         '<path d="' + d + '" fill="none" stroke="transparent" stroke-width="9"/></g>';
       const hor = A.equatorialToHorizontal(con.raH, con.decD, lat, lon, jd);
@@ -894,7 +929,7 @@
       if (h.alt < 3) return;
       const p = proj(h.alt, h.az);
       dsoPts.push({ o: o, p: p, alt: h.alt });
-      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.2" fill="none" stroke="rgba(126,224,192,.75)" stroke-width="1" stroke-dasharray="1.5 1.5"/>';
+      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.2" fill="none" stroke="' + (red ? RC.dso : 'rgba(126,224,192,.75)') + '" stroke-width="1" stroke-dasharray="1.5 1.5"/>';
     });
 
     // ── 이름표 배치: 밝은 별 → 딥스카이 → 별자리. 겹치면 뒤 순위는 포기한다.
@@ -924,14 +959,14 @@
       if (it.con.rank === 3 && drawn >= 10) return;
       const size = it.con.rank === 1 ? 9.2 : it.con.rank === 2 ? 7.8 : 6.9;
       const op = it.con.rank === 1 ? 0.66 : it.con.rank === 2 ? 0.48 : 0.36;
-      if (putLabel(it.con.name, it.x, it.y, size, 'rgba(150,180,255,' + op + ')', 'sky-con-name')) drawn++;
+      if (putLabel(it.con.name, it.x, it.y, size, red ? 'rgba(255,150,120,' + op + ')' : 'rgba(150,180,255,' + op + ')', 'sky-con-name')) drawn++;
     });
 
     // 행성
     c.planets.forEach(function (p) {
       if (p.hor.alt <= 0) return;
       const pnt = proj(p.hor.alt, p.hor.az);
-      const color = {
+      const color = red ? RC.planet : {
         mercury: '#dcdcdc', venus: '#ffeab0', mars: '#ff8a6a', jupiter: '#ffd9a0',
         saturn: '#f0e2ad', uranus: '#9fe8e0', neptune: '#9db8ff'
       }[p.key];
@@ -942,12 +977,12 @@
     // 달
     if (c.moonHor.alt > 0) {
       const p = proj(c.moonHor.alt, c.moonHor.az);
-      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="7" fill="rgba(255,240,200,' + (0.3 + c.phase.illum * 0.7).toFixed(2) + ')"/>';
-      s += '<text x="' + (p.x + 9).toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" class="sky-planet-label" fill="#ffeec8">달</text>';
+      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="7" fill="' + (red ? RC.moon : 'rgba(255,240,200,') + (0.3 + c.phase.illum * 0.7).toFixed(2) + ')"/>';
+      s += '<text x="' + (p.x + 9).toFixed(1) + '" y="' + (p.y + 4).toFixed(1) + '" class="sky-planet-label" fill="' + (red ? RC.moonLabel : '#ffeec8') + '">달</text>';
     }
 
     // 천정
-    s += '<circle cx="' + cx + '" cy="' + cy + '" r="1.6" fill="rgba(255,255,255,.5)"/>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="1.6" fill="' + (red ? RC.zenith : 'rgba(255,255,255,.5)') + '"/>';
 
     // --- 클릭·탭 히트 영역(투명) ---
     ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스',
@@ -1524,17 +1559,27 @@
   }
 
   /* ------------------------------------------------------- 체크리스트 */
-  function renderChecklist() {
+  let checklistWired = false;
+  function paintChecklistCount() {
     const saved = store.get('checklist', {});
     let total = 0, done = 0;
+    D.checklist.forEach(function (group, gi) {
+      group.items.forEach(function (item, ii) {
+        total++;
+        if (saved[gi + '-' + ii]) done++;
+      });
+    });
+    $('#checkCount').textContent = done + ' / ' + total;
+    $('#checkProgress').style.width = (total ? done / total * 100 : 0) + '%';
+  }
+  function renderChecklist() {
+    const saved = store.get('checklist', {});
     let html = '';
     D.checklist.forEach(function (group, gi) {
       html += '<div class="check-group"><h4>' + esc(group.group) + '</h4>';
       group.items.forEach(function (item, ii) {
         const key = gi + '-' + ii;
-        total++;
         const checked = !!saved[key];
-        if (checked) done++;
         html += '<label class="check-item' + (checked ? ' checked' : '') + '">' +
           '<input type="checkbox" data-key="' + key + '"' + (checked ? ' checked' : '') + '>' +
           '<span>' + esc(item) + '</span></label>';
@@ -1542,18 +1587,22 @@
       html += '</div>';
     });
     $('#checklistList').innerHTML = html;
-    $('#checkCount').textContent = done + ' / ' + total;
-    $('#checkProgress').style.width = (total ? done / total * 100 : 0) + '%';
-
-    $$('#checklistList input[type="checkbox"]').forEach(function (cb) {
-      cb.addEventListener('change', function () {
+    paintChecklistCount();
+    // 항목을 누를 때마다 목록을 다시 그리면 키보드 포커스가 사라지므로,
+    // 한 번만 이벤트를 걸고 체크 표시·진행률만 그 자리에서 갱신합니다.
+    if (!checklistWired) {
+      checklistWired = true;
+      $('#checklistList').addEventListener('change', function (ev) {
+        const cb = ev.target;
+        if (!cb || cb.type !== 'checkbox') return;
         const s = store.get('checklist', {});
         s[cb.getAttribute('data-key')] = cb.checked;
         store.set('checklist', s);
-        cb.closest('.check-item').classList.toggle('checked', cb.checked);
-        renderChecklist();
+        const row = cb.closest('.check-item');
+        if (row) row.classList.toggle('checked', cb.checked);
+        paintChecklistCount();
       });
-    });
+    }
   }
 
   /* ------------------------------------------------------------- 로그 */
@@ -1571,20 +1620,62 @@
       const cls = res === '성공' ? 'badge-good' : res === '실패' ? 'badge-bad' : 'badge-mid';
       return '<div class="log-entry"><div class="log-entry-top"><span>' + esc(l.date) + ' · ' + esc(l.place || '—') + '</span>' +
         '<span><span class="badge ' + cls + '">' + esc(res) + '</span> ' +
+        '<button class="edit" data-i="' + i + '" aria-label="이 기록 수정">✎</button> ' +
         '<button class="del" data-i="' + i + '" aria-label="이 기록 삭제">×</button></span></div>' +
         '<div class="small muted">' + esc(l.equip) + ' · ' + esc(l.target || '—') + ' · 시상 ' + l.seeing + '/5 · 투명도 ' + l.trans + '/5</div>' +
         (l.memo ? '<p>' + esc(l.memo) + '</p>' : '') + '</div>';
     }).join('');
+    $$('#logList .edit').forEach(function (b) {
+      b.addEventListener('click', function () { beginLogEdit(Number(b.getAttribute('data-i'))); });
+    });
     $$('#logList .del').forEach(function (b) {
       b.addEventListener('click', function () {
         const i = Number(b.getAttribute('data-i'));
         const logs2 = store.get('logs', []);
         logs2.splice(i, 1);
         store.set('logs', logs2);
+        if (logEditing === i) endLogEdit();
+        else if (logEditing != null && logEditing > i) logEditing--;
         renderLogs();
         toast('기록을 삭제했습니다.');
       });
     });
+  }
+
+  /* 로그 수정 — 목록의 ✎를 누르면 그 기록을 폼에 채우고, 저장하면 새 줄을 만들지 않고 고칩니다. */
+  let logEditing = null;
+  const LOG_EQUIPS = ['맨눈', '쌍안경', '망원경', '스마트폰', '카메라'];
+  function setLogFormMode(on) {
+    const btn = $('#logSubmit'), cancel = $('#logCancelEdit'), form = $('#logForm');
+    if (btn) btn.textContent = on ? '수정 저장' : '기록 저장';
+    if (cancel) cancel.hidden = !on;
+    if (form) form.classList.toggle('is-editing', on);
+  }
+  function beginLogEdit(i) {
+    const logs = store.get('logs', []);
+    const l = logs[i];
+    if (!l) return;
+    logEditing = i;
+    $('#logDate').value = String(l.date || todayKST()).slice(0, 10);
+    $('#logPlace').value = l.place || '';
+    $('#logEquip').value = LOG_EQUIPS.indexOf(l.equip) >= 0 ? l.equip : '맨눈';
+    $('#logTarget').value = l.target || '';
+    $('#logSeeing').value = l.seeing || 3;
+    $('#logTrans').value = l.trans || 3;
+    $('#logResult').value = ['성공', '부분 성공', '실패'].indexOf(l.result) >= 0 ? l.result : '성공';
+    $('#logMemo').value = l.memo || '';
+    setLogFormMode(true);
+    if ($('#logForm')) $('#logForm').scrollIntoView({ block: 'center' });
+    toast('기록을 수정합니다. 고친 뒤 「수정 저장」을 누르세요.');
+  }
+  function endLogEdit() {
+    logEditing = null;
+    setLogFormMode(false);
+    $('#logTarget').value = '';
+    $('#logMemo').value = '';
+    $('#logSeeing').value = 3;
+    $('#logTrans').value = 3;
+    $('#logResult').value = '성공';
   }
 
   /* ------------------------------------------------------- 캘린더 */
@@ -3878,7 +3969,11 @@
     // 레드라이트 전환 시 캔버스 다시 그리기
     const redBtn = $('#btnRed');
     if (redBtn) redBtn.addEventListener('click', function () {
-      setTimeout(function () { liveDirty = true; kickLive(); calcFov(); }, 30);
+      setTimeout(function () {
+        liveDirty = true; kickLive(); calcFov();
+        // 전천 지도는 색을 직접 그리므로 레드라이트 전환 때 다시 그립니다.
+        if ($('#skyMap')) renderSkyMap(state.last || computeNight());
+      }, 30);
     });
     // 화면 회전·크기 변경
     window.addEventListener('resize', function () { calcFov(); });
@@ -4410,7 +4505,7 @@
     $('#logForm').addEventListener('submit', function (e) {
       e.preventDefault();
       const logs = store.get('logs', []);
-      logs.push({
+      const rec = {
         date: $('#logDate').value || todayKST(),
         place: $('#logPlace').value.trim(),
         equip: $('#logEquip').value,
@@ -4420,11 +4515,46 @@
         result: $('#logResult').value,
         memo: $('#logMemo').value.trim(),
         ts: Date.now()
-      });
+      };
+      if (logEditing != null && logs[logEditing]) {
+        const prev = logs[logEditing];
+        rec.ts = prev && prev.ts ? prev.ts : rec.ts;
+        logs[logEditing] = Object.assign({}, prev, rec);
+        store.set('logs', logs);
+        endLogEdit();
+        renderLogs();
+        toast('관측 기록을 수정했습니다.');
+        return;
+      }
+      logs.push(rec);
       store.set('logs', logs);
       $('#logTarget').value = ''; $('#logMemo').value = '';
       renderLogs();
       toast('관측 기록을 저장했습니다.');
+    });
+    $('#logCancelEdit').addEventListener('click', function () { endLogEdit(); toast('수정을 취소했습니다.'); });
+    // 전체 삭제 — 실수로 지우지 않도록 두 번 눌러야 지웁니다(4초 안에 다시 누르지 않으면 원래대로).
+    let clearLogTimer = null;
+    $('#btnClearLog').addEventListener('click', function () {
+      const btn = this;
+      if (btn.getAttribute('data-armed') !== '1') {
+        if (!store.get('logs', []).length) { toast('지울 기록이 없습니다.'); return; }
+        btn.setAttribute('data-armed', '1');
+        btn.textContent = '정말 전체 삭제?';
+        clearTimeout(clearLogTimer);
+        clearLogTimer = setTimeout(function () {
+          btn.removeAttribute('data-armed');
+          btn.textContent = '전체 삭제';
+        }, 4000);
+        return;
+      }
+      clearTimeout(clearLogTimer);
+      btn.removeAttribute('data-armed');
+      btn.textContent = '전체 삭제';
+      store.set('logs', []);
+      endLogEdit();
+      renderLogs();
+      toast('관측 기록을 모두 지웠습니다.');
     });
 
     // 로그 가져오기 (JSON)
