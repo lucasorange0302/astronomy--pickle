@@ -2413,6 +2413,22 @@
 
   // 라이브 뷰가 다루는 고도 범위 — 지평선 아래 30°부터 천정 89°까지
   const ALT_MIN = -30, ALT_MAX = 89;
+
+  /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다.
+     회전축 = up × 시선(지평선과 나란한 축)이고, 그 축 둘레로 +θ 를 돌리면
+     시선의 z성분이 (x²+y²)·sinθ 만큼 줄어들므로 부호는 −diff 입니다.
+     천정·바닥을 정면으로 볼 때는 그 축이 흐려지므로 기기 x축(끄덕임 축)으로 대체합니다. */
+  function setCamAlt(q, altDeg) {
+    const d = camDir(q);
+    const diff = altDeg - d.alt;
+    if (Math.abs(diff) < 1e-4) return q;
+    const dir = Q.rot(q, [0, 0, -1]);
+    let ax = [-dir[1], dir[0], 0];
+    let n = Math.hypot(ax[0], ax[1], ax[2]);
+    if (n < 0.08) { ax = Q.rot(q, [1, 0, 0]); n = Math.hypot(ax[0], ax[1], ax[2]); }
+    if (n < 1e-6) return q;
+    return Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], -diff), q));
+  }
   // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계
   const LIVE_FOV_MIN = 15, LIVE_FOV_MAX = 115;
 
@@ -2443,7 +2459,8 @@
     comp: null, compBuf: [], spike: 0, acc: null, compT: 0,
     azBigSince: 0, altBigSince: 0, lastBeta: null,   // 방위·고도 '큰 오차' 지속 시각(대칭)
     calAz: 0,                      // '방향 맞추기'로 잡은 나침반 오차
-    altTarget: null,
+    altTarget: null,               // 경계에 맞춰 자른 고도 목표(보정용)
+    rawAlt: null,                  // beta·gamma 로 계산한 '실제' 기기 고도(자르기 전)
     az: 180, alt: 30,
     sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
     suspendUntil: 0,
@@ -2453,7 +2470,7 @@
   function trackReset() {
     track.q = null; track.ready = false; track.rot = [0, 0, 0];
     track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
-    track.acc = null; track.altTarget = null; track.calAz = 0;
+    track.acc = null; track.altTarget = null; track.rawAlt = null; track.calAz = 0;
     track.azBigSince = 0; track.altBigSince = 0; track.lastBeta = null;
     track.az = live.az; track.alt = live.alt;
     track.motionSeen = false; track.lastMotEv = 0; track.lastTs = 0; track.suspendUntil = 0;
@@ -2521,6 +2538,24 @@
         if (n < 0.08) { ax = Q.rot(track.q, [1, 0, 0]); n = Math.hypot(ax[0], ax[1], ax[2]); }
         if (n > 1e-4) track.q = Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], -step), track.q));
       }
+    }
+
+    /* 3) 고도 경계 고정 — 이게 '지평선 아래로 내렸다 올리면 각도가 틀어지는' 문제의 핵심입니다.
+       화면 표시(track.alt)만 ALT_MIN 에 묶어 두고 자세(q)는 그 아래로 계속 내려가게 두면,
+       다시 올릴 때 q 가 한참 아래에서부터 올라와야 해서 표시가 ALT_MIN 에 붙은 채로 멈춰 있고,
+       경계를 되돌아올 때 보정과 자이로가 서로 당겨 각도가 틀어집니다.
+       (예: 폰을 −80°까지 내렸다 올리면 표시는 −30°에서 멈춰 있다가 한참 뒤에야 따라옵니다)
+       그래서 기기가 범위 밖을 보고 있는 동안에는 q 의 고도를 경계에 '고정'합니다.
+       고정한 채로는 기기가 더 내려가도(올라가도) 자이로 회전이 q 에 쌓이지 않으므로,
+       다시 경계를 지나 올라오는 순간부터 정확히 1:1 로 따라옵니다. */
+    if (track.rawAlt != null) {
+      const cur = camDir(track.q).alt;
+      let pin = null;
+      if (track.rawAlt < ALT_MIN) pin = ALT_MIN;              // 기기는 경계 아래 — 경계에 붙임
+      else if (track.rawAlt > ALT_MAX) pin = ALT_MAX;         // 기기는 천정 너머
+      else if (cur < ALT_MIN) pin = ALT_MIN;                  // 관성으로 넘어간 값 되돌림
+      else if (cur > ALT_MAX) pin = ALT_MAX;
+      if (pin != null) track.q = setCamAlt(track.q, pin);
     }
   }
 
@@ -2645,6 +2680,14 @@
     return 'rgb(' + r.join(',') + ')';
   }
 
+  /* mixHex 와 같지만 알파를 붙입니다 — 낮 하늘 아래 땅을 반투명하게 깔 때 사용. */
+  function mixRGBA(a, b, t, alpha) {
+    const pa = [parseInt(a.slice(1, 3), 16), parseInt(a.slice(3, 5), 16), parseInt(a.slice(5, 7), 16)];
+    const pb = [parseInt(b.slice(1, 3), 16), parseInt(b.slice(3, 5), 16), parseInt(b.slice(5, 7), 16)];
+    const r = pa.map(function (v, i) { return Math.round(v + (pb[i] - v) * clamp(t, 0, 1)); });
+    return 'rgba(' + r[0] + ',' + r[1] + ',' + r[2] + ',' + clamp(alpha, 0, 1).toFixed(2) + ')';
+  }
+
   function livePalette() {
     if (isRed()) {
       return {
@@ -2743,11 +2786,12 @@
        · 그래서 지평선이 곡선이 되고, 보는 방향에 따라 아래쪽 호·위쪽 호 어느 쪽에 와도,
          위를 보아 화면 한 행이 지평선을 두 번 지나는 경우까지 빠짐없이 맞습니다.
        · 천체를 먼저 그린 뒤 반투명하게 덮어 지평선 아래 별·별자리가 땅 너머로 은은히 비칩니다. */
+    /* 지평선 고리 — 방위 0°부터 360°까지(끝점을 0°로 닫아 북쪽에서 끊기지 않게) 이어 그립니다.
+       화면 뒤쪽(den<0.12)은 project() 가 null 을 주는데, 예전에는 그 점을 그냥 버려서
+       잘려 나간 자리의 양 끝이 화면을 가로지르는 '긴 직선'(=상단 파란 가로선)으로 이어졌습니다.
+       null 을 그대로 넘겨 strokePts 가 선을 끊게 합니다. */
     const hzPts = [];
-    for (let a = 0; a < 360; a += 2) {
-      const p = project(0, a);
-      if (p) hzPts.push(p);
-    }
+    for (let a = 0; a <= 360; a += 2) hzPts.push(project(0, a % 360));
     function groundSpans(y) {
       const w = (cy - y) / kS;
       const a2 = -fwd[2], b2 = 2 * right[2], c2 = fwd[2] * (1 - w * w) + 2 * up[2] * w;
@@ -2782,20 +2826,32 @@
         }
       }
       if (!rows.length) return;
-      const base = dayF > 0.02
-        ? mixHex(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayF * 0.7)
+      /* 땅 색 — 낮에도 불투명하게 덮지 않습니다.
+         (예전에는 mixHex() 가 알파 없는 rgb() 를 주어 낮에는 땅이 100% 불투명했고,
+          그래서 "밤에는 지평선 아래가 은은히 보이는데 낮에는 안 보인다"는 제보가 왔습니다.)
+         낮에는 같은 색 계열을 0.55 → 0.85 알파로 깔아 해 아래 행성·달·별자리선이 비쳐 보입니다. */
+      const dayMix = clamp(dayF * 0.7, 0, 1);
+      const gTop = dayF > 0.02
+        ? mixRGBA(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayMix, 0.55)
         : pal.ground;
+      const gBot = dayF > 0.02
+        ? mixRGBA(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayMix, 0.85)
+        : pal.groundDeep;
       const gr = ctx.createLinearGradient(0, clamp(top, -H, H), 0, H);
-      gr.addColorStop(0, base);
-      gr.addColorStop(1, dayF > 0.02 ? base : pal.groundDeep);
+      gr.addColorStop(0, gTop);
+      gr.addColorStop(1, gBot);
+      /* 행마다 fillRect 를 따로 하면 겹치는 1px 이 두 번 칠해져 가로줄이 생깁니다.
+         한 경로에 모아 한 번에 채우면 알파가 균일합니다. */
       ctx.save();
       ctx.fillStyle = gr;
+      ctx.beginPath();
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
         for (let k = 0; k < r.sp.length; k++) {
-          ctx.fillRect(r.sp[k][0], r.y - 0.5, r.sp[k][1] - r.sp[k][0], stepY + 1);   // 줄 사이 틈 방지
+          ctx.rect(r.sp[k][0], r.y - 0.5, r.sp[k][1] - r.sp[k][0], stepY + 1);   // 줄 사이 틈 방지
         }
       }
+      ctx.fill();
       ctx.restore();
       // 지평선 경계는 또렷하게 — 위(하늘)·아래(땅) 구분이 한눈에 남습니다.
       strokePts(hzPts, pal.horizon, 2);
@@ -3515,6 +3571,7 @@
       const d = camDir(q);
       track.az = live.az = d.az;
       track.alt = live.alt = clamp(d.alt, ALT_MIN, ALT_MAX);
+      track.q = setCamAlt(track.q, track.alt);   // 자세도 같은 경계에서 시작
       track.ready = true;
       setSensorUi(true, 'on', track.motionSeen ? '센서 연결됨' : '나침반 모드');
       trackStart();
@@ -3526,7 +3583,9 @@
       track.lastBeta = ev.beta;
       // 고도 목표는 beta만으로 계산합니다(±180 뒤집힘에서도 연속).
       //   beta≈90이 지평선, 180이 천정, 0이 바로 아래입니다.
-      track.altTarget = clamp(altFromTilt(ev.beta, ev.gamma), ALT_MIN - 4, ALT_MAX + 1);
+      //   rawAlt 는 '자르기 전' 기기 고도 — 경계 고정(trackCorrect)이 이 값을 씁니다.
+      track.rawAlt = altFromTilt(ev.beta, ev.gamma);
+      track.altTarget = clamp(track.rawAlt, ALT_MIN, ALT_MAX);
     }
 
     // 자이로가 없거나 끊긴 경우: 오일러 자세를 목표로 부드럽게 따라갑니다(방위·고도 같은 비율)
@@ -3642,7 +3701,31 @@
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
     enableSensor: enableSensor,
-    disableSensor: disableSensor
+    disableSensor: disableSensor,
+    /* -- 검증용 — 합성 센서 표본을 '실제' 처리 경로(onOrientation·onMotion)에 넣고
+       그 자리에서 한 프레임(dt초)을 진행합니다. 도구 검사가 이 훅으로 리얼 타이머 없이
+       '지평선 아래로 내렸다 올리기' 시퀀스를 같은 순서로 재현합니다.
+       (두 스로틀만 되감아 표본이 버려지지 않게 합니다. 그 외에는 실제 코드 경로 그대로) */
+    feed: function (s, dt) {
+      const step = dt || 0.016;
+      if (s.beta != null) {
+        track.lastOriEv = 0;                      // 6ms 스로틀 통과
+        onOrientation({
+          type: 'deviceorientation', absolute: true,
+          alpha: s.alpha == null ? 0 : s.alpha,
+          beta: s.beta, gamma: s.gamma == null ? 0 : s.gamma,
+          webkitCompassHeading: s.heading, webkitCompassAccuracy: 6
+        });
+      }
+      if (s.rate) {
+        if (track.lastMotEv) track.lastMotEv = performance.now() - step * 1000;
+        onMotion({ rotationRate: s.rate });
+      }
+      trackCorrect(step);
+      if (trackApply(step)) liveDraw();
+      const cam = track.q ? camDir(track.q) : null;
+      return { alt: track.alt, az: track.az, cam: cam ? { az: cam.az, alt: cam.alt } : null, raw: track.rawAlt, target: track.altTarget };
+    },
   };
 
   function pickStartView() {
