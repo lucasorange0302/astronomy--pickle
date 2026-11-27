@@ -1572,6 +1572,16 @@ body.red .sd-panel { background: linear-gradient(175deg, #1c0503, #0c0100 60%); 
 .sa-body strong { font-size: 14.5px; line-height: 1.4; }
 .sa-meta { font-size: 11.5px; color: var(--faint); }
 .sa-note { margin-top: 14px; font-size: 12px; color: var(--faint); line-height: 1.6; }
+.sa-more { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.sa-more-note { font-size: 12px; color: var(--faint); }
+.sa-tag.is-inst {
+  display: inline-block; padding: 2px 8px; border-radius: 999px; margin-bottom: 5px;
+  background: var(--accent-2-soft); color: var(--accent-2);
+  font-size: 10px; letter-spacing: .02em; text-transform: none;
+}
+.sa-thumb.is-broken {
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 8px, transparent 8px 16px);
+}
 body.red .sa-thumb img { filter: grayscale(1) sepia(1) hue-rotate(-35deg) saturate(3.4) brightness(.62); }
 
 /* ---------- 사진 + 정보 라이트박스 ---------- */
@@ -2622,6 +2632,78 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
   .sm-nav.next { right: 16px; }
 }
 
+/* ------------------------------------------------------------------
+   도입화면 뒤 환영 안내 (처음 온 사람에게 한 번)
+   ------------------------------------------------------------------ */
+.bww { position: fixed; inset: 0; z-index: 3900; display: grid; place-items: center; padding: 18px; }
+.bww.is-out { opacity: 0; transition: opacity .32s ease; }
+.bww-back { position: absolute; inset: 0; background: rgba(3, 6, 12, .74); }
+.bww-card {
+  position: relative; width: min(440px, 100%); max-height: calc(100vh - 36px); overflow-y: auto;
+  background: linear-gradient(172deg, rgba(26, 36, 62, .99), rgba(9, 14, 25, .99));
+  border: 1px solid var(--border-hi); border-radius: 20px; padding: 26px 22px 20px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, .62);
+  animation: bwwIn .42s cubic-bezier(.2, .8, .3, 1) both;
+}
+@keyframes bwwIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+.bww-x {
+  position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; border-radius: 50%;
+  border: none; background: rgba(255, 255, 255, .05); color: var(--muted); font-size: 1.15rem; cursor: pointer;
+}
+.bww-x:hover { background: rgba(255, 255, 255, .1); color: var(--text); }
+.bww-eyebrow { position: static; margin: 0 0 8px; color: var(--accent-2); font-size: .72rem; font-weight: 800; letter-spacing: .16em; }
+.bww-card h2 { margin: 0 0 6px; font-size: 1.28rem; line-height: 1.35; }
+.bww-sub { margin: 0 0 16px; color: var(--muted); font-size: .88rem; line-height: 1.6; }
+.bww-list { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bww-list li { display: flex; gap: 12px; align-items: flex-start; background: rgba(255, 255, 255, .035); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.bww-list li > span { font-size: 1.15rem; line-height: 1.4; }
+.bww-list b { display: block; font-size: .9rem; color: var(--text); }
+.bww-list small { display: block; color: var(--faint); font-size: .78rem; line-height: 1.5; margin-top: 2px; }
+.bww-actions { display: flex; gap: 8px; }
+.bww-actions .btn { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .bww-card { animation: none; } }
+@media (max-width: 420px) {
+  .bww-card { padding: 24px 16px 18px; border-radius: 16px; }
+  .bww-card h2 { font-size: 1.16rem; }
+}
+
+/* ------------------------------------------------------------------
+   원형 회전 다이얼 (24시간·12개월·0~360° 처럼 한 바퀴 도는 값)
+   ------------------------------------------------------------------ */
+.dial {
+  position: relative; display: block; touch-action: none; cursor: grab;
+  user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.dial canvas { display: block; width: 100%; height: 100%; }
+.dial:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 50%; }
+.dial.is-drag { cursor: grabbing; }
+.dial-center {
+  position: absolute; inset: 0; display: grid; place-content: center; gap: 2px;
+  pointer-events: none; text-align: center;
+}
+.dial-val { font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.dial-sub { font-size: .68rem; color: var(--faint); letter-spacing: .01em; }
+
+/* 시간 카드 안의 다이얼 */
+.ltc-dial { display: grid; place-items: center; margin: 4px 0 10px; }
+.ltc-dial .dial { margin: 0 auto; }
+.ltc-dial-note { margin: 0 0 10px; text-align: center; color: var(--faint); font-size: .74rem; }
+
+/* 학습관 실험실의 다이얼 조절기 */
+.sim-ctrl.is-dial {
+  grid-template-columns: 1fr; justify-items: center; gap: 6px;
+  background: rgba(255, 255, 255, .02); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 10px 10px; margin: 0;
+}
+.sim-ctrl.is-dial .sim-ctrl-label { font-size: .78rem; color: var(--muted); }
+.sim-dial { display: grid; place-items: center; width: 100%; }
+.sim-ctrl.is-dial .dial-val { font-size: .9rem; }
+.sim-ctrl.is-dial .sim-ctrl-val { text-align: center; order: 3; }
+.sim-dial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 6px; }
+@media (max-width: 560px) {
+  .sim-dial-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* =========================================================================
    2026-11-27 — 🎓 천문 학습관 · 📰 우주·천문 뉴스 · 지연 로딩 도감
    ========================================================================= */
@@ -2646,6 +2728,21 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
 .learn-level { padding: 8px 14px; font-size: .84rem; }
 .learn-level small { font-weight: 500; opacity: .8; margin-left: 4px; }
 .learn-level-note { color: var(--faint); font-size: .84rem; margin: 0 0 18px; }
+
+/* -------------------------------------- 교육과정 묶음(공통과학 / 지구과학) */
+.learn-group { margin: 30px 0 2px; }
+.learn-group:first-child { margin-top: 4px; }
+.lg-head { display: flex; align-items: center; gap: 10px; }
+.lg-head h4 { margin: 0; font-size: 1rem; letter-spacing: -.01em; }
+.lg-head::after { content: ''; flex: 1 1 auto; height: 1px; background: var(--border); }
+.lg-badge {
+  order: 2; font-size: .72rem; font-weight: 800; letter-spacing: .02em;
+  color: var(--accent-2); background: var(--accent-2-soft);
+  border: 1px solid transparent; border-radius: 999px; padding: 3px 9px; white-space: nowrap;
+}
+.lg-head h4 { order: 1; }
+.lg-head::after { order: 3; }
+.lg-note { margin: 6px 0 0; color: var(--faint); font-size: .82rem; line-height: 1.6; }
 
 /* ---------------------------------------------------------- 단원 카드 */
 .learn-units { display: flex; flex-direction: column; gap: 12px; }

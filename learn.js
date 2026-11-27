@@ -1,8 +1,8 @@
 /* =========================================================================
    learn.js — 🎓 천문 학습관 (2026-11-27)
-   · 탭 1: 교육과정 · 단계별 실험실 (초등 → 중등 → 고등 → 대학 심화)
+   · 탭 1: 교육과정 · 단계별 실험실 (초등 → 중등 → 고등(공통과학·지구과학) → 대학 심화)
      - 단원별 원리·핵심 수식·오개념·탐구 질문
-     - 직접 조작하는 캔버스 실험 9종
+     - 직접 조작하는 캔버스 실험 10종
    · 탭 2: 빅뱅부터 지금까지 · 천문학사 타임라인 (일반인용)
    외부 라이브러리 없이 canvas 2D 로만 그립니다.
    ========================================================================= */
@@ -62,7 +62,7 @@
     var wrap = document.createElement('div');
     wrap.className = 'sim';
     wrap.setAttribute('data-sim', cfg.id);
-    var controls = (cfg.controls || []).map(function (c) {
+    var controls = (cfg.controls || []).filter(function (c) { return !c.cycle; }).map(function (c) {
       var id = 'sim-' + cfg.id + '-' + c.k;
       return '<label class="sim-ctrl" for="' + id + '">' +
         '<span class="sim-ctrl-label">' + esc(c.label) + '</span>' +
@@ -74,11 +74,19 @@
     var buttons = (cfg.buttons || []).map(function (b) {
       return '<button type="button" class="mini-btn sim-btn" data-b="' + b.k + '">' + esc(b.label) + '</button>';
     }).join('');
+    // 한 바퀴 도는 값(계절·달·공전 위치)은 직선 슬라이더 대신 원형 다이얼로 만집니다.
+    var dials = (cfg.controls || []).filter(function (c) { return c.cycle; }).map(function (c) {
+      return '<div class="sim-ctrl is-dial">' +
+        '<span class="sim-ctrl-label">' + esc(c.label) + '</span>' +
+        '<div class="sim-dial" data-dial="' + c.k + '"></div>' +
+        '<output class="sim-ctrl-val" data-out="' + c.k + '"></output></div>';
+    }).join('');
     wrap.innerHTML =
       '<div class="sim-head"><h4>' + esc(cfg.title) + '</h4>' +
       (buttons ? '<div class="sim-btns">' + buttons + '</div>' : '') + '</div>' +
       '<div class="sim-canvas"><canvas aria-label="' + esc(cfg.title) + ' 실험 그림"></canvas></div>' +
       '<div class="sim-readout" aria-live="polite"></div>' +
+      (dials ? '<div class="sim-dial-grid">' + dials + '</div>' : '') +
       (controls ? '<div class="sim-controls">' + controls + '</div>' : '') +
       (cfg.hint ? '<p class="sim-hint">' + cfg.hint + '</p>' : '');
     host.appendChild(wrap);
@@ -91,19 +99,36 @@
     var last = 0;
 
     (cfg.controls || []).forEach(function (c) {
-      var input = $('input[data-k="' + c.k + '"]', wrap);
       if (S[c.k] == null) S[c.k] = +c.value;
       var out = $('[data-out="' + c.k + '"]', wrap);
       function sync() {
-        out.textContent = c.fmt ? c.fmt(S[c.k]) : S[c.k];
+        if (out) out.textContent = c.fmt ? c.fmt(S[c.k]) : S[c.k];
       }
-      input.value = S[c.k];
-      sync();
-      input.addEventListener('input', function () {
-        S[c.k] = +input.value;
+      if (c.cycle) {
+        var dhost = $('[data-dial="' + c.k + '"]', wrap);
         sync();
-        render();
-      });
+        if (dhost && window.Dial) {
+          c._dial = window.Dial.create(dhost, {
+            min: c.min, max: c.max, step: c.step || 1,
+            value: S[c.k], size: c.size || 126,
+            label: c.label, fmt: c.fmt, sub: c.sub,
+            onChange: function (v) { S[c.k] = v; sync(); render(); },
+            onCommit: function () { sync(); render(); }
+          });
+        }
+        c._sync = sync;
+        return;
+      }
+      var input = $('input[data-k="' + c.k + '"]', wrap);
+      if (input) {
+        input.value = S[c.k];
+        input.addEventListener('input', function () {
+          S[c.k] = +input.value;
+          sync();
+          render();
+        });
+      }
+      sync();
       c._sync = sync;
     });
 
@@ -148,6 +173,7 @@
         (cfg.controls || []).forEach(function (c) {
           var input = $('input[data-k="' + c.k + '"]', wrap);
           if (input) input.value = S[c.k];
+          if (c._dial) c._dial.set(S[c.k]);
           if (c._sync) c._sync();
         });
         render();
@@ -179,6 +205,7 @@
           S[c.k] = +c.value;
           var input = $('input[data-k="' + c.k + '"]', wrap);
           if (input) input.value = c.value;
+          if (c._dial) c._dial.set(c.value);
           if (c._sync) c._sync();
         });
         if (cfg.onReset) cfg.onReset(S);
@@ -217,6 +244,18 @@
     ctx.textBaseline = 'middle';
     ctx.fillText(text, x, y);
   }
+  /** 긴 안내 문구가 캔버스 밖으로 잘리지 않도록 폭에 맞춰 글자를 줄입니다. */
+  function labelFit(ctx, text, x, y, color, size, maxW, align) {
+    var s = size || 11;
+    var fam = 'px "Pretendard", system-ui, sans-serif';
+    var lim = Math.max(60, (maxW || 280) - 8);
+    ctx.font = s + fam;
+    while (s > 8 && ctx.measureText(text).width > lim) {
+      s -= 0.5;
+      ctx.font = s + fam;
+    }
+    label(ctx, text, x, y, color, s, align);
+  }
   function circle(ctx, x, y, r, fill, stroke) {
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
     if (fill) { ctx.fillStyle = fill; ctx.fill(); }
@@ -240,7 +279,7 @@
     createSim(host, {
       id: 'moon', title: '🌙 달의 위상과 일·월식', height: 340,
       controls: [
-        { k: 'day', label: '달의 나이', min: 0, max: 29.5, step: 0.1, value: 7.4, fmt: function (v) { return v.toFixed(1) + '일'; } },
+        { k: 'day', label: '달의 나이', min: 0, max: 29.5, step: 0.1, value: 7.4, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
         { k: 'tilt', label: '달 궤도 기울기', min: 0, max: 12, step: 0.5, value: 5.1, fmt: function (v) { return v.toFixed(1) + '°'; } }
       ],
       buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
@@ -339,7 +378,7 @@
     createSim(host, {
       id: 'seasons', title: '🌍 계절은 지구의 기울기 때문에 생깁니다', height: 330,
       controls: [
-        { k: 'month', label: '지구의 공전 위치', min: 1, max: 12, step: 1, value: 6, fmt: function (v) { return v + '월'; } },
+        { k: 'month', label: '지구의 공전 위치', min: 1, max: 12, step: 1, value: 6, cycle: true, sub: '12개월', fmt: function (v) { return v + '월'; } },
         { k: 'lat', label: '관측 위도', min: -66, max: 66, step: 1, value: 37, fmt: function (v) { return (v >= 0 ? '북위 ' : '남위 ') + Math.abs(v) + '°'; } }
       ],
       draw: function (ctx, W, H, S, T) {
@@ -386,7 +425,7 @@
 
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
         ctx.fillRect(10, 8, W - 20, 30);
-        label(ctx, '지구 자전축은 공전 궤도에 대해 23.44° 기울어진 채 방향이 일정합니다.', W / 2, 23, T.muted, 11);
+        labelFit(ctx, '지구 자전축은 공전 궤도에 대해 23.44° 기울어진 채 방향이 일정합니다.', W / 2, 23, T.muted, 11, W - 24);
       },
       readout: function (S) {
         var dec = 23.44 * Math.cos((S.month - 6.5) / 12 * Math.PI * 2);
@@ -413,7 +452,7 @@
       id: 'parallax', title: '📐 연주시차로 별까지 거리 재기', height: 350,
       controls: [
         { k: 'dpc', label: '별까지 거리', min: 0.2, max: 10, step: 0.05, value: 1.3, fmt: function (v) { return v.toFixed(2) + ' pc'; } },
-        { k: 'month', label: '지구의 공전 위치', min: 0, max: 12, step: 0.5, value: 0, fmt: function (v) { return (v === 0 || v === 12 ? '1월' : v === 6 ? '7월' : (v < 6 ? '1월 +' : '7월 +') + Math.abs(v - (v < 6 ? 0 : 6)).toFixed(1) + '개월'); } }
+        { k: 'month', label: '지구의 공전 위치', min: 0, max: 12, step: 0.5, value: 0, cycle: true, sub: '1년 12개월', fmt: function (v) { return (v === 0 || v === 12 ? '1월' : v === 6 ? '7월' : (v < 6 ? '1월 +' : '7월 +') + Math.abs(v - (v < 6 ? 0 : 6)).toFixed(1) + '개월'); } }
       ],
       buttons: [{ k: 'play', label: '▶ 6개월 이동' }, { k: 'reset', label: '1월로' }],
       onPlay: function (S) { S._dir = 1; },
@@ -466,8 +505,9 @@
         circle(ctx, vx + shift, vy, 3, T.accent, null);
         label(ctx, '망원경으로 본 별의 흔들림(과장)', vx, vy + vr + 16, T.faint, 10);
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.fillRect(10, 8, W - 20, 26);
-        label(ctx, '그림은 이해를 위해 거리·각도를 과장했습니다. 실제 시차각은 아주 작습니다.', W / 2, 21, T.muted, 11);
+        ctx.fillRect(10, 8, W - 20, 40);
+        labelFit(ctx, '그림은 이해를 위해 거리·각도를 과장했습니다.', W / 2, 19, T.muted, 11, W - 24);
+        labelFit(ctx, '실제 연주시차 각도는 아주 작습니다.', W / 2, 34, T.faint, 10, W - 24);
       },
       readout: function (S) {
         var p = 1 / S.dpc;
@@ -496,13 +536,14 @@
       id: 'kepler', title: '🪐 케플러 3법칙 — 궤도와 공전 주기', height: 330,
       controls: [
         { k: 'a', label: '궤도 장반경 a', min: 0.3, max: 40, step: 0.1, value: 1, fmt: function (v) { return v.toFixed(1) + ' AU'; } },
-        { k: 'e', label: '이심률 e', min: 0, max: 0.85, step: 0.01, value: 0.25, fmt: function (v) { return v.toFixed(2); } }
+        { k: 'e', label: '이심률 e', min: 0, max: 0.85, step: 0.01, value: 0.25, fmt: function (v) { return v.toFixed(2); } },
+        { k: 'Mdeg', label: '공전 위치', min: 0, max: 360, step: 2, value: 30, cycle: true, sub: '한 바퀴 = 한 공전', fmt: function (v) { return Math.round(v) + '°'; } }
       ],
       buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
-      state: { M: 0 },
+      state: { Mdeg: 30 },
       tick: function (S, dt) {
         var T = Math.pow(S.a, 1.5);
-        S.M = (S.M + dt * 2 * Math.PI / Math.max(0.2, T * 0.35)) % (Math.PI * 2);
+        S.Mdeg = (S.Mdeg + dt * 360 / Math.max(0.2, T * 0.35)) % 360;
         return true;
       },
       draw: function (ctx, W, H, S, T) {
@@ -517,7 +558,7 @@
         circle(ctx, cx - c, cy, 9, T.accent, null);
         label(ctx, '태양(초점)', cx - c, cy - 18, T.accent, 10);
         // 행성
-        var E = solveKepler(S.M, S.e);
+        var E = solveKepler(S.Mdeg * Math.PI / 180, S.e);
         var px = cx + A * (Math.cos(E) - S.e);
         var py = cy + b * Math.sin(E);
         circle(ctx, px, py, 6, T.accent3, null);
@@ -535,7 +576,7 @@
         label(ctx, '빈 초점', cx + c, cy + 16, T.faint, 9);
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
         ctx.fillRect(10, 8, W - 20, 26);
-        label(ctx, '케플러 1법칙: 행성은 태양을 한 초점으로 하는 타원 궤도를 돕니다.', W / 2, 21, T.muted, 11);
+        labelFit(ctx, '케플러 1법칙: 행성은 태양을 한 초점으로 하는 타원 궤도를 돕니다.', W / 2, 21, T.muted, 11, W - 24);
       },
       readout: function (S) {
         var T = Math.pow(S.a, 1.5);
@@ -874,6 +915,122 @@
   }
 
   /* ======================================================================
+     실험 10 — 성운의 수축과 태양계·지구의 형성 (고등 공통과학)
+     ====================================================================== */
+  function simNebula(host) {
+    createSim(host, {
+      id: 'nebula', title: '☁️ 성운의 수축 — 태양계와 지구의 형성', height: 340,
+      controls: [
+        { k: 't', label: '형성 단계', min: 0, max: 100, step: 1, value: 18, fmt: function (v) { return v + '%'; } },
+        { k: 'spin', label: '성운의 회전', min: 0, max: 2, step: 0.1, value: 1, fmt: function (v) { return v === 0 ? '거의 없음' : v.toFixed(1) + '배'; } }
+      ],
+      buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
+      state: { _hold: 0 },
+      onPlay: function (S) { S._hold = 0; if (S.t >= 99.5) S.t = 0; },
+      tick: function (S, dt) {
+        S.t = Math.min(100, S.t + dt * 15);
+        if (S.t >= 100) { S._hold = (S._hold || 0) + 1; if (S._hold > 1) return false; }
+        return true;
+      },
+      draw: function (ctx, W, H, S, T) {
+        var t = S.t / 100;
+        var cx = W * 0.5, cy = H * 0.47;
+        var Rmax = Math.min(W * 0.40, (H - 96) * 0.74);
+        var flat = 0.30;                                  // 원반을 비스듬히 본 정도
+        var vscale = 1 - 0.96 * Math.pow(t, 1.25);        // 구름(두꺼움) → 원반(얇음)
+
+        // 원반 궤도 안내선
+        ctx.strokeStyle = 'rgba(138,182,255,0.10)'; ctx.lineWidth = 1;
+        for (var k = 1; k <= 3; k++) {
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, Rmax * k / 3, Rmax * k / 3 * flat, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // 성간 가스·먼지 입자 (고정 난수 → 매 프레임 같은 배치)
+        var seed = 2026;
+        function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+        var N = 190;
+        for (var i = 0; i < N; i++) {
+          var rf = 0.26 + 0.74 * Math.pow(rnd(), 0.8);
+          var phi0 = rnd() * Math.PI * 2;
+          var z0 = rnd() * 2 - 1;
+          var rr = Rmax * rf * (1 - 0.26 * t * (1 - rf));
+          var ang = phi0 + S.spin * t * 2.6 / Math.pow(rf, 0.5);
+          var x = cx + Math.cos(ang) * rr;
+          var y = cy + Math.sin(ang) * rr * flat + z0 * Rmax * 0.52 * vscale;
+          var al = 0.16 + 0.44 * rnd();
+          circle(ctx, x, y, 0.8 + 1.5 * rnd(), 'rgba(200,220,255,' + al.toFixed(2) + ')', null);
+        }
+
+        // 원시 태양 — 수축할수록 밝고 커짐
+        var sr = 4 + 24 * Math.pow(t, 2);
+        var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, sr * 2.6);
+        g.addColorStop(0, 'rgba(255,236,170,' + (0.55 + 0.4 * t).toFixed(2) + ')');
+        g.addColorStop(0.45, 'rgba(255,190,90,' + (0.22 + 0.28 * t).toFixed(2) + ')');
+        g.addColorStop(1, 'rgba(255,150,60,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, sr * 2.6, 0, Math.PI * 2); ctx.fill();
+        circle(ctx, cx, cy, sr, T.accent, null);
+        if (t > 0.82) label(ctx, '원시 태양', cx, cy - sr - 12, T.accent, 11);
+
+        // 미행성 충돌 → 원시 행성
+        if (t > 0.48) {
+          var pf = Math.min(1, (t - 0.48) / 0.42);
+          var planets = [
+            { r: 0.34, s: 1.7, c: '#c9a27a' }, { r: 0.44, s: 3.0, c: '#e3c58c' },
+            { r: 0.55, s: 3.2, c: '#6fa8ff' }, { r: 0.65, s: 2.1, c: '#d97757' },
+            { r: 0.80, s: 6.4, c: '#d8b48a' }, { r: 0.95, s: 5.4, c: '#e6d3a3' }
+          ];
+          planets.forEach(function (p, idx) {
+            var a = idx * 1.1 + S.spin * t * 2.2 / Math.pow(p.r, 0.5);
+            var px = cx + Math.cos(a) * Rmax * p.r;
+            var py = cy + Math.sin(a) * Rmax * p.r * flat;
+            circle(ctx, px, py, p.s * pf, p.c, 'rgba(0,0,0,0.35)');
+          });
+        }
+
+        // 각운동량(회전) 표시
+        if (S.spin > 0.05 && t > 0.05) {
+          var ax = Rmax * 1.06;
+          ctx.strokeStyle = 'rgba(126,224,192,0.55)'; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.ellipse(cx, cy, ax, ax * flat, 0, -0.9, 0.9); ctx.stroke();
+          arrow(ctx, cx + ax * Math.cos(0.9), cy + ax * flat * Math.sin(0.9) - 2,
+            cx + ax * Math.cos(1.15), cy + ax * flat * Math.sin(1.15) + 2, 'rgba(126,224,192,0.75)', 1.3);
+          label(ctx, '회전', cx + ax * 0.72, cy + ax * flat * 0.78 + 12, T.accent2, 10);
+        }
+
+        // 아래 설명 띠
+        var note = t < 0.16
+          ? '차갑고 밀도 높은 성간 분자운이 중력으로 스스로 무너집니다.'
+          : t < 0.46
+            ? '각운동량 보존 → 회전이 빨라지고 원심력 때문에 납작한 원반이 됩니다.'
+            : t < 0.80
+              ? '원반의 미행성(수 km)이 충돌·합체하며 원시 행성이 자랍니다.'
+              : '중심은 핵융합이 점화된 원시 태양, 원반은 원시 행성으로 나뉩니다.';
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(8, H - 44, W - 16, 36);
+        label(ctx, note, 16, H - 26, t > 0.46 ? T.accent : T.muted, 11, 'left');
+        label(ctx, '안쪽 = 암석·금속 행성 · 바깥 = 얼음·가스 행성', W - 16, H - 60, T.faint, 10, 'right');
+      },
+      readout: function (S) {
+        var t = S.t / 100;
+        var stage = t < 0.16 ? '① 성간 분자운의 수축'
+          : t < 0.46 ? '② 회전하는 원반의 형성'
+            : t < 0.80 ? '③ 미행성 충돌·합체'
+              : '④ 원시 태양 + 원시 행성';
+        return [
+          ['형성 단계', stage],
+          ['원반 편평도 (두께 : 지름)', '1 : ' + nf(1 / Math.max(0.04, 1 - 0.96 * Math.pow(t, 1.25)), 0)],
+          ['중심으로 모인 질량', nf(Math.min(99.8, 99.8 * Math.pow(t, 0.35)), 1) + '% (태양계 전체 대비)'],
+          ['중심 온도', nf(1000 + 1.57e7 * Math.pow(t, 6), 0) + ' K']
+        ];
+      },
+      hint: '성운설: 회전하는 성간 가스·먼지 구름이 중력으로 수축하면 각운동량 보존 때문에 회전이 빨라지고 납작한 원반이 됩니다. 원반 안쪽은 뜨거워 암석·금속만 응축되고 바깥은 얼음까지 응축되어 암석 행성과 가스 행성으로 나뉩니다. 미행성이 충돌해 원시 행성이 자라고, 원시 지구는 충돌 에너지와 방사성 붕괴열로 녹아 철·니켈 핵과 규산염 맨틀로 분화했습니다.'
+    });
+  }
+
+  /* ======================================================================
      교육과정 데이터
      ====================================================================== */
   var CURRICULUM = {
@@ -949,8 +1106,79 @@
       ]
     },
     high: {
-      label: '고등(지구과학Ⅰ·Ⅱ)', icon: '🎓', sub: '지구과학Ⅰ·Ⅱ — 수식으로 우주의 구조를 읽는 단계',
-      units: [
+      label: '고등(공통과학·지구과학)', icon: '🎓',
+      sub: '고등 — 공통과학(통합과학) 천문 영역 4단원 + 지구과학Ⅰ·Ⅱ 4단원',
+      groups: [
+        {
+          key: 'common',
+          title: '공통과학(통합과학) · 천문 영역',
+          badge: '4단원',
+          note: '고등학교 공통과학에서 다루는 우주·별·태양계 — 증거와 원리 중심',
+          units: [
+            {
+              title: '우주의 시작과 빅뱅 우주론',
+              principle: '우주는 약 138억 년 전 아주 뜨겁고 빽빽한 상태에서 팽창을 시작했습니다(빅뱅). 멀리 있는 은하일수록 스펙트럼의 선이 더 붉은 쪽으로 치우치고(적색편이) 후퇴 속도가 거리에 비례한다는 허블-르메트르 법칙은 우주가 팽창한다는 직접 증거입니다. 팽창하며 식은 초기 우주가 남긴 빛이 우주배경복사(현재 2.725K)이고, 그 흑체 스펙트럼과 10만 분의 1 수준의 온도 요동이 빅뱅 우주론을 결정적으로 뒷받침합니다. 빅뱅 후 약 3분 동안의 원소 합성으로 수소와 헬륨이 질량비 약 3 : 1로 만들어졌고, 이는 오늘날 별과 성간 물질에서 측정한 값과 일치합니다.',
+              formula: 'z = (λ관측 − λ기준) / λ기준 · v = H₀d (H₀ ≈ 70 km/s/Mpc) · T_CMB = 2.725 K · 원소 합성: 수소 : 헬륨 ≈ 3 : 1 (질량비, 개수비로는 약 12 : 1)',
+              misconcept: [
+                '빅뱅은 공간의 한 점에서 폭발해 파편이 퍼져 나간 사건이 아니라, 공간 자체가 모든 곳에서 늘어난 것입니다. 그래서 팽창의 중심도 가장자리도 없습니다.',
+                '아주 먼 은하의 적색편이로 계산한 후퇴 속도가 광속을 넘는 것처럼 보이는 것은 은하가 공간 속을 그렇게 빨리 달리기 때문이 아니라, 빛이 오는 동안 그 사이의 공간이 늘어났기 때문입니다. 은하 자체는 국소적으로 광속보다 느립니다.'
+              ],
+              question: [
+                'H₀ = 70 km/s/Mpc일 때 1 Mpc과 100 Mpc 떨어진 은하의 후퇴 속도를 각각 구해 보세요.',
+                '재결합 당시 약 3,000K이던 우주배경복사가 오늘 2.7K로 식은 까닭을 우주 팽창과 연결해 설명해 보세요.'
+              ],
+              sim: 'redshift'
+            },
+            {
+              title: '별의 진화와 무거운 원소의 생성',
+              principle: '성간 성운이 중력으로 수축해 원시별이 되고, 중심 온도가 약 1,000만 K를 넘으면 수소 핵융합이 점화되어 주계열성이 됩니다. 중심의 수소가 줄면 핵이 수축하며 온도가 올라가 바깥층이 부풀어 적색거성·초거성이 되고, 헬륨을 탄소·산소로 태우는 단계로 이어집니다. 태양 정도 질량의 별은 행성상 성운을 남기고 백색왜성이 되며, 태양의 8배보다 무거운 별은 철 핵까지 만들어 초신성으로 폭발해 중성자별이나 블랙홀을 남깁니다. 탄소·산소·규소·철은 별 내부의 핵융합에서, 금·우라늄 같은 철보다 무거운 원소는 초신성 폭발과 중성자별 충돌의 급격한 중성자 포획에서 만들어집니다.',
+              formula: 'L = 4πR²σT⁴ · 주계열 수명 t ≈ 10¹⁰ 년 × (M/M☉)^−2.5 · 철(Fe)은 핵자당 결합에너지가 최대 → 철 핵은 융합해도 에너지를 내지 않음',
+              misconcept: [
+                '별의 색이 변하는 것은 나이가 들어서가 아니라 표면 온도가 바뀌기 때문입니다. 적색거성은 핵이 수축하고 외피가 부풀어 식은 것이지, 불타 없어지는 것이 아닙니다.',
+                '철보다 무거운 원소는 별 내부의 핵융합으로 만들어지지 않습니다. 철 핵은 융합해도 에너지를 내지 않으므로, 금이나 우라늄은 초신성 폭발·중성자별 충돌 같은 급격한 과정에서 만들어집니다.'
+              ],
+              question: [
+                '태양 질량의 10배인 별의 주계열 수명을 위 식으로 어림해 보세요(태양 수명 100억 년).',
+                '우리 몸을 이루는 탄소·산소·철은 각각 어떤 과정을 거쳐 만들어졌을까요?'
+              ],
+              sim: 'hr'
+            },
+            {
+              title: '태양계와 지구의 형성',
+              principle: '회전하는 성간 분자운이 중력으로 수축하면 각운동량이 보존되어 회전이 빨라지고, 그 원심력 때문에 구름이 납작한 원반으로 퍼집니다(성운설). 중심에는 원시 태양이 자라고, 원반의 먼지가 뭉친 미행성(수 km 규모)이 서로 충돌·합체하며 원시 행성이 됩니다. 원반 안쪽은 뜨거워 녹는점이 높은 암석·금속만 응축되어 수성~화성 같은 작은 암석 행성이, 바깥은 얼음까지 응축되고 가스를 붙잡아 목성~해왕성 같은 거대 행성이 만들어졌습니다. 원시 지구는 충돌 에너지와 방사성 붕괴열로 녹아 밀도가 큰 철·니켈이 중심핵으로, 규산염이 맨틀로 분리되었습니다(분화). 달은 화성 크기 천체의 충돌로 생긴 파편이 다시 모여 만들어졌다는 거대 충돌설이 유력합니다.',
+              formula: '각운동량 L = mvr = 일정 · 운석 연대 ≈ 45.7억 년, 지구 나이 ≈ 46억 년 · 태양이 태양계 전체 질량의 99.8% 차지',
+              misconcept: [
+                '성운설은 “태양이 다른 별 곁을 지나며 물질을 끌어당겨 행성이 생겼다”는 조석설과 다릅니다. 현재 태양계 형성의 표준 설명은 회전하는 성운의 수축입니다.',
+                '행성이 처음부터 지금 크기로 생긴 것이 아니라, 작은 미행성이 수천만 년 동안 충돌·합체해 자랐습니다. 충돌은 파괴만 한 것이 아니라 행성을 키운 주된 과정입니다.'
+              ],
+              question: [
+                '왜 수성·금성·지구·화성은 작은 암석 행성이고, 목성·토성은 큰 가스 행성일까요?',
+                '원시 지구가 녹아 분화했다는 증거를 지구 내부 구조와 운석에서 각각 찾아보세요.'
+              ],
+              sim: 'nebula'
+            },
+            {
+              title: '별빛을 읽는 법 — 흑체복사와 스펙트럼',
+              principle: '별은 거의 완벽한 흑체에 가깝게 빛을 냅니다. 온도가 높을수록 모든 파장에서 복사량이 커지고(T⁴), 가장 강하게 내는 파장은 짧아집니다(빈의 법칙). 그래서 푸른 별은 뜨겁고 붉은 별은 상대적으로 차갑습니다. 별 표면에서 나온 빛이 별 대기의 원자에 일부 파장을 흡수당하면 연속 스펙트럼 위에 어두운 흡수선이 생기고, 이 선의 위치로 원소의 종류를, 선의 이동(도플러 효과)으로 별이 다가오고 멀어지는 속도를 읽습니다.',
+              formula: 'λmax = 2.898×10⁻³ m·K / T · L = 4πR²σT⁴ · z = Δλ / λ₀',
+              misconcept: [
+                '어두운 흡수선은 그 색의 빛이 별에 없다는 뜻이 아니라, 별이 낸 그 파장의 빛을 별 대기의 원자가 흡수했다는 뜻입니다.',
+                '별의 색만 보고 온도를 정확히 알 수는 없습니다. 성간 먼지가 파란빛을 더 흡수해 별을 붉게 보이게(적색화) 하므로 보정이 필요합니다.'
+              ],
+              question: [
+                '표면 온도가 5,800K인 별과 3,000K인 별의 최대 복사 파장을 각각 구해 보세요.',
+                '스펙트럼의 같은 흡수선이 길게 늘어나 보이는 것은 무엇을 뜻할까요?'
+              ],
+              sim: 'planck'
+            }
+          ]
+        },
+        {
+          key: 'earth',
+          title: '지구과학Ⅰ·Ⅱ',
+          badge: '4단원',
+          note: '선택 과목 — 수식과 계산으로 우주의 구조를 읽는 단계',
+          units: [
         {
           title: '케플러 법칙과 행성의 운동',
           principle: '행성은 태양을 한 초점으로 하는 타원 궤도를 돌고(1법칙), 태양과 행성을 잇는 선은 같은 시간에 같은 면적을 지나가며(2법칙), 공전 주기의 제곱은 장반경의 세제곱에 비례합니다(3법칙).',
@@ -981,6 +1209,8 @@
           formula: '세페이드: 주기 P가 길수록 광도 L이 큼 · 거리지수 m − M = 5 log₁₀(d/10pc)',
           misconcept: ['한 가지 방법으로 우주의 모든 거리를 잴 수는 없습니다. 각 방법은 유효한 거리 범위가 있습니다.', '세페이드의 주기-광도 관계는 1908년 헨리에타 리비트가 발견했습니다.'],
           question: ['세페이드가 왜 표준 광원(standard candle)으로 쓰일까요?', '거리지수로 거리를 구하는 과정을 설명해 보세요.']
+            }
+          ]
         }
       ]
     },
@@ -1052,7 +1282,7 @@
     { era: 'modern', when: '2015년', title: 'LIGO, 중력파를 처음 검출', text: '두 블랙홀이 합쳐질 때 생긴 시공간의 물결을 지구에서 감지했습니다. 중력을 보는 새로운 창이 열렸습니다.', tags: ['중력파'] },
     { era: 'modern', when: '2019년', title: '사건의 지평선 망원경, 블랙홀을 찍다', text: '지구 크기의 가상 망원경으로 M87 은하 중심 블랙홀의 그림자를 촬영했습니다.', tags: ['EHT', '블랙홀'] },
     { era: 'modern', when: '2022년', title: '제임스 웹, 첫 이미지를 공개하다', text: '6.5m 거울과 적외선으로 우주 최초의 은하와 별이 태어나는 구름을 관측합니다. 지구에서 150만 km 떨어진 L2에 있습니다.', tags: ['JWST'] },
-    { era: 'today', when: '2026년', title: '지금 이 순간의 천문학', text: '확정 외계행성 6,473개, 보이저 1호의 1광일 거리, TESS·케플러의 계속되는 발견, 그리고 한국천문연구원(KASI)의 관측 자료까지 — 이 사이트의 데이터도 그 기록 위에 서 있습니다.', tags: ['오늘', 'KASI'] }
+    { era: 'today', when: '2026년', title: '지금 이 순간의 천문학', text: '확정 외계행성 6,473개, 보이저 1호의 1광일 거리, TESS·케플러의 계속되는 발견, 그리고 한국천문연구원(KASI)의 관측 자료까지 — 이 사이트의 관측 자료도 그 기록 위에 서 있습니다.', tags: ['오늘', 'KASI'] }
   ];
 
   var ERA_LABEL = { cosmic: '🌌 우주 초기', ancient: '🏺 고대·중세', modern: '🔭 근대·현대', today: '✨ 오늘' };
@@ -1087,25 +1317,35 @@
       });
       var data = CURRICULUM[key];
       $('#learnLevelNote').textContent = data.sub;
-      var units = $('#learnUnits');
-      units.innerHTML = '';
-      data.units.forEach(function (u, i) {
+      var host = $('#learnUnits');
+      host.innerHTML = '';
+      var groups = data.groups || [{ units: data.units || [] }];
+      groups.forEach(function (g) {
+        if (g.title) {
+          var ghead = document.createElement('div');
+          ghead.className = 'learn-group';
+          ghead.innerHTML = '<div class="lg-head"><h4>' + esc(g.title) + '</h4>' +
+            (g.badge ? '<span class="lg-badge">' + esc(g.badge) + '</span>' : '') + '</div>' +
+            (g.note ? '<p class="lg-note">' + esc(g.note) + '</p>' : '');
+          host.appendChild(ghead);
+        }
+        g.units.forEach(function (u, i) {
         var card = document.createElement('article');
         card.className = 'learn-unit';
         var simHost = u.sim ? '<div class="learn-sim-host" data-sim-host="' + u.sim + '"></div>' : '';
         card.innerHTML =
-          '<button type="button" class="learn-unit-head" aria-expanded="' + (i === 0 ? 'true' : 'false') + '">' +
+          '<button type="button" class="learn-unit-head" aria-expanded="false">' +
           '<span class="lu-num">' + (i + 1) + '</span>' +
           '<span class="lu-title">' + esc(u.title) + '</span>' +
           '<span class="lu-chev" aria-hidden="true">⌄</span></button>' +
-          '<div class="learn-unit-body"' + (i === 0 ? '' : ' hidden') + '>' +
+          '<div class="learn-unit-body" hidden>' +
           '<div class="lu-block"><h5>원리</h5><p>' + esc(u.principle) + '</p></div>' +
           '<div class="lu-block lu-formula"><h5>핵심 수식 · 비례 관계</h5><code>' + esc(u.formula) + '</code></div>' +
           '<div class="lu-grid">' +
           '<div class="lu-block"><h5>자주 하는 오개념</h5><ul>' + u.misconcept.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
           '<div class="lu-block"><h5>탐구 질문</h5><ul>' + u.question.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' +
           '</div>' + simHost + '</div>';
-        units.appendChild(card);
+        host.appendChild(card);
         var head = $('.learn-unit-head', card);
         head.addEventListener('click', function () {
           var body = $('.learn-unit-body', card);
@@ -1115,9 +1355,10 @@
           card.classList.toggle('is-open', open);
           if (open && u.sim) ensureSim(u.sim);
         });
-        card.classList.toggle('is-open', i === 0);
+        card.classList.toggle('is-open', false);
+        });
       });
-      if (data.units[0] && data.units[0].sim) ensureSim(data.units[0].sim);
+      // 단원은 모두 접힌 채로 시작합니다. 펼칠 때 실험을 만듭니다.
     }
 
     function ensureSim(key) {
@@ -1133,6 +1374,7 @@
       else if (key === 'planck') simPlanck(host);
       else if (key === 'transit') simTransit(host);
       else if (key === 'rv') simRV(host);
+      else if (key === 'nebula') simNebula(host);
     }
 
     chips.addEventListener('click', function (e) {

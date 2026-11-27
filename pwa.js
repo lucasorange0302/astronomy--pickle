@@ -238,7 +238,7 @@
       return;
     }
     if (!isHttp) {
-      toast('파일로 열었습니다. 설치하려면 https 주소(byeolneoul.vercel.app)로 여세요.');
+      toast('지금은 앱 설치를 시작할 수 없습니다. byeolneoul.vercel.app 주소로 열어 주세요.');
       return;
     }
     if (deferred) {

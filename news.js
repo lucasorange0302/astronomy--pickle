@@ -224,10 +224,10 @@
         status.innerHTML = '<span class="dot"></span>최신 소식을 불러오는 중…';
       } else if (N.fallback) {
         status.className = 'news-status is-fallback';
-        status.innerHTML = '<span class="dot"></span>지금은 API에 연결하지 못해 <b>검증된 한국어 소식</b>을 보여 드립니다 · ' + esc(N.error);
+        status.innerHTML = '<span class="dot"></span>지금은 새 소식을 받아오지 못해 <b>확인된 한국어 소식</b>을 보여 드립니다';
       } else {
         status.className = 'news-status';
-        status.innerHTML = '<span class="dot"></span>Spaceflight News API · ' + N.items.length + '건 · 최신순 (한국 시간)';
+        status.innerHTML = '<span class="dot"></span>Spaceflight News · ' + N.items.length + '건 · 최신순 (한국 시간)';
       }
     }
 
@@ -274,7 +274,7 @@
       '<h3 id="newsModalTitle">' + esc(a.title) + '</h3>' +
       '<p class="nd-sum">' + esc(a.summary || '이 기사에는 요약이 없습니다. 원문에서 확인해 주세요.') + '</p>' +
       (a.ko ? '<p class="nd-note">한국어 요약은 공식 자료를 바탕으로 이 사이트에서 정리한 것입니다.</p>'
-        : '<p class="nd-note">요약은 Spaceflight News API가 제공한 원문 요약(영어)입니다. 자세한 내용은 원문에서 확인하세요.</p>') +
+        : '<p class="nd-note">요약은 Spaceflight News가 제공한 원문 요약(영어)입니다. 자세한 내용은 원문에서 확인하세요.</p>') +
       '<div class="nd-links"><a class="btn btn-primary btn-sm" href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">원문 열기 ↗</a>' +
       '<button class="btn btn-ghost btn-sm" type="button" data-news-close="1">닫기</button></div>';
     var c = $('.modal-close', m);
@@ -302,7 +302,7 @@
       '</div>' +
       '<p class="news-status" id="newsStatus"><span class="dot"></span>최신 소식을 불러오는 중…</p>' +
       '<div class="news-grid" id="newsGrid"></div>' +
-      '<p class="news-sub-note">기사는 Spaceflight News API(Spaceflight News)에서 실시간으로 가져옵니다. 요약은 영어 원문이며, 원문 링크에서 전체 내용을 볼 수 있습니다. 한국어 소식은 공식 기관 자료를 바탕으로 정리했습니다.</p>';
+      '<p class="news-sub-note">기사는 Spaceflight News에서 실시간으로 받아옵니다. 요약은 영어 원문이며, 원문 링크에서 전체 내용을 볼 수 있습니다. 한국어 소식은 공식 기관 자료를 바탕으로 정리했습니다.</p>';
 
     var chips = $('#newsChips');
     chips.addEventListener('click', function (e) {

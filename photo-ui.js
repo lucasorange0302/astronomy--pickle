@@ -248,7 +248,7 @@
       linkEl.textContent = 'NASA SkyView 원본 ↗';
       media.classList.add('is-survey');
       timer = setTimeout(function () {
-        if (!settled) showFallback('탐사 사진 응답이 늦어 성도로 대신 표시합니다');
+        if (!settled) showFallback('탐사 사진이 늦게 와서 성도로 대신 보여 드립니다');
       }, 20000);
     }
 

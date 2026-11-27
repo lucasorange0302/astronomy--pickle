@@ -72,7 +72,7 @@
       '    <button class="sd-close" type="button" data-fb-close="1" aria-label="닫기">×</button>' +
       '  </header>' +
       '  <div class="fb-body" id="fbBody">' +
-      '    <p class="fb-intro">불편한 점이나 있었으면 하는 기능을 알려 주세요. 지금 보고 있는 화면과 기기 정보가 함께 적혀 더 정확히 확인할 수 있습니다.</p>' +
+      '    <p class="fb-intro">불편한 점이나 있었으면 하는 기능을 알려 주세요. 지금 보고 있는 화면이 함께 전달되어 더 정확히 살펴볼 수 있습니다.</p>' +
       '    <div class="chip-row fb-cats" role="group" aria-label="피드백 종류">' +
              CATS.map(function (c, i) {
                return '<button type="button" class="chip' + (i === 0 ? ' is-active' : '') + '" data-fb-cat="' + c[0] + '">' + c[1] + '</button>';
@@ -81,8 +81,8 @@
       '    <label class="fb-field" for="fbText"><span>내용 <b>필수</b></span>' +
       '      <textarea id="fbText" rows="6" maxlength="2000" placeholder="예) 관측 명소에서 제주를 고르면 목록이 비어 보여요. / 다음에는 달 위상 달력을 넣어 주세요."></textarea>' +
       '      <small id="fbCount">0 / 2000</small></label>' +
-      '    <label class="fb-field" for="fbContext"><span>화면·상황</span>' +
-      '      <input id="fbContext" type="text" maxlength="200" placeholder="지금 화면이 자동으로 채워집니다"></label>' +
+      '    <label class="fb-field" for="fbContext"><span>참고할 상황 <em>선택</em></span>' +
+      '      <input id="fbContext" type="text" maxlength="200" placeholder="덧붙이고 싶은 상황이 있으면 적어 주세요"></label>' +
       '    <label class="fb-field" for="fbContact"><span>회신받을 연락처 <em>선택</em></span>' +
       '      <input id="fbContact" type="text" maxlength="120" placeholder="이메일이나 연락처 (답변을 원할 때만)"></label>' +
       '    <p class="fb-privacy">연락처를 적으면 답변을 위해 접수 창구로 함께 전달됩니다. 적지 않아도 괜찮습니다.</p>' +
@@ -129,8 +129,8 @@
     var n = loadQueue().length;
     foot.textContent = (FORMSPREE_ENDPOINT
       ? '보낸 의견은 접수 창구로 전달됩니다.'
-      : '아직 온라인 접수 창구가 연결되지 않아, 보낸 의견은 이 기기에만 저장됩니다.') +
-      (n ? ' · 이 기기에 저장된 의견 ' + n + '건' : '');
+      : '지금은 바로 보내지 못해, 보낸 의견을 이 기기에 남겨 둡니다.') +
+      (n ? ' · 남겨 둔 의견 ' + n + '건' : '');
   }
 
   function payload() {
@@ -167,8 +167,8 @@
     }
     if (!FORMSPREE_ENDPOINT) {
       storeLocal(p);
-      setStatus('saved', '<b>아직 온라인 접수 창구 연결 준비 중이라 이 기기에 임시 저장되었습니다.</b><br>' +
-        '보낸 내용은 이 브라우저에만 남아 있고 어디로도 전송되지 않았습니다. 아래에서 복사해 직접 전달하시거나, 창구가 연결된 뒤 다시 눌러 주세요.');
+      setStatus('saved', '<b>지금은 바로 보내지 못해, 적어 주신 내용을 이 기기에 남겨 두었습니다.</b><br>' +
+        '보낸 내용은 이 기기 밖으로 나가지 않았습니다. 아래에서 복사해 직접 전달하시거나, 잠시 뒤 다시 눌러 주세요.');
       return;
     }
     FB.busy = true;
@@ -188,8 +188,8 @@
       var c = $('#fbCount'); if (c) c.textContent = '0 / 2000';
     }).catch(function () {
       storeLocal(p);
-      setStatus('error', '<b>지금은 보내지 못했습니다.</b> 네트워크 상태를 확인한 뒤 다시 시도해 주세요.<br>' +
-        '대신 적어 주신 내용을 이 기기에 저장해 두었습니다. 복사해 직접 전달하실 수 있습니다.');
+      setStatus('error', '<b>지금은 보내지 못했습니다.</b> 인터넷 연결을 확인한 뒤 다시 시도해 주세요.<br>' +
+        '대신 적어 주신 내용을 이 기기에 남겨 두었습니다. 복사해 직접 전달하실 수 있습니다.');
     }).then(function () {
       FB.busy = false;
       if (btn) { btn.disabled = false; btn.textContent = '의견 보내기'; }
@@ -213,7 +213,7 @@
     if (!arr.length) { box.hidden = true; return; }
     box.hidden = false;
     var last = arr[arr.length - 1];
-    box.innerHTML = '<p class="fb-saved-title">이 기기에 저장된 의견 ' + arr.length + '건 (최근: ' + esc(last.at) + ')</p>' +
+    box.innerHTML = '<p class="fb-saved-title">이 기기에 남겨 둔 의견 ' + arr.length + '건 (최근: ' + esc(last.at) + ')</p>' +
       '<pre class="fb-saved-text">' + esc(formatOne(last)) + '</pre>' +
       '<div class="fb-saved-actions">' +
       (FORMSPREE_ENDPOINT ? '<button type="button" class="mini-btn" data-fb-resend="1">보관한 의견 다시 보내기</button>' : '') +
@@ -257,7 +257,7 @@
       if (btn) { btn.disabled = false; btn.textContent = '보관한 의견 다시 보내기'; }
       if (sent && !failed) setStatus('ok', '보관해 둔 의견 ' + sent + '건을 모두 보냈습니다. 감사합니다!');
       else if (sent) setStatus('saved', sent + '건은 보냈고 ' + failed + '건은 아직 보내지 못했습니다. 잠시 뒤 다시 시도해 주세요.');
-      else setStatus('error', '아직 보내지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요. (내용은 이 기기에 그대로 있습니다)');
+      else setStatus('error', '아직 보내지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요. (적은 내용은 그대로 남아 있습니다)');
       showSaved(); updateFoot();
     });
   }

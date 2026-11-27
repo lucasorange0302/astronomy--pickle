@@ -13,7 +13,7 @@
     today: ['🌙', '오늘 밤', '관측 지수 · 구름 · 행성'],
     skymap: ['🗺', '전천 지도', '하늘 전체 한 장'],
     catalog: ['🔭', '도감', '천체 2.3만 · 별자리 88'],
-    spacearchive: ['🛰', '자료관', 'NASA · SpaceX 사진'],
+    spacearchive: ['🛰', '자료관', '세계 우주기관 사진'],
     calendar: ['📅', '관측 일정', '2026~2027 천문 캘린더'],
     sites: ['🏕', '관측 명소', '전국 34곳'],
     lab: ['🧮', '계산기', '노출 · 배율 · 거리'],
@@ -172,8 +172,8 @@
     });
     html += '<p class="as-title">바로 열기</p>' +
       '<button type="button" class="as-item as-quick" data-open="cookie"><span class="as-ico" aria-hidden="true">🍪</span><span class="as-txt"><b>우주 쿠키</b><small>오늘의 우주 사실</small></span></button>' +
-      '<button type="button" class="as-item as-quick" data-view="spacearchive"><span class="as-ico" aria-hidden="true">🛰</span><span class="as-txt"><b>관측 자료관</b><small>NASA · SpaceX 사진</small></span></button>' +
-      '<button type="button" class="as-item as-quick" data-open="ai"><span class="as-ico" aria-hidden="true">🤖</span><span class="as-txt"><b>AI 도우미</b><small>이 사이트 데이터로 답변</small></span></button>';
+      '<button type="button" class="as-item as-quick" data-view="spacearchive"><span class="as-ico" aria-hidden="true">🛰</span><span class="as-txt"><b>🛰️ 자료관</b><small>세계 우주기관 사진</small></span></button>' +
+      '<button type="button" class="as-item as-quick" data-open="ai"><span class="as-ico" aria-hidden="true">🤖</span><span class="as-txt"><b>AI 도우미</b><small>이 사이트의 하늘 정보로 답변</small></span></button>';
     side.innerHTML = html;
     var main = document.querySelector('main');
     main.parentNode.insertBefore(side, main);

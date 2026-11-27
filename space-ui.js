@@ -131,7 +131,7 @@
     loadCookieManifest();
   }
 
-  /* ---------- 쿠키 지연 로딩: 2,000개를 200개씩 나눠 필요한 묶음만 받습니다 ---------- */
+  /* ---------- 쿠키 목록: 2,000개를 200개씩 보여 줍니다 ---------- */
   function loadCookieManifest() {
     if (CK.state !== 'idle') return;
     CK.state = 'loading';
@@ -142,12 +142,12 @@
       CK.lazy = CK.total > SD.COOKIES.length;
       CK.state = 'ready';
       var foot = $('#ckFoot');
-      if (foot) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + CK.total.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴';
+      if (foot) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + CK.total.toLocaleString('en-US') + '개';
       if (CK.view === 'draw') renderCookie();
     }).catch(function () {
       CK.state = 'error';
       var foot = $('#ckFoot');
-      if (foot) foot.textContent = '오프라인 · 내장 쿠키 ' + SD.COOKIES.length + '개로 뜯습니다';
+      if (foot) foot.textContent = '지금은 준비된 쿠키 ' + SD.COOKIES.length + '개로 뜯습니다';
     });
   }
 
@@ -264,7 +264,7 @@
     if (!body) return;
     if (CK.view === 'list') { renderCookieList(body); return; }
     var n = cookieCount();
-    if (!n) { body.innerHTML = '<p class="ck-empty">쿠키 데이터를 불러오지 못했습니다.</p>'; return; }
+    if (!n) { body.innerHTML = '<p class="ck-empty">쿠키를 불러오지 못했습니다.</p>'; return; }
     if (STATE.cookie == null || STATE.cookie >= n) STATE.cookie = pickCookie();
     var c = currentCookie();
     if (!c) {
@@ -312,7 +312,7 @@
     renderRecent(); renderSkyMini();
     var foot = $('#ckFoot');
     if (foot) foot.textContent = CK.lazy
-      ? '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + n.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴'
+      ? '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + n.toLocaleString('en-US') + '개'
       : '출처는 각 쿠키에 표시됩니다 · 수집 2026-11-26';
   }
 
@@ -370,7 +370,7 @@
         return '<button class="chip' + (cur === p[0] ? ' is-active' : '') + '" data-ck="cat" data-cat="' + esc(p[0]) + '">' + esc(p[1]) + '</button>';
       }).join('') + '</div>' +
       (CK.lazy
-        ? '<p class="ck-total" id="ckLoadNote">불러온 쿠키 ' + loaded.toLocaleString('en-US') + ' / ' + max.toLocaleString('en-US') + ' · 200개씩 나눠 받습니다</p>'
+        ? '<p class="ck-total" id="ckLoadNote">보고 있는 쿠키 ' + loaded.toLocaleString('en-US') + ' / ' + max.toLocaleString('en-US') + '</p>'
         : '') +
       '<div class="ck-list">' + rows.map(function (x) {
         var cat = SD.CAT[x.c.c] || { label: x.c.c, icon: '🍪' };
@@ -380,11 +380,11 @@
           '<span class="ck-item-stat">' + esc(x.c.s) + '</span></button>';
       }).join('') + '</div>' +
       (CK.lazy && loaded < max
-        ? '<div class="ck-list-more"><button class="mini-btn" data-ck="more">다음 200개 불러오기</button>' +
-          '<button class="mini-btn" data-ck="allchunks">2,000개 모두 불러오기</button></div>'
+        ? '<div class="ck-list-more"><button class="mini-btn" data-ck="more">다음 200개 보기</button>' +
+          '<button class="mini-btn" data-ck="allchunks">2,000개 모두 보기</button></div>'
         : '');
     var foot = $('#ckFoot');
-    if (foot && CK.lazy) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + max.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴';
+    if (foot && CK.lazy) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + max.toLocaleString('en-US') + '개';
   }
 
   function openCookie() {
@@ -402,26 +402,45 @@
   /* ======================================================================
      🛰️ NASA·SpaceX 관측 자료관 섹션
      ====================================================================== */
+  var SA = { page: 0, pages: 0, busy: false, filter: '', seen: {} };
+  var SA_BASE = 'assets/data/archive/';
+  var INST_LABEL = { nasa: 'NASA', spacex: 'SpaceX', kari: '한국(KARI)', esa: 'ESA·ESO', jaxa: 'JAXA', private: '민간 우주기업' };
+
+  function instOf(g) {
+    if (g.inst) return g.inst;
+    if (/falcon|starship|crew|dragon|spacex/i.test(g.mission + ' ' + g.title)) return 'spacex';
+    return 'nasa';
+  }
+  function galSrc(g) { return g.url || ('assets/space/' + g.file); }
+  function galFull(g) { return g.large || g.url || ('assets/space/' + (g.file || '')); }
+  function instMatch(g, f) {
+    if (!f) return true;
+    var k = instOf(g);
+    if (f === 'jaxa') return k === 'jaxa' || k === 'private';
+    return k === f;
+  }
+
   function buildGallerySection() {
     var main = $('main');
     if (!main) return;
     var sec = document.createElement('section');
     sec.className = 'section space-archive';
     sec.id = 'spacearchive';
-    var tags = [['', '전체'], ['nasa', 'NASA'], ['spacex', 'SpaceX'], ['moon', '달·행성'], ['sun', '태양'], ['earth', '지구']];
+    var tags = [['', '전체'], ['nasa', 'NASA'], ['spacex', 'SpaceX'], ['kari', '한국(KARI)'], ['esa', 'ESA·ESO'], ['jaxa', 'JAXA·기타']];
     sec.innerHTML =
       '<div class="wrap">' +
       '  <div class="section-head">' +
-      '    <p class="eyebrow">관측 자료관 · 실제 사진</p>' +
-      '    <h2>NASA·SpaceX가 보낸 <span class="grad">진짜 사진</span>으로 보는 우주</h2>' +
-      '    <p class="section-sub">제임스 웹·허블·SDO·카시니·주노·퍼서비어런스와 SpaceX 팰컨 9·크루 드래곤. 2026-11-26에 공식 공개 자료에서 내려받은 원본을 카드로 모았습니다. 카드를 누르면 큰 사진과 촬영 정보가 함께 열립니다.</p>' +
+      '    <p class="eyebrow">자료관 · 실제 사진</p>' +
+      '    <h2>각국 우주기관이 보낸 <span class="grad">진짜 사진</span>으로 보는 우주</h2>' +
+      '    <p class="section-sub">제임스 웹·허블, 누리호·다누리, 로제타·유클리드, 하야부사 2, 팰컨 9·스타십까지 — 공개된 실제 관측·임무 사진을 모았습니다. 카드를 누르면 큰 사진과 설명이 함께 열립니다.</p>' +
       '  </div>' +
       '  <div class="chip-row" id="saChips">' + tags.map(function (t) {
         return '<button class="chip' + (t[0] === '' ? ' is-active' : '') + '" data-sa="' + t[0] + '">' + t[1] + '</button>';
       }).join('') + '</div>' +
       '  <p class="result-count" id="saCount">—</p>' +
       '  <div class="sa-grid" id="saGrid"></div>' +
-      '  <p class="sa-note">사진은 NASA 공개 이미지(퍼블릭 도메인)·SpaceX/NASA 공동 촬영본입니다. 각 카드의 원본 링크에서 고해상도 파일을 받을 수 있습니다. 전체 목록과 데이터는 <code>downloads/space-archive/</code>에 정리했습니다.</p>' +
+      '  <div class="sa-more"><button class="mini-btn" id="saMore" type="button">사진 더 보기</button><span class="sa-more-note" id="saMoreNote"></span></div>' +
+      '  <p class="sa-note">사진은 NASA·ESA·ESO·JAXA·KARI와 SpaceX 등이 공개한 실제 촬영본입니다. 저작자와 이용 조건은 각 사진의 원본 링크에 표시되어 있습니다.</p>' +
       '</div>';
     var cal = $('#calendar');
     if (cal && cal.parentNode) cal.parentNode.insertBefore(sec, cal);
@@ -434,6 +453,7 @@
         renderGallery(chip.getAttribute('data-sa'));
         return;
       }
+      if (e.target.closest('#saMore')) { saLoadMore(); return; }
       var card = e.target.closest('[data-gal]');
       if (card) {
         var i = +card.getAttribute('data-gal');
@@ -443,40 +463,98 @@
       }
     });
     renderGallery('');
+    saLoadManifest();
+  }
+
+  function saLoadManifest() {
+    fetchJSON(SA_BASE + 'manifest.json').then(function (m) {
+      SA.pages = m.pages || 0;
+      saPaintMore();
+    }).catch(function () { saPaintMore(); });
+  }
+
+  function saPaintMore() {
+    var btn = $('#saMore'), note = $('#saMoreNote');
+    var left = Math.max(0, SA.pages - SA.page);
+    if (btn) {
+      btn.hidden = left <= 0;
+      btn.disabled = SA.busy;
+      btn.textContent = SA.busy ? '불러오는 중…' : '사진 더 보기';
+    }
+    if (note) {
+      note.textContent = left > 0
+        ? '지금까지 ' + SD.GALLERY.length + '장 · ' + (left * 24) + '장 더 있습니다'
+        : SD.GALLERY.length + '장 모두 보았습니다';
+    }
+  }
+
+  function saLoadMore() {
+    if (SA.busy || SA.page >= SA.pages) return;
+    SA.busy = true;
+    saPaintMore();
+    var n = SA.page;
+    fetchJSON(SA_BASE + 'p' + n + '.json').then(function (arr) {
+      (arr || []).forEach(function (e) {
+        var id = e.id || ('p' + n + '-' + SD.GALLERY.length);
+        if (SA.seen[id]) return;
+        SA.seen[id] = 1;
+        SD.GALLERY.push({
+          id: id, file: '', url: e.url, large: e.large || e.url,
+          title: e.title, en: e.en, mission: e.mission || 'NASA',
+          inst: e.inst || 'nasa', date: e.date || '', obj: e.obj || '',
+          d: e.d || '', credit: e.credit || 'NASA', src: e.src || '', nasa: e.nasa || ''
+        });
+      });
+      SA.page = Math.min(SA.pages, n + 1);
+      SA.busy = false;
+      renderGallery(SA.filter);
+      saPaintMore();
+    }).catch(function () {
+      SA.busy = false;
+      saPaintMore();
+      if (window.OneulBam && window.OneulBam.toast) window.OneulBam.toast('사진을 더 불러오지 못했습니다. 잠시 뒤 다시 눌러 주세요.');
+    });
   }
 
   function galTag(g) {
-    if (/falcon|crew|dragon|spacex/i.test(g.mission + g.title)) return 'spacex';
-    if (/SDO|SOHO|태양/.test(g.mission + g.obj)) return 'sun';
-    if (/EPIC|지구/.test(g.mission + g.obj)) return 'earth';
+    if (/falcon|crew|dragon|spacex/i.test(g.mission + ' ' + g.title)) return 'spacex';
+    if (/SDO|SOHO|태양/.test(g.mission + ' ' + g.obj)) return 'sun';
+    if (/EPIC|지구/.test(g.mission + ' ' + g.obj)) return 'earth';
     return 'nasa';
   }
 
   function renderGallery(tag) {
     var grid = $('#saGrid');
     if (!grid) return;
+    SA.filter = tag || '';
     var vis = [];
-    SD.GALLERY.forEach(function (g, i) { if (!tag || galTag(g) === tag) vis.push(i); });
+    SD.GALLERY.forEach(function (g, i) { if (instMatch(g, tag)) vis.push(i); });
     STATE.galVis = vis;
     grid.innerHTML = vis.map(function (i) {
       var g = SD.GALLERY[i];
+      var k = instOf(g);
       return '<button class="sa-card" data-gal="' + i + '" aria-label="' + esc(g.title) + ' 크게 보기">' +
-        '<span class="sa-thumb"><img src="assets/space/' + esc(g.file) + '" alt="' + esc(g.title) + '" loading="lazy" decoding="async" data-full="' + esc(g.file) + '"></span>' +
-        '<span class="sa-body"><span class="sa-tag">' + esc(g.mission) + '</span>' +
+        '<span class="sa-thumb"><img src="' + esc(galSrc(g)) + '" alt="' + esc(g.title) + '" loading="lazy" decoding="async"></span>' +
+        '<span class="sa-body"><span class="sa-tag is-inst">' + esc(INST_LABEL[k] || 'NASA') + '</span>' +
         '<strong>' + esc(g.title) + '</strong>' +
-        '<span class="sa-meta">' + esc(g.date) + ' · ' + esc(g.obj) + '</span></span></button>';
-    }).join('');
+        '<span class="sa-meta">' + esc(g.mission) + (g.date ? ' · ' + esc(g.date) : '') + '</span></span></button>';
+    }).join('') || '<p class="cat2-empty">이 기관의 사진을 아직 불러오지 않았습니다. <b>사진 더 보기</b>를 눌러 주세요.</p>';
     var cnt = $('#saCount');
-    if (cnt) cnt.textContent = vis.length + '장 · 눌러서 사진과 정보 보기';
+    if (cnt) cnt.textContent = vis.length + '장 · 눌러서 사진과 설명 보기';
     $$('#saGrid img').forEach(function (img) {
       img.addEventListener('error', function () {
         var g = SD.GALLERY[+img.closest('[data-gal]').getAttribute('data-gal')];
-        if (g && g.nasa && !img.dataset.fb) {
+        if (!g) return;
+        if (g.nasa && !img.dataset.fb) {
           img.dataset.fb = '1';
           img.src = 'https://images-assets.nasa.gov/image/' + g.nasa + '/' + g.nasa + '~medium.jpg';
+          return;
         }
+        img.closest('.sa-thumb').classList.add('is-broken');
+        img.remove();
       });
     });
+    saPaintMore();
   }
 
   /* ======================================================================
@@ -559,16 +637,18 @@
     var ph0 = $('#smPhoto');
     if (ph0) { ph0.innerHTML = ''; ph0.hidden = true; }
     img.alt = g.title;
-    img.src = 'assets/space/' + g.file;
+    img.src = galSrc(g);
     img.onerror = function () {
       if (g.nasa && !img.dataset.fb) { img.dataset.fb = '1'; img.src = 'https://images-assets.nasa.gov/image/' + g.nasa + '/' + g.nasa + '~large.jpg'; }
     };
     $('#smCredit').textContent = g.credit ? 'Credit: ' + g.credit : '';
-    var isSp = galTag(g) === 'spacex';
-    $('#smKind').textContent = isSp ? 'SpaceX' : (galTag(g) === 'sun' ? 'NASA · 태양' : (galTag(g) === 'earth' ? 'NASA · 지구' : 'NASA'));
+    var inst = instOf(g);
+    var isSp = inst === 'spacex';
+    $('#smKind').textContent = INST_LABEL[inst] || 'NASA';
     $('#smKind').className = 'sm-kind' + (isSp ? ' spx' : '');
     $('#smTitle').textContent = g.title;
-    var rows = [['촬영 장비·미션', g.mission], ['촬영·공개일', g.date], ['대상', g.obj], ['거리', g.dist]];
+    var rows = [['기관·미션', g.mission], ['촬영·공개일', g.date], ['대상', g.obj], ['거리', g.dist]];
+    if (g.en) rows.push(['원제', g.en]);
     $('#smFacts').innerHTML = rows.map(function (r) {
       return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1] || '—') + '</dd></div>';
     }).join('');
@@ -579,7 +659,9 @@
       acts += '<button class="btn btn-primary btn-sm" data-lb-aim=\'' + esc(JSON.stringify({ ra: cat.ra, dec: cat.dec, name: cat.ko })) + '\'>🎯 하늘에서 조준</button>';
     }
     if (g.nasa) acts += '<a class="btn btn-ghost btn-sm" href="https://images.nasa.gov/details/' + esc(g.nasa) + '" target="_blank" rel="noopener noreferrer">NASA 원본 페이지 ↗</a>';
-    acts += '<a class="btn btn-ghost btn-sm" href="assets/space/' + esc(g.file) + '" target="_blank" rel="noopener noreferrer" download>사진 내려받기 ↓</a>';
+    else if (g.src) acts += '<a class="btn btn-ghost btn-sm" href="' + esc(g.src) + '" target="_blank" rel="noopener noreferrer">원본·출처 열기 ↗</a>';
+    if (g.file) acts += '<a class="btn btn-ghost btn-sm" href="assets/space/' + esc(g.file) + '" target="_blank" rel="noopener noreferrer" download>사진 내려받기 ↓</a>';
+    else if (g.large || g.url) acts += '<a class="btn btn-ghost btn-sm" href="' + esc(galFull(g)) + '" target="_blank" rel="noopener noreferrer">큰 사진 열기 ↗</a>';
     $('#smActions').innerHTML = acts;
     $('#smSrc').textContent = (STATE.lbIndex + 1) + ' / ' + list.length + ' · NASA 공개 이미지 라이브러리' + (g.nasa ? ' (' + g.nasa + ')' : '');
     var cl = $('.sm-close', m); if (cl) cl.focus();
@@ -605,7 +687,7 @@
 
   function fetchJSON(url) {
     return new Promise(function (resolve, reject) {
-      if (!window.fetch) { reject(new Error('fetch 없음')); return; }
+      if (!window.fetch) { reject(new Error('지금은 목록을 받을 수 없습니다')); return; }
       var ctrl = null, timer = 0;
       var opts = {};
       if (window.AbortController) { ctrl = new AbortController(); opts.signal = ctrl.signal; }
@@ -658,7 +740,7 @@
     box.innerHTML =
       '<div class="cat2-head">' +
       '  <div><h3>🌌 하늘 전체 도감 <span class="cat2-badge" id="c2total">' + SC.meta.count.toLocaleString('en-US') + '종</span></h3>' +
-      '  <p>메시에 110종 전체 + NGC/IC 전체 + 6등급보다 밝은 별 + 외계행성계까지, 공개 카탈로그(OpenNGC·HYG·NASA/IPAC)의 좌표를 그대로 담았습니다. 카드를 누르면 상세 정보와 조준 버튼이 열립니다. <b>2만 3천여 종은 필요한 만큼만 나눠서 불러옵니다.</b></p></div>' +
+      '  <p>메시에 110종 전체 + NGC/IC 전체 + 6등급보다 밝은 별 + 외계행성계까지, 공개 카탈로그(OpenNGC·HYG·NASA/IPAC)의 좌표를 그대로 담았습니다. 카드를 누르면 상세 정보와 조준 버튼이 열립니다. <b>2만 3천여 종을 한자리에서 찾아볼 수 있습니다.</b></p></div>' +
       '</div>' +
       '<div class="cat2-controls">' +
       '  <input type="search" id="c2q" class="cat2-search" placeholder="이름·번호로 찾기 (M42, NGC 7000, 베가…)" aria-label="전체 도감 검색">' +
@@ -669,7 +751,7 @@
         return '<button class="chip' + (g[0] === '' ? ' is-active' : '') + '" data-c2t="' + g[0] + '">' + g[1] + '</button>';
       }).join('') + '</div>' +
       '<p class="result-count" id="c2count">—</p>' +
-      '<p class="lazy-note" id="c2lazy"><span class="lz-badge" id="c2lazyBadge">지연 로딩</span><span id="c2lazyTxt">전체 목록은 스크롤할 때 필요한 부분만 불러옵니다</span></p>' +
+      '<p class="lazy-note" id="c2lazy"><span class="lz-badge" id="c2lazyBadge">전체 목록</span><span id="c2lazyTxt">아래로 내리면 목록이 이어집니다</span></p>' +
       '<p class="c2-loading" id="c2loading" hidden>목록을 불러오는 중…</p>' +
       '<div class="cat2-grid" id="c2grid"></div>' +
       '<div class="cat2-pager"><button class="mini-btn" id="c2prev">← 이전</button><span id="c2page">—</span><button class="mini-btn" id="c2next">다음 →</button></div>' +
@@ -760,9 +842,9 @@
     refreshConOptions();
     updateCatalogCount(C2.rows.length);
     var badge = $('#c2lazyBadge');
-    if (badge) { badge.textContent = '온라인 확장 완료'; badge.classList.add('is-on'); }
+    if (badge) { badge.textContent = '전체 목록'; badge.classList.add('is-on'); }
     var txt = $('#c2lazyTxt');
-    if (txt) txt.textContent = C2.rows.length.toLocaleString('en-US') + '종 전체 목록 · 카드 상세는 그때그때 필요한 묶음만 불러옵니다';
+    if (txt) txt.textContent = C2.rows.length.toLocaleString('en-US') + '종 전체 목록 · 카드를 누르면 상세 정보가 열립니다';
     renderCat2();
   }
 
@@ -1038,21 +1120,21 @@
       '<div class="sd-backdrop" data-close="1"></div>' +
       '<div class="sd-panel ai-panel">' +
       '  <header class="sd-head">' +
-      '    <div><p class="sd-eyebrow">사이트 하늘 데이터 기반</p><h3 id="aiTitle">🤖 AI 천문 도우미</h3></div>' +
-      '    <div class="ai-head-actions"><span class="ai-badge" id="aiBadge">로컬 도우미</span>' +
-      '    <button class="sd-icon" id="aiGear" aria-label="API 연결 설정" aria-expanded="false">⚙️</button>' +
+      '    <div><p class="sd-eyebrow">이 사이트의 하늘 정보로 답합니다</p><h3 id="aiTitle">🤖 AI 천문 도우미</h3></div>' +
+      '    <div class="ai-head-actions"><span class="ai-badge" id="aiBadge">기본 도우미</span>' +
+      '    <button class="sd-icon" id="aiGear" aria-label="AI 연결 설정" aria-expanded="false">⚙️</button>' +
       '    <button class="sd-close" data-close="1" aria-label="닫기">×</button></div>' +
       '  </header>' +
       '  <div class="ai-settings" id="aiSettings" hidden>' +
       '    <label class="field"><span class="field-label">제공자</span>' +
-      '      <select id="aiProvider"><option value="local">로컬 도우미 (키 필요 없음)</option><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="custom">OpenAI 호환 (Ollama·프록시)</option></select></label>' +
+      '      <select id="aiProvider"><option value="local">기본 도우미 (키 필요 없음)</option><option value="gemini">Google Gemini</option><option value="openai">OpenAI</option><option value="custom">OpenAI 호환 (Ollama 등)</option></select></label>' +
       '    <label class="field" id="aiModelWrap"><span class="field-label">모델</span><input id="aiModel" placeholder="gemini-2.5-flash / gpt-4.1-mini" autocomplete="off"></label>' +
-      '    <label class="field" id="aiEndpointWrap" hidden><span class="field-label">엔드포인트 URL</span><input id="aiEndpoint" placeholder="http://localhost:11434/v1/chat/completions" autocomplete="off"></label>' +
+      '    <label class="field" id="aiEndpointWrap" hidden><span class="field-label">연결 주소(URL)</span><input id="aiEndpoint" placeholder="http://localhost:11434/v1/chat/completions" autocomplete="off"></label>' +
       '    <label class="field" id="aiKeyWrap"><span class="field-label">API 키</span><input id="aiKey" type="password" placeholder="AIza… / sk-…" autocomplete="off"></label>' +
       '    <div class="ai-set-actions"><button class="btn btn-primary btn-sm" id="aiSave">저장</button>' +
       '      <button class="btn btn-ghost btn-sm" id="aiTest">연결 테스트</button>' +
       '      <button class="btn btn-ghost btn-sm" id="aiClear">키 삭제</button></div>' +
-      '    <p class="ai-note">🔒 입력한 API 키는 <strong>이 브라우저의 localStorage에만</strong> 저장되며 공개 저장소·서버로 전송되지 않습니다. 질문을 보낼 때만 선택한 제공자의 API로 직접 전송됩니다. 공용 PC에서는 사용 후 삭제하세요.</p>' +
+      '    <p class="ai-note">🔒 입력한 키는 <strong>이 기기 안에만</strong> 보관되고 공개되는 곳이 없습니다. 질문을 보낼 때만 선택한 AI 서비스로 직접 전달됩니다. 공용 기기에서는 사용 뒤 <b>키 삭제</b>를 눌러 주세요.</p>' +
       '    <p class="ai-status" id="aiStatus" role="status"></p>' +
       '  </div>' +
       '  <div class="ai-log" id="aiLog" aria-live="polite"></div>' +
@@ -1106,8 +1188,8 @@
       }
       $('#aiKey').value = '';
       $('#aiStatus').textContent = had
-        ? '키를 삭제했습니다. 로컬 도우미로 동작합니다.'
-        : (others.length ? '저장된 API 키를 모두 삭제했습니다. 로컬 도우미로 동작합니다.' : '저장된 키가 없습니다. 로컬 도우미로 동작합니다.');
+        ? '키를 삭제했습니다. 이제 기본 도우미로 답합니다.'
+        : (others.length ? '저장된 키를 모두 삭제했습니다. 이제 기본 도우미로 답합니다.' : '저장된 키가 없습니다. 기본 도우미로 답합니다.');
       AI.provider = 'local'; store('ai.provider', 'local');
       $('#aiProvider').value = 'local';
       syncAIPanels(); syncAI();
@@ -1137,7 +1219,7 @@
     $('#aiEndpoint').value = AI.endpoint || '';
     $('#aiKey').value = AI.provider === 'local' ? '' : aiKey(AI.provider);
     syncAIPanels();
-    $('#aiStatus').textContent = AI.provider === 'local' ? '로컬 도우미 모드 — 사이트 데이터만으로 답합니다.' : '키가 저장되어 있으면 질문이 제공자 API로 전송됩니다.';
+    $('#aiStatus').textContent = AI.provider === 'local' ? '기본 도우미 — 이 사이트의 하늘 정보만으로 답합니다.' : '키를 저장하면 질문이 선택한 AI 서비스로 전달됩니다.';
   }
   function defaultModel(p) {
     if (p === 'gemini') return 'gemini-2.5-flash';
@@ -1149,7 +1231,7 @@
     var badge = $('#aiBadge');
     if (!badge) return;
     var on = AI.provider !== 'local' && !!aiKey(AI.provider);
-    badge.textContent = on ? 'API 연결됨 · ' + (AI.provider === 'gemini' ? 'Gemini' : AI.provider === 'openai' ? 'OpenAI' : '커스텀') : '로컬 도우미';
+    badge.textContent = on ? (AI.provider === 'gemini' ? 'Gemini 연결됨' : AI.provider === 'openai' ? 'OpenAI 연결됨' : '커스텀 연결됨') : '기본 도우미';
     badge.classList.toggle('is-api', on);
     AI.provider = on ? AI.provider : 'local';
   }
@@ -1162,12 +1244,12 @@
     store('ai.provider', p); store('ai.model', AI.model); store('ai.endpoint', AI.endpoint);
     AI.provider = p;
     if (p !== 'local' && !aiKey(p)) {
-      $('#aiStatus').textContent = '키가 비어 있어 로컬 도우미로 동작합니다.';
+      $('#aiStatus').textContent = '키가 비어 있어 기본 도우미로 답합니다.';
       AI.provider = 'local'; store('ai.provider', 'local');
       $('#aiProvider').value = 'local';
       syncAIPanels();
     } else {
-      $('#aiStatus').textContent = '저장했습니다. 이 브라우저에만 보관됩니다.';
+      $('#aiStatus').textContent = '저장했습니다. 키는 이 기기 밖으로 나가지 않습니다.';
     }
     syncAI();
   }
@@ -1175,13 +1257,13 @@
   function testAI() {
     var p = $('#aiProvider').value;
     var k = $('#aiKey').value.trim() || aiKey(p);
-    if (p === 'local') { $('#aiStatus').textContent = '로컬 도우미는 키 없이 항상 동작합니다.'; return; }
+    if (p === 'local') { $('#aiStatus').textContent = '기본 도우미는 키 없이 바로 답합니다.'; return; }
     if (!k) { $('#aiStatus').textContent = 'API 키를 입력하세요.'; return; }
     if (p === 'custom') {
       var ep = $('#aiEndpoint').value.trim();
-      if (!ep) { $('#aiStatus').textContent = '엔드포인트 URL을 입력하세요.'; return; }
+      if (!ep) { $('#aiStatus').textContent = '연결 주소를 입력하세요.'; return; }
       if (!/^https?:\/\/[^\s]+$/i.test(ep)) {
-        $('#aiStatus').textContent = '❌ 엔드포인트는 http:// 또는 https://로 시작하는 주소여야 합니다.';
+        $('#aiStatus').textContent = '❌ 주소는 http:// 또는 https://로 시작해야 합니다.';
         return;
       }
     }
@@ -1195,8 +1277,8 @@
   function greetAI() {
     var log = $('#aiLog');
     if (!log) return;
-    log.innerHTML = '<div class="ai-msg bot"><div class="ai-bubble">안녕하세요! 이 사이트의 <strong>오늘 밤 하늘 데이터</strong>(관측지·시각·달·행성·도감 2,500여 종·우주 쿠키)를 알고 답하는 도우미입니다.<br>' +
-      'API 키 없이도 <strong>로컬 도우미</strong>로 바로 쓸 수 있고, ⚙️에서 Gemini·OpenAI 키를 넣으면 더 자유로운 질문도 가능합니다.<br>' +
+    log.innerHTML = '<div class="ai-msg bot"><div class="ai-bubble">안녕하세요! 이 사이트의 <strong>오늘 밤 하늘 정보</strong>(관측지·시각·달·행성·도감 2,500여 종·우주 쿠키)를 알고 답하는 도우미입니다.<br>' +
+      'API 키 없이도 <strong>기본 도우미</strong>로 바로 쓸 수 있고, ⚙️에서 Gemini·OpenAI 키를 넣으면 더 자유로운 질문도 가능합니다.<br>' +
       '지금 상태: ' + esc(contextLine()) + '</div></div>';
   }
 
@@ -1205,7 +1287,7 @@
       var st = window.OneulBam.state, c = st.last || window.OneulBam.computeNight();
       var ph = c.phase;
       return st.site.name + ' · ' + st.dateStr + ' ' + (st.timeStr || '지금') + ' · 달 ' + ph.name + ' ' + Math.round(ph.illum * 100) + '% · 관측지수 ' + c.score;
-    } catch (e) { return '하늘 데이터 준비 중'; }
+    } catch (e) { return '하늘 정보 준비 중'; }
   }
 
   function buildContext() {
@@ -1258,8 +1340,8 @@
         AI.msgs.push({ role: 'user', text: q }, { role: 'assistant', text: txt });
       })
       .catch(function (err) {
-        typing.innerHTML = '<div class="ai-bubble err">API 호출에 실패했습니다: ' + esc(err.message) +
-          '<br><span class="ai-small">키·모델·엔드포인트를 확인하거나, 아래 로컬 도우미 답변을 참고하세요.</span></div>' + localAnswer(q);
+        typing.innerHTML = '<div class="ai-bubble err">답변을 받지 못했습니다: ' + esc(err.message) +
+          '<br><span class="ai-small">키와 모델을 확인하거나, 아래 기본 도우미의 답변을 참고하세요.</span></div>' + localAnswer(q);
         wireAnswer(typing);
       })
       .then(function () { AI.busy = false; if (sendBtn) sendBtn.disabled = false; });
@@ -1303,15 +1385,15 @@
         };
       } else {
         url = provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : (endpoint || '');
-        if (!url) { reject(new Error('엔드포인트 URL이 비어 있습니다')); return; }
+        if (!url) { reject(new Error('연결 주소가 비어 있습니다')); return; }
         // 주소를 확인하지 않으면 'not-a-url' 같은 입력이 이 사이트 주소로 요청되어
         // API 키가 엉뚱한 곳으로 전송될 수 있습니다.
         if (!/^https?:\/\/[^\s]+$/i.test(url)) {
-          reject(new Error('엔드포인트 주소가 올바르지 않습니다. http:// 또는 https://로 시작하는 주소를 넣어 주세요'));
+          reject(new Error('연결 주소가 올바르지 않습니다. http:// 또는 https://로 시작하는 주소를 넣어 주세요'));
           return;
         }
         if (location.protocol === 'https:' && url.indexOf('http://') === 0) {
-          reject(new Error('HTTPS 페이지에서는 http:// 엔드포인트가 차단됩니다(혼합 콘텐츠). https 주소나 프록시를 쓰세요'));
+          reject(new Error('이 화면은 보안 연결(https)이라 http:// 주소로는 연결할 수 없습니다. https 주소를 넣어 주세요'));
           return;
         }
         headers.Authorization = 'Bearer ' + key;
@@ -1331,30 +1413,30 @@
             try { j = JSON.parse(t); } catch (e) { j = null; }
             if (!r.ok) {
               var msg = (j && (j.error && (j.error.message || j.error))) ||
-                (t ? '응답 본문: ' + t.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : '');
+                (t ? '돌아온 내용: ' + t.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : '');
               throw new Error(r.status + (msg ? ' ' + msg : ''));
             }
-            if (!j) throw new Error('응답을 해석할 수 없습니다');
+            if (!j) throw new Error('답변을 이해하지 못했습니다');
             var out = '';
             if (provider === 'gemini') {
               out = ((j.candidates || [])[0] || {}).content ? j.candidates[0].content.parts.map(function (p) { return p.text || ''; }).join('') : '';
             } else {
               out = ((j.choices || [])[0] || {}).message ? j.choices[0].message.content : '';
             }
-            if (!out) throw new Error('빈 응답');
+            if (!out) throw new Error('답변이 비어 있습니다');
             resolve(out.trim());
           });
         })
         .catch(function (e) {
           clearTimeout(timer);
-          if (e.name === 'AbortError') reject(new Error('시간 초과(45초)'));
-          else if (String(e.message).indexOf('Failed to fetch') >= 0) reject(new Error('네트워크/CORS 차단. 키·엔드포인트·브라우저 정책을 확인하세요'));
+          if (e.name === 'AbortError') reject(new Error('45초 안에 답이 오지 않았습니다'));
+          else if (String(e.message).indexOf('Failed to fetch') >= 0) reject(new Error('연결하지 못했습니다. 키와 연결 주소를 확인해 주세요'));
           else reject(e);
         });
     });
   }
 
-  /* ------------------------------- 로컬 도우미 ------------------------------- */
+  /* ------------------------------- 기본 도우미 ------------------------------- */
   function localAnswer(q) {
     var s = q.toLowerCase();
     var parts = [];
@@ -1425,7 +1507,7 @@
       return '<div class="ai-bubble">우주 쿠키에서 <strong>' + ckHits.length + '개</strong>를 찾았습니다.' +
         ckHits.slice(0, 4).map(function (c) { return '<div class="ai-cookie">🍪 <strong>' + esc(c.t) + '</strong> — ' + esc(c.s) + '<br><span class="ai-small">' + esc(c.d) + '</span></div>'; }).join('') + '</div>';
     }
-    return '<div class="ai-bubble">로컬 도우미는 <strong>사이트 안의 데이터</strong>(도감 ' + SC.meta.count + '종, 우주 쿠키 ' + SD.COOKIES.length + '개, 오늘 밤 계산값)만으로 답합니다. "' + esc(q) + '"에 대한 자료를 찾지 못했습니다.<br>' +
+    return '<div class="ai-bubble">기본 도우미는 <strong>이 사이트에 담긴 정보</strong>(도감 ' + SC.meta.count + '종, 우주 쿠키 ' + SD.COOKIES.length + '개, 오늘 밤 계산값)만으로 답합니다. "' + esc(q) + '"에 대한 자료를 찾지 못했습니다.<br>' +
       '<span class="ai-small">천체 이름(M42, 안드로메다, 베가…)이나 "오늘 뭐 보지", "달", "유성우"처럼 물어보세요. 더 자유로운 질문은 ⚙️에서 API 키를 넣으면 됩니다.</span></div>';
   }
 

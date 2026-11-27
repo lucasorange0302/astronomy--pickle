@@ -401,8 +401,8 @@
 
     if (wx.status !== 'ok') {
       const why = wx.reason === 'range' ? '이 날짜는 기상 예보 제공 범위(16일) 밖입니다.'
-        : wx.reason === 'timeout' ? '기상 예보 응답이 늦어 시간 초과했습니다.'
-          : wx.reason === 'network' ? '기상 서버에 연결하지 못했습니다.'
+        : wx.reason === 'timeout' ? '예보를 받아오는 데 시간이 걸리고 있습니다.'
+          : wx.reason === 'network' ? '지금은 날씨 예보에 연결할 수 없습니다.'
             : '이 날짜·지점의 시간별 예보가 없습니다.';
       chart.innerHTML = '<div class="cc-empty"><b>기상 예보를 받지 못했어요</b>' +
         '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span>' +
@@ -1914,7 +1914,7 @@
     }
 
     $('#principlesList').innerHTML = D.principles.map(function (p, i) {
-      return '<details class="principle"' + (i === 0 ? ' open' : '') + '><summary>' + esc(p.title) + '</summary>' +
+      return '<details class="principle"><summary>' + esc(p.title) + '</summary>' +
         '<div class="p-summary">' + esc(p.summary) + '</div>' +
         '<div class="p-body">' + p.body.map(function (b) { return '<p>' + esc(b) + '</p>'; }).join('') +
         '<code class="p-formula">' + esc(p.formula) + '</code></div></details>';
@@ -3077,7 +3077,7 @@
     setSensorUi(false, 'error', '센서 차단됨');
     const help = $('#liveHelp');
     if (help) {
-      help.innerHTML = '<b>' + esc(msg) + '.</b> 센서는 HTTPS(보안 연결)에서만 허용되며, 아이폰은 <b>권한 허용</b>이 필요합니다. ' +
+      help.innerHTML = '<b>' + esc(msg) + '.</b> 센서는 보안 연결에서만 쓸 수 있고, 아이폰은 <b>권한 허용</b>이 필요합니다. ' +
         '지금은 <b>드래그·터치</b> 또는 <b>북/동/남/서/천정</b> 버튼과 방위·고도 슬라이더로 하늘을 둘러보세요.';
     }
     toast(msg + ' — 드래그·버튼으로 둘러볼 수 있습니다.');
@@ -3196,7 +3196,7 @@
 
   function enableSensor() {
     const DOE = window.DeviceOrientationEvent;
-    if (!DOE) { sensorFail('이 브라우저에는 방향 센서 API가 없습니다'); return; }
+    if (!DOE) { sensorFail('이 기기에서는 방향 센서를 쓸 수 없습니다'); return; }
     const DME = window.DeviceMotionEvent;
     const jobs = [];
     if (typeof DOE.requestPermission === 'function') {
@@ -3219,15 +3219,15 @@
       trackStart();
       setTimeout(function () {
         if (!live.sensor) return;
-        if (!live.gotEvent) { sensorFail('센서 값을 받지 못했습니다(HTTPS·권한 확인)'); return; }
+        if (!live.gotEvent) { sensorFail('센서 값을 받지 못했습니다. 보안 연결과 권한을 확인해 주세요'); return; }
         if (!track.motionSeen) setSensorUi(true, 'on', '나침반 모드');
       }, 2400);
     };
     if (jobs.length) {
       Promise.all(jobs).then(function (res) {
         if (res[0] === 'granted') proceed();
-        else sensorFail('센서 권한이 거부되었습니다');
-      }).catch(function () { sensorFail('센서 권한 요청이 차단되었습니다'); });
+        else sensorFail('센서 권한을 허용하지 않았습니다');
+      }).catch(function () { sensorFail('권한을 묻는 창이 차단되었습니다'); });
     } else {
       proceed();
     }
@@ -3318,6 +3318,10 @@
     if (!el) return;
     el.style.setProperty('--ltc-fill', ((Number(el.value) / 1435) * 100).toFixed(1) + '%');
   }
+  function ltcClockLabel(mm) {
+    const h = Math.floor(mm / 60), m = mm % 60;
+    return p2(h) + ':' + p2(m);
+  }
   function syncLiveTimeCard() {
     const card = $('#liveTimeCard');
     const c = state.last || (card ? computeNight() : null);
@@ -3343,8 +3347,11 @@
     }
     const range = $('#ltcRange');
     if (range && document.activeElement !== range) { range.value = String(mins); paintLtcRange(); }
+    if (ltc.dial && document.activeElement !== ltc.dial.el) ltc.dial.set(mins);
     const dateIn = $('#ltcDate');
-    if (dateIn && document.activeElement !== dateIn) dateIn.value = state.dateStr;
+    // 날짜 칸은 '실제 시뮬레이션 날짜' — 자정을 지나면 다음 날로 바뀝니다.
+    const simDate = ltcDateFor(Math.floor(mins / 60), state.dateStr);
+    if (dateIn && document.activeElement !== dateIn) dateIn.value = simDate;
     const timeIn = $('#ltcTime');
     if (timeIn && document.activeElement !== timeIn) timeIn.value = A.fmtClock(jd);
     $$('#ltcPresets [data-ltc]').forEach(function (b) {
@@ -3380,6 +3387,20 @@
       range.addEventListener('input', function () { applyLiveTime(Number(this.value), { fast: true }); paintLtcRange(); });
       range.addEventListener('change', function () { applyLiveTime(Number(this.value)); });
     }
+    const dialHost = $('#ltcDial');
+    if (dialHost && window.Dial) {
+      const cur = state.last || computeNight();
+      ltc.dial = window.Dial.create(dialHost, {
+        min: 0, max: 1435, step: 5, size: 178,
+        value: clockMinutes(cur.jd),
+        label: '하늘 시각 (0시~24시)',
+        fmt: ltcClockLabel,
+        sub: '한 바퀴 = 24시간',
+        labels: [{ v: 0, text: '0시' }, { v: 360, text: '6시' }, { v: 720, text: '12시' }, { v: 1080, text: '18시' }],
+        onChange: function (v) { applyLiveTime(v, { fast: true }); },
+        onCommit: function (v) { applyLiveTime(v); }
+      });
+    }
     const presets = $('#ltcPresets');
     if (presets) presets.addEventListener('click', function (ev) {
       const b = ev.target.closest('[data-ltc]');
@@ -3411,12 +3432,13 @@
       const val = this.value;
       if (!val) return;
       const keep = clockMinutes((state.last || computeNight()).jd);
-      state.dateStr = val;
+      // 고른 날짜는 '실제 시뮬레이션 날짜'입니다. 0~11시는 그날 새벽 = 앞선 밤에서 시작합니다.
+      state.dateStr = Math.floor(keep / 60) < 12 ? addDays(val, -1) : val;
       state.timeStr = '';
       state.simJd = null;
       stopPlay();
       const di = $('#dateInput'), ti = $('#timeInput');
-      if (di) di.value = val;
+      if (di) di.value = state.dateStr;
       if (ti) ti.value = '';
       applyLiveTime(keep);   // 같은 시각을 새 날짜의 밤으로
     });
@@ -3634,6 +3656,9 @@
         slider.value = String(Math.round(frac * 1000));
         paintSlider(slider);
       }
+      if (dock._timeDial && document.activeElement !== dock._timeDial.el) {
+        dock._timeDial.set(Math.round(frac * 1000));
+      }
       paintDial(dock);
     });
     // 관측 시각 입력칸도 실제로 쓰이는 시각을 그대로 보여 준다(시뮬레이션 중이면 그 시각).
@@ -3739,6 +3764,22 @@
           stopPlay();
           paintSlider(this);
           setSimFrac(Number(this.value) / 1000);
+        });
+      }
+      const tHost = dock.querySelector('[data-tm-time]');
+      if (tHost && window.Dial) {
+        dock._timeDial = window.Dial.create(tHost, {
+          min: 0, max: 1000, step: 1, size: 96,
+          value: Math.round((state.tmFrac || 0) * 1000),
+          label: '밤 시간 이동 (일몰~일출)',
+          fmt: function (v) {
+            try {
+              const w = nightWindow();
+              return A.fmtClock(w.start + (w.end - w.start) * (v / 1000));
+            } catch (e) { return '—'; }
+          },
+          sub: '한 바퀴 = 한 밤',
+          onChange: function (v) { stopPlay(); setSimFrac(v / 1000); }
         });
       }
       const sunset = dock.querySelector('[data-tm-sunset]');
@@ -4514,7 +4555,7 @@
     const selP = $('#provinceSelect'), selD = $('#districtSelect');
     if (!selP || !selD) return;
     if (!KR) {
-      selP.innerHTML = '<option>지역 데이터를 불러오지 못했습니다</option>';
+      selP.innerHTML = '<option>지역 목록을 불러오지 못했습니다</option>';
       selP.disabled = true; selD.disabled = true;
       return;
     }
