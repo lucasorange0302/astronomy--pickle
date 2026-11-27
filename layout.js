@@ -188,7 +188,11 @@
     if (fvWrap && window.ResizeObserver) {
       try { new ResizeObserver(syncLiveTop).observe(fvWrap); } catch (e) { }
     }
-    window.addEventListener('resize', syncLiveTop);   // 화면 전환(views.js)도 resize 를 쏩니다
+    window.addEventListener('resize', function () {
+      // 화면 전환(views.js)도 resize 를 쏩니다. 레이아웃·스크롤이 자리 잡은 다음 한 번 더 잽니다.
+      syncLiveTop();
+      window.requestAnimationFrame(syncLiveTop);
+    });
     window.addEventListener('orientationchange', function () { setTimeout(syncLiveTop, 200); });
     window.addEventListener('load', function () { syncLiveTop(); setTimeout(syncLiveTop, 900); });
     syncLiveTop();
