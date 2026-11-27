@@ -9,10 +9,17 @@
     spacex: { label: 'SpaceX', icon: '🛰️', color: '#b0bec5' },
     solar: { label: '태양계', icon: '🪐', color: '#ffb74d' },
     deep: { label: '심우주', icon: '🌌', color: '#b39ddb' },
+    star: { label: '별', icon: '⭐', color: '#ffd479' },
+    exo: { label: '외계행성', icon: '🌍', color: '#7ee0c0' },
+    meteor: { label: '유성우', icon: '💫', color: '#8ab6ff' },
+    history: { label: '천문학사', icon: '📜', color: '#c9a0ff' },
     tip: { label: '관측꿀팁', icon: '🔭', color: '#81c784' }
   };
 
   var SRC = {
+    openngc: { name: 'OpenNGC 카탈로그 (CC BY-SA 4.0)', url: 'https://github.com/mattiaverga/OpenNGC' },
+    hyg: { name: 'HYG 항성 데이터베이스 v4.1 (CC BY-SA 2.5)', url: 'https://www.astronexus.com/projects/hyg' },
+    nssdc: { name: 'NASA NSSDC 행성 팩트시트', url: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/' },
     voyager: { name: 'NASA 보이저 미션', url: 'https://science.nasa.gov/mission/voyager/' },
     webb: { name: 'NASA 제임스 웹', url: 'https://science.nasa.gov/mission/webb/' },
     hubble: { name: 'NASA 허블', url: 'https://science.nasa.gov/mission/hubble/' },

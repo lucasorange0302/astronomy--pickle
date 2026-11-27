@@ -86,7 +86,10 @@
   /* ======================================================================
      🍪 우주 쿠키 드로어
      ====================================================================== */
-  var CK = { view: 'draw' };
+  var CK = {
+    view: 'draw', manifest: null, total: 0, per: 200, lazy: false,
+    chunks: {}, loading: {}, state: 'idle', cat: ''
+  };
 
   function buildCookie() {
     var d = document.createElement('div');
@@ -118,17 +121,105 @@
       else if (a === 'again') { CK.view = 'draw'; STATE.cookie = pickCookie(); renderCookie(); crackCookie(); }
       else if (a === 'all') { CK.view = 'list'; renderCookie(); }
       else if (a === 'back') { CK.view = 'draw'; renderCookie(); }
-      else if (a === 'aim') aimAtCookie(SD.COOKIES[STATE.cookie]);
+      else if (a === 'aim') aimAtCookie(currentCookie());
       else if (a === 'item') { STATE.cookie = +act.getAttribute('data-i'); CK.view = 'draw'; renderCookie(); }
       else if (a === 'cat') { CK.cat = act.getAttribute('data-cat') || ''; CK.view = 'list'; renderCookie(); }
+      else if (a === 'more') loadMoreCookieChunks();
+      else if (a === 'allchunks') loadAllCookieChunks();
     });
     renderCookie();
+    loadCookieManifest();
+  }
+
+  /* ---------- 쿠키 지연 로딩: 2,000개를 200개씩 나눠 필요한 묶음만 받습니다 ---------- */
+  function loadCookieManifest() {
+    if (CK.state !== 'idle') return;
+    CK.state = 'loading';
+    fetchJSON(CK_BASE + 'manifest.json').then(function (m) {
+      CK.manifest = m;
+      CK.total = m.total || 0;
+      CK.per = m.perChunk || 200;
+      CK.lazy = CK.total > SD.COOKIES.length;
+      CK.state = 'ready';
+      var foot = $('#ckFoot');
+      if (foot) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + CK.total.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴';
+      if (CK.view === 'draw') renderCookie();
+    }).catch(function () {
+      CK.state = 'error';
+      var foot = $('#ckFoot');
+      if (foot) foot.textContent = '오프라인 · 내장 쿠키 ' + SD.COOKIES.length + '개로 뜯습니다';
+    });
+  }
+
+  function cookieCount() { return CK.lazy ? CK.total : SD.COOKIES.length; }
+
+  function chunkOf(i) { return Math.floor(i / CK.per); }
+
+  function cookieAt(i) {
+    if (!CK.lazy) return SD.COOKIES[i] || null;
+    var n = chunkOf(i);
+    var list = CK.chunks[n];
+    return (list && list[i % CK.per]) || null;
+  }
+
+  function currentCookie() {
+    if (!CK.lazy) return SD.COOKIES[STATE.cookie] || SD.COOKIES[0] || null;
+    return cookieAt(STATE.cookie);
+  }
+
+  function loadCookieChunk(n) {
+    if (CK.chunks[n]) return Promise.resolve(CK.chunks[n]);
+    if (CK.loading[n]) return CK.loading[n];
+    var file = (CK.manifest && CK.manifest.chunks && CK.manifest.chunks[n])
+      ? CK.manifest.chunks[n].file
+      : 'k' + (n < 10 ? '0' + n : n) + '.json';
+    CK.loading[n] = fetchJSON(CK_BASE + file).then(function (d) {
+      CK.chunks[n] = (d && d.items) || [];
+      delete CK.loading[n];
+      return CK.chunks[n];
+    }).catch(function (e) { delete CK.loading[n]; throw e; });
+    return CK.loading[n];
+  }
+
+  function loadedCookieCount() {
+    var n = 0;
+    Object.keys(CK.chunks).forEach(function (k) { n += CK.chunks[k].length; });
+    return n;
+  }
+
+  function loadMoreCookieChunks() {
+    if (!CK.lazy) return;
+    var next = -1;
+    for (var i = 0; i < Math.ceil(CK.total / CK.per); i++) if (!CK.chunks[i]) { next = i; break; }
+    if (next < 0) return;
+    var body = $('#ckBody');
+    var note = body && $('.ck-list-more', body);
+    if (note) note.innerHTML = '<span class="ck-total">더 불러오는 중…</span>';
+    loadCookieChunk(next).then(function () { renderCookie(); }).catch(function () { renderCookie(); });
+  }
+
+  function loadAllCookieChunks() {
+    if (!CK.lazy) return;
+    var total = Math.ceil(CK.total / CK.per);
+    var seq = Promise.resolve();
+    for (var i = 0; i < total; i++) {
+      (function (n) {
+        seq = seq.then(function () {
+          if (CK.chunks[n]) return null;
+          var body = $('#ckBody');
+          var note = body && $('#ckLoadNote');
+          if (note) note.textContent = '쿠키를 모으는 중… ' + loadedCookieCount().toLocaleString('en-US') + ' / ' + CK.total.toLocaleString('en-US');
+          return loadCookieChunk(n).then(function () { if (CK.view === 'list') renderCookie(); }).catch(function () { });
+        });
+      })(i);
+    }
+    seq.then(function () { renderCookie(); });
   }
 
   function pickCookie() {
-    var n = SD.COOKIES.length;
+    var n = cookieCount();
     if (!n) return 0;
-    var seen = STATE.cookieSeen || [];
+    var seen = (STATE.cookieSeen || []).filter(function (i) { return i < n; });
     var left = [];
     for (var i = 0; i < n; i++) if (seen.indexOf(i) < 0) left.push(i);
     if (!left.length) { left = []; for (var j = 0; j < n; j++) left.push(j); }
@@ -161,7 +252,8 @@
       r.hidden = false; r.classList.add('is-on');
       if (r.scrollIntoView) setTimeout(function () { r.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }, 40);
     }
-    if (SD.COOKIES[STATE.cookie] && SD.COOKIES[STATE.cookie].aim) {
+    var c = currentCookie();
+    if (c && c.aim) {
       var b = $('[data-ck="aim"]', r || document);
       if (b) b.hidden = false;
     }
@@ -171,8 +263,21 @@
     var body = $('#ckBody');
     if (!body) return;
     if (CK.view === 'list') { renderCookieList(body); return; }
-    var c = SD.COOKIES[STATE.cookie] || SD.COOKIES[0];
-    if (!c) { body.innerHTML = '<p class="ck-empty">쿠키 데이터를 불러오지 못했습니다.</p>'; return; }
+    var n = cookieCount();
+    if (!n) { body.innerHTML = '<p class="ck-empty">쿠키 데이터를 불러오지 못했습니다.</p>'; return; }
+    if (STATE.cookie == null || STATE.cookie >= n) STATE.cookie = pickCookie();
+    var c = currentCookie();
+    if (!c) {
+      // 고른 쿠키가 든 묶음만 받아 옵니다.
+      body.innerHTML = '<div class="ck-loading"><span class="spin"></span>쿠키를 불러오는 중…</div>';
+      loadCookieChunk(chunkOf(STATE.cookie)).then(function () { renderCookie(); })
+        .catch(function () {
+          CK.lazy = false;
+          STATE.cookie = pickCookie();
+          renderCookie();
+        });
+      return;
+    }
     var cat = (SD.CAT[c.c] || { label: c.c, icon: '🍪' });
     var src = (SD.SRC[c.src] || { name: c.src, url: '#' });
     body.innerHTML =
@@ -182,12 +287,12 @@
       '    <span class="ck-emoji" aria-hidden="true">🍪</span>' +
       '    <span class="ck-btn-txt">쿠키 뜯기</span>' +
       '  </button>' +
-      '  <p class="ck-hint">누르면 오늘의 우주 사실이 하나 나옵니다 — ' + SD.COOKIES.length + '개 중 하나</p>' +
+      '  <p class="ck-hint">누르면 오늘의 우주 사실이 하나 나옵니다 — ' + n.toLocaleString('en-US') + '개 중 하나</p>' +
       '</div>' +
       '' +
       '<article class="ck-result" id="ckResult" hidden>' +
       '  <div class="ck-meta"><span class="ck-cat" data-c="' + esc(c.c) + '">' + cat.icon + ' ' + esc(cat.label) + '</span>' +
-      '    <span class="ck-idx">#' + (STATE.cookie + 1) + ' / ' + SD.COOKIES.length + '</span></div>' +
+      '    <span class="ck-idx">#' + (STATE.cookie + 1) + ' / ' + n.toLocaleString('en-US') + '</span></div>' +
       '  <h4 class="ck-title">' + esc(c.t) + '</h4>' +
       '  <div class="ck-stat">' + esc(c.s) + '</div>' +
       '  <p class="ck-desc">' + esc(c.d) + '</p>' +
@@ -206,17 +311,23 @@
     }
     renderRecent(); renderSkyMini();
     var foot = $('#ckFoot');
-    if (foot) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 수집 2026-11-26';
+    if (foot) foot.textContent = CK.lazy
+      ? '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + n.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴'
+      : '출처는 각 쿠키에 표시됩니다 · 수집 2026-11-26';
   }
 
   function renderRecent() {
     var box = $('#ckRecent');
     if (!box) return;
     var seen = (STATE.cookieSeen || []).slice(0, -1).slice(-3).reverse();
-    if (seen.length) {
-      box.innerHTML = '<p class="ck-recent-title">방금 뜯은 쿠키</p><div class="ck-recent-list">' + seen.map(function (i) {
-        var c = SD.COOKIES[i]; if (!c) return '';
-        return '<button class="ck-recent-item" data-ck="item" data-i="' + i + '"><span>' + esc(c.t) + '</span><em>' + esc(c.s) + '</em></button>';
+    var shown = [];
+    seen.forEach(function (i) {
+      var c = cookieAt(i);
+      if (c) shown.push({ c: c, i: i });
+    });
+    if (shown.length) {
+      box.innerHTML = '<p class="ck-recent-title">방금 뜯은 쿠키</p><div class="ck-recent-list">' + shown.map(function (x) {
+        return '<button class="ck-recent-item" data-ck="item" data-i="' + x.i + '"><span>' + esc(x.c.t) + '</span><em>' + esc(x.c.s) + '</em></button>';
       }).join('') + '</div>';
       return;
     }
@@ -243,20 +354,37 @@
   function renderCookieList(body) {
     var cats = [['', '전체']].concat(Object.keys(SD.CAT).map(function (k) { return [k, SD.CAT[k].label]; }));
     var cur = CK.cat || '';
-    var list = SD.COOKIES.map(function (c, i) { return { c: c, i: i }; }).filter(function (x) { return !cur || x.c.c === cur; });
+    var rows = [];
+    var max = CK.lazy ? CK.total : SD.COOKIES.length;
+    for (var i = 0; i < max; i++) {
+      var c = cookieAt(i);
+      if (!c) continue;
+      if (cur && c.c !== cur) continue;
+      rows.push({ c: c, i: i });
+    }
+    var loaded = CK.lazy ? loadedCookieCount() : SD.COOKIES.length;
     body.innerHTML =
       '<div class="ck-list-head"><button class="mini-btn" data-ck="back">← 뽑기로</button>' +
-      '<span class="ck-list-count">' + list.length + '개</span></div>' +
+      '<span class="ck-list-count">' + rows.length.toLocaleString('en-US') + '개</span></div>' +
       '<div class="chip-row ck-chips">' + cats.map(function (p) {
         return '<button class="chip' + (cur === p[0] ? ' is-active' : '') + '" data-ck="cat" data-cat="' + esc(p[0]) + '">' + esc(p[1]) + '</button>';
       }).join('') + '</div>' +
-      '<div class="ck-list">' + list.map(function (x) {
+      (CK.lazy
+        ? '<p class="ck-total" id="ckLoadNote">불러온 쿠키 ' + loaded.toLocaleString('en-US') + ' / ' + max.toLocaleString('en-US') + ' · 200개씩 나눠 받습니다</p>'
+        : '') +
+      '<div class="ck-list">' + rows.map(function (x) {
         var cat = SD.CAT[x.c.c] || { label: x.c.c, icon: '🍪' };
         return '<button class="ck-item" data-ck="item" data-i="' + x.i + '">' +
           '<span class="ck-item-cat">' + cat.icon + ' ' + esc(cat.label) + '</span>' +
           '<strong>' + esc(x.c.t) + '</strong>' +
           '<span class="ck-item-stat">' + esc(x.c.s) + '</span></button>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' +
+      (CK.lazy && loaded < max
+        ? '<div class="ck-list-more"><button class="mini-btn" data-ck="more">다음 200개 불러오기</button>' +
+          '<button class="mini-btn" data-ck="allchunks">2,000개 모두 불러오기</button></div>'
+        : '');
+    var foot = $('#ckFoot');
+    if (foot && CK.lazy) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + max.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴';
   }
 
   function openCookie() {
@@ -266,7 +394,9 @@
     d.hidden = false;
     document.body.classList.add('space-lock');
     var ck = $('.sd-close', d); if (ck) ck.focus();
+    if (CK.state === 'idle') loadCookieManifest();
     if (CK.view === 'draw' && STATE.cookie == null) renderCookie();
+    else renderCookie();
   }
 
   /* ======================================================================
@@ -463,14 +593,36 @@
   }
 
   /* ======================================================================
-     🌌 전체 하늘 도감 (2,500+)
+     🌌 전체 하늘 도감 (내장 2,571종 + 온라인 2만 3천여 종 지연 로딩)
      ====================================================================== */
-  var C2 = { q: '', type: '', con: '', sort: 'm', page: 0, per: 40 };
+  var CAT_BASE = 'assets/data/catalog/';
+  var CK_BASE = 'assets/data/cookies/';
+  var C2 = {
+    q: '', type: '', con: '', sort: 'm', page: 0, per: 40,
+    rows: [], byId: {}, index: null, manifest: null, indexState: null,
+    chunks: {}, loading: {}, conList: []
+  };
+
+  function fetchJSON(url) {
+    return new Promise(function (resolve, reject) {
+      if (!window.fetch) { reject(new Error('fetch 없음')); return; }
+      var ctrl = null, timer = 0;
+      var opts = {};
+      if (window.AbortController) { ctrl = new AbortController(); opts.signal = ctrl.signal; }
+      timer = setTimeout(function () { try { if (ctrl) ctrl.abort(); } catch (e) { } }, 12000);
+      fetch(url, opts).then(function (r) {
+        clearTimeout(timer);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(resolve).catch(function (e) { clearTimeout(timer); reject(e); });
+    });
+  }
 
   var TYPE_LABEL = {
     G: '은하', GPair: '은하쌍', GTrpl: '은하삼중', GGroup: '은하군', OCl: '산개성단', GCl: '구상성단',
     PN: '행성상성운', Neb: '성운', EmN: '방출성운', RfN: '반사성운', HII: '전리수소영역', SNR: '초신성잔해',
     'Cl+N': '성단+성운', DrkN: '암흑성운', '*Ass': '성협', star: '항성', var: '변광성', dstar: '이중성',
+    Other: '기타 천체', exo: '외계행성계',
     planet: '행성', dwarf: '왜소행성', moon: '위성', sun: '항성', bh: '블랙홀', pulsar: '펄서'
   };
   var TYPE_GROUPS = [
@@ -481,7 +633,20 @@
   function catTypeGroup(t) {
     if (t === 'solar') return ['planet', 'dwarf', 'moon', 'sun'];
     if (t === 'etc') return ['bh', 'pulsar', 'dstar', 'SNR'];
+    if (t === 'Neb') return ['Neb', 'HII', 'RfN', 'EmN', 'DrkN', 'PN', 'SNR', 'Cl+N'];
+    if (t === 'G') return ['G', 'GPair', 'GTrpl', 'GGroup'];
+    if (t === 'star') return ['star', 'exo', 'dstar'];
     return [t];
+  }
+
+  function baseRow(o) {
+    return { i: o.i, ko: o.ko || o.i, en: o.en || '', t: o.t, m: o.m, c: o.c, s: o.s,
+             M: o.M || '', ch: -1, o: o };
+  }
+
+  function indexRow(r, pos, per) {
+    return { i: r[0], ko: r[0], en: r[6] || '', t: r[1], m: r[2], c: r[3], s: r[4],
+             M: r[5] || '', ch: Math.floor(pos / per), o: null };
   }
 
   function buildCatalogBlock() {
@@ -490,31 +655,34 @@
     var box = document.createElement('div');
     box.className = 'cat2';
     box.id = 'cat2';
-    var cons = {};
-    SC.items.forEach(function (o) { if (o.c) cons[o.c] = 1; });
-    var conList = Object.keys(cons).sort();
     box.innerHTML =
       '<div class="cat2-head">' +
-      '  <div><h3>🌌 하늘 전체 도감 <span class="cat2-badge">' + SC.meta.count.toLocaleString('en-US') + '종</span></h3>' +
-      '  <p>메시에 110종 전체 + 밝은 NGC/IC 은하·성운·성단 + 항성·변광성 + 태양계 천체를 공개 카탈로그(OpenNGC·HYG) 좌표 그대로 담았습니다. 카드를 누르면 상세 정보와 조준 버튼이 열립니다.</p></div>' +
+      '  <div><h3>🌌 하늘 전체 도감 <span class="cat2-badge" id="c2total">' + SC.meta.count.toLocaleString('en-US') + '종</span></h3>' +
+      '  <p>메시에 110종 전체 + NGC/IC 전체 + 6등급보다 밝은 별 + 외계행성계까지, 공개 카탈로그(OpenNGC·HYG·NASA/IPAC)의 좌표를 그대로 담았습니다. 카드를 누르면 상세 정보와 조준 버튼이 열립니다. <b>2만 3천여 종은 필요한 만큼만 나눠서 불러옵니다.</b></p></div>' +
       '</div>' +
       '<div class="cat2-controls">' +
       '  <input type="search" id="c2q" class="cat2-search" placeholder="이름·번호로 찾기 (M42, NGC 7000, 베가…)" aria-label="전체 도감 검색">' +
-      '  <select id="c2con" aria-label="별자리 필터"><option value="">모든 별자리</option>' + conList.map(function (c) {
-        return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
-      }).join('') + '</select>' +
+      '  <select id="c2con" aria-label="별자리 필터"><option value="">모든 별자리</option></select>' +
       '  <select id="c2sort" aria-label="정렬"><option value="m">메시에 우선</option><option value="mag">밝은 순</option><option value="name">이름 순</option><option value="size">큰 순</option></select>' +
       '</div>' +
       '<div class="chip-row" id="c2chips">' + TYPE_GROUPS.map(function (g) {
         return '<button class="chip' + (g[0] === '' ? ' is-active' : '') + '" data-c2t="' + g[0] + '">' + g[1] + '</button>';
       }).join('') + '</div>' +
       '<p class="result-count" id="c2count">—</p>' +
+      '<p class="lazy-note" id="c2lazy"><span class="lz-badge" id="c2lazyBadge">지연 로딩</span><span id="c2lazyTxt">전체 목록은 스크롤할 때 필요한 부분만 불러옵니다</span></p>' +
+      '<p class="c2-loading" id="c2loading" hidden>목록을 불러오는 중…</p>' +
       '<div class="cat2-grid" id="c2grid"></div>' +
       '<div class="cat2-pager"><button class="mini-btn" id="c2prev">← 이전</button><span id="c2page">—</span><button class="mini-btn" id="c2next">다음 →</button></div>' +
-      '<p class="cat2-src">좌표·등급 출처: OpenNGC (CC BY-SA 4.0), HYG Database v4.1 (CC BY-SA 2.5), d3-celestial Messier. 거리는 알려진 값만 표시합니다.</p>';
+      '<p class="cat2-src">좌표·등급 출처: OpenNGC (CC BY-SA 4.0), HYG Database v4.1 (CC BY-SA 2.5), NASA/IPAC 외계행성 아카이브, d3-celestial Messier. 적색편이로 계산한 거리는 추정값입니다.</p>';
     wrap.appendChild(box);
 
+    // 내장 2,571종으로 즉시 시작합니다.
+    C2.rows = SC.items.map(baseRow);
+    C2.rows.forEach(function (r) { C2.byId[r.i] = r; });
+    refreshConOptions();
+
     $('#c2q').addEventListener('input', debounce(function (e) { C2.q = e.target.value.trim().toLowerCase(); C2.page = 0; renderCat2(); }, 160));
+    $('#c2q').addEventListener('focus', function () { loadCatalogIndex(); });
     $('#c2con').addEventListener('change', function (e) { C2.con = e.target.value; C2.page = 0; renderCat2(); });
     $('#c2sort').addEventListener('change', function (e) { C2.sort = e.target.value; C2.page = 0; renderCat2(); });
     $('#c2chips').addEventListener('click', function (e) {
@@ -523,32 +691,158 @@
       C2.type = b.getAttribute('data-c2t'); C2.page = 0; renderCat2();
     });
     $('#c2prev').addEventListener('click', function () { if (C2.page > 0) { C2.page--; renderCat2(); } });
-    $('#c2next').addEventListener('click', function () { C2.page++; renderCat2(); });
+    $('#c2next').addEventListener('click', function () {
+      var pages = Math.max(1, Math.ceil(catFiltered().length / C2.per));
+      if (C2.page < pages - 1) { C2.page++; renderCat2(); }
+    });
     $('#c2grid').addEventListener('click', function (e) {
       var aim = e.target.closest('[data-c2aim]');
       if (aim) {
-        var o = SC.items.find(function (x) { return x.i === aim.getAttribute('data-c2aim'); });
-        if (o) aimAtCatalog(o);
+        var row = findRow(aim.getAttribute('data-c2aim'));
+        if (!row) return;
+        resolveObject(row, function (o) { if (o) aimAtCatalog(o); });
         return;
       }
       var card = e.target.closest('[data-c2]');
       if (!card) return;
-      var obj = SC.items.find(function (x) { return x.i === card.getAttribute('data-c2'); });
-      if (obj) openCatalogModal(obj);
+      var r2 = findRow(card.getAttribute('data-c2'));
+      if (!r2) return;
+      resolveObject(r2, function (o) { if (o) openCatalogModal(o); });
     });
     renderCat2();
     bindPhotoPrefetch();
+
+    // 도감이 화면에 가까워지면 확장 목록을 지연 로딩합니다.
+    if (window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { loadCatalogIndex(); io.disconnect(); } });
+      }, { rootMargin: '600px' });
+      io.observe(box);
+      var sec = $('#catalog');
+      if (sec) io.observe(sec);      // 도감 화면을 열면 미리 목록을 받아 둡니다
+    }
+  }
+
+  function findRow(id) {
+    for (var i = 0; i < C2.rows.length; i++) if (C2.rows[i].i === id) return C2.rows[i];
+    return null;
+  }
+
+  function refreshConOptions() {
+    var sel = $('#c2con');
+    if (!sel) return;
+    var set = {};
+    C2.rows.forEach(function (r) { if (r.c) set[r.c] = 1; });
+    C2.conList = Object.keys(set).sort();
+    var cur = C2.con;
+    sel.innerHTML = '<option value="">모든 별자리</option>' + C2.conList.map(function (c) {
+      return '<option value="' + esc(c) + '"' + (c === cur ? ' selected' : '') + '>' + esc(c) + '</option>';
+    }).join('');
+  }
+
+  function updateCatalogCount(n) {
+    var badge = $('#c2total');
+    if (badge) badge.textContent = n.toLocaleString('en-US') + '종';
+    var tot = document.querySelector('.views-meta-catalog, #tabCatalogMeta');
+    if (tot) tot.textContent = n.toLocaleString('en-US');
+  }
+
+  function mergeIndex(idx) {
+    var per = (C2.manifest && C2.manifest.chunkSize) || 800;
+    var added = 0;
+    for (var p = 0; p < idx.items.length; p++) {
+      var r = indexRow(idx.items[p], p, per);
+      if (C2.byId[r.i]) continue;       // 내장 목록에 있으면 한국어 이름·설명을 그대로 씁니다.
+      C2.rows.push(r);
+      C2.byId[r.i] = r;
+      added += 1;
+    }
+    refreshConOptions();
+    updateCatalogCount(C2.rows.length);
+    var badge = $('#c2lazyBadge');
+    if (badge) { badge.textContent = '온라인 확장 완료'; badge.classList.add('is-on'); }
+    var txt = $('#c2lazyTxt');
+    if (txt) txt.textContent = C2.rows.length.toLocaleString('en-US') + '종 전체 목록 · 카드 상세는 그때그때 필요한 묶음만 불러옵니다';
+    renderCat2();
+  }
+
+  function loadCatalogIndex() {
+    if (C2.indexState) return C2.indexState;
+    var ld = $('#c2loading');
+    var badge = $('#c2lazyBadge');
+    if (badge) badge.textContent = '목록 불러오는 중';
+    if (ld) ld.hidden = false;
+    C2.indexState = fetchJSON(CAT_BASE + 'manifest.json').then(function (man) {
+      C2.manifest = man;
+      return fetchJSON(CAT_BASE + 'index.json');
+    }).then(function (idx) {
+      C2.index = idx;
+      if (ld) ld.hidden = true;
+      mergeIndex(idx);
+      return true;
+    }).catch(function () {
+      if (ld) ld.hidden = true;
+      C2.indexState = null;
+      if (badge) badge.textContent = '내장 ' + SC.items.length.toLocaleString('en-US') + '종';
+      var txt = $('#c2lazyTxt');
+      if (txt) txt.textContent = '지금은 확장 목록을 불러오지 못했습니다. 인터넷에 연결하면 2만 3천여 종이 열립니다. (내장 목록은 그대로 쓸 수 있습니다)';
+      return false;
+    });
+    return C2.indexState;
+  }
+
+  function chunkFile(n) {
+    if (C2.manifest && C2.manifest.chunks && C2.manifest.chunks[n]) return C2.manifest.chunks[n].file;
+    return 'c' + (n < 10 ? '0' + n : n) + '.json';
+  }
+
+  function loadChunk(n) {
+    if (C2.chunks[n]) return Promise.resolve(C2.chunks[n]);
+    if (C2.loading[n]) return C2.loading[n];
+    C2.loading[n] = fetchJSON(CAT_BASE + chunkFile(n)).then(function (d) {
+      var items = (d && d.items) || [];
+      C2.chunks[n] = items;
+      items.forEach(function (o) {
+        if (!SC.byId) SC.byId = {};
+        if (!SC.byId[o.i]) { SC.byId[o.i] = o; SC.items.push(o); }
+        var row = C2.byId[o.i];
+        if (row) { row.o = o; row.ko = o.ko || row.ko; row.en = o.en || row.en; }
+      });
+      delete C2.loading[n];
+      return items;
+    }).catch(function (e) { delete C2.loading[n]; throw e; });
+    return C2.loading[n];
+  }
+
+  function findInChunk(n, id) {
+    var list = C2.chunks[n] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].i === id) return list[i];
+    return null;
+  }
+
+  function resolveObject(row, cb) {
+    if (row.o) { cb(row.o); return; }
+    if (row.ch < 0) { cb(null); return; }
+    if (C2.chunks[row.ch]) { cb(findInChunk(row.ch, row.i)); return; }
+    toastLocal('상세 정보를 불러오는 중…');
+    loadChunk(row.ch).then(function () { cb(findInChunk(row.ch, row.i)); })
+      .catch(function () { toastLocal('상세 정보를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'); });
   }
 
   // 카드에 마우스를 올리면 실제 하늘 사진을 미리 받아 둔다(모달 열 때 바로 보임)
   function bindPhotoPrefetch() {
     var grid = $('#c2grid');
     if (!grid || !window.SkyPhoto) return;
+    var tm = 0;
     function warm(e) {
       var card = e.target.closest ? e.target.closest('[data-c2]') : null;
       if (!card) return;
-      var obj = SC.items.find(function (x) { return x.i === card.getAttribute('data-c2'); });
-      if (obj) SkyPhoto.prefetch(obj);
+      clearTimeout(tm);
+      tm = setTimeout(function () {
+        var row = findRow(card.getAttribute('data-c2'));
+        if (!row) return;
+        resolveObject(row, function (o) { if (o) SkyPhoto.prefetch(o); });
+      }, 120);
     }
     grid.addEventListener('mouseover', warm);
     grid.addEventListener('focusin', warm);
@@ -558,30 +852,34 @@
     var t; return function (e) { clearTimeout(t); t = setTimeout(function () { fn(e); }, ms); };
   }
 
+  function magOf(r) { return (r.m == null || r.m >= 90) ? 99 : r.m; }
+
   function catFiltered() {
     var groups = C2.type ? catTypeGroup(C2.type) : null;
     var q = C2.q;
-    var out = SC.items.filter(function (o) {
+    var out = C2.rows.filter(function (o) {
       if (groups && groups.indexOf(o.t) < 0) return false;
       if (C2.con && o.c !== C2.con) return false;
       if (q) {
-        var hay = (o.i + ' ' + o.ko + ' ' + o.en + ' ' + (o.M || '')).toLowerCase().replace(/\s+/g, '');
+        var hay = (o.i + ' ' + (o.ko || '') + ' ' + (o.en || '') + ' ' + (o.M || '')).toLowerCase().replace(/\s+/g, '');
         if (hay.indexOf(q.replace(/\s+/g, '')) < 0) return false;
       }
       return true;
     });
-    if (C2.sort === 'm') out.sort(function (a, b) { return (a.M ? 0 : 1) - (b.M ? 0 : 1) || (a.m == null ? 99 : a.m) - (b.m == null ? 99 : b.m); });
-    else if (C2.sort === 'mag') out.sort(function (a, b) { return (a.m == null ? 99 : a.m) - (b.m == null ? 99 : b.m); });
+    if (C2.sort === 'm') out.sort(function (a, b) { return (a.M ? 0 : 1) - (b.M ? 0 : 1) || magOf(a) - magOf(b); });
+    else if (C2.sort === 'mag') out.sort(function (a, b) { return magOf(a) - magOf(b); });
     else if (C2.sort === 'name') out.sort(function (a, b) { return a.i.localeCompare(b.i, 'ko'); });
     else out.sort(function (a, b) { return (b.s || 0) - (a.s || 0); });
     return out;
   }
 
   function canAim(o) {
-    if (o.t === 'sun') return false;
-    if (o.t === 'moon') return true;
-    if (o.t === 'planet' || o.t === 'dwarf') return !!({ Mercury: 1, Venus: 1, Mars: 1, Jupiter: 1, Saturn: 1, Uranus: 1, Neptune: 1 })[o.en];
-    return o.ra != null && o.dec != null;
+    if (o.ch != null && o.ch >= 0) return o.t !== 'sun';
+    var x = o.o || o;
+    if (x.t === 'sun') return false;
+    if (x.t === 'moon') return true;
+    if (x.t === 'planet' || x.t === 'dwarf') return !!({ Mercury: 1, Venus: 1, Mars: 1, Jupiter: 1, Saturn: 1, Uranus: 1, Neptune: 1 })[x.en];
+    return x.ra != null && x.dec != null;
   }
 
   function renderCat2() {
@@ -599,7 +897,7 @@
         (o.M ? '<span class="c2-m">' + esc(o.M) + '</span>' : '') + '</div>' +
         '<div class="c2-meta"><span class="c2-type">' + esc(t) + '</span>' +
         (o.c ? '<span>' + esc(o.c) + '</span>' : '') +
-        '<span class="c2-mag">' + (o.m == null || o.m >= 90 ? '—' : (o.m > 0 ? '+' : '') + o.m.toFixed(1) + '등') + '</span></div>' +
+        '<span class="c2-mag">' + (o.m == null || o.m >= 90 ? '—' : (o.m > 0 ? '+' : '') + Number(o.m).toFixed(1) + '등') + '</span></div>' +
         (o.s ? '<div class="c2-size">겉보기 ' + (o.s >= 60 ? (o.s / 60).toFixed(1) + '°' : o.s.toFixed(0) + '′') + '</div>' : '') +
         (canAim(o) ? '<button class="mini-btn c2-aim" data-c2aim="' + esc(o.i) + '" aria-label="' + esc(o.ko) + ' 조준">🎯</button>' : '') +
         '</article>';
@@ -615,6 +913,8 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
       });
     });
+    // 다음 페이지의 묶음을 미리 받아 두면 페이지 이동이 매끄럽습니다.
+    if (slice.length && slice[0].ch >= 0) loadChunk(slice[0].ch).catch(function () { });
   }
 
   function aimAtCatalog(o) {

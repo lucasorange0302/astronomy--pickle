@@ -9,11 +9,12 @@
    배포할 때마다 아래 VERSION 을 올리세요. 올리면 install 에서 코어 캐시를 새로 받습니다.
    ========================================================================= */
 
-var VERSION = '2026-11-27.8';
+var VERSION = '2026-11-27.10';
 var CORE_CACHE = 'byeolneoul-core-' + VERSION;
 var ASSET_CACHE = 'byeolneoul-assets-v1';
+var DATA_CACHE = 'byeolneoul-data-' + VERSION;   // 도감·쿠키 JSON 청크(지연 로딩)
 var ASSET_LIMIT = 160;                     // 사진 캐시 최대 개수(무한정 커지지 않게)
-var KEEP = [CORE_CACHE, ASSET_CACHE];
+var KEEP = [CORE_CACHE, ASSET_CACHE, DATA_CACHE];
 
 /* 첫 설치 때 미리 받아 둘 파일 — 네트워크가 없어도 앱 화면과 계산 기능이 뜨도록 */
 var CORE = [
@@ -37,6 +38,9 @@ var CORE = [
   './astro.js',
   './app.js',
   './space-ui.js',
+  './learn.js',
+  './news.js',
+  './feedback.js',
   './views.js',
   './layout.js',
   './pwa.js',
@@ -102,6 +106,9 @@ self.addEventListener('fetch', function (event) {
   var isCode = req.mode === 'navigate' || dest === 'document' || dest === 'script' ||
                dest === 'style' || dest === 'worker' || /\.webmanifest$/.test(url.pathname);
 
+  // 지연 로딩 JSON(도감·쿠키 청크)은 전용 캐시에 담아 사진 캐시를 밀어내지 않게 합니다.
+  if (/\/assets\/data\//.test(url.pathname)) { event.respondWith(dataFirst(req)); return; }
+
   event.respondWith(isCode ? networkFirst(req) : cacheFirst(req));
 });
 
@@ -121,6 +128,19 @@ async function networkFirst(req) {
       if (shell) return shell;
     }
     return offlinePage();
+  }
+}
+
+async function dataFirst(req) {
+  var cache = await caches.open(DATA_CACHE);
+  var hit = await cache.match(req, { ignoreSearch: true });
+  if (hit) return hit;
+  try {
+    var res = await fetch(req);
+    if (res && res.ok && res.type === 'basic') await put(DATA_CACHE, req, res.clone());
+    return res;
+  } catch (err) {
+    return new Response('', { status: 504, statusText: 'offline' });
   }
 }
 

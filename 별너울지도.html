@@ -6,6 +6,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#070b14">
 <meta name="description" content="별너울 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="별너울">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="별너울 — 대한민국 천체관측 가이드">
+<meta property="og:description" content="오늘 밤 달·행성·별자리와 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 천문 학습관과 우주 뉴스까지 한곳에서. 설치 없이 브라우저에서 바로 열립니다.">
+<meta property="og:image" content="https://byeolneoul.vercel.app/assets/space/jwst-carina-cosmic-cliffs.jpg">
+<meta property="og:image:alt" content="제임스 웹 우주망원경이 촬영한 용골자리 성운">
+<meta property="og:url" content="https://byeolneoul.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="별너울 — 대한민국 천체관측 가이드">
+<meta name="twitter:description" content="오늘 밤 하늘을 10초 만에. 달·행성·별자리, 관측 명소, 촬영 계산기, 천문 학습관.">
+<meta name="twitter:image" content="https://byeolneoul.vercel.app/assets/space/jwst-carina-cosmic-cliffs.jpg">
 <title>별너울 — 대한민국 천체관측 가이드</title>
 
 <style>
@@ -2633,6 +2646,316 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
   .sm-nav.next { right: 16px; }
 }
 
+/* =========================================================================
+   2026-11-27 — 🎓 천문 학습관 · 📰 우주·천문 뉴스 · 지연 로딩 도감
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- 탭 */
+.learn-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 22px; }
+.learn-tab {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  background: rgba(255, 255, 255, .035); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 16px; color: var(--muted); cursor: pointer;
+  transition: all .18s; min-width: 0;
+}
+.learn-tab b { display: block; color: var(--text); font-size: .95rem; }
+.learn-tab small { display: block; color: var(--faint); font-size: .76rem; }
+.learn-tab .lt-ico { font-size: 1.3rem; }
+.learn-tab:hover { border-color: var(--border-hi); }
+.learn-tab.is-active { background: var(--accent-soft); border-color: rgba(255, 212, 121, .45); color: var(--accent); }
+.learn-tab.is-active b { color: var(--accent); }
+
+/* ------------------------------------------------------- 교육 단계 칩 */
+.learn-levels { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.learn-level { padding: 8px 14px; font-size: .84rem; }
+.learn-level small { font-weight: 500; opacity: .8; margin-left: 4px; }
+.learn-level-note { color: var(--faint); font-size: .84rem; margin: 0 0 18px; }
+
+/* ---------------------------------------------------------- 단원 카드 */
+.learn-units { display: flex; flex-direction: column; gap: 12px; }
+.learn-unit {
+  background: linear-gradient(165deg, rgba(24, 33, 56, .7), rgba(9, 14, 25, .92));
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.learn-unit.is-open { border-color: var(--border-hi); }
+.learn-unit-head {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  background: none; border: none; color: var(--text); text-align: left;
+  padding: 16px 18px; cursor: pointer; font-family: inherit;
+}
+.learn-unit-head:hover { background: rgba(255, 255, 255, .03); }
+.lu-num {
+  flex: 0 0 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); font-weight: 800; font-size: .82rem;
+}
+.lu-title { flex: 1; font-weight: 700; font-size: 1rem; line-height: 1.4; }
+.lu-chev { color: var(--faint); transition: transform .18s; }
+.learn-unit.is-open .lu-chev { transform: rotate(180deg); }
+.learn-unit-body { padding: 4px 18px 20px; }
+.lu-block { margin: 0 0 16px; }
+.lu-block h5 {
+  margin: 0 0 6px; font-size: .76rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent-2); font-weight: 800;
+}
+.lu-block p { margin: 0; color: var(--text); font-size: .93rem; line-height: 1.75; }
+.lu-block ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: .88rem; line-height: 1.7; }
+.lu-block li { margin-bottom: 5px; }
+.lu-formula code {
+  display: block; background: rgba(255, 255, 255, .05); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 13px; font-family: var(--mono); font-size: .84rem;
+  color: var(--accent); overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+}
+.lu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .lu-grid { grid-template-columns: 1fr; gap: 12px; } }
+
+/* ------------------------------------------------------------- 실험실 */
+.learn-sim-host { margin-top: 6px; }
+.sim {
+  background: rgba(6, 10, 20, .62); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-top: 6px;
+}
+.sim-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.sim-head h4 { margin: 0; font-size: .95rem; }
+.sim-btns { display: flex; gap: 6px; }
+.sim-canvas { position: relative; width: 100%; border-radius: 10px; background: rgba(4, 8, 16, .55); overflow: hidden; }
+.sim-canvas canvas { display: block; width: 100%; }
+.sim-readout { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 4px; }
+.sim-ro { font-size: .8rem; color: var(--muted); display: flex; gap: 6px; align-items: baseline; }
+.sim-ro strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sim-ro.is-key strong { color: var(--accent); }
+.sim-controls { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.sim-ctrl { display: grid; grid-template-columns: 128px 1fr 76px; align-items: center; gap: 10px; font-size: .8rem; color: var(--muted); }
+.sim-ctrl input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; }
+.sim-ctrl-val { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; font-size: .8rem; }
+.sim-hint { color: var(--faint); font-size: .8rem; line-height: 1.65; margin: 10px 0 0; }
+@media (max-width: 560px) {
+  .sim-ctrl { grid-template-columns: 1fr 70px; grid-template-areas: "label val" "range range"; }
+  .sim-ctrl-label { grid-area: label; }
+  .sim-ctrl input { grid-area: range; }
+  .sim-ctrl-val { grid-area: val; }
+}
+
+/* ------------------------------------------------------- 천문학사 타임라인 */
+.learn-eras { margin: 0 0 20px; }
+.timeline { position: relative; padding-left: 26px; }
+.timeline::before {
+  content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px;
+  background: linear-gradient(180deg, var(--accent-soft), var(--accent-2-soft), transparent);
+}
+.tl-item { position: relative; margin-bottom: 16px; }
+.tl-dot {
+  position: absolute; left: -26px; top: 8px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--bg); border: 2.5px solid var(--accent); box-shadow: 0 0 0 4px rgba(255, 212, 121, .08);
+}
+.tl-item[data-era="ancient"] .tl-dot { border-color: var(--accent-3); box-shadow: 0 0 0 4px rgba(138, 182, 255, .08); }
+.tl-item[data-era="modern"] .tl-dot { border-color: var(--accent-2); box-shadow: 0 0 0 4px rgba(126, 224, 192, .08); }
+.tl-item[data-era="today"] .tl-dot { border-color: var(--danger); box-shadow: 0 0 0 4px rgba(255, 122, 110, .1); }
+.tl-body {
+  background: linear-gradient(165deg, rgba(24, 33, 56, .62), rgba(9, 14, 25, .92));
+  border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px;
+}
+.tl-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .74rem; margin-bottom: 4px; }
+.tl-era { color: var(--accent-2); font-weight: 700; }
+.tl-when { color: var(--faint); font-variant-numeric: tabular-nums; }
+.tl-body h4 { margin: 0 0 6px; font-size: .98rem; }
+.tl-body p { margin: 0; color: var(--muted); font-size: .87rem; line-height: 1.7; }
+.tl-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.tl-tags span {
+  font-size: .7rem; color: var(--faint); border: 1px solid var(--border);
+  border-radius: 99px; padding: 2px 8px;
+}
+
+/* ---------------------------------------------------------------- 뉴스 */
+.news-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.news-status { font-size: .78rem; color: var(--faint); }
+.news-status .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 6px; vertical-align: 1px; }
+.news-status.is-fallback .dot { background: var(--accent); }
+.news-status.is-fallback { color: var(--accent); }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-top: 14px; }
+.news-card {
+  display: flex; flex-direction: column; text-align: left; width: 100%;
+  background: linear-gradient(165deg, rgba(24, 33, 56, .7), rgba(9, 14, 25, .92));
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  color: var(--text); cursor: pointer; transition: all .16s; padding: 0;
+}
+.news-card:hover, .news-card:focus-visible { border-color: var(--border-hi); transform: translateY(-2px); }
+.nc-img { aspect-ratio: 16 / 9; width: 100%; object-fit: cover; background: rgba(255, 255, 255, .04); display: block; }
+.nc-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.nc-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: .72rem; color: var(--faint); }
+.nc-cat { color: var(--accent-2); font-weight: 700; }
+.nc-title { font-size: .92rem; font-weight: 700; line-height: 1.45; margin: 0; }
+.nc-sum { color: var(--muted); font-size: .8rem; line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.nc-ko {
+  align-self: flex-start; font-size: .7rem; color: var(--accent);
+  border: 1px solid rgba(255, 212, 121, .35); background: var(--accent-soft);
+  border-radius: 99px; padding: 2px 8px;
+}
+.news-more { display: flex; justify-content: center; margin-top: 18px; }
+.news-detail { max-width: 720px; }
+.news-detail h3 { margin: 0 0 6px; }
+.nd-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: .76rem; color: var(--faint); margin-bottom: 14px; }
+.nd-sum { color: var(--text); line-height: 1.8; font-size: .92rem; white-space: pre-wrap; }
+.nd-note { color: var(--faint); font-size: .8rem; margin-top: 14px; }
+.nd-links { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ------------------------------------------- 지연 로딩 도감 · 쿠키 상태 */
+.lazy-note {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: .76rem; color: var(--faint); margin: 8px 0 0;
+}
+.lazy-note .lz-badge {
+  border: 1px solid var(--border); border-radius: 99px; padding: 2px 9px;
+  color: var(--muted); background: rgba(255, 255, 255, .04);
+}
+.lazy-note .lz-badge.is-on { color: var(--accent-2); border-color: rgba(126, 224, 192, .35); }
+.c2-loading { color: var(--accent); font-size: .82rem; margin: 8px 0 0; }
+.c2-loading[hidden] { display: none; }
+.ck-loading { padding: 40px 10px; text-align: center; color: var(--muted); font-size: .88rem; }
+.ck-loading .spin { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.15); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -4px; margin-right: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ck-list-more { display: flex; justify-content: center; margin-top: 14px; }
+.ck-total { color: var(--faint); font-size: .78rem; }
+
+/* =========================================================================
+   2026-11-27 — 💬 사용자 피드백 시트
+   ========================================================================= */
+.fb-panel { width: min(460px, 100%); }
+.fb-body { flex: 1; overflow-y: auto; padding: 16px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
+.fb-intro { color: var(--muted); font-size: .85rem; line-height: 1.65; margin: 0 0 12px; }
+.fb-cats { margin-bottom: 14px; }
+.fb-field { display: block; margin: 0 0 12px; }
+.fb-field > span { display: block; font-size: .78rem; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+.fb-field > span b { color: var(--danger); font-weight: 800; margin-left: 2px; }
+.fb-field > span em { color: var(--faint); font-style: normal; font-weight: 500; margin-left: 4px; }
+.fb-field textarea, .fb-field input {
+  width: 100%; background: rgba(255, 255, 255, .045); border: 1px solid var(--border);
+  border-radius: 11px; color: var(--text); font: inherit; font-size: .9rem; padding: 10px 12px;
+  line-height: 1.6; resize: vertical;
+}
+.fb-field textarea { min-height: 118px; }
+.fb-field textarea:focus, .fb-field input:focus { outline: none; border-color: var(--accent); }
+.fb-field textarea.is-invalid { border-color: var(--danger); }
+.fb-field small { display: block; text-align: right; color: var(--faint); font-size: .7rem; margin-top: 4px; }
+.fb-privacy { color: var(--faint); font-size: .74rem; line-height: 1.6; margin: -4px 0 12px; }
+.fb-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.fb-status { margin-top: 12px; font-size: .84rem; line-height: 1.7; color: var(--muted); }
+.fb-status.is-ok { color: var(--ok); background: rgba(110, 231, 168, .08); border: 1px solid rgba(110, 231, 168, .28); border-radius: 11px; padding: 10px 12px; }
+.fb-status.is-error { color: var(--danger); background: rgba(255, 122, 110, .08); border: 1px solid rgba(255, 122, 110, .3); border-radius: 11px; padding: 10px 12px; }
+.fb-status.is-saved { color: var(--accent); background: var(--accent-soft); border: 1px solid rgba(255, 212, 121, .3); border-radius: 11px; padding: 10px 12px; }
+.fb-status:empty { display: none; }
+.fb-saved { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.fb-saved-title { font-size: .76rem; color: var(--faint); margin: 0 0 8px; }
+.fb-saved-text {
+  margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, .04);
+  border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: .74rem;
+  line-height: 1.65; white-space: pre-wrap; word-break: break-word; max-height: 190px; overflow: auto;
+}
+.fb-saved-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.fb-foot { color: var(--faint); font-size: .72rem; line-height: 1.6; margin: 14px 0 0; }
+body.red .fb-status.is-ok, body.red .fb-status.is-saved { background: rgba(255, 106, 61, .12); border-color: rgba(255, 106, 61, .35); }
+
+/* =========================================================================
+   2026-11-27 — iOS 홈 화면 앱(standalone): 더보기 시트·드로어·모달 상단 여백
+   · 상태 표시줄(black-translucent)이 화면 위를 덮으므로, 화면을 덮는 모든 판의
+     첫 내용이 상태바 블러 영역으로 올라가지 않도록 env(safe-area-inset-top)을 줍니다.
+   ========================================================================= */
+@media (display-mode: standalone) {
+  /* ☰ 더보기 시트 — 상태바 아래에서 시작하고, 길어져도 상태바를 덮지 않게 */
+  html[data-layout="mobile"] .more-menu {
+    top: auto;
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+  }
+  /* 우주 쿠키 · AI · 피드백 드로어 */
+  .sd-panel { padding-top: env(safe-area-inset-top, 0px); }
+  /* 객체·뉴스 모달(폰에서는 아래에서 올라오는 시트) */
+  html[data-layout="mobile"] .modal-card {
+    padding-top: calc(22px + env(safe-area-inset-top, 0px));
+    max-height: calc(92dvh - env(safe-area-inset-top, 0px));
+  }
+  .modal .modal-card { margin-top: env(safe-area-inset-top, 0px); max-height: calc(88dvh - env(safe-area-inset-top, 0px)); }
+  /* 천체 정보 시트 · 사진 모달 */
+  html[data-layout="mobile"] .li-card { max-height: calc(72dvh - env(safe-area-inset-top, 0px)); }
+  .sm-card { padding-top: env(safe-area-inset-top, 0px); }
+  .pwa-sheet-card { margin-top: env(safe-area-inset-top, 0px); }
+  .fb-body { padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* =========================================================================
+   2026-11-27 — 첫 화면 준비 표시 · 첫 접속 지역 안내 · 최종 확인일 · 다음 이벤트
+   ========================================================================= */
+/* JavaScript 안내 — 화면 맨 위에서 바로 보이게 */
+.noscript-warn {
+  position: relative; z-index: 400; margin: 0; padding: 14px 18px;
+  background: #3a1305; color: #ffe6c9; border-bottom: 1px solid rgba(255, 160, 90, .45);
+  font-size: .9rem; line-height: 1.6; text-align: center;
+}
+.noscript-warn b { color: #ffd479; }
+
+/* 계산이 끝나기 전 부드러운 안내 */
+.boot-note {
+  display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0;
+  color: var(--muted); font-size: .84rem; padding: 7px 12px;
+  border: 1px solid var(--border); border-radius: 99px; background: var(--panel);
+  transition: opacity .35s;
+}
+.boot-note.is-done { opacity: 0; }
+.bn-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  animation: bnPulse 1.1s ease-in-out infinite;
+}
+@keyframes bnPulse { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .bn-dot { animation: none; opacity: .8; } }
+
+/* 첫 접속 지역 안내 */
+.first-visit {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 14px 0 4px; padding: 12px 14px; border-radius: 14px;
+  background: var(--accent-soft); border: 1px solid rgba(255, 212, 121, .32);
+}
+.fv-ico { font-size: 1.2rem; }
+.fv-txt { flex: 1 1 240px; min-width: 0; }
+.fv-txt b { display: block; color: var(--accent); font-size: .88rem; }
+.fv-txt span { display: block; color: var(--muted); font-size: .8rem; line-height: 1.55; }
+.fv-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.fv-ghost { background: transparent; }
+
+/* 최종 확인일 */
+.fresh-note {
+  margin: 10px 0 0; font-size: .78rem; color: var(--faint); line-height: 1.6;
+  border-left: 2px solid var(--border-hi); padding-left: 10px;
+}
+.fresh-note b { color: var(--muted); }
+
+/* 다음 천문 이벤트 */
+.next-event {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 14px; padding: 12px 14px; border-radius: 14px;
+  background: linear-gradient(120deg, rgba(126, 224, 192, .10), rgba(255, 212, 121, .06));
+  border: 1px solid rgba(126, 224, 192, .28);
+}
+.next-event:empty { display: none; }
+.ne-ico { font-size: 1.3rem; }
+.ne-txt { flex: 1 1 220px; min-width: 0; }
+.ne-txt small { display: block; font-size: .72rem; color: var(--accent-2); font-weight: 700; }
+.ne-txt b { display: block; font-size: .95rem; color: var(--text); margin: 2px 0; }
+.ne-txt span { display: block; font-size: .78rem; color: var(--faint); }
+.event-item.is-flash { animation: evFlash 1.6s ease; }
+@keyframes evFlash { 0%, 100% { background: transparent; } 30% { background: rgba(126, 224, 192, .16); } }
+
+/* API 실패 · 사진 실패 다시 시도 */
+.cc-retry, .cp-retry, .sg-retry { margin-top: 10px; }
+.cc-empty .cc-retry { margin-left: 10px; }
+.cp-retry, .sg-retry { display: inline-block; }
+body.red .first-visit { background: rgba(255, 106, 61, .12); border-color: rgba(255, 106, 61, .35); }
+body.red .next-event { background: linear-gradient(120deg, rgba(255, 106, 61, .10), rgba(255, 150, 90, .05)); border-color: rgba(255, 106, 61, .3); }
+.first-visit-wrap { position: relative; z-index: 60; }
+.first-visit-wrap .first-visit { margin: 12px 0 0; }
+@media (display-mode: standalone) {
+  html[data-layout="mobile"] .first-visit-wrap { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+  html[data-layout="mobile"] .first-visit-wrap:has(.first-visit[hidden]) { padding-top: env(safe-area-inset-top, 0px); }
+}
+
 </style>
 <!-- 홈 화면 설치(PWA) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2643,6 +2966,10 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
+
+<noscript>
+  <div class="noscript-warn" role="alert"><b>JavaScript가 꺼져 있습니다.</b> 별너울은 달 위상·행성 위치·박명 시각을 이 브라우저에서 직접 계산합니다. 브라우저 설정에서 JavaScript를 켜면 모든 기능이 동작합니다.</div>
+</noscript>
 
 <a class="skip-link" href="#today">본문으로 건너뛰기</a>
 
@@ -2726,8 +3053,19 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
               <span class="mi-txt"><b>NASA·SpaceX 자료관</b><small>공식 관측 사진과 기록</small></span>
             </a>
           </div>
+          <div class="more-group" role="group" aria-label="학습관과 소식">
+            <p class="more-title"><span aria-hidden="true">🎓</span> 배움 · 소식</p>
+            <a href="#learn" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🎓</span>
+              <span class="mi-txt"><b>천문 학습관</b><small>교육과정 실험실 · 천문학사</small></span>
+            </a>
+            <a href="#news" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">📰</span>
+              <span class="mi-txt"><b>우주·천문 뉴스</b><small>최신 관측 · 로켓 발사 소식</small></span>
+            </a>
+          </div>
           <div class="more-group" role="group" aria-label="입문과 학습">
-            <p class="more-title"><span aria-hidden="true">🎓</span> 입문 · 학습</p>
+            <p class="more-title"><span aria-hidden="true">📖</span> 입문 · 학습</p>
             <a href="#guide" class="more-item" role="menuitem">
               <span class="mi-ico" aria-hidden="true">📖</span>
               <span class="mi-txt"><b>초보자 가이드 &amp; 용어사전</b><small>첫 관측 7단계 + 용어 89개</small></span>
@@ -2752,11 +3090,30 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
               <span class="mi-txt"><b>AI 천문 도우미</b><small>이 사이트 데이터로 답합니다</small></span>
             </button>
           </div>
+          <div class="more-group" role="group" aria-label="의견 보내기">
+            <p class="more-title"><span aria-hidden="true">💬</span> 의견</p>
+            <button type="button" class="more-item" data-open="feedback" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">💬</span>
+              <span class="mi-txt"><b>사용자 피드백</b><small>버그 제보 · 기능 제안 · 칭찬</small></span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </header>
+
+<div class="wrap first-visit-wrap">
+  <div class="first-visit" id="firstVisit" hidden>
+    <span class="fv-ico" aria-hidden="true">📍</span>
+    <div class="fv-txt"><b>지금은 오산 기준으로 계산했어요.</b><span>다른 지역이라면 지역을 골라 주세요. 고른 지역은 이 기기에만 저장됩니다.</span></div>
+    <div class="fv-actions">
+      <button type="button" class="mini-btn" data-fv="geo">내 위치 사용</button>
+      <button type="button" class="mini-btn" data-fv="pick">지역 고르기</button>
+      <button type="button" class="mini-btn fv-ghost" data-fv="keep">오산으로 계속</button>
+    </div>
+  </div>
+</div>
 
 <main>
 
@@ -2772,6 +3129,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
       <p class="eyebrow">오늘 밤, 어디서 무엇을 볼까</p>
       <h1>대한민국 어디서든,<br><span class="grad">오늘 밤 하늘</span>을 10초 만에.</h1>
       <p class="hero-sub">지역과 날짜를 고르면 달 위상·어두운 시간·지금 떠 있는 천체·촬영 설정까지 한 번에 계산합니다.</p>
+      <p class="boot-note" id="bootNote" role="status" aria-live="polite"><span class="bn-dot" aria-hidden="true"></span>오늘 밤 하늘을 계산하고 있어요…</p>
 
       <div class="quick-actions" id="quickActions" role="group" aria-label="빠른 날짜 선택">
         <button class="qa-btn is-active" data-preset="tonight" type="button"><span aria-hidden="true">🌙</span>오늘 밤</button>
@@ -3090,7 +3448,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
       <div class="live-foot">
         <div class="live-day-hint" id="liveDayHint" hidden>지금은 낮입니다 — 별은 밤에 보입니다. <button class="mini-btn" id="liveNightBtn" type="button">🌙 밤 22시 하늘 보기</button></div>
         <div class="live-inview" id="liveInView"></div>
-        <p class="live-help" id="liveHelp">드래그·터치로 둘러보고, <b>북/동/남/서/천정</b> 버튼으로 한 번에 회전할 수 있습니다. 센서 연동은 HTTPS 보안 연결에서만 동작하며(iOS는 권한 허용 필요), 로컬 파일(file://)로 열었다면 자이로·나침반이 차단되므로 드래그·버튼으로 둘러보세요.</p>
+        <p class="live-help" id="liveHelp">드래그·터치로 둘러보고, <b>북/동/남/서/천정</b> 버튼으로 한 번에 회전할 수 있습니다. 센서 연동은 보안 연결(HTTPS)에서만 동작하며(iOS는 권한 허용 필요)입니다. 파일을 내려받아 직접 열었다면 센서가 막히므로 드래그·버튼으로 둘러보세요.</p>
       </div>
     </div>
   </div>
@@ -3154,7 +3512,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
     <div class="section-head">
       <p class="eyebrow">천체 · 별자리 도감</p>
       <h2>오늘 밤 볼 수 있는 것들, <span class="grad">전부</span> 여기 있습니다</h2>
-      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2,571종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>와 <b>별자리</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
+      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2만 3천여 종(지연 로딩), IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>와 <b>별자리</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
     </div>
 
     <div class="cat-tabs" role="tablist" aria-label="도감 보기 전환">
@@ -3562,6 +3920,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
       <p class="eyebrow">전국 관측 명소</p>
       <h2>집에서 30분, <span class="grad">별이 쏟아지는 곳</span>까지</h2>
       <p class="section-sub">수도권부터 제주까지 34곳. 광공해 등급·해발·운영시간·요금·예약 방식·오산 기준 차량 소요 시간까지, 공식 페이지와 지도 데이터로 확인한 실전 정보로 정리했습니다. <b>Bortle은 모두 추정값</b>입니다.</p>
+      <p class="fresh-note">정보 최종 확인일 <b>2026-11-26</b> · 운영시간·요금·예약 방식은 바뀔 수 있어 떠나기 전에 시설에 한 번 더 확인하세요.</p>
     </div>
 
     <div class="panel bortle-panel">
@@ -3590,7 +3949,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
     <div class="section-head">
       <p class="eyebrow">준비와 기록</p>
       <h2>체크리스트로 나가고, <span class="grad">로그</span>로 남기세요</h2>
-      <p class="section-sub">체크 상태와 관측 기록은 이 브라우저에 저장됩니다(localStorage). 서버로 전송되지 않습니다.</p>
+      <p class="section-sub">체크 상태와 관측 기록은 이 브라우저에만 저장됩니다. 서버로 전송되지 않습니다.</p>
     </div>
 
     <div class="grid-2">
@@ -3650,6 +4009,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
       <p class="eyebrow">2026 ~ 2027</p>
       <h2>놓치면 아쉬운 <span class="grad">하늘의 일정</span></h2>
       <p class="section-sub">한국천문연구원(KASI) 월별 천문현상, IMO 유성우 달력, NASA 일식·월식 자료로 확인한 일정입니다. 시각은 한국 표준시(KST).</p>
+      <p class="fresh-note">일정 최종 확인일 <b>2026-11-26</b> · 지난 일정은 숨기고, 아래 <b>다음 천문 이벤트</b>는 오늘 날짜를 기준으로 자동으로 바뀝니다.</p>
     </div>
 
     <div class="panel lunar-note">
@@ -3658,6 +4018,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
       <p><b>다음 기회:</b> 2028-07-06 부분식(한국 2028-07-07 03:20 최대) → <b>2028-12-31 개기월식</b>(최대 16:53 UT = <b>2029-01-01 01:53 KST</b>, 개기 1시간 11분).</p>
     </div>
 
+    <div class="next-event" id="nextEvent"></div>
     <div class="event-tools">
       <div class="chip-row" id="eventFilters"></div>
       <label class="check-inline"><input type="checkbox" id="hidePast" checked> 지난 일정 숨기기</label>
@@ -3693,6 +4054,45 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
   </div>
 </section>
 
+<!-- ===================== 13. 천문 학습관 ===================== -->
+<section class="section section-alt" id="learn" data-view="learn">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">천문 학습관 · 직접 만지며 배우기</p>
+      <h2>교과서의 <span class="grad">천문학</span>을 손으로 돌려 보세요</h2>
+      <p class="section-sub">초등부터 대학 심화까지 단계별 단원을 고르고, 슬라이더를 움직여 연주시차·달의 위상·케플러 법칙·흑체복사·외계행성 트랜짓을 직접 실험할 수 있습니다. 두 번째 탭은 빅뱅부터 제임스 웹까지의 천문학사입니다.</p>
+    </div>
+    <div class="learn-tabs" role="tablist" aria-label="학습관 탭">
+      <button type="button" class="learn-tab is-active" data-learn-tab="curriculum" role="tab" aria-selected="true">
+        <span class="lt-ico" aria-hidden="true">📚</span>
+        <span><b>교육과정 · 단계별 실험실</b><small>초등 · 중등 · 고등 · 대학 심화</small></span>
+      </button>
+      <button type="button" class="learn-tab" data-learn-tab="history" role="tab" aria-selected="false">
+        <span class="lt-ico" aria-hidden="true">🌌</span>
+        <span><b>빅뱅부터 지금까지</b><small>천문학사 타임라인 · 일반인용</small></span>
+      </button>
+    </div>
+    <div class="learn-panel" id="learnCurriculum" role="tabpanel">
+      <div id="learnCurriculumBody"></div>
+    </div>
+    <div class="learn-panel" id="learnHistory" role="tabpanel" hidden>
+      <div id="learnHistoryBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 14. 우주·천문 뉴스 ===================== -->
+<section class="section" id="news" data-view="news">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">우주 · 천문 뉴스</p>
+      <h2>오늘 우주에서는 <span class="grad">무슨 일</span>이 있었을까요</h2>
+      <p class="section-sub">천문학 발견·망원경·천체 현상과 로켓 발사·우주탐사 소식을 한곳에 모았습니다. 기사를 누르면 요약과 원문 링크가 열리고, 인터넷이 끊겨도 검증된 한국어 소식을 볼 수 있습니다.</p>
+    </div>
+    <div id="newsApp"></div>
+  </div>
+</section>
+
 </main>
 
 <!-- ===================== 푸터 ===================== -->
@@ -3708,7 +4108,7 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
       <a href="https://www.imo.net/" target="_blank" rel="noopener">IMO 유성우 자료</a>
       <a href="https://eclipse.gsfc.nasa.gov/" target="_blank" rel="noopener">NASA Eclipse</a>
     </div>
-    <p class="footer-note"><b>별너울지도.html</b>은 외부 파일 없이 혼자 동작하는 단일 HTML 배포본입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
+    <p class="footer-note"><b>별너울지도.html</b>은 인터넷 연결 없이도 열리는 저장용 한 파일 페이지입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
   </div>
 </footer>
 
@@ -3726,6 +4126,15 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- 뉴스 상세 창 -->
+<div class="modal" id="newsModal" hidden>
+  <div class="modal-backdrop" data-news-close="1"></div>
+  <div class="modal-card news-detail" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
+    <button class="modal-close" type="button" data-news-close="1" aria-label="닫기">&times;</button>
+    <div id="newsModalBody"></div>
+  </div>
+</div>
+
 <!-- 하단 탭 바 (모바일판) — 화면 최하단에서 이동, 본문을 가리지 않음 -->
 <nav class="tabbar" id="tabBar" aria-label="화면 이동">
   <a href="#today" class="tab-item" data-nav="today"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M20 13.2A8.4 8.4 0 1 1 10.8 4a6.7 6.7 0 0 0 9.2 9.2z"/></svg></span><span class="tab-txt">오늘 밤</span></a>
@@ -3735,9 +4144,6 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
   <button type="button" class="tab-item" id="tabMore" aria-expanded="false" aria-controls="moreMenu"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tab-txt">더보기</span></button>
 </nav>
 
-<noscript>
-  <div class="noscript-warn">이 사이트는 달 위상·행성 위치·박명 시각을 브라우저에서 직접 계산합니다. JavaScript를 켜야 모든 기능이 동작합니다.</div>
-</noscript>
 <script>
 /* ===== data.js ===== */
 /* =========================================================================
@@ -6041,10 +6447,17 @@ window.SPACE_CATALOG = {"meta":{"count":2571,"generated":"2026-11-26 17:26","sou
     spacex: { label: 'SpaceX', icon: '🛰️', color: '#b0bec5' },
     solar: { label: '태양계', icon: '🪐', color: '#ffb74d' },
     deep: { label: '심우주', icon: '🌌', color: '#b39ddb' },
+    star: { label: '별', icon: '⭐', color: '#ffd479' },
+    exo: { label: '외계행성', icon: '🌍', color: '#7ee0c0' },
+    meteor: { label: '유성우', icon: '💫', color: '#8ab6ff' },
+    history: { label: '천문학사', icon: '📜', color: '#c9a0ff' },
     tip: { label: '관측꿀팁', icon: '🔭', color: '#81c784' }
   };
 
   var SRC = {
+    openngc: { name: 'OpenNGC 카탈로그 (CC BY-SA 4.0)', url: 'https://github.com/mattiaverga/OpenNGC' },
+    hyg: { name: 'HYG 항성 데이터베이스 v4.1 (CC BY-SA 2.5)', url: 'https://www.astronexus.com/projects/hyg' },
+    nssdc: { name: 'NASA NSSDC 행성 팩트시트', url: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/' },
     voyager: { name: 'NASA 보이저 미션', url: 'https://science.nasa.gov/mission/voyager/' },
     webb: { name: 'NASA 제임스 웹', url: 'https://science.nasa.gov/mission/webb/' },
     hubble: { name: 'NASA 허블', url: 'https://science.nasa.gov/mission/hubble/' },
@@ -7340,7 +7753,18 @@ window.PHOTO_SETS = {
       img.removeAttribute('src');
       img.style.display = 'none';
       fallbackEl.hidden = false;
-      fallbackEl.innerHTML = miniChartSvg(d);
+      fallbackEl.innerHTML = miniChartSvg(d) + '<button type="button" class="mini-btn cp-retry">↻ 사진 다시 시도</button>';
+      var rb = fallbackEl.querySelector('.cp-retry');
+      if (rb) rb.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        settled = false;
+        fallbackEl.hidden = true; fallbackEl.innerHTML = '';
+        img.style.display = '';
+        setState('loading');
+        if (entry) { fig.setAttribute('data-src', 'local'); withEntry(entry); }
+        else if (survey) { fig.setAttribute('data-src', 'survey'); startSurvey(); }
+        else showFallback('이 천체는 공개 사진 좌표가 없습니다');
+      });
       titleEl.textContent = d.label + ' · 성도 미리보기';
       creditEl.textContent = note || '사진을 불러오지 못해 성도로 대신 표시합니다.';
       var q = (d.keys[0] || d.label || '').toString();
@@ -8097,7 +8521,17 @@ window.PHOTO_SETS = {
       img.hidden = true;
       fb.hidden = false;
       var svg = (window.SkyPhoto && window.SkyPhoto.chartSvg) ? window.SkyPhoto.chartSvg(d) : '';
-      fb.innerHTML = svg + '<small>' + esc(note || '사진을 불러오지 못해 성도로 대신 표시합니다.') + '</small>';
+      fb.innerHTML = svg + '<small>' + esc(note || '사진을 불러오지 못해 성도로 대신 표시합니다.') + '</small>' +
+        '<button type="button" class="mini-btn sg-retry">↻ 사진 다시 시도</button>';
+      var rb = fb.querySelector('.sg-retry');
+      if (rb) rb.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        fb.hidden = true;
+        skel.hidden = false;
+        S.alive = true;
+        S.loading = true;
+        start();
+      });
       titleEl.textContent = d.label + ' · 성도 미리보기';
       creditEl.textContent = note || '';
       linkEl.hidden = false;
@@ -9402,11 +9836,25 @@ window.Astro = (function () {
         : wx.reason === 'timeout' ? '기상 예보 응답이 늦어 시간 초과했습니다.'
           : wx.reason === 'network' ? '기상 서버에 연결하지 못했습니다.'
             : '이 날짜·지점의 시간별 예보가 없습니다.';
-      chart.innerHTML = '<div class="cc-empty"><b>기상 예보 미제공</b>' +
-        '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span></div>';
+      chart.innerHTML = '<div class="cc-empty"><b>기상 예보를 받지 못했어요</b>' +
+        '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span>' +
+        '<button class="mini-btn cc-retry" type="button" id="cloudRetry">↻ 다시 시도</button></div>';
       if (pill) { pill.textContent = '예보 없음'; pill.className = 'cloud-pill is-none'; }
       if (note) note.textContent = 'Open-Meteo · ' + (wx.reason === 'range' ? '예보 범위 밖' : '연결 실패');
-      if (foot) foot.textContent = '예보가 없는 날은 구름을 0%로 두고 계산합니다. 당일 다시 확인하면 정확해집니다.';
+      if (foot) foot.textContent = '인터넷 연결을 확인한 뒤 다시 시도해 보세요. 예보가 없는 날은 구름을 0%로 두고 계산합니다.';
+      const rb = $('#cloudRetry');
+      if (rb) rb.addEventListener('click', function () {
+        try {
+          Object.keys(window.localStorage).forEach(function (k) {
+            if (k.indexOf('skywx.') === 0) localStorage.removeItem(k);
+          });
+        } catch (e) { /* 저장소 접근 제한 무시 */ }
+        state.last = computeNight();
+        renderHero(state.last);
+        renderCloudPanel(state.last);
+        refreshWeather();
+        toast('시간별 구름양을 다시 불러옵니다.');
+      });
       return;
     }
 
@@ -10700,6 +11148,31 @@ window.Astro = (function () {
     if (!list.length) list = D.events.filter(function (e) { return state.eventType === '전체' || e.type === state.eventType; })
       .sort(function (a, b) { return a.sort - b.sort; });
     const nextIdx = list.findIndex(function (e) { return e.sort >= todayNum; });
+    const neBox = $('#nextEvent');
+    if (neBox) {
+      const nx = nextIdx >= 0 ? list[nextIdx] : null;
+      if (nx) {
+        const tp = todayKST().split('-').map(Number);
+        const np = nx.date.split('-').map(Number);
+        const dd = Math.max(0, Math.round((Date.UTC(np[0], np[1] - 1, np[2]) - Date.UTC(tp[0], tp[1] - 1, tp[2])) / 86400000));
+        const when = dd === 0 ? '오늘' : dd === 1 ? '내일' : dd + '일 뒤';
+        neBox.innerHTML = '<span class="ne-ico" aria-hidden="true">' + (nx.type === '유성우' ? '☄️' : nx.type === '월식' ? '🌙' : nx.type === '일식' ? '🌞' : '✨') + '</span>' +
+          '<div class="ne-txt"><small>다음 천문 이벤트 · ' + when + '</small><b>' + esc(nx.title) + '</b>' +
+          '<span>' + nx.date + ' (' + weekdayKR(nx.date) + ') · ' + esc(nx.moon) + '</span></div>' +
+          '<button type="button" class="mini-btn" id="neJump">목록에서 보기</button>';
+        const jb = $('#neJump');
+        if (jb) jb.addEventListener('click', function () {
+          const el = document.querySelectorAll('#eventList .event-item')[nextIdx];
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('is-flash');
+            setTimeout(function () { el.classList.remove('is-flash'); }, 1600);
+          }
+        });
+      } else {
+        neBox.innerHTML = '<span class="ne-ico" aria-hidden="true">✨</span><div class="ne-txt"><small>다음 천문 이벤트</small><b>예정된 일정을 모두 지나 지난 일정을 보여 드리고 있습니다.</b><span>위의 ‘지난 일정 숨기기’를 끄면 전체 목록을 볼 수 있습니다.</span></div>';
+      }
+    }
 
     $('#eventList').innerHTML = list.map(function (e, i) {
       const p = e.date.split('-');
@@ -14162,6 +14635,7 @@ window.Astro = (function () {
         if (act) {
           e.preventDefault();
           closeMenu();
+          if (act === 'feedback' && window.Feedback) { window.Feedback.open(); return; }
           if (window.SpaceUI) {
             if (act === 'cookie') SpaceUI.openCookie();
             else if (act === 'ai') SpaceUI.openAI();
@@ -14390,7 +14864,10 @@ window.Astro = (function () {
   /* ======================================================================
      🍪 우주 쿠키 드로어
      ====================================================================== */
-  var CK = { view: 'draw' };
+  var CK = {
+    view: 'draw', manifest: null, total: 0, per: 200, lazy: false,
+    chunks: {}, loading: {}, state: 'idle', cat: ''
+  };
 
   function buildCookie() {
     var d = document.createElement('div');
@@ -14422,17 +14899,105 @@ window.Astro = (function () {
       else if (a === 'again') { CK.view = 'draw'; STATE.cookie = pickCookie(); renderCookie(); crackCookie(); }
       else if (a === 'all') { CK.view = 'list'; renderCookie(); }
       else if (a === 'back') { CK.view = 'draw'; renderCookie(); }
-      else if (a === 'aim') aimAtCookie(SD.COOKIES[STATE.cookie]);
+      else if (a === 'aim') aimAtCookie(currentCookie());
       else if (a === 'item') { STATE.cookie = +act.getAttribute('data-i'); CK.view = 'draw'; renderCookie(); }
       else if (a === 'cat') { CK.cat = act.getAttribute('data-cat') || ''; CK.view = 'list'; renderCookie(); }
+      else if (a === 'more') loadMoreCookieChunks();
+      else if (a === 'allchunks') loadAllCookieChunks();
     });
     renderCookie();
+    loadCookieManifest();
+  }
+
+  /* ---------- 쿠키 지연 로딩: 2,000개를 200개씩 나눠 필요한 묶음만 받습니다 ---------- */
+  function loadCookieManifest() {
+    if (CK.state !== 'idle') return;
+    CK.state = 'loading';
+    fetchJSON(CK_BASE + 'manifest.json').then(function (m) {
+      CK.manifest = m;
+      CK.total = m.total || 0;
+      CK.per = m.perChunk || 200;
+      CK.lazy = CK.total > SD.COOKIES.length;
+      CK.state = 'ready';
+      var foot = $('#ckFoot');
+      if (foot) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + CK.total.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴';
+      if (CK.view === 'draw') renderCookie();
+    }).catch(function () {
+      CK.state = 'error';
+      var foot = $('#ckFoot');
+      if (foot) foot.textContent = '오프라인 · 내장 쿠키 ' + SD.COOKIES.length + '개로 뜯습니다';
+    });
+  }
+
+  function cookieCount() { return CK.lazy ? CK.total : SD.COOKIES.length; }
+
+  function chunkOf(i) { return Math.floor(i / CK.per); }
+
+  function cookieAt(i) {
+    if (!CK.lazy) return SD.COOKIES[i] || null;
+    var n = chunkOf(i);
+    var list = CK.chunks[n];
+    return (list && list[i % CK.per]) || null;
+  }
+
+  function currentCookie() {
+    if (!CK.lazy) return SD.COOKIES[STATE.cookie] || SD.COOKIES[0] || null;
+    return cookieAt(STATE.cookie);
+  }
+
+  function loadCookieChunk(n) {
+    if (CK.chunks[n]) return Promise.resolve(CK.chunks[n]);
+    if (CK.loading[n]) return CK.loading[n];
+    var file = (CK.manifest && CK.manifest.chunks && CK.manifest.chunks[n])
+      ? CK.manifest.chunks[n].file
+      : 'k' + (n < 10 ? '0' + n : n) + '.json';
+    CK.loading[n] = fetchJSON(CK_BASE + file).then(function (d) {
+      CK.chunks[n] = (d && d.items) || [];
+      delete CK.loading[n];
+      return CK.chunks[n];
+    }).catch(function (e) { delete CK.loading[n]; throw e; });
+    return CK.loading[n];
+  }
+
+  function loadedCookieCount() {
+    var n = 0;
+    Object.keys(CK.chunks).forEach(function (k) { n += CK.chunks[k].length; });
+    return n;
+  }
+
+  function loadMoreCookieChunks() {
+    if (!CK.lazy) return;
+    var next = -1;
+    for (var i = 0; i < Math.ceil(CK.total / CK.per); i++) if (!CK.chunks[i]) { next = i; break; }
+    if (next < 0) return;
+    var body = $('#ckBody');
+    var note = body && $('.ck-list-more', body);
+    if (note) note.innerHTML = '<span class="ck-total">더 불러오는 중…</span>';
+    loadCookieChunk(next).then(function () { renderCookie(); }).catch(function () { renderCookie(); });
+  }
+
+  function loadAllCookieChunks() {
+    if (!CK.lazy) return;
+    var total = Math.ceil(CK.total / CK.per);
+    var seq = Promise.resolve();
+    for (var i = 0; i < total; i++) {
+      (function (n) {
+        seq = seq.then(function () {
+          if (CK.chunks[n]) return null;
+          var body = $('#ckBody');
+          var note = body && $('#ckLoadNote');
+          if (note) note.textContent = '쿠키를 모으는 중… ' + loadedCookieCount().toLocaleString('en-US') + ' / ' + CK.total.toLocaleString('en-US');
+          return loadCookieChunk(n).then(function () { if (CK.view === 'list') renderCookie(); }).catch(function () { });
+        });
+      })(i);
+    }
+    seq.then(function () { renderCookie(); });
   }
 
   function pickCookie() {
-    var n = SD.COOKIES.length;
+    var n = cookieCount();
     if (!n) return 0;
-    var seen = STATE.cookieSeen || [];
+    var seen = (STATE.cookieSeen || []).filter(function (i) { return i < n; });
     var left = [];
     for (var i = 0; i < n; i++) if (seen.indexOf(i) < 0) left.push(i);
     if (!left.length) { left = []; for (var j = 0; j < n; j++) left.push(j); }
@@ -14465,7 +15030,8 @@ window.Astro = (function () {
       r.hidden = false; r.classList.add('is-on');
       if (r.scrollIntoView) setTimeout(function () { r.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }, 40);
     }
-    if (SD.COOKIES[STATE.cookie] && SD.COOKIES[STATE.cookie].aim) {
+    var c = currentCookie();
+    if (c && c.aim) {
       var b = $('[data-ck="aim"]', r || document);
       if (b) b.hidden = false;
     }
@@ -14475,8 +15041,21 @@ window.Astro = (function () {
     var body = $('#ckBody');
     if (!body) return;
     if (CK.view === 'list') { renderCookieList(body); return; }
-    var c = SD.COOKIES[STATE.cookie] || SD.COOKIES[0];
-    if (!c) { body.innerHTML = '<p class="ck-empty">쿠키 데이터를 불러오지 못했습니다.</p>'; return; }
+    var n = cookieCount();
+    if (!n) { body.innerHTML = '<p class="ck-empty">쿠키 데이터를 불러오지 못했습니다.</p>'; return; }
+    if (STATE.cookie == null || STATE.cookie >= n) STATE.cookie = pickCookie();
+    var c = currentCookie();
+    if (!c) {
+      // 고른 쿠키가 든 묶음만 받아 옵니다.
+      body.innerHTML = '<div class="ck-loading"><span class="spin"></span>쿠키를 불러오는 중…</div>';
+      loadCookieChunk(chunkOf(STATE.cookie)).then(function () { renderCookie(); })
+        .catch(function () {
+          CK.lazy = false;
+          STATE.cookie = pickCookie();
+          renderCookie();
+        });
+      return;
+    }
     var cat = (SD.CAT[c.c] || { label: c.c, icon: '🍪' });
     var src = (SD.SRC[c.src] || { name: c.src, url: '#' });
     body.innerHTML =
@@ -14486,12 +15065,12 @@ window.Astro = (function () {
       '    <span class="ck-emoji" aria-hidden="true">🍪</span>' +
       '    <span class="ck-btn-txt">쿠키 뜯기</span>' +
       '  </button>' +
-      '  <p class="ck-hint">누르면 오늘의 우주 사실이 하나 나옵니다 — ' + SD.COOKIES.length + '개 중 하나</p>' +
+      '  <p class="ck-hint">누르면 오늘의 우주 사실이 하나 나옵니다 — ' + n.toLocaleString('en-US') + '개 중 하나</p>' +
       '</div>' +
       '' +
       '<article class="ck-result" id="ckResult" hidden>' +
       '  <div class="ck-meta"><span class="ck-cat" data-c="' + esc(c.c) + '">' + cat.icon + ' ' + esc(cat.label) + '</span>' +
-      '    <span class="ck-idx">#' + (STATE.cookie + 1) + ' / ' + SD.COOKIES.length + '</span></div>' +
+      '    <span class="ck-idx">#' + (STATE.cookie + 1) + ' / ' + n.toLocaleString('en-US') + '</span></div>' +
       '  <h4 class="ck-title">' + esc(c.t) + '</h4>' +
       '  <div class="ck-stat">' + esc(c.s) + '</div>' +
       '  <p class="ck-desc">' + esc(c.d) + '</p>' +
@@ -14510,17 +15089,23 @@ window.Astro = (function () {
     }
     renderRecent(); renderSkyMini();
     var foot = $('#ckFoot');
-    if (foot) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 수집 2026-11-26';
+    if (foot) foot.textContent = CK.lazy
+      ? '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + n.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴'
+      : '출처는 각 쿠키에 표시됩니다 · 수집 2026-11-26';
   }
 
   function renderRecent() {
     var box = $('#ckRecent');
     if (!box) return;
     var seen = (STATE.cookieSeen || []).slice(0, -1).slice(-3).reverse();
-    if (seen.length) {
-      box.innerHTML = '<p class="ck-recent-title">방금 뜯은 쿠키</p><div class="ck-recent-list">' + seen.map(function (i) {
-        var c = SD.COOKIES[i]; if (!c) return '';
-        return '<button class="ck-recent-item" data-ck="item" data-i="' + i + '"><span>' + esc(c.t) + '</span><em>' + esc(c.s) + '</em></button>';
+    var shown = [];
+    seen.forEach(function (i) {
+      var c = cookieAt(i);
+      if (c) shown.push({ c: c, i: i });
+    });
+    if (shown.length) {
+      box.innerHTML = '<p class="ck-recent-title">방금 뜯은 쿠키</p><div class="ck-recent-list">' + shown.map(function (x) {
+        return '<button class="ck-recent-item" data-ck="item" data-i="' + x.i + '"><span>' + esc(x.c.t) + '</span><em>' + esc(x.c.s) + '</em></button>';
       }).join('') + '</div>';
       return;
     }
@@ -14547,20 +15132,37 @@ window.Astro = (function () {
   function renderCookieList(body) {
     var cats = [['', '전체']].concat(Object.keys(SD.CAT).map(function (k) { return [k, SD.CAT[k].label]; }));
     var cur = CK.cat || '';
-    var list = SD.COOKIES.map(function (c, i) { return { c: c, i: i }; }).filter(function (x) { return !cur || x.c.c === cur; });
+    var rows = [];
+    var max = CK.lazy ? CK.total : SD.COOKIES.length;
+    for (var i = 0; i < max; i++) {
+      var c = cookieAt(i);
+      if (!c) continue;
+      if (cur && c.c !== cur) continue;
+      rows.push({ c: c, i: i });
+    }
+    var loaded = CK.lazy ? loadedCookieCount() : SD.COOKIES.length;
     body.innerHTML =
       '<div class="ck-list-head"><button class="mini-btn" data-ck="back">← 뽑기로</button>' +
-      '<span class="ck-list-count">' + list.length + '개</span></div>' +
+      '<span class="ck-list-count">' + rows.length.toLocaleString('en-US') + '개</span></div>' +
       '<div class="chip-row ck-chips">' + cats.map(function (p) {
         return '<button class="chip' + (cur === p[0] ? ' is-active' : '') + '" data-ck="cat" data-cat="' + esc(p[0]) + '">' + esc(p[1]) + '</button>';
       }).join('') + '</div>' +
-      '<div class="ck-list">' + list.map(function (x) {
+      (CK.lazy
+        ? '<p class="ck-total" id="ckLoadNote">불러온 쿠키 ' + loaded.toLocaleString('en-US') + ' / ' + max.toLocaleString('en-US') + ' · 200개씩 나눠 받습니다</p>'
+        : '') +
+      '<div class="ck-list">' + rows.map(function (x) {
         var cat = SD.CAT[x.c.c] || { label: x.c.c, icon: '🍪' };
         return '<button class="ck-item" data-ck="item" data-i="' + x.i + '">' +
           '<span class="ck-item-cat">' + cat.icon + ' ' + esc(cat.label) + '</span>' +
           '<strong>' + esc(x.c.t) + '</strong>' +
           '<span class="ck-item-stat">' + esc(x.c.s) + '</span></button>';
-      }).join('') + '</div>';
+      }).join('') + '</div>' +
+      (CK.lazy && loaded < max
+        ? '<div class="ck-list-more"><button class="mini-btn" data-ck="more">다음 200개 불러오기</button>' +
+          '<button class="mini-btn" data-ck="allchunks">2,000개 모두 불러오기</button></div>'
+        : '');
+    var foot = $('#ckFoot');
+    if (foot && CK.lazy) foot.textContent = '출처는 각 쿠키에 표시됩니다 · 우주 쿠키 ' + max.toLocaleString('en-US') + '개 · 200개씩 나눠 불러옴';
   }
 
   function openCookie() {
@@ -14570,7 +15172,9 @@ window.Astro = (function () {
     d.hidden = false;
     document.body.classList.add('space-lock');
     var ck = $('.sd-close', d); if (ck) ck.focus();
+    if (CK.state === 'idle') loadCookieManifest();
     if (CK.view === 'draw' && STATE.cookie == null) renderCookie();
+    else renderCookie();
   }
 
   /* ======================================================================
@@ -14767,14 +15371,36 @@ window.Astro = (function () {
   }
 
   /* ======================================================================
-     🌌 전체 하늘 도감 (2,500+)
+     🌌 전체 하늘 도감 (내장 2,571종 + 온라인 2만 3천여 종 지연 로딩)
      ====================================================================== */
-  var C2 = { q: '', type: '', con: '', sort: 'm', page: 0, per: 40 };
+  var CAT_BASE = 'assets/data/catalog/';
+  var CK_BASE = 'assets/data/cookies/';
+  var C2 = {
+    q: '', type: '', con: '', sort: 'm', page: 0, per: 40,
+    rows: [], byId: {}, index: null, manifest: null, indexState: null,
+    chunks: {}, loading: {}, conList: []
+  };
+
+  function fetchJSON(url) {
+    return new Promise(function (resolve, reject) {
+      if (!window.fetch) { reject(new Error('fetch 없음')); return; }
+      var ctrl = null, timer = 0;
+      var opts = {};
+      if (window.AbortController) { ctrl = new AbortController(); opts.signal = ctrl.signal; }
+      timer = setTimeout(function () { try { if (ctrl) ctrl.abort(); } catch (e) { } }, 12000);
+      fetch(url, opts).then(function (r) {
+        clearTimeout(timer);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(resolve).catch(function (e) { clearTimeout(timer); reject(e); });
+    });
+  }
 
   var TYPE_LABEL = {
     G: '은하', GPair: '은하쌍', GTrpl: '은하삼중', GGroup: '은하군', OCl: '산개성단', GCl: '구상성단',
     PN: '행성상성운', Neb: '성운', EmN: '방출성운', RfN: '반사성운', HII: '전리수소영역', SNR: '초신성잔해',
     'Cl+N': '성단+성운', DrkN: '암흑성운', '*Ass': '성협', star: '항성', var: '변광성', dstar: '이중성',
+    Other: '기타 천체', exo: '외계행성계',
     planet: '행성', dwarf: '왜소행성', moon: '위성', sun: '항성', bh: '블랙홀', pulsar: '펄서'
   };
   var TYPE_GROUPS = [
@@ -14785,7 +15411,20 @@ window.Astro = (function () {
   function catTypeGroup(t) {
     if (t === 'solar') return ['planet', 'dwarf', 'moon', 'sun'];
     if (t === 'etc') return ['bh', 'pulsar', 'dstar', 'SNR'];
+    if (t === 'Neb') return ['Neb', 'HII', 'RfN', 'EmN', 'DrkN', 'PN', 'SNR', 'Cl+N'];
+    if (t === 'G') return ['G', 'GPair', 'GTrpl', 'GGroup'];
+    if (t === 'star') return ['star', 'exo', 'dstar'];
     return [t];
+  }
+
+  function baseRow(o) {
+    return { i: o.i, ko: o.ko || o.i, en: o.en || '', t: o.t, m: o.m, c: o.c, s: o.s,
+             M: o.M || '', ch: -1, o: o };
+  }
+
+  function indexRow(r, pos, per) {
+    return { i: r[0], ko: r[0], en: r[6] || '', t: r[1], m: r[2], c: r[3], s: r[4],
+             M: r[5] || '', ch: Math.floor(pos / per), o: null };
   }
 
   function buildCatalogBlock() {
@@ -14794,31 +15433,34 @@ window.Astro = (function () {
     var box = document.createElement('div');
     box.className = 'cat2';
     box.id = 'cat2';
-    var cons = {};
-    SC.items.forEach(function (o) { if (o.c) cons[o.c] = 1; });
-    var conList = Object.keys(cons).sort();
     box.innerHTML =
       '<div class="cat2-head">' +
-      '  <div><h3>🌌 하늘 전체 도감 <span class="cat2-badge">' + SC.meta.count.toLocaleString('en-US') + '종</span></h3>' +
-      '  <p>메시에 110종 전체 + 밝은 NGC/IC 은하·성운·성단 + 항성·변광성 + 태양계 천체를 공개 카탈로그(OpenNGC·HYG) 좌표 그대로 담았습니다. 카드를 누르면 상세 정보와 조준 버튼이 열립니다.</p></div>' +
+      '  <div><h3>🌌 하늘 전체 도감 <span class="cat2-badge" id="c2total">' + SC.meta.count.toLocaleString('en-US') + '종</span></h3>' +
+      '  <p>메시에 110종 전체 + NGC/IC 전체 + 6등급보다 밝은 별 + 외계행성계까지, 공개 카탈로그(OpenNGC·HYG·NASA/IPAC)의 좌표를 그대로 담았습니다. 카드를 누르면 상세 정보와 조준 버튼이 열립니다. <b>2만 3천여 종은 필요한 만큼만 나눠서 불러옵니다.</b></p></div>' +
       '</div>' +
       '<div class="cat2-controls">' +
       '  <input type="search" id="c2q" class="cat2-search" placeholder="이름·번호로 찾기 (M42, NGC 7000, 베가…)" aria-label="전체 도감 검색">' +
-      '  <select id="c2con" aria-label="별자리 필터"><option value="">모든 별자리</option>' + conList.map(function (c) {
-        return '<option value="' + esc(c) + '">' + esc(c) + '</option>';
-      }).join('') + '</select>' +
+      '  <select id="c2con" aria-label="별자리 필터"><option value="">모든 별자리</option></select>' +
       '  <select id="c2sort" aria-label="정렬"><option value="m">메시에 우선</option><option value="mag">밝은 순</option><option value="name">이름 순</option><option value="size">큰 순</option></select>' +
       '</div>' +
       '<div class="chip-row" id="c2chips">' + TYPE_GROUPS.map(function (g) {
         return '<button class="chip' + (g[0] === '' ? ' is-active' : '') + '" data-c2t="' + g[0] + '">' + g[1] + '</button>';
       }).join('') + '</div>' +
       '<p class="result-count" id="c2count">—</p>' +
+      '<p class="lazy-note" id="c2lazy"><span class="lz-badge" id="c2lazyBadge">지연 로딩</span><span id="c2lazyTxt">전체 목록은 스크롤할 때 필요한 부분만 불러옵니다</span></p>' +
+      '<p class="c2-loading" id="c2loading" hidden>목록을 불러오는 중…</p>' +
       '<div class="cat2-grid" id="c2grid"></div>' +
       '<div class="cat2-pager"><button class="mini-btn" id="c2prev">← 이전</button><span id="c2page">—</span><button class="mini-btn" id="c2next">다음 →</button></div>' +
-      '<p class="cat2-src">좌표·등급 출처: OpenNGC (CC BY-SA 4.0), HYG Database v4.1 (CC BY-SA 2.5), d3-celestial Messier. 거리는 알려진 값만 표시합니다.</p>';
+      '<p class="cat2-src">좌표·등급 출처: OpenNGC (CC BY-SA 4.0), HYG Database v4.1 (CC BY-SA 2.5), NASA/IPAC 외계행성 아카이브, d3-celestial Messier. 적색편이로 계산한 거리는 추정값입니다.</p>';
     wrap.appendChild(box);
 
+    // 내장 2,571종으로 즉시 시작합니다.
+    C2.rows = SC.items.map(baseRow);
+    C2.rows.forEach(function (r) { C2.byId[r.i] = r; });
+    refreshConOptions();
+
     $('#c2q').addEventListener('input', debounce(function (e) { C2.q = e.target.value.trim().toLowerCase(); C2.page = 0; renderCat2(); }, 160));
+    $('#c2q').addEventListener('focus', function () { loadCatalogIndex(); });
     $('#c2con').addEventListener('change', function (e) { C2.con = e.target.value; C2.page = 0; renderCat2(); });
     $('#c2sort').addEventListener('change', function (e) { C2.sort = e.target.value; C2.page = 0; renderCat2(); });
     $('#c2chips').addEventListener('click', function (e) {
@@ -14827,32 +15469,158 @@ window.Astro = (function () {
       C2.type = b.getAttribute('data-c2t'); C2.page = 0; renderCat2();
     });
     $('#c2prev').addEventListener('click', function () { if (C2.page > 0) { C2.page--; renderCat2(); } });
-    $('#c2next').addEventListener('click', function () { C2.page++; renderCat2(); });
+    $('#c2next').addEventListener('click', function () {
+      var pages = Math.max(1, Math.ceil(catFiltered().length / C2.per));
+      if (C2.page < pages - 1) { C2.page++; renderCat2(); }
+    });
     $('#c2grid').addEventListener('click', function (e) {
       var aim = e.target.closest('[data-c2aim]');
       if (aim) {
-        var o = SC.items.find(function (x) { return x.i === aim.getAttribute('data-c2aim'); });
-        if (o) aimAtCatalog(o);
+        var row = findRow(aim.getAttribute('data-c2aim'));
+        if (!row) return;
+        resolveObject(row, function (o) { if (o) aimAtCatalog(o); });
         return;
       }
       var card = e.target.closest('[data-c2]');
       if (!card) return;
-      var obj = SC.items.find(function (x) { return x.i === card.getAttribute('data-c2'); });
-      if (obj) openCatalogModal(obj);
+      var r2 = findRow(card.getAttribute('data-c2'));
+      if (!r2) return;
+      resolveObject(r2, function (o) { if (o) openCatalogModal(o); });
     });
     renderCat2();
     bindPhotoPrefetch();
+
+    // 도감이 화면에 가까워지면 확장 목록을 지연 로딩합니다.
+    if (window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { loadCatalogIndex(); io.disconnect(); } });
+      }, { rootMargin: '600px' });
+      io.observe(box);
+      var sec = $('#catalog');
+      if (sec) io.observe(sec);      // 도감 화면을 열면 미리 목록을 받아 둡니다
+    }
+  }
+
+  function findRow(id) {
+    for (var i = 0; i < C2.rows.length; i++) if (C2.rows[i].i === id) return C2.rows[i];
+    return null;
+  }
+
+  function refreshConOptions() {
+    var sel = $('#c2con');
+    if (!sel) return;
+    var set = {};
+    C2.rows.forEach(function (r) { if (r.c) set[r.c] = 1; });
+    C2.conList = Object.keys(set).sort();
+    var cur = C2.con;
+    sel.innerHTML = '<option value="">모든 별자리</option>' + C2.conList.map(function (c) {
+      return '<option value="' + esc(c) + '"' + (c === cur ? ' selected' : '') + '>' + esc(c) + '</option>';
+    }).join('');
+  }
+
+  function updateCatalogCount(n) {
+    var badge = $('#c2total');
+    if (badge) badge.textContent = n.toLocaleString('en-US') + '종';
+    var tot = document.querySelector('.views-meta-catalog, #tabCatalogMeta');
+    if (tot) tot.textContent = n.toLocaleString('en-US');
+  }
+
+  function mergeIndex(idx) {
+    var per = (C2.manifest && C2.manifest.chunkSize) || 800;
+    var added = 0;
+    for (var p = 0; p < idx.items.length; p++) {
+      var r = indexRow(idx.items[p], p, per);
+      if (C2.byId[r.i]) continue;       // 내장 목록에 있으면 한국어 이름·설명을 그대로 씁니다.
+      C2.rows.push(r);
+      C2.byId[r.i] = r;
+      added += 1;
+    }
+    refreshConOptions();
+    updateCatalogCount(C2.rows.length);
+    var badge = $('#c2lazyBadge');
+    if (badge) { badge.textContent = '온라인 확장 완료'; badge.classList.add('is-on'); }
+    var txt = $('#c2lazyTxt');
+    if (txt) txt.textContent = C2.rows.length.toLocaleString('en-US') + '종 전체 목록 · 카드 상세는 그때그때 필요한 묶음만 불러옵니다';
+    renderCat2();
+  }
+
+  function loadCatalogIndex() {
+    if (C2.indexState) return C2.indexState;
+    var ld = $('#c2loading');
+    var badge = $('#c2lazyBadge');
+    if (badge) badge.textContent = '목록 불러오는 중';
+    if (ld) ld.hidden = false;
+    C2.indexState = fetchJSON(CAT_BASE + 'manifest.json').then(function (man) {
+      C2.manifest = man;
+      return fetchJSON(CAT_BASE + 'index.json');
+    }).then(function (idx) {
+      C2.index = idx;
+      if (ld) ld.hidden = true;
+      mergeIndex(idx);
+      return true;
+    }).catch(function () {
+      if (ld) ld.hidden = true;
+      C2.indexState = null;
+      if (badge) badge.textContent = '내장 ' + SC.items.length.toLocaleString('en-US') + '종';
+      var txt = $('#c2lazyTxt');
+      if (txt) txt.textContent = '지금은 확장 목록을 불러오지 못했습니다. 인터넷에 연결하면 2만 3천여 종이 열립니다. (내장 목록은 그대로 쓸 수 있습니다)';
+      return false;
+    });
+    return C2.indexState;
+  }
+
+  function chunkFile(n) {
+    if (C2.manifest && C2.manifest.chunks && C2.manifest.chunks[n]) return C2.manifest.chunks[n].file;
+    return 'c' + (n < 10 ? '0' + n : n) + '.json';
+  }
+
+  function loadChunk(n) {
+    if (C2.chunks[n]) return Promise.resolve(C2.chunks[n]);
+    if (C2.loading[n]) return C2.loading[n];
+    C2.loading[n] = fetchJSON(CAT_BASE + chunkFile(n)).then(function (d) {
+      var items = (d && d.items) || [];
+      C2.chunks[n] = items;
+      items.forEach(function (o) {
+        if (!SC.byId) SC.byId = {};
+        if (!SC.byId[o.i]) { SC.byId[o.i] = o; SC.items.push(o); }
+        var row = C2.byId[o.i];
+        if (row) { row.o = o; row.ko = o.ko || row.ko; row.en = o.en || row.en; }
+      });
+      delete C2.loading[n];
+      return items;
+    }).catch(function (e) { delete C2.loading[n]; throw e; });
+    return C2.loading[n];
+  }
+
+  function findInChunk(n, id) {
+    var list = C2.chunks[n] || [];
+    for (var i = 0; i < list.length; i++) if (list[i].i === id) return list[i];
+    return null;
+  }
+
+  function resolveObject(row, cb) {
+    if (row.o) { cb(row.o); return; }
+    if (row.ch < 0) { cb(null); return; }
+    if (C2.chunks[row.ch]) { cb(findInChunk(row.ch, row.i)); return; }
+    toastLocal('상세 정보를 불러오는 중…');
+    loadChunk(row.ch).then(function () { cb(findInChunk(row.ch, row.i)); })
+      .catch(function () { toastLocal('상세 정보를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'); });
   }
 
   // 카드에 마우스를 올리면 실제 하늘 사진을 미리 받아 둔다(모달 열 때 바로 보임)
   function bindPhotoPrefetch() {
     var grid = $('#c2grid');
     if (!grid || !window.SkyPhoto) return;
+    var tm = 0;
     function warm(e) {
       var card = e.target.closest ? e.target.closest('[data-c2]') : null;
       if (!card) return;
-      var obj = SC.items.find(function (x) { return x.i === card.getAttribute('data-c2'); });
-      if (obj) SkyPhoto.prefetch(obj);
+      clearTimeout(tm);
+      tm = setTimeout(function () {
+        var row = findRow(card.getAttribute('data-c2'));
+        if (!row) return;
+        resolveObject(row, function (o) { if (o) SkyPhoto.prefetch(o); });
+      }, 120);
     }
     grid.addEventListener('mouseover', warm);
     grid.addEventListener('focusin', warm);
@@ -14862,30 +15630,34 @@ window.Astro = (function () {
     var t; return function (e) { clearTimeout(t); t = setTimeout(function () { fn(e); }, ms); };
   }
 
+  function magOf(r) { return (r.m == null || r.m >= 90) ? 99 : r.m; }
+
   function catFiltered() {
     var groups = C2.type ? catTypeGroup(C2.type) : null;
     var q = C2.q;
-    var out = SC.items.filter(function (o) {
+    var out = C2.rows.filter(function (o) {
       if (groups && groups.indexOf(o.t) < 0) return false;
       if (C2.con && o.c !== C2.con) return false;
       if (q) {
-        var hay = (o.i + ' ' + o.ko + ' ' + o.en + ' ' + (o.M || '')).toLowerCase().replace(/\s+/g, '');
+        var hay = (o.i + ' ' + (o.ko || '') + ' ' + (o.en || '') + ' ' + (o.M || '')).toLowerCase().replace(/\s+/g, '');
         if (hay.indexOf(q.replace(/\s+/g, '')) < 0) return false;
       }
       return true;
     });
-    if (C2.sort === 'm') out.sort(function (a, b) { return (a.M ? 0 : 1) - (b.M ? 0 : 1) || (a.m == null ? 99 : a.m) - (b.m == null ? 99 : b.m); });
-    else if (C2.sort === 'mag') out.sort(function (a, b) { return (a.m == null ? 99 : a.m) - (b.m == null ? 99 : b.m); });
+    if (C2.sort === 'm') out.sort(function (a, b) { return (a.M ? 0 : 1) - (b.M ? 0 : 1) || magOf(a) - magOf(b); });
+    else if (C2.sort === 'mag') out.sort(function (a, b) { return magOf(a) - magOf(b); });
     else if (C2.sort === 'name') out.sort(function (a, b) { return a.i.localeCompare(b.i, 'ko'); });
     else out.sort(function (a, b) { return (b.s || 0) - (a.s || 0); });
     return out;
   }
 
   function canAim(o) {
-    if (o.t === 'sun') return false;
-    if (o.t === 'moon') return true;
-    if (o.t === 'planet' || o.t === 'dwarf') return !!({ Mercury: 1, Venus: 1, Mars: 1, Jupiter: 1, Saturn: 1, Uranus: 1, Neptune: 1 })[o.en];
-    return o.ra != null && o.dec != null;
+    if (o.ch != null && o.ch >= 0) return o.t !== 'sun';
+    var x = o.o || o;
+    if (x.t === 'sun') return false;
+    if (x.t === 'moon') return true;
+    if (x.t === 'planet' || x.t === 'dwarf') return !!({ Mercury: 1, Venus: 1, Mars: 1, Jupiter: 1, Saturn: 1, Uranus: 1, Neptune: 1 })[x.en];
+    return x.ra != null && x.dec != null;
   }
 
   function renderCat2() {
@@ -14903,7 +15675,7 @@ window.Astro = (function () {
         (o.M ? '<span class="c2-m">' + esc(o.M) + '</span>' : '') + '</div>' +
         '<div class="c2-meta"><span class="c2-type">' + esc(t) + '</span>' +
         (o.c ? '<span>' + esc(o.c) + '</span>' : '') +
-        '<span class="c2-mag">' + (o.m == null || o.m >= 90 ? '—' : (o.m > 0 ? '+' : '') + o.m.toFixed(1) + '등') + '</span></div>' +
+        '<span class="c2-mag">' + (o.m == null || o.m >= 90 ? '—' : (o.m > 0 ? '+' : '') + Number(o.m).toFixed(1) + '등') + '</span></div>' +
         (o.s ? '<div class="c2-size">겉보기 ' + (o.s >= 60 ? (o.s / 60).toFixed(1) + '°' : o.s.toFixed(0) + '′') + '</div>' : '') +
         (canAim(o) ? '<button class="mini-btn c2-aim" data-c2aim="' + esc(o.i) + '" aria-label="' + esc(o.ko) + ' 조준">🎯</button>' : '') +
         '</article>';
@@ -14919,6 +15691,8 @@ window.Astro = (function () {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
       });
     });
+    // 다음 페이지의 묶음을 미리 받아 두면 페이지 이동이 매끄럽습니다.
+    if (slice.length && slice[0].ch >= 0) loadChunk(slice[0].ch).catch(function () { });
   }
 
   function aimAtCatalog(o) {
@@ -15638,6 +16412,1888 @@ window.Astro = (function () {
 
 </script>
 <script>
+/* ===== learn.js ===== */
+/* =========================================================================
+   learn.js — 🎓 천문 학습관 (2026-11-27)
+   · 탭 1: 교육과정 · 단계별 실험실 (초등 → 중등 → 고등 → 대학 심화)
+     - 단원별 원리·핵심 수식·오개념·탐구 질문
+     - 직접 조작하는 캔버스 실험 9종
+   · 탭 2: 빅뱅부터 지금까지 · 천문학사 타임라인 (일반인용)
+   외부 라이브러리 없이 canvas 2D 로만 그립니다.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function nf(v, d) { return (v == null || !isFinite(v)) ? '—' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: d == null ? 1 : d, minimumFractionDigits: 0 }); }
+
+  /* ======================================================================
+     실험(시뮬레이터) 공통 틀
+     ====================================================================== */
+  function cssVar(name, fallback) {
+    try {
+      var v = getComputedStyle(document.body).getPropertyValue(name).trim();
+      return v || fallback;
+    } catch (e) { return fallback; }
+  }
+
+  function theme() {
+    return {
+      text: cssVar('--text', '#eef2fb'),
+      muted: cssVar('--muted', '#9aa6c0'),
+      faint: cssVar('--faint', '#7c88a3'),
+      accent: cssVar('--accent', '#ffd479'),
+      accent2: cssVar('--accent-2', '#7ee0c0'),
+      accent3: cssVar('--accent-3', '#8ab6ff'),
+      danger: cssVar('--danger', '#ff7a6e'),
+      grid: 'rgba(255,255,255,0.10)',
+      panel: 'rgba(10,16,30,0.55)'
+    };
+  }
+
+  /**
+   * cfg = {
+   *   id, title, hint,
+   *   height: 320,
+   *   controls: [{k, label, min, max, step, value, fmt(v)}],
+   *   buttons: [{k, label}],
+   *   state: {...},
+   *   draw(ctx, W, H, S, T),
+   *   readout(S) -> [[label, value], ...],
+   *   tick(S, dt) -> bool (다시 그릴지)
+   * }
+   */
+  var SIMS = [];
+
+  function createSim(host, cfg) {
+    var wrap = document.createElement('div');
+    wrap.className = 'sim';
+    wrap.setAttribute('data-sim', cfg.id);
+    var controls = (cfg.controls || []).map(function (c) {
+      var id = 'sim-' + cfg.id + '-' + c.k;
+      return '<label class="sim-ctrl" for="' + id + '">' +
+        '<span class="sim-ctrl-label">' + esc(c.label) + '</span>' +
+        '<input type="range" id="' + id + '" data-k="' + c.k + '" min="' + c.min + '" max="' + c.max +
+        '" step="' + (c.step || 1) + '" value="' + c.value + '" aria-label="' + esc(c.label) + '">' +
+        '<output class="sim-ctrl-val" data-out="' + c.k + '"></output>' +
+        '</label>';
+    }).join('');
+    var buttons = (cfg.buttons || []).map(function (b) {
+      return '<button type="button" class="mini-btn sim-btn" data-b="' + b.k + '">' + esc(b.label) + '</button>';
+    }).join('');
+    wrap.innerHTML =
+      '<div class="sim-head"><h4>' + esc(cfg.title) + '</h4>' +
+      (buttons ? '<div class="sim-btns">' + buttons + '</div>' : '') + '</div>' +
+      '<div class="sim-canvas"><canvas aria-label="' + esc(cfg.title) + ' 실험 그림"></canvas></div>' +
+      '<div class="sim-readout" aria-live="polite"></div>' +
+      (controls ? '<div class="sim-controls">' + controls + '</div>' : '') +
+      (cfg.hint ? '<p class="sim-hint">' + cfg.hint + '</p>' : '');
+    host.appendChild(wrap);
+
+    var canvas = $('canvas', wrap);
+    var ctx = canvas.getContext('2d');
+    var S = cfg.state || {};
+    var playing = false;
+    var raf = 0;
+    var last = 0;
+
+    (cfg.controls || []).forEach(function (c) {
+      var input = $('input[data-k="' + c.k + '"]', wrap);
+      if (S[c.k] == null) S[c.k] = +c.value;
+      var out = $('[data-out="' + c.k + '"]', wrap);
+      function sync() {
+        out.textContent = c.fmt ? c.fmt(S[c.k]) : S[c.k];
+      }
+      input.value = S[c.k];
+      sync();
+      input.addEventListener('input', function () {
+        S[c.k] = +input.value;
+        sync();
+        render();
+      });
+      c._sync = sync;
+    });
+
+    function updateReadout() {
+      var box = $('.sim-readout', wrap);
+      if (!box) return;
+      var rows = cfg.readout ? cfg.readout(S) : [];
+      box.innerHTML = rows.map(function (r) {
+        return '<div class="sim-ro' + (r[2] ? ' is-key' : '') + '"><span>' + r[0] + '</span><strong>' + r[1] + '</strong></div>';
+      }).join('');
+    }
+
+    function sizeCanvas() {
+      var rect = canvas.parentNode.getBoundingClientRect();
+      var W = Math.max(260, Math.round(rect.width));
+      var H = cfg.height || 320;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { W: W, H: H };
+    }
+
+    var dims = { W: 300, H: cfg.height || 320 };
+
+    function render() {
+      var d = sizeCanvas();
+      dims = d;
+      var T = theme();
+      ctx.clearRect(0, 0, d.W, d.H);
+      try { cfg.draw(ctx, d.W, d.H, S, T); } catch (e) { /* 그리기 오류로 화면이 멈추지 않게 */ }
+      updateReadout();
+    }
+
+    function loop(ts) {
+      if (!playing) return;
+      var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+      last = ts;
+      if (cfg.tick && cfg.tick(S, dt)) {
+        (cfg.controls || []).forEach(function (c) {
+          var input = $('input[data-k="' + c.k + '"]', wrap);
+          if (input) input.value = S[c.k];
+          if (c._sync) c._sync();
+        });
+        render();
+        raf = requestAnimationFrame(loop);
+      } else {
+        playing = false;
+        updatePlayBtn();
+      }
+    }
+
+    function updatePlayBtn() {
+      var b = $('[data-b="play"]', wrap);
+      if (b) b.textContent = playing ? '⏸ 멈춤' : '▶ 재생';
+    }
+
+    wrap.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-b]');
+      if (!b) return;
+      var k = b.getAttribute('data-b');
+      if (k === 'play') {
+        if (playing) { playing = false; cancelAnimationFrame(raf); updatePlayBtn(); return; }
+        if (cfg.onPlay) cfg.onPlay(S);
+        playing = true;
+        last = 0;
+        updatePlayBtn();
+        raf = requestAnimationFrame(loop);
+      } else if (k === 'reset') {
+        (cfg.controls || []).forEach(function (c) {
+          S[c.k] = +c.value;
+          var input = $('input[data-k="' + c.k + '"]', wrap);
+          if (input) input.value = c.value;
+          if (c._sync) c._sync();
+        });
+        if (cfg.onReset) cfg.onReset(S);
+        render();
+      } else if (cfg.onButton) {
+        cfg.onButton(k, S, render);
+      }
+    });
+
+    var ro = null;
+    if (window.ResizeObserver) {
+      ro = new ResizeObserver(function () { render(); });
+      ro.observe(canvas.parentNode);
+    }
+    window.addEventListener('resize', render);
+    render();
+    SIMS.push({ id: cfg.id, wrap: wrap, S: S, render: render });
+    return wrap;
+  }
+
+  /* ------------------------------------------------------------ 그리기 도구 */
+  function arrow(ctx, x1, y1, x2, y2, color, w) {
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w || 1.4;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    var a = Math.atan2(y2 - y1, x2 - x1);
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 8 * Math.cos(a - 0.4), y2 - 8 * Math.sin(a - 0.4));
+    ctx.lineTo(x2 - 8 * Math.cos(a + 0.4), y2 - 8 * Math.sin(a + 0.4));
+    ctx.closePath(); ctx.fill();
+  }
+  function label(ctx, text, x, y, color, size, align) {
+    ctx.fillStyle = color;
+    ctx.font = (size || 12) + 'px "Pretendard", system-ui, sans-serif';
+    ctx.textAlign = align || 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, y);
+  }
+  function circle(ctx, x, y, r, fill, stroke) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  function star(ctx, x, y, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (var i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4;
+      var rr = i % 2 ? r * 0.38 : r;
+      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
+  /* ======================================================================
+     실험 1 — 달의 위상과 일·월식
+     ====================================================================== */
+  function simMoon(host) {
+    createSim(host, {
+      id: 'moon', title: '🌙 달의 위상과 일·월식', height: 340,
+      controls: [
+        { k: 'day', label: '달의 나이', min: 0, max: 29.5, step: 0.1, value: 7.4, fmt: function (v) { return v.toFixed(1) + '일'; } },
+        { k: 'tilt', label: '달 궤도 기울기', min: 0, max: 12, step: 0.5, value: 5.1, fmt: function (v) { return v.toFixed(1) + '°'; } }
+      ],
+      buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
+      state: { orbit: 0 },
+      onPlay: function () { },
+      tick: function (S, dt) {
+        S.day = (S.day + dt * 2.2) % 29.5;
+        return true;
+      },
+      draw: function (ctx, W, H, S, T) {
+        var cx = W * 0.30, cy = H * 0.52;
+        var R = Math.min(W * 0.24, H * 0.36);
+        // 궤도
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+        // 태양 방향 (왼쪽)
+        label(ctx, '☀ 태양빛', 12, 16, T.accent, 12, 'left');
+        for (var i = 0; i < 3; i++) arrow(ctx, 16, 40 + i * 16, W * 0.30 - R - 26, 40 + i * 16, 'rgba(255,212,121,0.35)', 1);
+        // 지구
+        circle(ctx, cx, cy, 13, T.accent3, null);
+        label(ctx, '지구', cx, cy + 26, T.muted, 11);
+        // 달 위치: day 0 = 태양 쪽(왼쪽)
+        var ang = Math.PI + (S.day / 29.5) * Math.PI * 2;
+        var mx = cx + Math.cos(ang) * R, my = cy + Math.sin(ang) * R * 0.92;
+        // 기울기만큼 위아래로 (식이 드물게 일어나는 이유)
+        var ty = Math.sin(ang) * (S.tilt / 12) * R * 0.30;
+        my += ty * 0;
+        circle(ctx, mx, my, 9, '#cfd6e4', null);
+        // 빛을 받는 쪽 표시
+        ctx.fillStyle = 'rgba(20,20,30,0.72)';
+        ctx.beginPath();
+        ctx.arc(mx, my, 9, -Math.PI / 2, Math.PI / 2, false);
+        ctx.fill();
+        label(ctx, '달', mx, my - 18, T.muted, 11);
+
+        // 지구에서 본 달
+        var vx = W * 0.70, vy = H * 0.44, vr = Math.min(W * 0.15, 60);
+        var k = (1 - Math.cos(S.day / 29.5 * Math.PI * 2)) / 2;
+        var waxing = S.day < 14.75;
+        label(ctx, '지구에서 본 모양', vx, vy - vr - 18, T.text, 12);
+        circle(ctx, vx, vy, vr, '#0a0f1c', T.grid);
+        // 밝은 부분
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(vx, vy, vr, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = '#e8e4d6';
+        ctx.beginPath();
+        var start = -Math.PI / 2, end = Math.PI / 2;
+        if (waxing) { ctx.arc(vx, vy, vr, start, end, false); }
+        else { ctx.arc(vx, vy, vr, end, start, false); }
+        var rx = Math.abs(1 - 2 * k) * vr;
+        if (waxing) {
+          ctx.ellipse(vx, vy, Math.max(0.01, rx), vr, 0, Math.PI / 2, -Math.PI / 2, k > 0.5);
+        } else {
+          ctx.ellipse(vx, vy, Math.max(0.01, rx), vr, 0, -Math.PI / 2, Math.PI / 2, k > 0.5);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        circle(ctx, vx, vy, vr, null, T.grid);
+
+        // 이름
+        var names = ['삭(신월)', '초승달', '상현달', '차오르는 달', '보름달', '기우는 달', '하현달', '그믐달'];
+        var idx = Math.round((S.day / 29.5) * 8) % 8;
+        label(ctx, names[idx], vx, vy + vr + 20, T.accent2, 13);
+
+        // 일·월식 조건
+        var nearNode = (S.day < 1.6 || S.day > 27.9 || Math.abs(S.day - 14.75) < 1.6);
+        var canEclipse = nearNode && S.tilt < 1.5;
+        var note = S.tilt >= 1.5
+          ? '달 궤도가 5.1° 기울어 있어 대부분의 삭·망에서 그림자가 빗나갑니다.'
+          : (canEclipse ? '교점 근처 + 기울기 0° → 이때 일식·월식이 가능합니다.' : '기울기가 0이어도 달이 교점 근처에 있어야 식이 일어납니다.');
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(10, H - 46, W - 20, 36);
+        label(ctx, note, 18, H - 28, S.tilt < 1.5 && nearNode ? T.accent : T.muted, 11, 'left');
+      },
+      readout: function (S) {
+        var k = (1 - Math.cos(S.day / 29.5 * Math.PI * 2)) / 2;
+        var phase = (S.day / 29.5 * 360);
+        return [
+          ['달의 나이', S.day.toFixed(1) + '일 / 29.5일'],
+          ['지구에서 보이는 밝은 비율', Math.round(k * 100) + '%'],
+          ['위상각(태양–달–지구)', phase.toFixed(0) + '°'],
+          ['한 달(삭망월)', '29.53일']
+        ];
+      },
+      hint: '달은 스스로 빛나지 않고 태양빛을 반사합니다. 지구에서 보는 각도가 달라지면서 밝은 부분의 모양이 바뀝니다. 기울기를 0으로 줄여도 달이 교점(궤도가 만나는 곳) 근처에 있을 때만 식이 일어납니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 2 — 계절과 태양 고도
+     ====================================================================== */
+  function simSeasons(host) {
+    createSim(host, {
+      id: 'seasons', title: '🌍 계절은 지구의 기울기 때문에 생깁니다', height: 330,
+      controls: [
+        { k: 'month', label: '지구의 공전 위치', min: 1, max: 12, step: 1, value: 6, fmt: function (v) { return v + '월'; } },
+        { k: 'lat', label: '관측 위도', min: -66, max: 66, step: 1, value: 37, fmt: function (v) { return (v >= 0 ? '북위 ' : '남위 ') + Math.abs(v) + '°'; } }
+      ],
+      draw: function (ctx, W, H, S, T) {
+        var cx = W * 0.26, cy = H * 0.5;
+        circle(ctx, cx, cy, 22, T.accent, null);
+        label(ctx, '태양', cx, cy + 38, T.muted, 11);
+        var R = Math.min(W * 0.19, H * 0.34);
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(cx, cy, R, R * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+        var ang = Math.PI + ((S.month - 1) / 12) * Math.PI * 2;
+        var ex = cx + Math.cos(ang) * R, ey = cy + Math.sin(ang) * R * 0.55;
+        // 자전축 (23.5° 기울어짐, 방향 고정)
+        var tilt = 23.44 * Math.PI / 180;
+        var ax = Math.sin(tilt) * 22, ay = -Math.cos(tilt) * 22;
+        ctx.strokeStyle = T.text; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(ex - ax, ey - ay); ctx.lineTo(ex + ax, ey + ay); ctx.stroke();
+        circle(ctx, ex + ax, ey + ay, 3, T.accent3, null);   // 북극
+        circle(ctx, ex - ax, ey - ay, 3, T.accent2, null);
+        circle(ctx, ex, ey, 11, T.accent3, null);
+        label(ctx, '지구', ex, ey + 30, T.muted, 11);
+
+        // 태양 적위: δ = -23.44° × cos(2π(month-6.5)/12) 근사 (6월 하지 +23.4)
+        var dec = 23.44 * Math.cos((S.month - 6.5) / 12 * Math.PI * 2);
+        var phi = S.lat * Math.PI / 180, d = dec * Math.PI / 180;
+        var cosH = -Math.tan(phi) * Math.tan(d);
+        var dayLen;
+        if (cosH <= -1) dayLen = 24;
+        else if (cosH >= 1) dayLen = 0;
+        else dayLen = Math.acos(cosH) / Math.PI * 24;
+
+        // 오른쪽: 지평선과 태양 고도
+        var bx = W * 0.62, by = H - 52, bw = W * 0.33, bh = H * 0.58;
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(bx - 10, by); ctx.lineTo(bx + bw, by); ctx.stroke();
+        label(ctx, '지평선', bx + bw - 4, by + 14, T.faint, 10, 'right');
+        var noonAlt = 90 - Math.abs(S.lat - dec);
+        var hx = bx + bw * 0.5, hy = by - Math.max(0, noonAlt) / 90 * bh;
+        ctx.strokeStyle = 'rgba(255,212,121,0.4)'; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(hx, by); ctx.lineTo(hx, hy); ctx.stroke(); ctx.setLineDash([]);
+        circle(ctx, hx, hy, 9, T.accent, null);
+        label(ctx, '정오 태양', hx, hy - 18, T.accent, 11);
+        label(ctx, '고도 ' + Math.round(noonAlt) + '°', hx, by + 14, T.text, 11);
+        label(ctx, '북쪽', bx - 3, by + 14, T.faint, 10, 'left');
+
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(10, 8, W - 20, 30);
+        label(ctx, '지구 자전축은 공전 궤도에 대해 23.44° 기울어진 채 방향이 일정합니다.', W / 2, 23, T.muted, 11);
+      },
+      readout: function (S) {
+        var dec = 23.44 * Math.cos((S.month - 6.5) / 12 * Math.PI * 2);
+        var phi = S.lat * Math.PI / 180, d = dec * Math.PI / 180;
+        var cosH = -Math.tan(phi) * Math.tan(d);
+        var dayLen = cosH <= -1 ? 24 : cosH >= 1 ? 0 : Math.acos(cosH) / Math.PI * 24;
+        var alt = 90 - Math.abs(S.lat - dec);
+        return [
+          ['태양 적위', (dec >= 0 ? '+' : '') + dec.toFixed(1) + '°'],
+          ['정오 태양 고도', Math.round(alt) + '°'],
+          ['낮 길이', Math.floor(dayLen) + '시간 ' + Math.round((dayLen % 1) * 60) + '분'],
+          ['계절', dec > 15 ? '북반구 여름 (남반구 겨울)' : dec < -15 ? '북반구 겨울 (남반구 여름)' : (S.month > 6 ? '북반구 가을' : '북반구 봄')]
+        ];
+      },
+      hint: '계절이 생기는 까닭은 지구와 태양 사이 거리가 아니라 자전축의 기울기입니다. 축이 기울어 태양빛이 비스듬히 들어오는 곳은 같은 빛을 넓게 받아 덜 데워집니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 3 — 연주시차 (중학교 2-2 '별과 우주')
+     ====================================================================== */
+  function simParallax(host) {
+    createSim(host, {
+      id: 'parallax', title: '📐 연주시차로 별까지 거리 재기', height: 350,
+      controls: [
+        { k: 'dpc', label: '별까지 거리', min: 0.2, max: 10, step: 0.05, value: 1.3, fmt: function (v) { return v.toFixed(2) + ' pc'; } },
+        { k: 'month', label: '지구의 공전 위치', min: 0, max: 12, step: 0.5, value: 0, fmt: function (v) { return (v === 0 || v === 12 ? '1월' : v === 6 ? '7월' : (v < 6 ? '1월 +' : '7월 +') + Math.abs(v - (v < 6 ? 0 : 6)).toFixed(1) + '개월'); } }
+      ],
+      buttons: [{ k: 'play', label: '▶ 6개월 이동' }, { k: 'reset', label: '1월로' }],
+      onPlay: function (S) { S._dir = 1; },
+      tick: function (S, dt) {
+        S.month = (S.month + dt * 3) % 12;
+        return true;
+      },
+      draw: function (ctx, W, H, S, T) {
+        var p = 1 / S.dpc;                    // 각초
+        var cx = W * 0.26, cy = H * 0.55, R = Math.min(W * 0.16, 70);
+        // 태양과 지구 궤도
+        circle(ctx, cx, cy, R, null, T.grid);
+        circle(ctx, cx, cy, 12, T.accent, null);
+        label(ctx, '태양', cx, cy + 26, T.muted, 11);
+        // 지구 (1월 = 오른쪽, 7월 = 왼쪽)
+        var a = (S.month / 12) * Math.PI * 2;
+        var ex = cx + Math.cos(a) * R, ey = cy + Math.sin(a) * R;
+        circle(ctx, ex, ey, 8, T.accent3, null);
+        label(ctx, '지구', ex, ey - 16, T.accent3, 10);
+        // 6개월 전 위치
+        var a2 = a + Math.PI;
+        var e2x = cx + Math.cos(a2) * R, e2y = cy + Math.sin(a2) * R;
+        circle(ctx, e2x, e2y, 6, 'rgba(138,182,255,0.4)', null);
+
+        // 별 위치 (화면 오른쪽) — 거리는 로그로 압축
+        var sx = W * 0.62 + Math.log10(S.dpc / 0.2) * (W * 0.10);
+        var sy = cy;
+        star(ctx, sx, sy, 9, T.accent);
+        label(ctx, '가까운 별', sx, sy - 20, T.accent, 11);
+        // 배경 별
+        var seed = 7;
+        function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+        for (var i = 0; i < 26; i++) {
+          var bx = W * 0.58 + rnd() * W * 0.40, by = 30 + rnd() * (H - 80);
+          if (Math.abs(bx - sx) < 14 && Math.abs(by - sy) < 14) continue;
+          circle(ctx, bx, by, 1.4, 'rgba(200,210,230,0.7)', null);
+        }
+
+        // 시선: 지구 → 별 (과장)
+        arrow(ctx, ex, ey, sx, sy, 'rgba(126,224,192,0.55)', 1);
+        arrow(ctx, e2x, e2y, sx, sy, 'rgba(255,180,120,0.35)', 1);
+        // 시차각 표시
+        label(ctx, '시선 방향 차이 = 연주시차 p', W * 0.60, H - 26, T.muted, 11);
+        label(ctx, 'p = ' + p.toFixed(2) + '″', sx + 4, sy + 22, T.accent2, 12);
+
+        // 망원경 시야: 배경에 대한 별의 이동 (과장)
+        var vx = W * 0.22, vy = H - 60, vr = 34;
+        circle(ctx, vx, vy, vr, 'rgba(5,10,20,0.8)', T.grid);
+        var shift = Math.sin(a) * vr * 0.55;    // 과장
+        circle(ctx, vx + shift, vy, 3, T.accent, null);
+        label(ctx, '망원경으로 본 별의 흔들림(과장)', vx, vy + vr + 16, T.faint, 10);
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(10, 8, W - 20, 26);
+        label(ctx, '그림은 이해를 위해 거리·각도를 과장했습니다. 실제 시차각은 아주 작습니다.', W / 2, 21, T.muted, 11);
+      },
+      readout: function (S) {
+        var p = 1 / S.dpc;
+        return [
+          ['연주시차 p', p.toFixed(2) + '″ (각초)'],
+          ['거리 d = 1 / p', S.dpc.toFixed(2) + ' pc (파섹)'],
+          ['광년으로', (S.dpc * 3.2616).toFixed(2) + '광년'],
+          ['1 pc의 정의', '1 AU를 1″로 보는 거리 ≈ 3.26광년']
+        ];
+      },
+      hint: '지구가 6개월 동안 3억 km를 이동하기 때문에 가까운 별이 먼 배경 별에 대해 조금 움직여 보입니다. 이 각도(연주시차 p)의 역수가 거리입니다. p가 1각초이면 거리는 1파섹(3.26광년)입니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 4 — 케플러 3법칙
+     ====================================================================== */
+  function solveKepler(M, e) {
+    var E = M;
+    for (var i = 0; i < 6; i++) E = E - (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    return E;
+  }
+
+  function simKepler(host) {
+    createSim(host, {
+      id: 'kepler', title: '🪐 케플러 3법칙 — 궤도와 공전 주기', height: 330,
+      controls: [
+        { k: 'a', label: '궤도 장반경 a', min: 0.3, max: 40, step: 0.1, value: 1, fmt: function (v) { return v.toFixed(1) + ' AU'; } },
+        { k: 'e', label: '이심률 e', min: 0, max: 0.85, step: 0.01, value: 0.25, fmt: function (v) { return v.toFixed(2); } }
+      ],
+      buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
+      state: { M: 0 },
+      tick: function (S, dt) {
+        var T = Math.pow(S.a, 1.5);
+        S.M = (S.M + dt * 2 * Math.PI / Math.max(0.2, T * 0.35)) % (Math.PI * 2);
+        return true;
+      },
+      draw: function (ctx, W, H, S, T) {
+        var cx = W / 2, cy = H / 2;
+        var A = Math.min(W * 0.36, H * 0.40) * (0.35 + 0.65 * Math.min(1, Math.log10(S.a + 1) / 1.6));
+        var b = A * Math.sqrt(1 - S.e * S.e);
+        var c = A * S.e;
+        // 궤도
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(cx, cy, A, b, 0, 0, Math.PI * 2); ctx.stroke();
+        // 태양(초점)
+        circle(ctx, cx - c, cy, 9, T.accent, null);
+        label(ctx, '태양(초점)', cx - c, cy - 18, T.accent, 10);
+        // 행성
+        var E = solveKepler(S.M, S.e);
+        var px = cx + A * (Math.cos(E) - S.e);
+        var py = cy + b * Math.sin(E);
+        circle(ctx, px, py, 6, T.accent3, null);
+        // 반지름 선
+        ctx.strokeStyle = 'rgba(138,182,255,0.35)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx - c, cy); ctx.lineTo(px, py); ctx.stroke();
+        // 속도 벡터 (면적 속도 일정 시각화)
+        var vx = -(A * Math.sin(E)) * (1 / (1 - S.e * Math.cos(E)));
+        var vy = b * Math.cos(E) * (1 / (1 - S.e * Math.cos(E)));
+        var len = Math.hypot(vx, vy) || 1;
+        arrow(ctx, px, py, px + vx / len * 30, py + vy / len * 30, 'rgba(126,224,192,0.7)', 1.2);
+        label(ctx, '속도', px + vx / len * 44, py + vy / len * 44, T.accent2, 10);
+        // 초점 표시
+        circle(ctx, cx + c, cy, 2.5, T.faint, null);
+        label(ctx, '빈 초점', cx + c, cy + 16, T.faint, 9);
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(10, 8, W - 20, 26);
+        label(ctx, '케플러 1법칙: 행성은 태양을 한 초점으로 하는 타원 궤도를 돕니다.', W / 2, 21, T.muted, 11);
+      },
+      readout: function (S) {
+        var T = Math.pow(S.a, 1.5);
+        var vp = Math.sqrt((1 + S.e) / (1 - S.e));
+        return [
+          ['공전 주기 T = a^1.5', T.toFixed(2) + '년'],
+          ['지구 기준', 'a = 1 AU → T = 1년'],
+          ['근일점/원일점 속도비', vp.toFixed(2) + '배'],
+          ['케플러 2법칙', '같은 시간에 같은 면적을 지나갑니다']
+        ];
+      },
+      hint: 'T² = a³ (T는 년, a는 AU)은 태양계 모든 행성에서 성립합니다. 이심률이 커지면 근일점에서 빠르게, 원일점에서 느리게 움직입니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 5 — H-R도
+     ====================================================================== */
+  function simHR(host) {
+    createSim(host, {
+      id: 'hr', title: '⭐ H-R도 — 별의 밝기와 표면 온도', height: 360,
+      controls: [
+        { k: 'mass', label: '별의 질량', min: 0.1, max: 30, step: 0.1, value: 1, fmt: function (v) { return v.toFixed(1) + ' × 태양'; } }
+      ],
+      draw: function (ctx, W, H, S, T) {
+        var L = 44, R = W - 16, TOP = 26, BOT = H - 34;
+        var x0 = L, x1 = R, y0 = TOP, y1 = BOT;
+        // 축
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x1, y1); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.stroke();
+        // 온도 축 (왼쪽 뜨겁고 오른쪽 차갑게)
+        var temps = [30000, 10000, 6000, 3000];
+        temps.forEach(function (t) {
+          var x = x0 + (Math.log10(40000 / t) / Math.log10(40000 / 2500)) * (x1 - x0);
+          ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+          ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+          label(ctx, t >= 1000 ? (t / 1000) + 'k' : t, x, y1 + 12, T.faint, 10);
+        });
+        label(ctx, '표면 온도 (K)', (x0 + x1) / 2, H - 12, T.muted, 11);
+        // 광도 축
+        [1e-3, 1, 1e3, 1e6].forEach(function (l) {
+          var y = y1 - (Math.log10(l) - (-4)) / 10 * (y1 - y0);
+          ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+          ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+          label(ctx, '10' + (l === 1 ? '⁰' : '^' + Math.log10(l)), x0 - 8, y, T.faint, 9, 'right');
+        });
+        label(ctx, '광도 (태양=1)', x0 + 6, y0 - 10, T.muted, 10, 'left');
+
+        function pos(Tk, Lg) {
+          var x = x0 + (Math.log10(40000 / Math.max(2500, Tk)) / Math.log10(40000 / 2500)) * (x1 - x0);
+          var y = y1 - (Math.log10(Math.max(1e-4, Lg)) + 4) / 10 * (y1 - y0);
+          return { x: x, y: y };
+        }
+        // 주계열
+        ctx.strokeStyle = 'rgba(255,212,121,0.55)'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (var m = 0.08; m <= 40; m *= 1.18) {
+          var Lg = Math.pow(m, 3.5);
+          var Tk = 5772 * Math.pow(m, 0.55);
+          var q = pos(Tk, Lg);
+          if (m === 0.08) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+        }
+        ctx.stroke();
+        // 거성·백색왜성 무리
+        ctx.fillStyle = 'rgba(255,140,90,0.35)';
+        for (var i = 0; i < 26; i++) {
+          var gx = x0 + 0.18 * (x1 - x0) + (i % 7) * 9, gy = y0 + 0.18 * (y1 - y0) + Math.floor(i / 7) * 10;
+          ctx.beginPath(); ctx.arc(gx, gy, 3, 0, 6.28); ctx.fill();
+        }
+        label(ctx, '거성', x0 + 0.24 * (x1 - x0), y0 + 0.12 * (y1 - y0), 'rgba(255,150,110,0.8)', 10);
+        ctx.fillStyle = 'rgba(140,200,255,0.35)';
+        for (var j = 0; j < 12; j++) {
+          var wx = x0 + 0.30 * (x1 - x0) + (j % 6) * 9, wy = y1 - 0.12 * (y1 - y0) + Math.floor(j / 6) * -10;
+          ctx.beginPath(); ctx.arc(wx, wy, 2.4, 0, 6.28); ctx.fill();
+        }
+        label(ctx, '백색왜성', x0 + 0.40 * (x1 - x0), y1 - 0.16 * (y1 - y0), 'rgba(150,205,255,0.8)', 10);
+        label(ctx, '주계열', x0 + 0.30 * (x1 - x0), y1 - 0.62 * (y1 - y0), T.accent, 11);
+
+        // 선택한 별
+        var mass = S.mass;
+        var lum = Math.pow(mass, 3.5);
+        var temp = 5772 * Math.pow(mass, 0.55);
+        var p = pos(temp, lum);
+        circle(ctx, p.x, p.y, 8, 'rgba(126,224,192,0.25)', T.accent2);
+        circle(ctx, p.x, p.y, 3.4, T.accent2, null);
+        var tag = mass < 0.5 ? '적색왜성' : mass < 1.5 ? '태양형' : mass < 4 ? '청색 주계열성' : '거대 청색별';
+        label(ctx, tag, p.x, p.y - 14, T.accent2, 10);
+      },
+      readout: function (S) {
+        var lum = Math.pow(S.mass, 3.5);
+        var temp = 5772 * Math.pow(S.mass, 0.55);
+        var rad = Math.sqrt(lum) / Math.pow(temp / 5772, 2);
+        return [
+          ['광도', nf(lum, 3) + ' × 태양'],
+          ['표면 온도', nf(temp, 0) + ' K'],
+          ['반지름', nf(rad, 2) + ' × 태양'],
+          ['수명(대략)', nf(10 / Math.pow(S.mass, 2.5), 1) + ' × 100억 년']
+        ];
+      },
+      hint: '주계열성은 질량이 클수록 훨씬 밝고 뜨겁습니다(L ≈ M^3.5). 그래서 수명은 짧습니다. 별의 위치를 바꾸면 광도·온도·반지름이 함께 어떻게 변하는지 보세요.'
+    });
+  }
+
+  /* ======================================================================
+     실험 6 — 적색편이와 허블-르메트르 법칙
+     ====================================================================== */
+  function simRedshift(host) {
+    createSim(host, {
+      id: 'redshift', title: '🌈 적색편이와 허블-르메트르 법칙', height: 300,
+      controls: [
+        { k: 'z', label: '적색편이 z', min: 0, max: 1, step: 0.005, value: 0.05, fmt: function (v) { return v.toFixed(3); } }
+      ],
+      draw: function (ctx, W, H, S, T) {
+        var x0 = 20, x1 = W - 20, y = H * 0.42;
+        var grad = ctx.createLinearGradient(x0, 0, x1, 0);
+        grad.addColorStop(0, '#4b1f8a'); grad.addColorStop(0.18, '#2244cc');
+        grad.addColorStop(0.36, '#22bbdd'); grad.addColorStop(0.5, '#44dd77');
+        grad.addColorStop(0.64, '#dde033'); grad.addColorStop(0.8, '#e08a22'); grad.addColorStop(1, '#b02a1a');
+        ctx.fillStyle = grad; ctx.fillRect(x0, y - 26, x1 - x0, 52);
+        // 파장 축 400~700nm
+        var lines = [434, 486, 656];  // 수소 발머선
+        ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 2;
+        lines.forEach(function (nm) {
+          var rest = (nm - 400) / 300;
+          var obs = (nm * (1 + S.z) - 400) / 300;
+          if (rest >= 0 && rest <= 1) {
+            ctx.beginPath(); ctx.moveTo(x0 + rest * (x1 - x0), y - 26); ctx.lineTo(x0 + rest * (x1 - x0), y + 26); ctx.stroke();
+          }
+          if (obs >= 0 && obs <= 1) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(x0 + obs * (x1 - x0), y - 26); ctx.lineTo(x0 + obs * (x1 - x0), y + 26); ctx.stroke();
+            ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 2;
+          }
+        });
+        label(ctx, '400nm', x0, y + 40, T.faint, 10, 'left');
+        label(ctx, '700nm', x1, y + 40, T.faint, 10, 'right');
+        label(ctx, '검은 선 = 실험실에서 잰 기준선', x0, y - 40, T.muted, 11, 'left');
+        label(ctx, '흰 선 = 멀리서 온 빛(오른쪽으로 이동)', x0 + 6, y + 62, T.text, 11, 'left');
+        // 속도·거리
+        var v = S.z < 0.1 ? S.z * 299792.458 : 299792.458 * ((1 + S.z) ** 2 - 1) / ((1 + S.z) ** 2 + 1);
+        var d = v / 70;    // Mpc
+        label(ctx, '후퇴 속도 약 ' + nf(v, 0) + ' km/s  ·  거리 약 ' + nf(d, 1) + ' Mpc', W / 2, H - 18, T.accent2, 12);
+      },
+      readout: function (S) {
+        var v = S.z < 0.1 ? S.z * 299792.458 : 299792.458 * (Math.pow(1 + S.z, 2) - 1) / (Math.pow(1 + S.z, 2) + 1);
+        var d = v / 70;
+        return [
+          ['적색편이 z', S.z.toFixed(3)],
+          ['후퇴 속도', nf(v, 0) + ' km/s'],
+          ['거리 (H₀=70)', nf(d, 1) + ' Mpc = ' + nf(d * 3.2616, 0) + '백만 광년'],
+          ['수소 발머선 Hα', '656.3nm → ' + nf(656.3 * (1 + S.z), 1) + 'nm']
+        ];
+      },
+      hint: '멀리 있는 은하일수록 스펙트럼 선이 더 붉은 쪽으로 치우칩니다. 허블-르메트르 법칙 v = H₀d 는 우주가 팽창한다는 가장 직접적인 증거입니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 7 — 플랑크 흑체복사
+     ====================================================================== */
+  function planck(lambdaNm, Tk) {
+    var l = lambdaNm * 1e-9;
+    var h = 6.62607015e-34, c = 2.99792458e8, k = 1.380649e-23;
+    return (2 * h * c * c) / (Math.pow(l, 5) * (Math.exp(h * c / (l * k * Tk)) - 1));
+  }
+
+  function simPlanck(host) {
+    createSim(host, {
+      id: 'planck', title: '🔥 플랑크 흑체복사 곡선', height: 320,
+      controls: [
+        { k: 'temp', label: '별의 표면 온도', min: 1000, max: 30000, step: 100, value: 5772, fmt: function (v) { return nf(v, 0) + ' K'; } }
+      ],
+      draw: function (ctx, W, H, S, T) {
+        var L = 46, R = W - 14, TOP = 24, BOT = H - 34;
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(L, BOT); ctx.lineTo(R, BOT); ctx.moveTo(L, TOP); ctx.lineTo(L, BOT); ctx.stroke();
+        var maxL = 2000;
+        var n = 160, pts = [], peak = 0;
+        for (var i = 0; i <= n; i++) {
+          var nm = 1 + (maxL - 1) * i / n;
+          var b = planck(nm, S.temp);
+          if (b > peak) peak = b;
+          pts.push([nm, b]);
+        }
+        var peakNm = 2.898e6 / S.temp;
+        function px(nm) { return L + (nm / maxL) * (R - L); }
+        function py(b) { return BOT - (b / peak) * (BOT - TOP) * 0.92; }
+        // 가시광 영역
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillRect(px(380), TOP, px(750) - px(380), BOT - TOP);
+        label(ctx, '가시광', (px(380) + px(750)) / 2, TOP + 10, T.faint, 10);
+        // 곡선
+        ctx.strokeStyle = T.accent; ctx.lineWidth = 2.4; ctx.beginPath();
+        pts.forEach(function (p, i) { if (i) ctx.lineTo(px(p[0]), py(p[1])); else ctx.moveTo(px(p[0]), py(p[1])); });
+        ctx.stroke();
+        // 채우기
+        ctx.lineTo(px(maxL), BOT); ctx.lineTo(px(1), BOT); ctx.closePath();
+        ctx.fillStyle = 'rgba(255,212,121,0.10)'; ctx.fill();
+        // 최대 파장
+        var pk = px(peakNm);
+        ctx.strokeStyle = T.accent2; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(pk, TOP); ctx.lineTo(pk, BOT); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx, '최대 ' + nf(peakNm, 0) + 'nm', Math.min(R - 40, pk + 6), TOP + 20, T.accent2, 11, 'left');
+        label(ctx, '파장 (nm)', (L + R) / 2, H - 12, T.muted, 11);
+        label(ctx, '복사 세기 (상대값)', L + 6, TOP - 10, T.muted, 10, 'left');
+        [0, 500, 1000, 1500, 2000].forEach(function (nm) { label(ctx, nm, px(nm), BOT + 12, T.faint, 9); });
+      },
+      readout: function (S) {
+        var peakNm = 2.898e6 / S.temp;
+        var total = 5.670374419e-8 * Math.pow(S.temp, 4);
+        return [
+          ['표면 온도', nf(S.temp, 0) + ' K'],
+          ['최대 복사 파장 (빈의 법칙)', nf(peakNm, 0) + ' nm'],
+          ['빛의 색', peakNm < 450 ? '푸르고 뜨거움' : peakNm < 600 ? '흰색에 가까움' : peakNm < 800 ? '주황색' : '붉고 차가움'],
+          ['단위면적당 복사 에너지 (σT⁴)', nf(total / 1e6, 1) + ' × 10⁶ W/m²']
+        ];
+      },
+      hint: '온도가 높아질수록 곡선 전체가 위로 올라가고(σT⁴), 최대 지점은 짧은 파장 쪽으로 이동합니다(빈의 법칙 λmax = 2.898×10⁶/T nm). 태양(5,772K)의 최대는 초록빛 근처입니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 8 — 외계행성 트랜짓
+     ====================================================================== */
+  function simTransit(host) {
+    createSim(host, {
+      id: 'transit', title: '🪐 외계행성 트랜짓 광도곡선', height: 330,
+      controls: [
+        { k: 'rp', label: '행성/항성 반지름 비 (Rp/Rs)', min: 0.01, max: 0.2, step: 0.005, value: 0.06, fmt: function (v) { return v.toFixed(3); } },
+        { k: 'b', label: '충돌 계수 b', min: 0, max: 1, step: 0.01, value: 0.2, fmt: function (v) { return v.toFixed(2); } },
+        { k: 'P', label: '공전 주기', min: 1, max: 60, step: 0.5, value: 10, fmt: function (v) { return v.toFixed(1) + '일'; } }
+      ],
+      draw: function (ctx, W, H, S, T) {
+        var k = S.rp, b = S.b, P = S.P;
+        // 태양형 별: a/Rs ≈ 215 (P/365)^(2/3)
+        var aRs = 215 * Math.pow(P / 365.25, 2 / 3) / (1);
+        var durDays = P / Math.PI * Math.asin(Math.min(1, Math.sqrt(Math.pow(1 + k, 2) - b * b) / aRs));
+        var depth = k * k;
+        // 곡선 영역
+        var L = 44, R = W - 14, TOP = 26, BOT = H - 46;
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(L, BOT); ctx.lineTo(R, BOT); ctx.moveTo(L, TOP); ctx.lineTo(L, BOT); ctx.stroke();
+        var half = Math.max(0.02, durDays / P * 2.2);   // 화면에 보이는 위상 폭
+        function px(ph) { return L + ((ph + half) / (2 * half)) * (R - L); }
+        var y0 = BOT - (BOT - TOP) * 0.18;
+        var yDepth = BOT - (BOT - TOP) * (0.18 + 0.78 * (depth / 0.04));
+        ctx.strokeStyle = T.accent3; ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        var N = 200;
+        for (var i = 0; i <= N; i++) {
+          var ph = -0.6 + 1.2 * i / N;
+          var t = Math.abs(ph) * P;            // 중심에서 떨어진 시간(일)
+          var inside = Math.abs(t) < durDays / 2;
+          var overlap = 1;
+          if (inside) {
+            var x = (t / (durDays / 2));       // -1..1
+            overlap = Math.min(1, Math.sqrt(Math.max(0, 1 - x * x)) * 1.05);
+            overlap = 1 - (1 - overlap) * 0.9;
+          }
+          var flux = 1 - depth * (inside ? overlap : 0);
+          var y = BOT - (BOT - TOP) * (0.18 + 0.78 * flux / Math.max(0.96, 1));
+          if (i) ctx.lineTo(px(ph), y); else ctx.moveTo(px(ph), y);
+        }
+        ctx.stroke();
+        // 깊이 표시
+        ctx.strokeStyle = 'rgba(255,122,110,0.7)'; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(L, y0); ctx.lineTo(R, y0); ctx.stroke(); ctx.setLineDash([]);
+        label(ctx, '광도 100%', L + 4, y0 - 8, T.faint, 9, 'left');
+        label(ctx, '−' + nf(depth * 100, 2) + '%', px(0) + 8, (y0 + yDepth) / 2, T.danger, 11, 'left');
+        label(ctx, '시간 (공전 위상)', (L + R) / 2, H - 12, T.muted, 11);
+        label(ctx, '식 지속 시간 ' + nf(durDays * 24, 1) + '시간', px(0), TOP + 10, T.accent2, 11);
+      },
+      readout: function (S) {
+        var k = S.rp, b = S.b, P = S.P;
+        var aRs = 215 * Math.pow(P / 365.25, 2 / 3);
+        var dur = P / Math.PI * Math.asin(Math.min(1, Math.sqrt(Math.pow(1 + k, 2) - b * b) / aRs));
+        var depth = k * k;
+        return [
+          ['광도 감소 깊이 (Rp/Rs)²', nf(depth * 100, 2) + '% (' + nf(depth * 1e6, 0) + ' ppm)'],
+          ['식 지속 시간', nf(dur * 24, 2) + '시간'],
+          ['행성 반지름', nf(k * 696340 / 6371, 1) + ' × 지구 (태양형 별 기준)'],
+          ['공전 주기', nf(P, 1) + '일']
+        ];
+      },
+      hint: '행성이 별 앞을 지나면 별빛이 아주 조금 줄어듭니다. 감소 폭은 (Rp/Rs)², 지속 시간은 궤도 크기와 경로에 따라 달라집니다. 케플러·TESS가 이 방법으로 수천 개의 행성을 찾았습니다.'
+    });
+  }
+
+  /* ======================================================================
+     실험 9 — 시선속도법
+     ====================================================================== */
+  function simRV(host) {
+    createSim(host, {
+      id: 'rv', title: '📈 시선속도법 — 별이 흔들리는 정도', height: 320,
+      controls: [
+        { k: 'mp', label: '행성 질량', min: 0.05, max: 10, step: 0.05, value: 1, fmt: function (v) { return v.toFixed(2) + ' × 목성'; } },
+        { k: 'P', label: '공전 주기', min: 1, max: 1000, step: 1, value: 365, fmt: function (v) { return v.toFixed(0) + '일'; } },
+        { k: 'e', label: '이심률', min: 0, max: 0.8, step: 0.01, value: 0.05, fmt: function (v) { return v.toFixed(2); } }
+      ],
+      draw: function (ctx, W, H, S, T) {
+        var a = Math.pow(S.P / 365.25, 2 / 3);           // AU
+        var K = 28.4329 * S.mp * Math.pow(a, -0.5) / Math.sqrt(1 - S.e * S.e);
+        var L = 44, R = W - 14, TOP = 30, BOT = H - 40;
+        var mid = (TOP + BOT) / 2;
+        ctx.strokeStyle = T.grid; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(L, mid); ctx.lineTo(R, mid); ctx.moveTo(L, TOP); ctx.lineTo(L, BOT); ctx.stroke();
+        var scale = Math.min(1, 60 / Math.max(1, K));
+        ctx.strokeStyle = T.accent2; ctx.lineWidth = 2.2; ctx.beginPath();
+        var N = 200;
+        for (var i = 0; i <= N; i++) {
+          var ph = i / N * Math.PI * 2;
+          var rv = K * (Math.cos(ph + S.e * Math.sin(ph)));
+          var x = L + i / N * (R - L);
+          var y = mid - (rv / Math.max(K, 1)) * (BOT - TOP) / 2 * (K / Math.max(K, 1));
+          y = mid - (rv / Math.max(1, 60)) * (BOT - TOP) / 2 * 1;
+          if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+        }
+        ctx.stroke();
+        label(ctx, '+' + nf(K, 1) + ' m/s', R - 4, mid - (K / Math.max(1, 60)) * (BOT - TOP) / 2 - 8, T.accent2, 10, 'right');
+        label(ctx, '−' + nf(K, 1) + ' m/s', R - 4, mid + (K / Math.max(1, 60)) * (BOT - TOP) / 2 + 10, T.accent2, 10, 'right');
+        label(ctx, '한 공전 주기', (L + R) / 2, H - 12, T.muted, 11);
+        label(ctx, '시선속도 곡선 (도플러 이동)', L + 6, TOP - 12, T.muted, 10, 'left');
+      },
+      readout: function (S) {
+        var a = Math.pow(S.P / 365.25, 2 / 3);
+        var K = 28.4329 * S.mp * Math.pow(a, -0.5) / Math.sqrt(1 - S.e * S.e);
+        return [
+          ['시선속도 반진폭 K', nf(K, 2) + ' m/s'],
+          ['궤도 장반경 a', nf(a, 3) + ' AU'],
+          ['행성 질량 (최소)', nf(S.mp, 2) + ' × 목성'],
+          ['도플러 이동', 'Δλ/λ = v/c ≈ ' + nf(K / 299792458, 8)]
+        ];
+      },
+      hint: '행성이 별을 끌어당기면 별도 작은 원을 그리며 흔들립니다. 별빛의 스펙트럼 선이 주기적으로 움직이는 것을 재면 행성의 질량과 궤도를 알 수 있습니다. 지구를 도는 태양의 흔들림은 약 0.09 m/s입니다.'
+    });
+  }
+
+  /* ======================================================================
+     교육과정 데이터
+     ====================================================================== */
+  var CURRICULUM = {
+    elementary: {
+      label: '초등', icon: '🌱', sub: '밤하늘을 처음 만나는 단계 · 그림과 손으로 익히기',
+      units: [
+        {
+          title: '낮과 밤은 지구가 돌기 때문에 생깁니다',
+          principle: '지구는 서에서 동으로 24시간에 한 바퀴 자전합니다. 그래서 태양이 비치는 쪽은 낮, 등지는 쪽은 밤이 됩니다. 해가 뜨고 지는 것은 태양이 지구를 도는 것처럼 보이지만, 실제로는 지구가 도는 것입니다.',
+          formula: '자전 주기 1일 = 24시간 · 360° ÷ 24시간 = 1시간에 15°',
+          misconcept: ['해가 하늘을 가로질러 가는 것처럼 보이지만, 실제로 움직이는 것은 지구입니다.', '낮과 밤의 길이는 계절에 따라 달라집니다. 여름에는 낮이 길고 겨울에는 짧습니다.'],
+          question: ['동쪽이 먼저 밝아지는 까닭은 무엇일까요?', '하루 중 그림자가 가장 짧은 때는 언제인가요?'],
+          sim: 'seasons'
+        },
+        {
+          title: '달의 모양은 왜 매일 달라질까',
+          principle: '달은 스스로 빛을 내지 않고 태양빛을 반사합니다. 달이 지구 둘레를 돌면서 우리가 보는 밝은 면의 각도가 달라지기 때문에 초승달, 보름달, 그믐달로 모양이 바뀝니다.',
+          formula: '삭망월(모양이 한 바퀴 도는 주기) ≈ 29.53일 · 항성월 ≈ 27.32일',
+          misconcept: ['달의 모양이 바뀌는 것은 지구의 그림자가 달을 가리기 때문이 아닙니다. 지구 그림자에 들어가는 것은 월식뿐입니다.', '달의 같은 면만 보이는 것은 달의 자전 주기와 공전 주기가 같기 때문입니다.'],
+          question: ['보름달은 해가 진 뒤 어느 방향에서 떠오를까요?', '한 달 동안 달이 뜨는 시각은 어떻게 변할까요?'],
+          sim: 'moon'
+        },
+        {
+          title: '계절이 생기는 까닭',
+          principle: '지구의 자전축이 공전 궤도에 대해 약 23.5° 기울어져 있고, 그 방향이 우주 공간에서 일정합니다. 그래서 여름에는 태양빛이 더 곧게 들어오고 낮이 길어지며, 겨울에는 반대가 됩니다.',
+          formula: '정오 태양 고도 ≈ 90° − |위도 − 태양 적위|',
+          misconcept: ['계절은 지구와 태양 사이 거리가 가까워지고 멀어져서 생기는 것이 아닙니다. 실제로 지구는 1월 초에 태양에 가장 가깝습니다.', '북반구가 여름일 때 남반구는 겨울입니다.'],
+          question: ['우리나라에서 여름 낮이 겨울보다 긴 이유를 설명해 보세요.', '적도 근처에는 왜 계절 변화가 작을까요?'],
+          sim: 'seasons'
+        },
+        {
+          title: '태양계 가족 여행',
+          principle: '태양 둘레를 도는 행성은 수성·금성·지구·화성·목성·토성·천왕성·해왕성 8개입니다. 수성·금성·지구·화성은 암석 행성, 목성·토성·천왕성·해왕성은 거대 가스·얼음 행성입니다.',
+          formula: '태양 지름 ≈ 지구의 109배 · 목성 지름 ≈ 지구의 11배',
+          misconcept: ['명왕성은 2006년 국제천문연맹(IAU)에서 왜소행성으로 분류되었습니다.', '행성의 순서를 태양에서부터 세면 수성 → 금성 → 지구 → 화성 → 목성 → 토성 → 천왕성 → 해왕성입니다.'],
+          question: ['목성과 토성이 왜 가장 큰 행성인지 생각해 보세요.', '밤하늘에서 행성과 별을 어떻게 구별할 수 있을까요?']
+        }
+      ]
+    },
+    middle: {
+      label: '중등', icon: '🔭', sub: '중학교 과학 「별과 우주」 — 관측과 계산으로 확인하는 단계',
+      units: [
+        {
+          title: '별의 연주 운동은 지구의 공전 때문입니다',
+          principle: '같은 시각에 같은 별을 계속 관찰하면 계절에 따라 위치가 조금씩 달라집니다. 지구가 태양 둘레를 공전하기 때문에 생기는 겉보기 운동을 연주 운동이라고 합니다. 북극성 주변 별들은 북극성을 중심으로 원을 그리며 돌아갑니다.',
+          formula: '지구 공전 속도 ≈ 29.8 km/s · 1년에 약 9.4억 km 이동',
+          misconcept: ['별이 실제로 그 자리에서 크게 움직이는 것이 아닙니다. 아주 가까운 별을 빼면 별의 고유 운동은 1년 동안 눈에 띄지 않습니다.', '북극성은 하늘에서 가장 밝은 별이 아니라, 북쪽 하늘에서 거의 움직이지 않는 별입니다.'],
+          question: ['여름과 겨울에 같은 시각 보이는 별자리가 다른 이유는 무엇일까요?', '북극성의 고도가 관측지의 위도와 같은 이유를 설명해 보세요.']
+        },
+        {
+          title: '연주시차로 별까지의 거리를 잽니다',
+          principle: '지구가 공전하면서 6개월 사이에 3억 km를 이동하면, 가까운 별은 먼 배경 별에 대해 조금 움직여 보입니다. 이 각도의 절반이 연주시차 p입니다. p가 클수록 별은 가깝습니다.',
+          formula: 'd(pc) = 1 / p(″) · 1 pc ≈ 3.26광년 ≈ 3.09×10¹³ km',
+          misconcept: ['연주시차는 별의 실제 크기가 아니라 거리를 재는 방법입니다.', '가까운 별일수록 시차가 크고, 아주 먼 별은 시차가 너무 작아 지구에서는 잘 보이지 않습니다.'],
+          question: ['p = 0.1″인 별까지의 거리는 몇 pc, 몇 광년인가요?', '왜 인공위성(가이아)으로 시차를 재면 더 먼 별까지 잴 수 있을까요?'],
+          sim: 'parallax'
+        },
+        {
+          title: '달의 위상과 일식·월식',
+          principle: '삭(신월)에는 달이 태양 쪽에 있어 보이지 않고, 망(보름달)에는 지구 반대쪽에 있습니다. 일식은 달이 태양을 가리는 현상, 월식은 달이 지구 그림자에 들어가는 현상입니다. 달 궤도가 5.1° 기울어 있어 매달 일어나지는 않습니다.',
+          formula: '삭망월 29.53일 · 달 궤도 경사 5.1° · 개기일식은 지구 어딘가에서 약 1~2년에 한 번',
+          misconcept: ['일식은 달이 태양 앞을 지날 때, 월식은 달이 지구 그림자 속으로 들어갈 때 일어납니다.', '보름달마다 월식이 일어나지 않는 이유는 달 궤도가 기울어져 있기 때문입니다.'],
+          question: ['일식은 왜 낮에만 볼 수 있나요?', '개기일식 동안 코로나가 보이는 이유는 무엇일까요?'],
+          sim: 'moon'
+        },
+        {
+          title: '별의 밝기와 등급',
+          principle: '별의 밝기는 등급으로 나타냅니다. 숫자가 작을수록 밝고, 1등급 차이는 약 2.512배 밝기 차이입니다. 1등성은 6등성보다 약 100배 밝습니다. 겉보기 등급은 거리와 실제 밝기가 섞인 값입니다.',
+          formula: 'm₁ − m₂ = −2.5 log₁₀(F₁/F₂) · 5등급 = 100배',
+          misconcept: ['겉보기 등급이 밝다고 실제로 더 밝은 별은 아닙니다. 거리가 가까우면 실제로 어두운 별도 밝게 보입니다.', '태양의 겉보기 등급은 약 −26.7등으로, 가장 밝은 별 시리우스(−1.44등)보다 훨씬 밝습니다.'],
+          question: ['1등성과 6등성의 밝기 차이는 몇 배인가요?', '절대 등급을 쓰면 무엇이 편리해질까요?']
+        }
+      ]
+    },
+    high: {
+      label: '고등(지구과학Ⅰ·Ⅱ)', icon: '🎓', sub: '지구과학Ⅰ·Ⅱ — 수식으로 우주의 구조를 읽는 단계',
+      units: [
+        {
+          title: '케플러 법칙과 행성의 운동',
+          principle: '행성은 태양을 한 초점으로 하는 타원 궤도를 돌고(1법칙), 태양과 행성을 잇는 선은 같은 시간에 같은 면적을 지나가며(2법칙), 공전 주기의 제곱은 장반경의 세제곱에 비례합니다(3법칙).',
+          formula: 'T²(년²) = a³(AU³) · v근일점/v원일점 = (1+e)/(1−e)',
+          misconcept: ['타원의 중심에는 태양이 아니라 초점 중 하나에 태양이 있습니다.', '케플러 3법칙은 태양계뿐 아니라 쌍성계와 외계행성계에도 (질량을 넣어) 적용됩니다.'],
+          question: ['a = 4 AU인 행성의 공전 주기는?', '이심률이 커지면 근일점 속도는 어떻게 변할까요?'],
+          sim: 'kepler'
+        },
+        {
+          title: 'H-R도와 별의 진화',
+          principle: '별의 표면 온도와 광도를 점으로 찍으면 대부분이 왼쪽 위(뜨겁고 밝음)에서 오른쪽 아래(차갑고 어두움)로 이어지는 주계열에 모입니다. 별은 수소를 태우는 주계열 단계를 지나 거성·초거성으로 부풀었다가, 질량에 따라 백색왜성·중성자별·블랙홀로 생을 마칩니다.',
+          formula: 'L = 4πR²σT⁴ · 주계열: L ≈ M^3.5',
+          misconcept: ['H-R도의 색은 별의 나이가 아니라 표면 온도입니다.', '모든 별이 같은 순서로 진화하지 않습니다. 질량이 큰 별은 수명이 짧고 폭발로 끝납니다.'],
+          question: ['태양보다 질량이 10배 큰 별의 수명은 대략 몇 배 짧을까요?', 'H-R도에서 백색왜성은 어디에 위치할까요?'],
+          sim: 'hr'
+        },
+        {
+          title: '허블-르메트르 법칙과 우주 팽창',
+          principle: '멀리 있는 은하일수록 스펙트럼의 선이 더 붉은 쪽으로 치우칩니다(적색편이). 후퇴 속도는 거리에 비례합니다. 이것은 은하가 공간 속을 달려가는 것이 아니라, 은하 사이의 공간 자체가 팽창하기 때문입니다.',
+          formula: 'v = H₀ d · H₀ ≈ 70 km/s/Mpc · z = (λ관측 − λ기준)/λ기준',
+          misconcept: ['우주 팽창의 중심이 지구라는 뜻이 아닙니다. 어느 은하에서 보아도 다른 은하가 멀어지는 것처럼 보입니다.', '적색편이는 은하의 나이가 아니라 거리의 지표입니다.'],
+          question: ['z = 0.05인 은하의 후퇴 속도는?', '허블 상수를 크게 잡으면 같은 은하의 거리는 어떻게 변할까요?'],
+          sim: 'redshift'
+        },
+        {
+          title: '우주 거리 사다리',
+          principle: '가까운 거리는 연주시차로, 그보다 먼 거리는 세페이드 변광성의 주기-광도 관계로, 더 먼 은하는 적색편이로 잽니다. 각 방법은 다음 단계의 기준을 세우는 사다리처럼 이어집니다.',
+          formula: '세페이드: 주기 P가 길수록 광도 L이 큼 · 거리지수 m − M = 5 log₁₀(d/10pc)',
+          misconcept: ['한 가지 방법으로 우주의 모든 거리를 잴 수는 없습니다. 각 방법은 유효한 거리 범위가 있습니다.', '세페이드의 주기-광도 관계는 1908년 헨리에타 리비트가 발견했습니다.'],
+          question: ['세페이드가 왜 표준 광원(standard candle)으로 쓰일까요?', '거리지수로 거리를 구하는 과정을 설명해 보세요.']
+        }
+      ]
+    },
+    college: {
+      label: '대학 심화', icon: '🧪', sub: '천문학 개론·관측 — 물리 법칙으로 별과 행성을 읽는 단계',
+      units: [
+        {
+          title: '플랑크 흑체복사와 빈의 법칙',
+          principle: '별은 거의 완벽한 흑체에 가깝게 복사합니다. 복사 에너지 분포는 플랑크 함수를 따르며, 온도가 높을수록 총복사량은 T⁴에 비례해 커지고 최대 파장은 짧아집니다.',
+          formula: 'Bλ(T) = 2hc²/λ⁵ · 1/(e^(hc/λkT) − 1) · λmax = 2.898×10⁻³/T m',
+          misconcept: ['별의 색만 보고 온도를 정확히 알 수는 없습니다. 성간 먼지에 의한 적색화(reddening)를 보정해야 합니다.', '흑체복사 곡선의 높이는 온도가 높을수록 모든 파장에서 커지지만, 최대 지점의 파장은 짧아집니다.'],
+          question: ['표면 온도 3,000K인 별의 최대 복사 파장은?', '태양의 최대 복사 파장이 가시광인 이유를 계산해 보세요.'],
+          sim: 'planck'
+        },
+        {
+          title: '외계행성 트랜짓 광도곡선',
+          principle: '행성이 별 앞을 지나면 별빛이 (Rp/Rs)² 만큼 줄어듭니다. 광도곡선의 깊이로 행성 크기를, 지속 시간과 주기로 궤도 크기를, 모양으로 충돌 계수 b를 구합니다.',
+          formula: '깊이 = (Rp/Rs)² · 지속 시간 ≈ P/π · arcsin(√((1+k)²−b²)/(a/Rs))',
+          misconcept: ['트랜짓이 관측되는 것은 행성 궤도가 시선 방향과 거의 일치할 때뿐입니다.', '광도 감소 폭이 작아도 행성이 작다는 뜻일 뿐, 질량을 바로 알 수는 없습니다.'],
+          question: ['깊이 1%인 트랜짓에서 행성 반지름은 별의 몇 배인가요?', '충돌 계수 b가 커지면 식 지속 시간은 어떻게 변할까요?'],
+          sim: 'transit'
+        },
+        {
+          title: '시선속도법과 도플러 효과',
+          principle: '행성이 별을 끌어당기면 별도 질량중심 둘레를 작은 원으로 돕니다. 별의 시선 속도 변화는 스펙트럼 선의 도플러 이동으로 나타나며, 그 진폭 K로 행성의 최소 질량을 구합니다.',
+          formula: 'K = 28.43 m/s · (Mp sin i / MJ) · (a/AU)^−1/2 · (Ms/Msun)^−1/2',
+          misconcept: ['시선속도법은 sin i를 모르기 때문에 질량의 최솟값만 줍니다.', '진폭이 크다고 반드시 무거운 행성은 아닙니다. 주기가 짧으면 더 작은 행성도 큰 신호를 만듭니다.'],
+          question: ['지구가 태양을 흔드는 시선속도 진폭은 약 얼마일까요?', '이심률이 커지면 시선속도 곡선 모양은 어떻게 변할까요?'],
+          sim: 'rv'
+        },
+        {
+          title: '분광 관측과 별의 물리량',
+          principle: '스펙트럼의 흡수선으로 표면 온도·중력·화학 조성을 읽습니다. 분광형 OBAFGKM은 온도 순서이며, 주계열성의 질량-광도 관계와 함께 쓰면 별의 반지름과 진화 단계를 추정할 수 있습니다.',
+          formula: '분광형 O > B > A > F > G > K > M (뜨거움 → 차가움) · R = √L / (T/5772)²',
+          misconcept: ['분광형 순서는 알파벳 순서가 아니라 온도 순서입니다.', '같은 분광형이라도 광도 계급(주계열·거성·초거성)이 다르면 반지름이 크게 다릅니다.'],
+          question: ['분광형 G2V인 태양의 V는 무엇을 뜻할까요?', '흡수선 폭이 넓어지는 것은 무엇을 의미할까요?']
+        }
+      ]
+    }
+  };
+
+  /* ======================================================================
+     천문학사 타임라인
+     ====================================================================== */
+  var HISTORY = [
+    { era: 'cosmic', when: '138억 년 전', title: '빅뱅 — 시간과 공간의 시작', text: '우주는 뜨겁고 빽빽한 한 점에서 시작해 팽창했습니다. 오늘 관측되는 은하의 후퇴와 우주배경복사가 이 시작을 가리킵니다.', tags: ['플랑크 시대', '팽창'] },
+    { era: 'cosmic', when: '138억 년 전 + 38만 년', title: '우주배경복사가 처음 빛을 냈습니다', text: '전자가 원자핵과 결합해 빛이 자유롭게 날아다닐 수 있게 되었습니다. 이 빛이 오늘 2.7K의 마이크로파로 온 하늘을 채웁니다.', tags: ['재결합', 'CMB'] },
+    { era: 'cosmic', when: '138억 년 전 + 1~2억 년', title: '최초의 별과 은하', text: '수소와 헬륨이 뭉쳐 첫 별이 켜졌습니다. 제임스 웹은 이 시기의 희미한 은하를 적외선으로 찾아내고 있습니다.', tags: ['우주 최초의 별', 'JWST'] },
+    { era: 'cosmic', when: '46억 년 전', title: '태양계의 탄생', text: '성간 가스와 먼지 구름이 중력으로 수축해 태양과 행성이 되었습니다. 태양계에서 가장 오래된 운석의 나이가 약 45.7억 년입니다.', tags: ['태양계', '원시행성계'] },
+    { era: 'ancient', when: '기원전 3000년~', title: '하늘을 기록한 첫 문명들', text: '메소포타미아·이집트·중국에서 일식과 행성의 움직임을 기록했습니다. 하늘은 농사와 달력의 기준이었습니다.', tags: ['고대 천문학'] },
+    { era: 'ancient', when: '기원전 7세기', title: '바빌로니아의 행성 기록', text: '점토판에 행성의 위치와 주기를 체계적으로 남겼습니다. 이후 그리스 천문학의 자료가 되었습니다.', tags: ['바빌로니아'] },
+    { era: 'ancient', when: '기원전 3세기', title: '에라토스테네스, 지구 둘레를 재다', text: '두 도시의 태양 그림자 각도 차이로 지구 둘레를 계산했습니다. 실제 값과 몇 % 안쪽으로 맞았습니다.', tags: ['지구 둘레'] },
+    { era: 'ancient', when: '2세기', title: '프톨레마이오스의 《알마게스트》', text: '지구를 중심에 두고 주전원으로 행성의 역행을 설명했습니다. 1,400년 동안 서양 천문학의 교과서였습니다.', tags: ['지구중심설'] },
+    { era: 'ancient', when: '1054년', title: '게성운을 만든 초신성', text: '낮에도 보인 밝은 별이 폭발했습니다. 그 잔해가 오늘의 게성운이며, 중심에는 초당 30번 도는 펄서가 있습니다.', tags: ['초신성', 'M1'] },
+    { era: 'modern', when: '1543년', title: '코페르니쿠스, 태양을 중심에 놓다', text: '《천구의 회전에 관하여》에서 지구가 아니라 태양이 중심에서 우주를 이끈다고 주장했습니다. 행성의 역행이 자연스럽게 설명됐습니다.', tags: ['태양중심설'] },
+    { era: 'modern', when: '1609~1619년', title: '케플러의 세 가지 법칙', text: '화성의 관측 기록을 분석해 타원 궤도, 면적 속도 일정, 주기-장반경 관계를 밝혔습니다.', tags: ['케플러'] },
+    { era: 'modern', when: '1610년', title: '갈릴레이, 목성의 위성을 보다', text: '갈릴레이가 망원경을 하늘로 돌려 목성 곁의 위성 4개와 달의 산, 금성의 위상을 확인했습니다.', tags: ['갈릴레이', '망원경'] },
+    { era: 'modern', when: '1687년', title: '뉴턴의 《프린키피아》', text: '만유인력과 운동 법칙으로 행성의 궤도와 조석, 달의 운동을 하나의 원리로 설명했습니다.', tags: ['만유인력'] },
+    { era: 'modern', when: '1781년', title: '허셜, 천왕성을 발견하다', text: '망원경으로 처음 발견된 행성입니다. 태양계의 크기가 갑자기 두 배로 넓어졌습니다.', tags: ['천왕성'] },
+    { era: 'modern', when: '1814년', title: '프라운호퍼의 스펙트럼 연구', text: '태양빛을 프리즘으로 나누어 흡수선을 기록했습니다. 별의 색과 성분을 재는 분광 천문학의 출발점입니다.', tags: ['분광학'] },
+    { era: 'modern', when: '1908년', title: '리비트, 세페이드의 주기-광도 관계', text: '변광성의 밝기 변화 주기가 길수록 실제 밝기가 크다는 것을 발견했습니다. 우주 거리를 재는 자가 생겼습니다.', tags: ['세페이드'] },
+    { era: 'modern', when: '1915년', title: '아인슈타인의 일반상대성이론', text: '중력을 시공간의 휘어짐으로 설명했습니다. 이후 중력렌즈, 블랙홀, 중력파의 이론적 토대가 되었습니다.', tags: ['일반상대성'] },
+    { era: 'modern', when: '1924~1929년', title: '허블, 우주가 팽창함을 보이다', text: '안드로메다가 우리은하 밖에 있음을 밝히고, 은하의 후퇴 속도가 거리에 비례함을 보였습니다.', tags: ['허블', '팽창'] },
+    { era: 'modern', when: '1965년', title: '펜지어스와 윌슨, 우주배경복사를 찾다', text: '설명되지 않는 잡음이 온 하늘에서 똑같이 들어오는 것을 발견했습니다. 빅뱅의 결정적 증거였습니다.', tags: ['CMB'] },
+    { era: 'modern', when: '1969년', title: '아폴로 11호, 사람이 달에 서다', text: '인류가 처음으로 다른 천체의 표면을 밟았습니다. 달의 암석은 태양계 초기의 기록을 담고 있었습니다.', tags: ['아폴로'] },
+    { era: 'modern', when: '1977년', title: '보이저 1·2호의 대여행', text: '목성·토성·천왕성·해왕성을 지나 성간공간으로 나아갔습니다. 보이저 1호는 2026년 11월 인류 물체로 처음 1광일 거리를 넘었습니다.', tags: ['보이저', '성간공간'] },
+    { era: 'modern', when: '1990년', title: '허블 우주망원경 발사', text: '대기 위 560km 궤도에서 우주를 관측하며 은하의 나이와 팽창률을 정밀하게 쟀습니다.', tags: ['허블'] },
+    { era: 'modern', when: '1995년', title: '첫 외계행성, 51 Pegasi b', text: '태양 같은 별을 도는 행성이 처음 확인되었습니다. 이후 30년 만에 확정 행성은 6,000개를 넘었습니다.', tags: ['외계행성'] },
+    { era: 'modern', when: '2015년', title: 'LIGO, 중력파를 처음 검출', text: '두 블랙홀이 합쳐질 때 생긴 시공간의 물결을 지구에서 감지했습니다. 중력을 보는 새로운 창이 열렸습니다.', tags: ['중력파'] },
+    { era: 'modern', when: '2019년', title: '사건의 지평선 망원경, 블랙홀을 찍다', text: '지구 크기의 가상 망원경으로 M87 은하 중심 블랙홀의 그림자를 촬영했습니다.', tags: ['EHT', '블랙홀'] },
+    { era: 'modern', when: '2022년', title: '제임스 웹, 첫 이미지를 공개하다', text: '6.5m 거울과 적외선으로 우주 최초의 은하와 별이 태어나는 구름을 관측합니다. 지구에서 150만 km 떨어진 L2에 있습니다.', tags: ['JWST'] },
+    { era: 'today', when: '2026년', title: '지금 이 순간의 천문학', text: '확정 외계행성 6,473개, 보이저 1호의 1광일 거리, TESS·케플러의 계속되는 발견, 그리고 한국천문연구원(KASI)의 관측 자료까지 — 이 사이트의 데이터도 그 기록 위에 서 있습니다.', tags: ['오늘', 'KASI'] }
+  ];
+
+  var ERA_LABEL = { cosmic: '🌌 우주 초기', ancient: '🏺 고대·중세', modern: '🔭 근대·현대', today: '✨ 오늘' };
+
+  /* ======================================================================
+     화면 만들기
+     ====================================================================== */
+  function buildCurriculum(root) {
+    var levels = ['elementary', 'middle', 'high', 'college'];
+    var currentLevel = 'elementary';
+    root.innerHTML =
+      '<div class="learn-levels" role="tablist" aria-label="교육 단계"></div>' +
+      '<div class="learn-level-note" id="learnLevelNote"></div>' +
+      '<div class="learn-units" id="learnUnits"></div>';
+
+    var chips = $('.learn-levels', root);
+    levels.forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip learn-level' + (k === currentLevel ? ' is-active' : '');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('data-level', k);
+      b.innerHTML = '<span aria-hidden="true">' + CURRICULUM[k].icon + '</span> ' + CURRICULUM[k].label;
+      chips.appendChild(b);
+    });
+
+    function renderLevel(key) {
+      currentLevel = key;
+      $$('.learn-level', chips).forEach(function (b) {
+        b.classList.toggle('is-active', b.getAttribute('data-level') === key);
+        b.setAttribute('aria-selected', String(b.getAttribute('data-level') === key));
+      });
+      var data = CURRICULUM[key];
+      $('#learnLevelNote').textContent = data.sub;
+      var units = $('#learnUnits');
+      units.innerHTML = '';
+      data.units.forEach(function (u, i) {
+        var card = document.createElement('article');
+        card.className = 'learn-unit';
+        var simHost = u.sim ? '<div class="learn-sim-host" data-sim-host="' + u.sim + '"></div>' : '';
+        card.innerHTML =
+          '<button type="button" class="learn-unit-head" aria-expanded="' + (i === 0 ? 'true' : 'false') + '">' +
+          '<span class="lu-num">' + (i + 1) + '</span>' +
+          '<span class="lu-title">' + esc(u.title) + '</span>' +
+          '<span class="lu-chev" aria-hidden="true">⌄</span></button>' +
+          '<div class="learn-unit-body"' + (i === 0 ? '' : ' hidden') + '>' +
+          '<div class="lu-block"><h5>원리</h5><p>' + esc(u.principle) + '</p></div>' +
+          '<div class="lu-block lu-formula"><h5>핵심 수식 · 비례 관계</h5><code>' + esc(u.formula) + '</code></div>' +
+          '<div class="lu-grid">' +
+          '<div class="lu-block"><h5>자주 하는 오개념</h5><ul>' + u.misconcept.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' +
+          '<div class="lu-block"><h5>탐구 질문</h5><ul>' + u.question.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('') + '</ul></div>' +
+          '</div>' + simHost + '</div>';
+        units.appendChild(card);
+        var head = $('.learn-unit-head', card);
+        head.addEventListener('click', function () {
+          var body = $('.learn-unit-body', card);
+          var open = body.hidden;
+          body.hidden = !open;
+          head.setAttribute('aria-expanded', String(open));
+          card.classList.toggle('is-open', open);
+          if (open && u.sim) ensureSim(u.sim);
+        });
+        card.classList.toggle('is-open', i === 0);
+      });
+      if (data.units[0] && data.units[0].sim) ensureSim(data.units[0].sim);
+    }
+
+    function ensureSim(key) {
+      var host = $('[data-sim-host="' + key + '"]');
+      if (!host || host.getAttribute('data-made')) return;
+      host.setAttribute('data-made', '1');
+      if (key === 'moon') simMoon(host);
+      else if (key === 'seasons') simSeasons(host);
+      else if (key === 'parallax') simParallax(host);
+      else if (key === 'kepler') simKepler(host);
+      else if (key === 'hr') simHR(host);
+      else if (key === 'redshift') simRedshift(host);
+      else if (key === 'planck') simPlanck(host);
+      else if (key === 'transit') simTransit(host);
+      else if (key === 'rv') simRV(host);
+    }
+
+    chips.addEventListener('click', function (e) {
+      var b = e.target.closest('.learn-level');
+      if (!b) return;
+      renderLevel(b.getAttribute('data-level'));
+    });
+    renderLevel(currentLevel);
+  }
+
+  function buildHistory(root) {
+    root.innerHTML =
+      '<div class="learn-eras chip-row" role="group" aria-label="시대 선택">' +
+      '<button class="chip is-active" data-era="">전체</button>' +
+      Object.keys(ERA_LABEL).map(function (k) {
+        return '<button class="chip" data-era="' + k + '">' + ERA_LABEL[k] + '</button>';
+      }).join('') + '</div>' +
+      '<div class="timeline" id="historyTimeline"></div>';
+
+    function render(era) {
+      var list = HISTORY.filter(function (h) { return !era || h.era === era; });
+      $('#historyTimeline').innerHTML = list.map(function (h, i) {
+        return '<article class="tl-item" data-era="' + h.era + '">' +
+          '<div class="tl-dot" aria-hidden="true"></div>' +
+          '<div class="tl-body">' +
+          '<div class="tl-meta"><span class="tl-era">' + ERA_LABEL[h.era] + '</span><span class="tl-when">' + esc(h.when) + '</span></div>' +
+          '<h4>' + esc(h.title) + '</h4><p>' + esc(h.text) + '</p>' +
+          '<div class="tl-tags">' + h.tags.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' +
+          '</div></article>';
+      }).join('');
+    }
+    root.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-era]');
+      if (!b) return;
+      $$('.chip', root).forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      render(b.getAttribute('data-era'));
+    });
+    render('');
+  }
+
+  /* ======================================================================
+     탭 · 시작
+     ====================================================================== */
+  function initTabs() {
+    var tabs = $$('.learn-tab');
+    if (!tabs.length) return;
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        var key = t.getAttribute('data-learn-tab');
+        tabs.forEach(function (x) {
+          var on = x === t;
+          x.classList.toggle('is-active', on);
+          x.setAttribute('aria-selected', String(on));
+        });
+        $('#learnCurriculum').hidden = key !== 'curriculum';
+        $('#learnHistory').hidden = key !== 'history';
+      });
+    });
+  }
+
+  function init() {
+    var cur = $('#learnCurriculumBody');
+    var his = $('#learnHistoryBody');
+    if (cur) buildCurriculum(cur);
+    if (his) buildHistory(his);
+    initTabs();
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  window.Learn = { init: init, sims: SIMS };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+<script>
+/* ===== news.js ===== */
+/* =========================================================================
+   news.js — 📰 우주·천문 뉴스 (2026-11-27)
+   · Spaceflight News API v4 (CORS 허용 공개 API)로 최신 기사를 불러옵니다.
+   · 오프라인·API 실패 시에도 바로 읽을 수 있는 '검증된 한국어 소식' 폴백을 둡니다.
+   · 기사를 누르면 요약과 원문 링크가 담긴 상세 창이 열립니다.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var API = 'https://api.spaceflightnewsapi.net/v4/articles/';
+  var CACHE_KEY = 'ob.news.cache.v1';
+  var TTL = 15 * 60 * 1000;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso.slice(0, 10);
+    var now = new Date();
+    var diff = (now - d) / 1000;
+    var kst = new Date(d.getTime() + 9 * 3600 * 1000);
+    var y = kst.getUTCFullYear(), m = kst.getUTCMonth() + 1, day = kst.getUTCDate();
+    var hh = kst.getUTCHours(), mm = String(kst.getUTCMinutes()).padStart(2, '0');
+    var label = y + '.' + m + '.' + day + '. ' + String(hh).padStart(2, '0') + ':' + mm;
+    if (diff < 3600) return Math.max(1, Math.round(diff / 60)) + '분 전 · ' + label;
+    if (diff < 86400 * 2) return Math.round(diff / 3600) + '시간 전 · ' + label;
+    return label;
+  }
+
+  /* ------------------------------------------------------------- 분류 */
+  var ASTRO = ['telescope', 'astronom', 'james webb', 'jwst', 'hubble', 'nebula', 'galaxy', 'galaxies',
+    'star', 'stellar', 'exoplanet', 'planet', 'asteroid', 'comet', 'eclipse', 'supernova', 'black hole',
+    'cosmic', 'cosmos', 'milky way', 'apod', 'astro', 'observatory', 'sky', 'moon', 'mars', 'jupiter',
+    'saturn', 'venus', 'mercury', 'neptune', 'uranus', 'solar system', 'dark matter', 'dark energy',
+    'gravitational wave', 'pulsar', 'quasar', 'meteor', 'aurora', 'heliophysics', 'sun', 'solar wind',
+    'spectrum', 'infrared', 'radio telescope', 'lunar', 'venus', 'pluto', 'kuiper', 'interstellar'];
+  var SPACE = ['launch', 'rocket', 'falcon', 'starship', 'soyuz', 'ariane', 'long march', 'electron',
+    'spacex', 'nasa', 'esa', 'jaxa', 'roscosmos', 'iss', 'space station', 'satellite', 'starlink',
+    'crew', 'dragon', 'orion', 'sls', 'artemis', 'cargo', 'docking', 'mission', 'probe', 'lander',
+    'rover', 'spaceflight', 'space force', 'faa', 'fcc', 'orbit', 'reentry', 'booster', 'payload',
+    'astronaut', 'cosmonaut', 'blue origin', 'rocket lab', 'ula', 'firefly', 'isro', 'cnes', 'dlr'];
+
+  function classify(a) {
+    var text = ((a.title || '') + ' ' + (a.summary || '') + ' ' + (a.news_site || '')).toLowerCase();
+    var astro = 0, space = 0;
+    ASTRO.forEach(function (k) { if (text.indexOf(k) >= 0) astro += 1; });
+    SPACE.forEach(function (k) { if (text.indexOf(k) >= 0) space += 1; });
+    // NASA APOD 은 천문 사진 소식으로 봅니다.
+    if (/apod/i.test(a.title || '')) astro += 3;
+    return astro > space ? 'astro' : 'space';
+  }
+
+  var CAT_LABEL = { astro: '🔭 천문학·관측', space: '🚀 로켓·우주탐사' };
+
+  /* ------------------------------------------------ 검증된 한국어 폴백 */
+  var FALLBACK = [
+    {
+      date: '2026-11-18', cat: 'space', site: 'NASA 보이저 미션',
+      title: '보이저 1호, 인류 물체로 처음 ‘1광일’ 거리를 넘었다',
+      ko: '1977년 발사된 보이저 1호가 2026년 11월 18일 지구에서 빛이 하루 동안 가는 거리(약 259억 km)를 넘어섰습니다. 49년 넘는 비행 끝의 기록입니다.',
+      url: 'https://science.nasa.gov/mission/voyager/'
+    },
+    {
+      date: '2026-11-27', cat: 'astro', site: 'NASA APOD',
+      title: '오늘의 천문사진 — The Moon Watchers',
+      ko: 'NASA의 오늘의 천문사진(APOD) 2026년 11월 27일 자는 달을 지켜보는 장면을 담았습니다. APOD는 1995년부터 매일 천문 사진과 해설을 올리고 있습니다.',
+      url: 'https://science.nasa.gov/apod/'
+    },
+    {
+      date: '2026-11-26', cat: 'space', site: 'NASASpaceflight · SpaceNews',
+      title: 'FCC, SpaceX의 ‘스타마인드’ 데이터센터 위성 최대 100만기 배치 승인',
+      ko: '미국 연방통신위원회(FCC)가 SpaceX가 2040년까지 최대 100만기의 ‘스타마인드’ AI 데이터센터 위성을 배치하도록 승인했습니다. 대규모 위성 군집 시대의 규제 기준이 될 전망입니다.',
+      url: 'https://www.nasaspaceflight.com/'
+    },
+    {
+      date: '2026-11-26', cat: 'space', site: 'European Spaceflight',
+      title: '탈레스 알레니아 스페이스, 화물 귀환 전담 법인 설립',
+      ko: '탈레스 알레니아 스페이스가 우주 화물의 지구 귀환 서비스를 전담하는 회사를 세웁니다. 우주정거장 이후의 상업 화물 수송 시장을 겨냥한 움직임입니다.',
+      url: 'https://europeanspaceflight.com/'
+    },
+    {
+      date: '2026-11-26', cat: 'astro', site: 'NASA/IPAC 외계행성 아카이브',
+      title: '확정된 외계행성 6,473개 — 30년 만의 기록',
+      ko: 'NASA/IPAC 외계행성 아카이브의 확정 행성 수는 2026년 11월 26일 기준 6,473개입니다. 1995년 첫 외계행성 확인 이후 30여 년 만에 6,000개를 넘어섰습니다.',
+      url: 'https://exoplanetarchive.ipac.caltech.edu/'
+    },
+    {
+      date: '2026-11-13', cat: 'space', site: 'SpaceX',
+      title: '스타십 15차 시험비행 성공',
+      ko: '스타십이 2026년 11월 13일 15번째 시험비행을 성공으로 마쳤습니다. 세계에서 가장 큰 로켓을 반복 재사용하는 시험이 이어지고 있습니다.',
+      url: 'https://www.spacex.com/'
+    },
+    {
+      date: '2026-11-26', cat: 'astro', site: 'NASA APOD',
+      title: '오늘의 천문사진 — Eye in the Sky: The Milky Way over Lençóis',
+      ko: '브라질 렌소이스의 밤하늘을 가로지르는 은하수를 담은 사진입니다. 은하수는 우리은하를 안쪽에서 바라본 모습입니다.',
+      url: 'https://science.nasa.gov/apod/'
+    },
+    {
+      date: '2026-10-01', cat: 'space', site: 'NASA',
+      title: '크루-13, 팰컨 9으로 ISS로 향하다',
+      ko: 'NASA 크루-13 임무가 2026년 10월 1일 팰컨 9과 크루 드래곤으로 발사되었습니다. 국제우주정거장(ISS) 장기 체류 임무입니다.',
+      url: 'https://www.nasa.gov/spacex/'
+    },
+    {
+      date: '2026-11-26', cat: 'astro', site: 'IMO 국제유성기구',
+      title: '2026년 유성우 — 페르세우스·쌍둥이자리 극대는 달 없는 밤',
+      ko: 'IMO 2026 유성우 달력에 따르면 페르세우스자리(8월 12일)와 쌍둥이자리(12월 14일) 유성우 극대는 달빛 방해가 없는 밤입니다. 사분의자리 유성우는 보름달과 겹칩니다.',
+      url: 'https://www.imo.net/files/meteor-shower/cal2026.pdf'
+    },
+    {
+      date: '2026-11-26', cat: 'space', site: 'NASA 파커 태양탐사선',
+      title: '파커 태양탐사선, 태양 표면 620만 km까지 접근',
+      ko: '파커 태양탐사선은 7년 동안 태양 주위를 24바퀴 돌며 가장 가까울 때 태양 표면에서 약 620만 km까지 접근합니다. 어떤 우주선보다 가까운 거리입니다.',
+      url: 'https://science.nasa.gov/mission/parker-solar-probe/'
+    },
+    {
+      date: '2026-11-26', cat: 'space', site: 'NASA 아르테미스',
+      title: '아르테미스 II — 사람이 다시 달로',
+      ko: 'NASA 아르테미스 프로그램은 우주비행사를 달에 보내는 계획입니다. 아르테미스 I(2022)은 무인으로 달 궤도를 돌았고, 아르테미스 II는 우주비행사가 달 궤도를 도는 임무입니다.',
+      url: 'https://science.nasa.gov/mission/artemis/'
+    },
+    {
+      date: '2026-11-26', cat: 'astro', site: '한국천문연구원(KASI)',
+      title: 'KASI 천문우주지식정보 — 매일의 천문현상',
+      ko: '한국천문연구원은 음양력, 일출·일몰, 월별 천문현상, 관측 정보를 공개합니다. 이 사이트의 박명·달 위상 계산도 KASI 값과 맞춰 검증했습니다.',
+      url: 'https://astro.kasi.re.kr/'
+    }
+  ];
+
+  /* ------------------------------------------------------------- 상태 */
+  var N = { items: [], cat: '', fallback: false, loaded: false, error: '', offset: 0 };
+
+  function getCache() {
+    try {
+      var raw = sessionStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      var d = JSON.parse(raw);
+      if (!d || !d.at || !d.items) return null;
+      if (Date.now() - d.at > TTL) return null;
+      return d;
+    } catch (e) { return null; }
+  }
+  function setCache(items) {
+    try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items: items })); } catch (e) { }
+  }
+
+  function goodImage(u) {
+    if (!u) return '';
+    if (/\.(png|svg|gif)(\?|$)/i.test(u)) return '';      // 로고·아이콘은 카드 사진으로 쓰지 않습니다
+    if (/logo/i.test(u)) return '';
+    return u;
+  }
+
+  function normalize(a) {
+    return {
+      id: a.id, title: a.title || '', summary: a.summary || '', url: a.url || '',
+      image: goodImage(a.image_url), site: a.news_site || '', date: a.published_at || '',
+      cat: classify(a)
+    };
+  }
+
+  function fetchNews(force) {
+    if (!force) {
+      var c = getCache();
+      if (c) { N.items = c.items; N.loaded = true; N.fallback = false; render(); return; }
+    }
+    N.error = '';
+    render();
+    var ctrl = null;
+    var t = setTimeout(function () {
+      try { if (ctrl) ctrl.abort(); } catch (e) { }
+    }, 9000);
+    var opts = { headers: { Accept: 'application/json' } };
+    if (window.AbortController) { ctrl = new AbortController(); opts.signal = ctrl.signal; }
+    fetch(API + '?limit=30', opts).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (d) {
+      clearTimeout(t);
+      var items = (d.results || []).map(normalize).filter(function (x) { return x.title; });
+      if (!items.length) throw new Error('빈 목록');
+      N.items = items;
+      N.loaded = true;
+      N.fallback = false;
+      setCache(items);
+      render();
+    }).catch(function (err) {
+      clearTimeout(t);
+      N.loaded = true;
+      N.fallback = true;
+      N.error = (err && err.name === 'AbortError') ? '시간 초과' : (err && err.message ? err.message : '연결 실패');
+      N.items = FALLBACK.map(function (f, i) {
+        return { id: 'fb-' + i, title: f.title, summary: f.ko, url: f.url, image: '',
+          site: f.site, date: f.date + 'T00:00:00Z', cat: f.cat, ko: true };
+      });
+      render();
+    });
+  }
+
+  function listFor() {
+    var list = N.items;
+    if (N.cat) list = list.filter(function (x) { return x.cat === N.cat; });
+    return list;
+  }
+
+  function render() {
+    var app = $('#newsApp');
+    if (!app) return;
+    var grid = $('#newsGrid');
+    var status = $('#newsStatus');
+    if (!grid) return;
+
+    if (status) {
+      if (!N.loaded) {
+        status.className = 'news-status';
+        status.innerHTML = '<span class="dot"></span>최신 소식을 불러오는 중…';
+      } else if (N.fallback) {
+        status.className = 'news-status is-fallback';
+        status.innerHTML = '<span class="dot"></span>지금은 API에 연결하지 못해 <b>검증된 한국어 소식</b>을 보여 드립니다 · ' + esc(N.error);
+      } else {
+        status.className = 'news-status';
+        status.innerHTML = '<span class="dot"></span>Spaceflight News API · ' + N.items.length + '건 · 최신순 (한국 시간)';
+      }
+    }
+
+    var list = listFor();
+    if (!N.loaded) {
+      grid.innerHTML = '<p class="news-status">불러오는 중…</p>';
+      return;
+    }
+    if (!list.length) {
+      grid.innerHTML = '<p class="news-status">이 분류의 기사가 없습니다. 다른 분류를 골라 보세요.</p>';
+      return;
+    }
+    grid.innerHTML = list.map(function (a, i) {
+      var img = a.image
+        ? '<img class="nc-img" src="' + esc(a.image) + '" alt="" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">'
+        : '';
+      return '<button type="button" class="news-card" data-news="' + i + '" aria-label="' + esc(a.title) + ' 상세 보기">' +
+        img +
+        '<span class="nc-body">' +
+        '<span class="nc-meta"><span class="nc-cat">' + (CAT_LABEL[a.cat] || '') + '</span>' +
+        '<span>' + esc(a.site) + '</span><span>' + esc(fmtDate(a.date)) + '</span></span>' +
+        '<span class="nc-title">' + esc(a.title) + '</span>' +
+        (a.ko ? '<span class="nc-ko">한국어 요약</span>' : '') +
+        (a.summary ? '<span class="nc-sum">' + esc(a.summary) + '</span>' : '') +
+        '</span></button>';
+    }).join('');
+    grid.querySelectorAll('.news-card').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var idx = +b.getAttribute('data-news');
+        openDetail(list[idx]);
+      });
+    });
+  }
+
+  function openDetail(a) {
+    if (!a) return;
+    var m = $('#newsModal');
+    if (!m) return;
+    m.hidden = false;
+    document.body.classList.add('space-lock');
+    $('#newsModalBody').innerHTML =
+      '<p class="nd-meta"><span class="nc-cat">' + (CAT_LABEL[a.cat] || '') + '</span>' +
+      '<span>' + esc(a.site) + '</span><span>' + esc(fmtDate(a.date)) + '</span></p>' +
+      '<h3 id="newsModalTitle">' + esc(a.title) + '</h3>' +
+      '<p class="nd-sum">' + esc(a.summary || '이 기사에는 요약이 없습니다. 원문에서 확인해 주세요.') + '</p>' +
+      (a.ko ? '<p class="nd-note">한국어 요약은 공식 자료를 바탕으로 이 사이트에서 정리한 것입니다.</p>'
+        : '<p class="nd-note">요약은 Spaceflight News API가 제공한 원문 요약(영어)입니다. 자세한 내용은 원문에서 확인하세요.</p>') +
+      '<div class="nd-links"><a class="btn btn-primary btn-sm" href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">원문 열기 ↗</a>' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-news-close="1">닫기</button></div>';
+    var c = $('.modal-close', m);
+    if (c) c.focus();
+  }
+
+  function closeDetail() {
+    var m = $('#newsModal');
+    if (!m) return;
+    m.hidden = true;
+    document.body.classList.remove('space-lock');
+  }
+
+  function init() {
+    var app = $('#newsApp');
+    if (!app) return;
+    app.innerHTML =
+      '<div class="news-head">' +
+      '  <div class="chip-row" id="newsChips">' +
+      '    <button class="chip is-active" data-news-cat="">전체</button>' +
+      '    <button class="chip" data-news-cat="astro">🔭 천문학·관측</button>' +
+      '    <button class="chip" data-news-cat="space">🚀 로켓·우주탐사</button>' +
+      '  </div>' +
+      '  <button class="mini-btn" type="button" id="newsRefresh">↻ 새로고침</button>' +
+      '</div>' +
+      '<p class="news-status" id="newsStatus"><span class="dot"></span>최신 소식을 불러오는 중…</p>' +
+      '<div class="news-grid" id="newsGrid"></div>' +
+      '<p class="news-sub-note">기사는 Spaceflight News API(Spaceflight News)에서 실시간으로 가져옵니다. 요약은 영어 원문이며, 원문 링크에서 전체 내용을 볼 수 있습니다. 한국어 소식은 공식 기관 자료를 바탕으로 정리했습니다.</p>';
+
+    var chips = $('#newsChips');
+    chips.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-news-cat]');
+      if (!b) return;
+      $$('.chip', chips).forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      N.cat = b.getAttribute('data-news-cat');
+      render();
+    });
+    $('#newsRefresh').addEventListener('click', function () { fetchNews(true); });
+
+    var m = $('#newsModal');
+    if (m) {
+      m.addEventListener('click', function (e) {
+        if (e.target.closest('[data-news-close]') || e.target.classList.contains('modal-backdrop')) closeDetail();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !m.hidden) closeDetail();
+      });
+    }
+    fetchNews(false);
+  }
+
+  window.NewsUI = { init: init, refresh: function () { fetchNews(true); } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
+</script>
+<script>
+/* ===== feedback.js ===== */
+/* =========================================================================
+   feedback.js — 💬 사용자 피드백 (2026-11-27)
+   · 카테고리(버그 제보 / 기능 제안 / 칭찬·기타) + 내용 + 화면 상황 + 연락처(선택)
+   · FORMSPREE_ENDPOINT 가 설정되어 있으면 실제로 전송합니다.
+   · 아직 비어 있으면 '보낸 척'하지 않고, 이 기기에만 임시 저장한 뒤
+     복사·내보내기 버튼을 드립니다. (코드에 어떤 이메일 주소도 넣지 않습니다)
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  // 접수 창구 주소. Formspree 폼을 만든 뒤 아래에 'https://formspree.io/f/코드'를 넣으면
+  // 그때부터 실제 전송으로 바뀝니다. 비어 있으면 이 기기 저장만 합니다.
+  var FORMSPREE_ENDPOINT = 'https://formspree.io/f/xeagdddj';
+
+  var STORE_KEY = 'ob.feedback.queue';
+  var MAX_LOCAL = 50;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  var SCREEN_KO = {
+    today: '오늘 밤', live: '라이브 하늘', skymap: '전천 지도', catalog: '도감',
+    spacearchive: '관측 자료관', calendar: '관측 일정', sites: '관측 명소', lab: '계산기',
+    guide: '가이드', science: '원리', learn: '천문 학습관', news: '우주·천문 뉴스', plan: '체크리스트'
+  };
+  var CATS = [['bug', '🐞 버그 제보'], ['idea', '💡 기능 제안'], ['praise', '👏 칭찬·기타']];
+
+  var FB = { cat: 'bug', busy: false };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function nowText() {
+    var d = new Date();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function currentScreen() {
+    var id = document.documentElement.getAttribute('data-screen') || document.body.getAttribute('data-screen') || '';
+    return { id: id, label: SCREEN_KO[id] || '첫 화면' };
+  }
+
+  function loadQueue() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function saveQueue(arr) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(arr.slice(-MAX_LOCAL))); } catch (e) { }
+  }
+
+  function build() {
+    var d = document.createElement('div');
+    d.className = 'space-drawer fb-drawer';
+    d.id = 'feedbackDrawer';
+    d.hidden = true;
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-modal', 'true');
+    d.setAttribute('aria-labelledby', 'fbTitle');
+    d.innerHTML =
+      '<div class="sd-backdrop" data-fb-close="1"></div>' +
+      '<div class="sd-panel fb-panel">' +
+      '  <header class="sd-head">' +
+      '    <div><p class="sd-eyebrow">별너울 의견함</p><h3 id="fbTitle">💬 사용자 피드백</h3></div>' +
+      '    <button class="sd-close" type="button" data-fb-close="1" aria-label="닫기">×</button>' +
+      '  </header>' +
+      '  <div class="fb-body" id="fbBody">' +
+      '    <p class="fb-intro">불편한 점이나 있었으면 하는 기능을 알려 주세요. 지금 보고 있는 화면과 기기 정보가 함께 적혀 더 정확히 확인할 수 있습니다.</p>' +
+      '    <div class="chip-row fb-cats" role="group" aria-label="피드백 종류">' +
+             CATS.map(function (c, i) {
+               return '<button type="button" class="chip' + (i === 0 ? ' is-active' : '') + '" data-fb-cat="' + c[0] + '">' + c[1] + '</button>';
+             }).join('') +
+      '    </div>' +
+      '    <label class="fb-field" for="fbText"><span>내용 <b>필수</b></span>' +
+      '      <textarea id="fbText" rows="6" maxlength="2000" placeholder="예) 관측 명소에서 제주를 고르면 목록이 비어 보여요. / 다음에는 달 위상 달력을 넣어 주세요."></textarea>' +
+      '      <small id="fbCount">0 / 2000</small></label>' +
+      '    <label class="fb-field" for="fbContext"><span>화면·상황</span>' +
+      '      <input id="fbContext" type="text" maxlength="200" placeholder="지금 화면이 자동으로 채워집니다"></label>' +
+      '    <label class="fb-field" for="fbContact"><span>회신받을 연락처 <em>선택</em></span>' +
+      '      <input id="fbContact" type="text" maxlength="120" placeholder="이메일이나 연락처 (답변을 원할 때만)"></label>' +
+      '    <p class="fb-privacy">연락처를 적으면 답변을 위해 접수 창구로 함께 전달됩니다. 적지 않아도 괜찮습니다.</p>' +
+      '    <div class="fb-actions">' +
+      '      <button type="button" class="btn btn-primary" id="fbSend">의견 보내기</button>' +
+      '      <button type="button" class="btn btn-ghost" data-fb-close="1">닫기</button>' +
+      '    </div>' +
+      '    <div class="fb-status" id="fbStatus" role="status" aria-live="polite"></div>' +
+      '    <div class="fb-saved" id="fbSaved" hidden></div>' +
+      '    <p class="fb-foot" id="fbFoot"></p>' +
+      '  </div>' +
+      '</div>';
+    document.body.appendChild(d);
+
+    var body = d;
+    body.addEventListener('click', function (e) {
+      if (e.target.closest('[data-fb-close]')) { close(); return; }
+      var chip = e.target.closest('[data-fb-cat]');
+      if (chip) {
+        FB.cat = chip.getAttribute('data-fb-cat');
+        $$('[data-fb-cat]', d).forEach(function (x) { x.classList.toggle('is-active', x === chip); });
+        return;
+      }
+      if (e.target.closest('#fbSend')) { send(); return; }
+      if (e.target.closest('[data-fb-copy]')) { copySaved(); return; }
+      if (e.target.closest('[data-fb-resend]')) { resendSaved(); return; }
+      if (e.target.closest('[data-fb-export]')) { exportSaved(); return; }
+    });
+
+    var ta = $('#fbText', d);
+    ta.addEventListener('input', function () {
+      $('#fbCount').textContent = ta.value.length + ' / 2000';
+      if (ta.value.trim()) ta.classList.remove('is-invalid');
+    });
+    d.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') close();
+    });
+    updateFoot();
+  }
+
+  function updateFoot() {
+    var foot = $('#fbFoot');
+    if (!foot) return;
+    var n = loadQueue().length;
+    foot.textContent = (FORMSPREE_ENDPOINT
+      ? '보낸 의견은 접수 창구로 전달됩니다.'
+      : '아직 온라인 접수 창구가 연결되지 않아, 보낸 의견은 이 기기에만 저장됩니다.') +
+      (n ? ' · 이 기기에 저장된 의견 ' + n + '건' : '');
+  }
+
+  function payload() {
+    var sc = currentScreen();
+    var ctx = $('#fbContext');
+    return {
+      category: FB.cat,
+      message: ($('#fbText').value || '').trim(),
+      screen: sc.id || 'unknown',
+      screen_label: sc.label,
+      context: ((ctx && ctx.value) || '').trim(),
+      contact: (($('#fbContact').value || '').trim()),
+      page: location.origin + location.pathname + location.hash,
+      user_agent: navigator.userAgent,
+      at: nowText()
+    };
+  }
+
+  function setStatus(kind, html) {
+    var s = $('#fbStatus');
+    if (!s) return;
+    s.className = 'fb-status' + (kind ? ' is-' + kind : '');
+    s.innerHTML = html;
+  }
+
+  function send() {
+    if (FB.busy) return;
+    var p = payload();
+    if (p.message.length < 5) {
+      setStatus('error', '내용을 5자 이상 적어 주세요. 어떤 화면에서 무엇이 불편했는지 적어 주시면 큰 도움이 됩니다.');
+      var ta = $('#fbText');
+      if (ta) { ta.classList.add('is-invalid'); ta.focus(); }
+      return;
+    }
+    if (!FORMSPREE_ENDPOINT) {
+      storeLocal(p);
+      setStatus('saved', '<b>아직 온라인 접수 창구 연결 준비 중이라 이 기기에 임시 저장되었습니다.</b><br>' +
+        '보낸 내용은 이 브라우저에만 남아 있고 어디로도 전송되지 않았습니다. 아래에서 복사해 직접 전달하시거나, 창구가 연결된 뒤 다시 눌러 주세요.');
+      return;
+    }
+    FB.busy = true;
+    var btn = $('#fbSend');
+    if (btn) { btn.disabled = true; btn.textContent = '보내는 중…'; }
+    setStatus('', '의견을 보내고 있습니다…');
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json().catch(function () { return {}; });
+    }).then(function () {
+      setStatus('ok', '<b>의견이 접수되었습니다. 감사합니다!</b><br>적어 주신 화면과 상황을 함께 보내 드렸습니다.');
+      var ta = $('#fbText'); if (ta) ta.value = '';
+      var c = $('#fbCount'); if (c) c.textContent = '0 / 2000';
+    }).catch(function () {
+      storeLocal(p);
+      setStatus('error', '<b>지금은 보내지 못했습니다.</b> 네트워크 상태를 확인한 뒤 다시 시도해 주세요.<br>' +
+        '대신 적어 주신 내용을 이 기기에 저장해 두었습니다. 복사해 직접 전달하실 수 있습니다.');
+    }).then(function () {
+      FB.busy = false;
+      if (btn) { btn.disabled = false; btn.textContent = '의견 보내기'; }
+      showSaved();
+      updateFoot();
+    });
+  }
+
+  function storeLocal(p) {
+    var arr = loadQueue();
+    arr.push(p);
+    saveQueue(arr);
+    showSaved();
+    updateFoot();
+  }
+
+  function showSaved() {
+    var box = $('#fbSaved');
+    if (!box) return;
+    var arr = loadQueue();
+    if (!arr.length) { box.hidden = true; return; }
+    box.hidden = false;
+    var last = arr[arr.length - 1];
+    box.innerHTML = '<p class="fb-saved-title">이 기기에 저장된 의견 ' + arr.length + '건 (최근: ' + esc(last.at) + ')</p>' +
+      '<pre class="fb-saved-text">' + esc(formatOne(last)) + '</pre>' +
+      '<div class="fb-saved-actions">' +
+      (FORMSPREE_ENDPOINT ? '<button type="button" class="mini-btn" data-fb-resend="1">보관한 의견 다시 보내기</button>' : '') +
+      '<button type="button" class="mini-btn" data-fb-copy="1">내용 복사</button>' +
+      '<button type="button" class="mini-btn" data-fb-export="1">파일로 내보내기</button>' +
+      '</div>';
+  }
+
+  function formatOne(p) {
+    var cat = (CATS.filter(function (c) { return c[0] === p.category; })[0] || ['', '기타'])[1];
+    return '[별너울 의견] ' + p.at + '\n' +
+      '종류: ' + cat + '\n' +
+      '화면: ' + (p.screen_label || p.screen) + (p.context ? ' · ' + p.context : '') + '\n' +
+      '내용: ' + p.message + '\n' +
+      (p.contact ? '연락처: ' + p.contact + '\n' : '') +
+      '주소: ' + p.page;
+  }
+
+  function resendSaved() {
+    var arr = loadQueue();
+    if (!arr.length || !FORMSPREE_ENDPOINT) return;
+    var btn = $('[data-fb-resend]');
+    if (btn) { btn.disabled = true; btn.textContent = '보내는 중…'; }
+    var sent = 0, failed = 0;
+    var seq = Promise.resolve();
+    arr.forEach(function (p) {
+      seq = seq.then(function () {
+        return fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify(p)
+        }).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          sent += 1;
+          var q = loadQueue().filter(function (x) { return x.at !== p.at || x.message !== p.message; });
+          saveQueue(q);
+        }).catch(function () { failed += 1; });
+      });
+    });
+    seq.then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = '보관한 의견 다시 보내기'; }
+      if (sent && !failed) setStatus('ok', '보관해 둔 의견 ' + sent + '건을 모두 보냈습니다. 감사합니다!');
+      else if (sent) setStatus('saved', sent + '건은 보냈고 ' + failed + '건은 아직 보내지 못했습니다. 잠시 뒤 다시 시도해 주세요.');
+      else setStatus('error', '아직 보내지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요. (내용은 이 기기에 그대로 있습니다)');
+      showSaved(); updateFoot();
+    });
+  }
+
+  function copySaved() {
+    var arr = loadQueue();
+    if (!arr.length) return;
+    var text = arr.map(formatOne).join('\n\n');
+    var done = function () { setStatus('ok', '복사했습니다. 원하는 곳에 붙여넣어 주세요.'); };
+    var fail = function () { setStatus('error', '복사가 막혔습니다. 아래 내용을 길게 눌러 직접 선택해 주세요.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fail);
+    } else {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta); done();
+      } catch (e) { fail(); }
+    }
+  }
+
+  function exportSaved() {
+    var arr = loadQueue();
+    if (!arr.length) return;
+    try {
+      var text = arr.map(formatOne).join('\n\n');
+      var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '별너울-의견-' + nowText().replace(/[: ]/g, '') + '.txt';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+      setStatus('ok', '파일로 내보냈습니다. 다운로드 폴더를 확인해 주세요.');
+    } catch (e) {
+      setStatus('error', '내보내기가 막혔습니다. 위의 내용 복사를 이용해 주세요.');
+    }
+  }
+
+  function open() {
+    var d = $('#feedbackDrawer');
+    if (!d) { build(); d = $('#feedbackDrawer'); }
+    d.hidden = false;
+    document.body.classList.add('space-lock');
+    var sc = currentScreen();
+    var ctx = $('#fbContext');
+    if (ctx && !ctx.value) ctx.value = sc.label + ' 화면';
+    setStatus('', '');
+    showSaved();
+    updateFoot();
+    var ta = $('#fbText');
+    if (ta) setTimeout(function () { ta.focus(); }, 80);
+  }
+
+  function close() {
+    var d = $('#feedbackDrawer');
+    if (!d) return;
+    d.hidden = true;
+    document.body.classList.remove('space-lock');
+  }
+
+  window.Feedback = { open: open, close: close, endpoint: FORMSPREE_ENDPOINT };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
+  else build();
+})();
+
+</script>
+<script>
 /* ===== views.js ===== */
 /* =========================================================================
    views.js — 앱형 화면 구조 (2026-11)
@@ -15648,25 +18304,27 @@ window.Astro = (function () {
    ========================================================================= */
 (function () {
   var VIEWS = ['live', 'today', 'skymap', 'catalog', 'spacearchive', 'calendar',
-    'sites', 'lab', 'guide', 'science', 'plan'];
+    'sites', 'lab', 'guide', 'science', 'learn', 'news', 'plan'];
   var META = {
     live: ['🧭', '라이브 하늘', '지금 이 방향의 하늘'],
     today: ['🌙', '오늘 밤', '관측 지수 · 구름 · 행성'],
     skymap: ['🗺', '전천 지도', '하늘 전체 한 장'],
-    catalog: ['🔭', '도감', '천체 2,571 · 별자리 88'],
+    catalog: ['🔭', '도감', '천체 2.3만 · 별자리 88'],
     spacearchive: ['🛰', '자료관', 'NASA · SpaceX 사진'],
     calendar: ['📅', '관측 일정', '2026~2027 천문 캘린더'],
     sites: ['🏕', '관측 명소', '전국 34곳'],
     lab: ['🧮', '계산기', '노출 · 배율 · 거리'],
     guide: ['📖', '가이드', '초보자 · 용어사전'],
     science: ['🔬', '원리', '암순응 · 광학 · 시상'],
+    learn: ['🎓', '학습관', '교육과정 · 실험 · 천문학사'],
+    news: ['📰', '뉴스', '천문학 · 우주탐사'],
     plan: ['✅', '체크리스트', '관측 준비 · 로그']
   };
   var MAP = {
     today: 'today', live: 'live', skymap: 'skymap', catalog: 'catalog',
     constellations: 'catalog', spacearchive: 'spacearchive', calendar: 'calendar',
     sites: 'sites', lab: 'lab', guide: 'guide', glossary: 'guide',
-    science: 'science', plan: 'plan', plan_: 'plan'
+    science: 'science', learn: 'learn', news: 'news', plan: 'plan', plan_: 'plan'
   };
   var DEFAULT = 'live';
 
@@ -15948,6 +18606,17 @@ window.Astro = (function () {
     return false;
   }
 
+  // 홈 화면 앱으로 실행 중이면 <html data-standalone="1"> 을 답니다.
+  // (iOS·안드로이드·미디어쿼리 지원이 달라도 CSS가 같은 규칙을 쓸 수 있게)
+  function markStandalone() {
+    try {
+      if (!isStandalone()) return;
+      document.documentElement.setAttribute('data-standalone', '1');
+      if (document.body) document.body.classList.add('is-standalone');
+    } catch (e) { }
+  }
+  markStandalone();
+
   function platform() {
     var ua = navigator.userAgent || '';
     var iOS = /iPad|iPhone|iPod/.test(ua) ||
@@ -16002,6 +18671,7 @@ window.Astro = (function () {
   function refresh() {
     var p = platform();
     // 1) 이미 앱으로 실행 중
+    markStandalone();
     if (isStandalone()) {
       label('앱으로 실행 중', '홈 화면에서 주소창 없이 열렸습니다', '실행 중');
       return;
@@ -16212,6 +18882,50 @@ window.Astro = (function () {
   };
 })();
 
+</script>
+<script>
+/* 첫 화면 준비 표시 · 첫 접속 지역 안내 (2026-11-27) */
+(function () {
+  function $(s, r) { return (r || document).querySelector(s); }
+  function hideBoot() {
+    var n = $('#bootNote');
+    if (n) { n.classList.add('is-done'); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 450); }
+    document.body.classList.add('is-ready');
+  }
+  var tries = 0;
+  function waitReady() {
+    try { if (window.OneulBam && window.OneulBam.state && window.OneulBam.state.last) return hideBoot(); } catch (e) { }
+    if (++tries > 80) return hideBoot();
+    setTimeout(waitReady, 100);
+  }
+  function initFirstVisit() {
+    var el = $('#firstVisit');
+    if (!el) return;
+    var saved = null, off = null;
+    try { saved = localStorage.getItem('ob.site'); } catch (e) { }
+    try { off = localStorage.getItem('ob.fv.off'); } catch (e) { }
+    if (saved || off === '1') return;
+    el.hidden = false;
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-fv]');
+      if (!b) return;
+      var k = b.getAttribute('data-fv');
+      try { localStorage.setItem('ob.fv.off', '1'); } catch (err) { }
+      el.hidden = true;
+      if (k === 'geo') { var g = $('#btnGeo'); if (g) g.click(); }
+      else if (k === 'pick') {
+        if (window.__views) window.__views.go('live');
+        setTimeout(function () {
+          var sel = $('#provinceSelect');
+          if (sel) { sel.focus(); if (sel.scrollIntoView) sel.scrollIntoView({ block: 'center' }); }
+        }, 420);
+      }
+    });
+  }
+  function boot() { setTimeout(waitReady, 60); setTimeout(initFirstVisit, 500); }
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
+})();
 </script>
 </body>
 </html>

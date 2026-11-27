@@ -1,0 +1,128 @@
+{
+ "version": "2026-11-27.1",
+ "total": 23129,
+ "chunkSize": 800,
+ "chunks": [
+  {
+   "file": "c00.json",
+   "n": 800
+  },
+  {
+   "file": "c01.json",
+   "n": 800
+  },
+  {
+   "file": "c02.json",
+   "n": 800
+  },
+  {
+   "file": "c03.json",
+   "n": 800
+  },
+  {
+   "file": "c04.json",
+   "n": 800
+  },
+  {
+   "file": "c05.json",
+   "n": 800
+  },
+  {
+   "file": "c06.json",
+   "n": 800
+  },
+  {
+   "file": "c07.json",
+   "n": 800
+  },
+  {
+   "file": "c08.json",
+   "n": 800
+  },
+  {
+   "file": "c09.json",
+   "n": 800
+  },
+  {
+   "file": "c10.json",
+   "n": 800
+  },
+  {
+   "file": "c11.json",
+   "n": 800
+  },
+  {
+   "file": "c12.json",
+   "n": 800
+  },
+  {
+   "file": "c13.json",
+   "n": 800
+  },
+  {
+   "file": "c14.json",
+   "n": 800
+  },
+  {
+   "file": "c15.json",
+   "n": 800
+  },
+  {
+   "file": "c16.json",
+   "n": 800
+  },
+  {
+   "file": "c17.json",
+   "n": 800
+  },
+  {
+   "file": "c18.json",
+   "n": 800
+  },
+  {
+   "file": "c19.json",
+   "n": 800
+  },
+  {
+   "file": "c20.json",
+   "n": 800
+  },
+  {
+   "file": "c21.json",
+   "n": 800
+  },
+  {
+   "file": "c22.json",
+   "n": 800
+  },
+  {
+   "file": "c23.json",
+   "n": 800
+  },
+  {
+   "file": "c24.json",
+   "n": 800
+  },
+  {
+   "file": "c25.json",
+   "n": 800
+  },
+  {
+   "file": "c26.json",
+   "n": 800
+  },
+  {
+   "file": "c27.json",
+   "n": 800
+  },
+  {
+   "file": "c28.json",
+   "n": 729
+  }
+ ],
+ "sources": [
+  "OpenNGC (CC BY-SA 4.0) — NGC/IC 전체",
+  "HYG Database v4.1 (CC BY-SA 2.5) — 6등급보다 밝은 별",
+  "NASA/IPAC 외계행성 아카이브 — 확정 행성 모항성 좌표"
+ ]
+}

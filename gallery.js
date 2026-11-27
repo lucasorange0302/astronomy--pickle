@@ -654,7 +654,17 @@
       img.hidden = true;
       fb.hidden = false;
       var svg = (window.SkyPhoto && window.SkyPhoto.chartSvg) ? window.SkyPhoto.chartSvg(d) : '';
-      fb.innerHTML = svg + '<small>' + esc(note || '사진을 불러오지 못해 성도로 대신 표시합니다.') + '</small>';
+      fb.innerHTML = svg + '<small>' + esc(note || '사진을 불러오지 못해 성도로 대신 표시합니다.') + '</small>' +
+        '<button type="button" class="mini-btn sg-retry">↻ 사진 다시 시도</button>';
+      var rb = fb.querySelector('.sg-retry');
+      if (rb) rb.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        fb.hidden = true;
+        skel.hidden = false;
+        S.alive = true;
+        S.loading = true;
+        start();
+      });
       titleEl.textContent = d.label + ' · 성도 미리보기';
       creditEl.textContent = note || '';
       linkEl.hidden = false;

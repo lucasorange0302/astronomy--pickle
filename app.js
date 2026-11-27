@@ -404,11 +404,25 @@
         : wx.reason === 'timeout' ? '기상 예보 응답이 늦어 시간 초과했습니다.'
           : wx.reason === 'network' ? '기상 서버에 연결하지 못했습니다.'
             : '이 날짜·지점의 시간별 예보가 없습니다.';
-      chart.innerHTML = '<div class="cc-empty"><b>기상 예보 미제공</b>' +
-        '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span></div>';
+      chart.innerHTML = '<div class="cc-empty"><b>기상 예보를 받지 못했어요</b>' +
+        '<span>' + esc(why) + ' 관측 지수는 <b>맑음 기준(구름 0%)</b>으로 계산했습니다.</span>' +
+        '<button class="mini-btn cc-retry" type="button" id="cloudRetry">↻ 다시 시도</button></div>';
       if (pill) { pill.textContent = '예보 없음'; pill.className = 'cloud-pill is-none'; }
       if (note) note.textContent = 'Open-Meteo · ' + (wx.reason === 'range' ? '예보 범위 밖' : '연결 실패');
-      if (foot) foot.textContent = '예보가 없는 날은 구름을 0%로 두고 계산합니다. 당일 다시 확인하면 정확해집니다.';
+      if (foot) foot.textContent = '인터넷 연결을 확인한 뒤 다시 시도해 보세요. 예보가 없는 날은 구름을 0%로 두고 계산합니다.';
+      const rb = $('#cloudRetry');
+      if (rb) rb.addEventListener('click', function () {
+        try {
+          Object.keys(window.localStorage).forEach(function (k) {
+            if (k.indexOf('skywx.') === 0) localStorage.removeItem(k);
+          });
+        } catch (e) { /* 저장소 접근 제한 무시 */ }
+        state.last = computeNight();
+        renderHero(state.last);
+        renderCloudPanel(state.last);
+        refreshWeather();
+        toast('시간별 구름양을 다시 불러옵니다.');
+      });
       return;
     }
 
@@ -1702,6 +1716,31 @@
     if (!list.length) list = D.events.filter(function (e) { return state.eventType === '전체' || e.type === state.eventType; })
       .sort(function (a, b) { return a.sort - b.sort; });
     const nextIdx = list.findIndex(function (e) { return e.sort >= todayNum; });
+    const neBox = $('#nextEvent');
+    if (neBox) {
+      const nx = nextIdx >= 0 ? list[nextIdx] : null;
+      if (nx) {
+        const tp = todayKST().split('-').map(Number);
+        const np = nx.date.split('-').map(Number);
+        const dd = Math.max(0, Math.round((Date.UTC(np[0], np[1] - 1, np[2]) - Date.UTC(tp[0], tp[1] - 1, tp[2])) / 86400000));
+        const when = dd === 0 ? '오늘' : dd === 1 ? '내일' : dd + '일 뒤';
+        neBox.innerHTML = '<span class="ne-ico" aria-hidden="true">' + (nx.type === '유성우' ? '☄️' : nx.type === '월식' ? '🌙' : nx.type === '일식' ? '🌞' : '✨') + '</span>' +
+          '<div class="ne-txt"><small>다음 천문 이벤트 · ' + when + '</small><b>' + esc(nx.title) + '</b>' +
+          '<span>' + nx.date + ' (' + weekdayKR(nx.date) + ') · ' + esc(nx.moon) + '</span></div>' +
+          '<button type="button" class="mini-btn" id="neJump">목록에서 보기</button>';
+        const jb = $('#neJump');
+        if (jb) jb.addEventListener('click', function () {
+          const el = document.querySelectorAll('#eventList .event-item')[nextIdx];
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('is-flash');
+            setTimeout(function () { el.classList.remove('is-flash'); }, 1600);
+          }
+        });
+      } else {
+        neBox.innerHTML = '<span class="ne-ico" aria-hidden="true">✨</span><div class="ne-txt"><small>다음 천문 이벤트</small><b>예정된 일정을 모두 지나 지난 일정을 보여 드리고 있습니다.</b><span>위의 ‘지난 일정 숨기기’를 끄면 전체 목록을 볼 수 있습니다.</span></div>';
+      }
+    }
 
     $('#eventList').innerHTML = list.map(function (e, i) {
       const p = e.date.split('-');
@@ -5164,6 +5203,7 @@
         if (act) {
           e.preventDefault();
           closeMenu();
+          if (act === 'feedback' && window.Feedback) { window.Feedback.open(); return; }
           if (window.SpaceUI) {
             if (act === 'cookie') SpaceUI.openCookie();
             else if (act === 'ai') SpaceUI.openAI();

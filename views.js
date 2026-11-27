@@ -7,25 +7,27 @@
    ========================================================================= */
 (function () {
   var VIEWS = ['live', 'today', 'skymap', 'catalog', 'spacearchive', 'calendar',
-    'sites', 'lab', 'guide', 'science', 'plan'];
+    'sites', 'lab', 'guide', 'science', 'learn', 'news', 'plan'];
   var META = {
     live: ['🧭', '라이브 하늘', '지금 이 방향의 하늘'],
     today: ['🌙', '오늘 밤', '관측 지수 · 구름 · 행성'],
     skymap: ['🗺', '전천 지도', '하늘 전체 한 장'],
-    catalog: ['🔭', '도감', '천체 2,571 · 별자리 88'],
+    catalog: ['🔭', '도감', '천체 2.3만 · 별자리 88'],
     spacearchive: ['🛰', '자료관', 'NASA · SpaceX 사진'],
     calendar: ['📅', '관측 일정', '2026~2027 천문 캘린더'],
     sites: ['🏕', '관측 명소', '전국 34곳'],
     lab: ['🧮', '계산기', '노출 · 배율 · 거리'],
     guide: ['📖', '가이드', '초보자 · 용어사전'],
     science: ['🔬', '원리', '암순응 · 광학 · 시상'],
+    learn: ['🎓', '학습관', '교육과정 · 실험 · 천문학사'],
+    news: ['📰', '뉴스', '천문학 · 우주탐사'],
     plan: ['✅', '체크리스트', '관측 준비 · 로그']
   };
   var MAP = {
     today: 'today', live: 'live', skymap: 'skymap', catalog: 'catalog',
     constellations: 'catalog', spacearchive: 'spacearchive', calendar: 'calendar',
     sites: 'sites', lab: 'lab', guide: 'guide', glossary: 'guide',
-    science: 'science', plan: 'plan', plan_: 'plan'
+    science: 'science', learn: 'learn', news: 'news', plan: 'plan', plan_: 'plan'
   };
   var DEFAULT = 'live';
 

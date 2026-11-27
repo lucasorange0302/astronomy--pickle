@@ -178,7 +178,18 @@
       img.removeAttribute('src');
       img.style.display = 'none';
       fallbackEl.hidden = false;
-      fallbackEl.innerHTML = miniChartSvg(d);
+      fallbackEl.innerHTML = miniChartSvg(d) + '<button type="button" class="mini-btn cp-retry">↻ 사진 다시 시도</button>';
+      var rb = fallbackEl.querySelector('.cp-retry');
+      if (rb) rb.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        settled = false;
+        fallbackEl.hidden = true; fallbackEl.innerHTML = '';
+        img.style.display = '';
+        setState('loading');
+        if (entry) { fig.setAttribute('data-src', 'local'); withEntry(entry); }
+        else if (survey) { fig.setAttribute('data-src', 'survey'); startSurvey(); }
+        else showFallback('이 천체는 공개 사진 좌표가 없습니다');
+      });
       titleEl.textContent = d.label + ' · 성도 미리보기';
       creditEl.textContent = note || '사진을 불러오지 못해 성도로 대신 표시합니다.';
       var q = (d.keys[0] || d.label || '').toString();

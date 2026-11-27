@@ -6,6 +6,19 @@
 <meta name="theme-color" content="#070b14">
 <meta name="ob-layout" content="mobile">
 <meta name="description" content="모바일판 · 별너울 — 대한민국 천체관측 가이드. 오늘 밤 달·행성·별자리, 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 2026~2027 천문 캘린더까지 한곳에서.">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="별너울">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="별너울 — 대한민국 천체관측 가이드">
+<meta property="og:description" content="오늘 밤 달·행성·별자리와 관측 가능 시간, 촬영 계산기, 전국 별보기 명소, 천문 학습관과 우주 뉴스까지 한곳에서. 설치 없이 브라우저에서 바로 열립니다.">
+<meta property="og:image" content="https://byeolneoul.vercel.app/assets/space/jwst-carina-cosmic-cliffs.jpg">
+<meta property="og:image:alt" content="제임스 웹 우주망원경이 촬영한 용골자리 성운">
+<meta property="og:url" content="https://byeolneoul.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="별너울 — 대한민국 천체관측 가이드">
+<meta name="twitter:description" content="오늘 밤 하늘을 10초 만에. 달·행성·별자리, 관측 명소, 촬영 계산기, 천문 학습관.">
+<meta name="twitter:image" content="https://byeolneoul.vercel.app/assets/space/jwst-carina-cosmic-cliffs.jpg">
 <title>별너울 — 모바일판</title>
 
 <link rel="stylesheet" href="styles.css">
@@ -21,6 +34,10 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23070b18'/%3E%3Cpath d='M40 14a20 20 0 1 0 0 36 16 16 0 0 1 0-36z' fill='%23ffd479'/%3E%3Ccircle cx='46' cy='20' r='2' fill='%23fff'/%3E%3Ccircle cx='18' cy='44' r='1.5' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
+
+<noscript>
+  <div class="noscript-warn" role="alert"><b>JavaScript가 꺼져 있습니다.</b> 별너울은 달 위상·행성 위치·박명 시각을 이 브라우저에서 직접 계산합니다. 브라우저 설정에서 JavaScript를 켜면 모든 기능이 동작합니다.</div>
+</noscript>
 
 <a class="skip-link" href="#today">본문으로 건너뛰기</a>
 
@@ -104,8 +121,19 @@
               <span class="mi-txt"><b>NASA·SpaceX 자료관</b><small>공식 관측 사진과 기록</small></span>
             </a>
           </div>
+          <div class="more-group" role="group" aria-label="학습관과 소식">
+            <p class="more-title"><span aria-hidden="true">🎓</span> 배움 · 소식</p>
+            <a href="#learn" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">🎓</span>
+              <span class="mi-txt"><b>천문 학습관</b><small>교육과정 실험실 · 천문학사</small></span>
+            </a>
+            <a href="#news" class="more-item" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">📰</span>
+              <span class="mi-txt"><b>우주·천문 뉴스</b><small>최신 관측 · 로켓 발사 소식</small></span>
+            </a>
+          </div>
           <div class="more-group" role="group" aria-label="입문과 학습">
-            <p class="more-title"><span aria-hidden="true">🎓</span> 입문 · 학습</p>
+            <p class="more-title"><span aria-hidden="true">📖</span> 입문 · 학습</p>
             <a href="#guide" class="more-item" role="menuitem">
               <span class="mi-ico" aria-hidden="true">📖</span>
               <span class="mi-txt"><b>초보자 가이드 &amp; 용어사전</b><small>첫 관측 7단계 + 용어 89개</small></span>
@@ -130,11 +158,30 @@
               <span class="mi-txt"><b>AI 천문 도우미</b><small>이 사이트 데이터로 답합니다</small></span>
             </button>
           </div>
+          <div class="more-group" role="group" aria-label="의견 보내기">
+            <p class="more-title"><span aria-hidden="true">💬</span> 의견</p>
+            <button type="button" class="more-item" data-open="feedback" role="menuitem">
+              <span class="mi-ico" aria-hidden="true">💬</span>
+              <span class="mi-txt"><b>사용자 피드백</b><small>버그 제보 · 기능 제안 · 칭찬</small></span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </header>
+
+<div class="wrap first-visit-wrap">
+  <div class="first-visit" id="firstVisit" hidden>
+    <span class="fv-ico" aria-hidden="true">📍</span>
+    <div class="fv-txt"><b>지금은 오산 기준으로 계산했어요.</b><span>다른 지역이라면 지역을 골라 주세요. 고른 지역은 이 기기에만 저장됩니다.</span></div>
+    <div class="fv-actions">
+      <button type="button" class="mini-btn" data-fv="geo">내 위치 사용</button>
+      <button type="button" class="mini-btn" data-fv="pick">지역 고르기</button>
+      <button type="button" class="mini-btn fv-ghost" data-fv="keep">오산으로 계속</button>
+    </div>
+  </div>
+</div>
 
 <main>
 
@@ -150,6 +197,7 @@
       <p class="eyebrow">오늘 밤, 어디서 무엇을 볼까</p>
       <h1>대한민국 어디서든,<br><span class="grad">오늘 밤 하늘</span>을 10초 만에.</h1>
       <p class="hero-sub">지역과 날짜를 고르면 달 위상·어두운 시간·지금 떠 있는 천체·촬영 설정까지 한 번에 계산합니다.</p>
+      <p class="boot-note" id="bootNote" role="status" aria-live="polite"><span class="bn-dot" aria-hidden="true"></span>오늘 밤 하늘을 계산하고 있어요…</p>
 
       <div class="quick-actions" id="quickActions" role="group" aria-label="빠른 날짜 선택">
         <button class="qa-btn is-active" data-preset="tonight" type="button"><span aria-hidden="true">🌙</span>오늘 밤</button>
@@ -468,7 +516,7 @@
       <div class="live-foot">
         <div class="live-day-hint" id="liveDayHint" hidden>지금은 낮입니다 — 별은 밤에 보입니다. <button class="mini-btn" id="liveNightBtn" type="button">🌙 밤 22시 하늘 보기</button></div>
         <div class="live-inview" id="liveInView"></div>
-        <p class="live-help" id="liveHelp">드래그·터치로 둘러보고, <b>북/동/남/서/천정</b> 버튼으로 한 번에 회전할 수 있습니다. 센서 연동은 HTTPS 보안 연결에서만 동작하며(iOS는 권한 허용 필요), 로컬 파일(file://)로 열었다면 자이로·나침반이 차단되므로 드래그·버튼으로 둘러보세요.</p>
+        <p class="live-help" id="liveHelp">드래그·터치로 둘러보고, <b>북/동/남/서/천정</b> 버튼으로 한 번에 회전할 수 있습니다. 센서 연동은 보안 연결(HTTPS)에서만 동작하며(iOS는 권한 허용 필요)입니다. 파일을 내려받아 직접 열었다면 센서가 막히므로 드래그·버튼으로 둘러보세요.</p>
       </div>
     </div>
   </div>
@@ -532,7 +580,7 @@
     <div class="section-head">
       <p class="eyebrow">천체 · 별자리 도감</p>
       <h2>오늘 밤 볼 수 있는 것들, <span class="grad">전부</span> 여기 있습니다</h2>
-      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2,571종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>와 <b>별자리</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
+      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2만 3천여 종(지연 로딩), IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>와 <b>별자리</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
     </div>
 
     <div class="cat-tabs" role="tablist" aria-label="도감 보기 전환">
@@ -940,6 +988,7 @@
       <p class="eyebrow">전국 관측 명소</p>
       <h2>집에서 30분, <span class="grad">별이 쏟아지는 곳</span>까지</h2>
       <p class="section-sub">수도권부터 제주까지 34곳. 광공해 등급·해발·운영시간·요금·예약 방식·오산 기준 차량 소요 시간까지, 공식 페이지와 지도 데이터로 확인한 실전 정보로 정리했습니다. <b>Bortle은 모두 추정값</b>입니다.</p>
+      <p class="fresh-note">정보 최종 확인일 <b>2026-11-26</b> · 운영시간·요금·예약 방식은 바뀔 수 있어 떠나기 전에 시설에 한 번 더 확인하세요.</p>
     </div>
 
     <div class="panel bortle-panel">
@@ -968,7 +1017,7 @@
     <div class="section-head">
       <p class="eyebrow">준비와 기록</p>
       <h2>체크리스트로 나가고, <span class="grad">로그</span>로 남기세요</h2>
-      <p class="section-sub">체크 상태와 관측 기록은 이 브라우저에 저장됩니다(localStorage). 서버로 전송되지 않습니다.</p>
+      <p class="section-sub">체크 상태와 관측 기록은 이 브라우저에만 저장됩니다. 서버로 전송되지 않습니다.</p>
     </div>
 
     <div class="grid-2">
@@ -1028,6 +1077,7 @@
       <p class="eyebrow">2026 ~ 2027</p>
       <h2>놓치면 아쉬운 <span class="grad">하늘의 일정</span></h2>
       <p class="section-sub">한국천문연구원(KASI) 월별 천문현상, IMO 유성우 달력, NASA 일식·월식 자료로 확인한 일정입니다. 시각은 한국 표준시(KST).</p>
+      <p class="fresh-note">일정 최종 확인일 <b>2026-11-26</b> · 지난 일정은 숨기고, 아래 <b>다음 천문 이벤트</b>는 오늘 날짜를 기준으로 자동으로 바뀝니다.</p>
     </div>
 
     <div class="panel lunar-note">
@@ -1036,6 +1086,7 @@
       <p><b>다음 기회:</b> 2028-07-06 부분식(한국 2028-07-07 03:20 최대) → <b>2028-12-31 개기월식</b>(최대 16:53 UT = <b>2029-01-01 01:53 KST</b>, 개기 1시간 11분).</p>
     </div>
 
+    <div class="next-event" id="nextEvent"></div>
     <div class="event-tools">
       <div class="chip-row" id="eventFilters"></div>
       <label class="check-inline"><input type="checkbox" id="hidePast" checked> 지난 일정 숨기기</label>
@@ -1071,6 +1122,45 @@
   </div>
 </section>
 
+<!-- ===================== 13. 천문 학습관 ===================== -->
+<section class="section section-alt" id="learn" data-view="learn">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">천문 학습관 · 직접 만지며 배우기</p>
+      <h2>교과서의 <span class="grad">천문학</span>을 손으로 돌려 보세요</h2>
+      <p class="section-sub">초등부터 대학 심화까지 단계별 단원을 고르고, 슬라이더를 움직여 연주시차·달의 위상·케플러 법칙·흑체복사·외계행성 트랜짓을 직접 실험할 수 있습니다. 두 번째 탭은 빅뱅부터 제임스 웹까지의 천문학사입니다.</p>
+    </div>
+    <div class="learn-tabs" role="tablist" aria-label="학습관 탭">
+      <button type="button" class="learn-tab is-active" data-learn-tab="curriculum" role="tab" aria-selected="true">
+        <span class="lt-ico" aria-hidden="true">📚</span>
+        <span><b>교육과정 · 단계별 실험실</b><small>초등 · 중등 · 고등 · 대학 심화</small></span>
+      </button>
+      <button type="button" class="learn-tab" data-learn-tab="history" role="tab" aria-selected="false">
+        <span class="lt-ico" aria-hidden="true">🌌</span>
+        <span><b>빅뱅부터 지금까지</b><small>천문학사 타임라인 · 일반인용</small></span>
+      </button>
+    </div>
+    <div class="learn-panel" id="learnCurriculum" role="tabpanel">
+      <div id="learnCurriculumBody"></div>
+    </div>
+    <div class="learn-panel" id="learnHistory" role="tabpanel" hidden>
+      <div id="learnHistoryBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 14. 우주·천문 뉴스 ===================== -->
+<section class="section" id="news" data-view="news">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">우주 · 천문 뉴스</p>
+      <h2>오늘 우주에서는 <span class="grad">무슨 일</span>이 있었을까요</h2>
+      <p class="section-sub">천문학 발견·망원경·천체 현상과 로켓 발사·우주탐사 소식을 한곳에 모았습니다. 기사를 누르면 요약과 원문 링크가 열리고, 인터넷이 끊겨도 검증된 한국어 소식을 볼 수 있습니다.</p>
+    </div>
+    <div id="newsApp"></div>
+  </div>
+</section>
+
 </main>
 
 <!-- ===================== 푸터 ===================== -->
@@ -1086,7 +1176,7 @@
       <a href="https://www.imo.net/" target="_blank" rel="noopener">IMO 유성우 자료</a>
       <a href="https://eclipse.gsfc.nasa.gov/" target="_blank" rel="noopener">NASA Eclipse</a>
     </div>
-    <p class="footer-note"><b>별너울지도.html</b>은 외부 파일 없이 혼자 동작하는 단일 HTML 배포본입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
+    <p class="footer-note"><b>별너울지도.html</b>은 인터넷 연결 없이도 열리는 저장용 한 파일 페이지입니다. 계산값은 근사 천문 공식으로 만든 참고값입니다. 안전한 관측을 위해 사유지·통제구역에 출입하지 말고, 태양을 망원경·쌍안경으로 직접 보지 마세요.</p>
   </div>
 </footer>
 
@@ -1104,6 +1194,15 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- 뉴스 상세 창 -->
+<div class="modal" id="newsModal" hidden>
+  <div class="modal-backdrop" data-news-close="1"></div>
+  <div class="modal-card news-detail" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
+    <button class="modal-close" type="button" data-news-close="1" aria-label="닫기">&times;</button>
+    <div id="newsModalBody"></div>
+  </div>
+</div>
+
 <!-- 하단 탭 바 (모바일판) — 화면 최하단에서 이동, 본문을 가리지 않음 -->
 <nav class="tabbar" id="tabBar" aria-label="화면 이동">
   <a href="#today" class="tab-item" data-nav="today"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M20 13.2A8.4 8.4 0 1 1 10.8 4a6.7 6.7 0 0 0 9.2 9.2z"/></svg></span><span class="tab-txt">오늘 밤</span></a>
@@ -1113,9 +1212,6 @@
   <button type="button" class="tab-item" id="tabMore" aria-expanded="false" aria-controls="moreMenu"><span class="tab-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tab-txt">더보기</span></button>
 </nav>
 
-<noscript>
-  <div class="noscript-warn">이 사이트는 달 위상·행성 위치·박명 시각을 브라우저에서 직접 계산합니다. JavaScript를 켜야 모든 기능이 동작합니다.</div>
-</noscript>
 <script src="data.js"></script>
 <script src="data-extra.js"></script>
 <script src="regions-kr.js"></script>
@@ -1129,8 +1225,55 @@
 <script src="astro.js"></script>
 <script src="app.js"></script>
 <script src="space-ui.js"></script>
+<script src="learn.js"></script>
+<script src="news.js"></script>
+<script src="feedback.js"></script>
 <script src="views.js"></script>
 <script src="pwa.js"></script>
+<script>
+/* 첫 화면 준비 표시 · 첫 접속 지역 안내 (2026-11-27) */
+(function () {
+  function $(s, r) { return (r || document).querySelector(s); }
+  function hideBoot() {
+    var n = $('#bootNote');
+    if (n) { n.classList.add('is-done'); setTimeout(function () { if (n.parentNode) n.parentNode.removeChild(n); }, 450); }
+    document.body.classList.add('is-ready');
+  }
+  var tries = 0;
+  function waitReady() {
+    try { if (window.OneulBam && window.OneulBam.state && window.OneulBam.state.last) return hideBoot(); } catch (e) { }
+    if (++tries > 80) return hideBoot();
+    setTimeout(waitReady, 100);
+  }
+  function initFirstVisit() {
+    var el = $('#firstVisit');
+    if (!el) return;
+    var saved = null, off = null;
+    try { saved = localStorage.getItem('ob.site'); } catch (e) { }
+    try { off = localStorage.getItem('ob.fv.off'); } catch (e) { }
+    if (saved || off === '1') return;
+    el.hidden = false;
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-fv]');
+      if (!b) return;
+      var k = b.getAttribute('data-fv');
+      try { localStorage.setItem('ob.fv.off', '1'); } catch (err) { }
+      el.hidden = true;
+      if (k === 'geo') { var g = $('#btnGeo'); if (g) g.click(); }
+      else if (k === 'pick') {
+        if (window.__views) window.__views.go('live');
+        setTimeout(function () {
+          var sel = $('#provinceSelect');
+          if (sel) { sel.focus(); if (sel.scrollIntoView) sel.scrollIntoView({ block: 'center' }); }
+        }, 420);
+      }
+    });
+  }
+  function boot() { setTimeout(waitReady, 60); setTimeout(initFirstVisit, 500); }
+  if (document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
+})();
+</script>
 <script src="layout.js"></script>
 </body>
 </html>

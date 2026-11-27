@@ -549,3 +549,58 @@ html[data-layout="mobile"] #live .live-time-card {
 html[data-layout="mobile"] #live .live-time-card .ltc-chip { min-height: 34px; }
 html[data-layout="mobile"] #live .live-time-card .ltc-row input { min-height: 38px; }
 html[data-layout="mobile"] #live .live-time-card .ltc-x { width: 32px; height: 32px; }
+
+/* =========================================================================
+   2026-11-27 — 아이폰 홈 화면 앱(standalone): 더보기 시트·드로어·모달 상단 여백
+   · pwa.js 가 <html data-standalone="1"> 을 달면 display-mode 미디어쿼리 지원과
+     관계없이 같은 규칙이 적용됩니다. (layout-mobile.css 는 styles.css 뒤에 옵니다)
+   ========================================================================= */
+html[data-layout="mobile"][data-standalone="1"] { scroll-padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+html[data-layout="mobile"][data-standalone="1"] main > section[data-view] {
+  padding-top: calc(34px + env(safe-area-inset-top, 0px));
+}
+html[data-layout="mobile"][data-standalone="1"] .section-hero {
+  padding-top: calc(14px + env(safe-area-inset-top, 0px));
+}
+html[data-layout="mobile"][data-standalone="1"] main > section[data-view="live"] {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+html[data-layout="mobile"][data-standalone="1"] #live .live-stage {
+  height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+  min-height: min(380px, calc(100dvh - 64px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px)));
+}
+/* 상태바 자리 불투명 띠 — 어떤 화면에서도 내용이 비쳐 보이지 않게 */
+html[data-layout="mobile"][data-standalone="1"] body::before {
+  content: ''; position: fixed; left: 0; right: 0; top: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #070b14; z-index: 140; pointer-events: none;
+}
+html[data-layout="mobile"][data-standalone="1"] body.red::before { background: #0b0201; }
+/* 첫 접속 지역 안내 */
+html[data-layout="mobile"][data-standalone="1"] .first-visit-wrap {
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+}
+/* ☰ 더보기 시트 — 상태바 아래에서 시작: max-height 에서 inset-top 을 뺍니다 */
+html[data-layout="mobile"][data-standalone="1"] .more-menu {
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px));
+}
+/* 전체를 덮는 드로어(우주 쿠키·AI·피드백) */
+html[data-standalone="1"] .sd-panel {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+}
+/* 아래에서 올라오는 모달 시트 */
+html[data-layout="mobile"][data-standalone="1"] .modal {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+html[data-layout="mobile"][data-standalone="1"] .modal-card {
+  max-height: calc(92dvh - env(safe-area-inset-top, 0px));
+}
+html[data-layout="mobile"][data-standalone="1"] .li-card {
+  max-height: calc(72dvh - env(safe-area-inset-top, 0px));
+}
+html[data-standalone="1"] .sm-card { padding-top: env(safe-area-inset-top, 0px); }
+html[data-layout="mobile"][data-standalone="1"] .pwa-sheet-card {
+  margin-top: env(safe-area-inset-top, 0px);
+}

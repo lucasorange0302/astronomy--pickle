@@ -37,6 +37,17 @@
     return false;
   }
 
+  // 홈 화면 앱으로 실행 중이면 <html data-standalone="1"> 을 답니다.
+  // (iOS·안드로이드·미디어쿼리 지원이 달라도 CSS가 같은 규칙을 쓸 수 있게)
+  function markStandalone() {
+    try {
+      if (!isStandalone()) return;
+      document.documentElement.setAttribute('data-standalone', '1');
+      if (document.body) document.body.classList.add('is-standalone');
+    } catch (e) { }
+  }
+  markStandalone();
+
   function platform() {
     var ua = navigator.userAgent || '';
     var iOS = /iPad|iPhone|iPod/.test(ua) ||
@@ -91,6 +102,7 @@
   function refresh() {
     var p = platform();
     // 1) 이미 앱으로 실행 중
+    markStandalone();
     if (isStandalone()) {
       label('앱으로 실행 중', '홈 화면에서 주소창 없이 열렸습니다', '실행 중');
       return;

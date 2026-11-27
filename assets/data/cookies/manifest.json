@@ -1,0 +1,61 @@
+{
+ "version": "2026-11-27.1",
+ "total": 2000,
+ "perChunk": 200,
+ "chunks": [
+  {
+   "file": "k00.json",
+   "n": 200
+  },
+  {
+   "file": "k01.json",
+   "n": 200
+  },
+  {
+   "file": "k02.json",
+   "n": 200
+  },
+  {
+   "file": "k03.json",
+   "n": 200
+  },
+  {
+   "file": "k04.json",
+   "n": 200
+  },
+  {
+   "file": "k05.json",
+   "n": 200
+  },
+  {
+   "file": "k06.json",
+   "n": 200
+  },
+  {
+   "file": "k07.json",
+   "n": 200
+  },
+  {
+   "file": "k08.json",
+   "n": 200
+  },
+  {
+   "file": "k09.json",
+   "n": 200
+  }
+ ],
+ "cats": [
+  "nasa",
+  "spacex",
+  "solar",
+  "deep",
+  "star",
+  "exo",
+  "meteor",
+  "tip",
+  "history"
+ ],
+ "sources": [
+  "NASA · SpaceX · IMO · OpenNGC · HYG · NASA/IPAC 외계행성 아카이브"
+ ]
+}
