@@ -107,7 +107,7 @@
       if (!act) return;
       var a = act.getAttribute('data-ck');
       if (a === 'crack') crackCookie();
-      else if (a === 'again') { CK.view = 'draw'; STATE.cookie = pickCookie(); renderCookie(); }
+      else if (a === 'again') { CK.view = 'draw'; STATE.cookie = pickCookie(); renderCookie(); crackCookie(); }
       else if (a === 'all') { CK.view = 'list'; renderCookie(); }
       else if (a === 'back') { CK.view = 'draw'; renderCookie(); }
       else if (a === 'aim') aimAtCookie(SD.COOKIES[STATE.cookie]);

@@ -10492,8 +10492,13 @@ window.Astro = (function () {
     liveDirty = true;
     kickLive();
     showInspector(kind, key);
-    const sec = $('#live');
-    if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 조준한 시선은 라이브 하늘 화면에서만 보입니다 — 다른 화면에서 눌렀으면 그 화면으로 넘어갑니다.
+    if (window.__VIEWS_MODE__ && window.__views && window.__views.current() !== 'live') {
+      jumpTo('live');
+    } else {
+      const sec = $('#live');
+      if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     if (info.alt < 0) toast(info.name + josa(info.name, '은', '는') + ' 지금 지평선 아래(' + nf(info.alt, 0) + '°)입니다. 지평선 쪽으로 맞췄습니다.');
     else if (info.alt < 12) toast(info.name + josa(info.name, '은', '는') + ' 낮은 하늘 ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°에 있습니다.');
     else toast(info.name + ' 방향으로 시선을 맞췄습니다 — ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°.');
@@ -13459,8 +13464,13 @@ window.Astro = (function () {
     live.targetAlt = clamp(h.alt, -8, 88);
     liveDirty = true;
     kickLive();
-    const sec = $('#live');
-    if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // aimAt과 같은 이유로, 다른 화면에서 부르면 라이브 하늘 화면으로 전환합니다.
+    if (window.__VIEWS_MODE__ && window.__views && window.__views.current() !== 'live') {
+      jumpTo('live');
+    } else {
+      const sec = $('#live');
+      if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     if (h.alt < 0) toast((name || '천체') + josa(name || '천체', '은', '는') + ' 지금 지평선 아래(' + nf(h.alt, 0) + '°)입니다. 지평선 쪽으로 맞췄습니다.');
     else toast((name || '천체') + ' 방향으로 시선을 맞췄습니다 — ' + dirName(h.az) + ' ' + nf(h.alt, 0) + '°.');
     return true;
@@ -13596,7 +13606,7 @@ window.Astro = (function () {
       if (!act) return;
       var a = act.getAttribute('data-ck');
       if (a === 'crack') crackCookie();
-      else if (a === 'again') { CK.view = 'draw'; STATE.cookie = pickCookie(); renderCookie(); }
+      else if (a === 'again') { CK.view = 'draw'; STATE.cookie = pickCookie(); renderCookie(); crackCookie(); }
       else if (a === 'all') { CK.view = 'list'; renderCookie(); }
       else if (a === 'back') { CK.view = 'draw'; renderCookie(); }
       else if (a === 'aim') aimAtCookie(SD.COOKIES[STATE.cookie]);
