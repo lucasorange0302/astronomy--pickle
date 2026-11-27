@@ -2441,10 +2441,14 @@
     const cb = Math.cos(beta * RAD), cg = Math.cos((gamma == null ? 0 : gamma) * RAD);
     return Math.asin(clamp(-cb * cg, -1, 1)) / RAD;
   }
+  /* 시선의 방위를 heading 으로 맞춥니다(지구 Z축 둘레 회전).
+     주의 — 이 좌표계(X 동·Y 북·Z 위)에서 +Z 회전은 방위를 '줄입니다'
+     (북(0,1,0)을 +10° 돌리면 동쪽으로 10° = 방위 −10°). 그래서 회전량은 (현재 − 목표)입니다.
+     예전에는 (목표 − 현재)를 썼는데, 그러면 방위가 목표에서 같은 만큼 '반대쪽'으로 밀려
+     (100°에서 130°로 맞추려는데 70°가 되는 식) 초기 정렬이 거울처럼 뒤집혔습니다. */
   function qAlignNorth(q, heading) {
     const d = camDir(q);
-    // 지구 Z축 회전: 방위를 heading 으로(최단 경로)
-    return Q.norm(Q.mul(Q.axis([0, 0, 1], heading - d.az), q));
+    return Q.norm(Q.mul(Q.axis([0, 0, 1], d.az - heading), q));
   }
   function circMedian(list, ref) {
     if (!list.length) return ref;
@@ -2457,12 +2461,17 @@
     rot: [0, 0, 0],                 // 아직 반영하지 않은 자이로 회전(도)
     motionSeen: false, lastMotEv: 0, lastOriEv: 0, lastApply: 0,
     comp: null, compBuf: [], spike: 0, acc: null, compT: 0,
-    azBigSince: 0, altBigSince: 0, lastBeta: null,   // 방위·고도 '큰 오차' 지속 시각(대칭)
+    lastBeta: null,
+    angVel: 0,                     // 지수평활한 최근 각속도 크기(°/초) — '움직이는 중' 판정
+    movingUntil: 0,                // 이 시각까지는 움직이는 중 — 드리프트 보정 이득 0
+    gate: 0,                       // 보정 이득 게이트(0 = 멈춤 ↔ 1 = 정지·수렴 중)
+    resync: false,                 // 자이로 표본이 크게 끊긴 뒤 한 번 다시 맞출 표시
     calAz: 0,                      // '방향 맞추기'로 잡은 나침반 오차
     altTarget: null,               // 경계에 맞춰 자른 고도 목표(보정용)
     rawAlt: null,                  // beta·gamma 로 계산한 '실제' 기기 고도(자르기 전)
     az: 180, alt: 30,
     sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
+    clock: null, feedT: null,      // 검증 훅(feed)의 가상 시계 — 실기기에서는 null
     suspendUntil: 0,
     raf: null, lastTs: 0, drawAt: 0
   };
@@ -2471,30 +2480,60 @@
     track.q = null; track.ready = false; track.rot = [0, 0, 0];
     track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
     track.acc = null; track.altTarget = null; track.rawAlt = null; track.calAz = 0;
-    track.azBigSince = 0; track.altBigSince = 0; track.lastBeta = null;
+    track.lastBeta = null;
+    track.angVel = 0; track.movingUntil = 0; track.gate = 0; track.resync = false;
+    track.clock = null; track.feedT = null;
     track.az = live.az; track.alt = live.alt;
     track.motionSeen = false; track.lastMotEv = 0; track.lastTs = 0; track.suspendUntil = 0;
   }
 
-  /* 절대 보정 곡선 — 방위(나침반)와 고도(중력/beta)에 똑같은 상수를 씁니다.
-     한쪽만 둔해지거나 막히지 않게 1:1로 맞춥니다.
-       오차 ≤25° : 100% 이득으로 τ초에 걸쳐 따라잡기(자이로가 주축, 이건 드리프트만 잡음)
-       25~45°   : 이득이 0으로 줄어듦(나침반 튐·중력 값의 순간 오류 차단)
-       45° 초과 : 잠깐은 무시, 1.2초 이상 계속되면 실제 자세 변화로 보고 천천히 받아들임
-                  (예전엔 30°에서 딱 잘라 버려서, 폰을 크게 기울이면 고도 보정이 영영 멈췄습니다) */
-  const COR = { tau: 2.2, free: 25, fade: 45, hold: 1.2, redo: 0.55 };
+  /* 드리프트 보정 — '폰이 멈춰 있을 때만' 아주 완만하게 잡습니다.
+     나침반(방위)과 중력(고도)은 자이로보다 늦게·흔들려 도착합니다. 폰을 돌리는 중에
+     보정을 걸면 자이로가 그린 궤적을 되돌려 화면이 출렁이므로, 움직이는 동안은
+     이득을 0으로 끕니다. 멈춘 뒤 0.35초가 지나면 아주 느린 드리프트 보정만 다시 켭니다.
+       오차 ≤20° : 게이트·τ초에 걸쳐 따라잡기(프레임당 최대 0.25°, 자이로가 주축)
+       20~35°    : 이득이 20→35°에서 1→0으로 줄어듦(나침반 튐·중력 값의 순간 오류 차단)
+       35° 초과  : 자동으로 당기지 않음 — 큰 방향 오차는 🎯 방향 맞추기로 맞춥니다
+     예전에는 45°를 넘는 오차를 1.2초 뒤 0.55°씩 '툭' 당겨(redo) 재조정이 눈에 띄었습니다. */
+  const COR = {
+    tau: 7.0,        // 정지 중 드리프트 시간상수(초) — 길수록 티가 덜 남
+    free: 20,        // 이 안쪽 오차만 자동 보정
+    fade: 35,        // 20→35°에서 이득 1→0
+    stepMax: 0.25,   // 프레임당 최대 보정(도)
+    moveOn: 7,       // °/초 — 이보다 빠르게 돌면 '움직이는 중'
+    settle: 0.35,    // 멈춘 뒤 안정화 시간(초)
+    easeIn: 0.45,    // 정지 후 보정 이득이 1까지 차오르는 시간(초)
+    easeOut: 0.04    // 움직임이 시작되면 보정을 즉시(≈3프레임) 끔
+  };
 
-  function corStep(err, dt, key) {
+  /* 센서 경로의 시계 — 검증 훅(feed)이 가상 시계를 넣으면 그쪽을 씁니다. */
+  function sNow() { return track.clock != null ? track.clock : performance.now(); }
+
+  /* 각속도(°/초)로 '지금 폰이 돌고 있는지'를 판정합니다.
+     7°/s 를 넘으면 움직이는 중으로 보고, 마지막 움직임에서 0.35초까지는 그대로 둡니다. */
+  function noteMotion(rate, now) {
+    const v = (typeof rate === 'number' && isFinite(rate)) ? Math.abs(rate) : 0;
+    track.angVel += (v - track.angVel) * 0.35;
+    if (track.angVel > COR.moveOn) track.movingUntil = now + COR.settle * 1000;
+  }
+
+  /* 보정 이득 게이트 — 움직이는 동안 0, 멈춘 뒤 easeIn 에 걸쳐 1로 차오릅니다. */
+  function driftGate(dt) {
+    const want = sNow() < track.movingUntil ? 0 : 1;
+    const k = clamp(dt / (want ? COR.easeIn : COR.easeOut), 0, 1);
+    track.gate += (want - track.gate) * k;
+    if (track.gate < 0.003) track.gate = 0;
+    return track.gate;
+  }
+
+  /* 한 걸음 보정량 — 게이트가 0이면 아무것도 하지 않습니다. */
+  function corStep(err, dt) {
     const a = Math.abs(err);
-    if (a <= COR.fade) {
-      track[key] = 0;
-      const g = a <= COR.free ? 1 : 1 - (a - COR.free) / (COR.fade - COR.free);
-      return clamp(err * clamp(dt / (COR.tau * track.sens), 0, 0.08) * g, -1.4, 1.4);
-    }
-    const now = performance.now();
-    if (!track[key]) track[key] = now;
-    if (now - track[key] > COR.hold * 1000) return (err > 0 ? 1 : -1) * COR.redo;
-    return 0;
+    if (a < 1e-3 || a >= COR.fade) return 0;
+    const g = (a <= COR.free ? 1 : (COR.fade - a) / (COR.fade - COR.free)) * track.gate;
+    if (g <= 0.003) return 0;
+    const frac = clamp(dt / (COR.tau * track.sens), 0, 0.05);
+    return clamp(err * frac * g, -COR.stepMax, COR.stepMax);
   }
 
   // 프레임마다: 자이로 적분 → 나침반(방위)·중력(고도) 같은 비율의 느린 보정
@@ -2506,27 +2545,26 @@
       if (ang > 1e-6 && ang < 120) track.q = Q.norm(Q.mul(track.q, Q.axis(r, ang)));
       track.rot = [0, 0, 0];
     }
-    const now = performance.now();
+    const now = sNow();
     const d = camDir(track.q);
+    driftGate(dt);        // 움직이는 동안 0 — 이 값이 아래 두 보정의 이득을 통째로 곱합니다
 
-    // 1) 나침반 → 방위. 오차 35° 넘는 값은 '나침반 오류'로 보고 곡선에 맡깁니다.
-    //    (자이로가 주축이므로 나침반은 분당 몇 도의 드리프트만 잡으면 됩니다)
-    if (track.comp != null && now - track.compT < 1600) {
+    // 1) 나침반 → 방위. 움직이는 동안(track.gate 0)은 손대지 않습니다.
+    //    (자이로가 주축이므로 나침반은 멈춰 있을 때 분당 몇 도의 드리프트만 잡으면 됩니다)
+    if (track.comp != null && now - track.compT < 1600 && track.gate > 0) {
       const bad = track.acc != null && (track.acc < 0 || track.acc > 25);
-      if (bad) {
-        track.azBigSince = 0;
-      } else {
+      if (!bad) {
         const err = shortestDelta(d.az, track.comp + track.calAz);
         const q = (track.acc != null && track.acc >= 0) ? clamp(1 - track.acc / 45, 0.35, 1) : 1;
-        const step = corStep(err, dt, 'azBigSince') * q;
+        const step = corStep(err, dt) * q;
         if (Math.abs(step) > 0.002) track.q = Q.norm(Q.mul(Q.axis([0, 0, 1], -step), track.q));
       }
     }
 
-    // 2) 중력(beta) → 고도. 방위와 같은 시간 상수로 따라갑니다.
+    // 2) 중력(beta) → 고도. 방위와 같은 시간 상수·게이트로 따라갑니다.
     if (track.altTarget != null) {
       const err = track.altTarget - camDir(track.q).alt;
-      const step = corStep(err, dt, 'altBigSince');
+      const step = corStep(err, dt);
       if (Math.abs(step) > 0.002) {
         // 고도를 바꾸는 회전축 = up × 시선 (지평선과 나란한 축).
         //   예전엔 [z,0,−x] 를 썼는데, 북쪽을 보면 축이 0이 되어 보정이 아예 죽고
@@ -2562,7 +2600,7 @@
   // 결과를 화면 값으로 — 손떨림 데드존 + 저역통과 + 최대 각속도 (좌우·상하 같은 값)
   function trackApply(dt) {
     if (!track.q) return false;
-    const now = performance.now();
+    const now = sNow();
     const gyroLive = track.motionSeen && (now - track.lastMotEv < 1200);
     const d = camDir(track.q);
     let dAz = shortestDelta(track.az, d.az);
@@ -3544,7 +3582,7 @@
 
   function onOrientation(ev) {
     if (!live.sensor) return;
-    const now = performance.now();
+    const now = sNow();
     if (now - track.lastOriEv < 6) return;       // ≤ 160Hz
     track.lastOriEv = now;
     live.gotEvent = true;
@@ -3588,6 +3626,21 @@
       track.altTarget = clamp(track.rawAlt, ALT_MIN, ALT_MAX);
     }
 
+    /* 자이로가 오래(0.6초 넘게) 끊겼다 돌아오면 — 화면을 다시 열었거나 다른 앱을 다녀왔을 때 —
+       그 사이 회전이 통째로 사라져 자세가 크게 어긋납니다. 그때만 오일러 자세로 한 번 다시
+       맞춥니다(움직이는 중의 재조정이 아니라, 자이로가 없던 구간을 메우는 한 번의 정렬). */
+    if (track.resync && ev.alpha != null && ev.beta != null) {
+      let qe = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
+      if (track.comp != null) qe = qAlignNorth(qe, track.comp + track.calAz);
+      const cur = camDir(track.q), nxt = camDir(qe);
+      if (Math.abs(shortestDelta(cur.az, nxt.az)) > 25 || Math.abs(nxt.alt - cur.alt) > 25) {
+        track.q = qe;
+        track.alt = clamp(nxt.alt, ALT_MIN, ALT_MAX);
+        track.q = setCamAlt(track.q, track.alt);
+      }
+      track.resync = false;
+    }
+
     // 자이로가 없거나 끊긴 경우: 오일러 자세를 목표로 부드럽게 따라갑니다(방위·고도 같은 비율)
     if (!usingGyro && ev.alpha != null && ev.beta != null) {
       let qe = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
@@ -3603,10 +3656,14 @@
   function onMotion(ev) {
     if (!live.sensor) return;
     const rr = ev.rotationRate;
-    const now = performance.now();
+    const now = sNow();
     if (!rr) return;
     const gap = track.lastMotEv ? (now - track.lastMotEv) / 1000 : 0.016;
-    if (gap > 0.25) { track.lastMotEv = now; return; }   // 끊겼다가 돌아온 값은 버림
+    if (gap > 0.25) {
+      track.lastMotEv = now;
+      if (gap > 0.6) track.resync = true;   // 그 사이 회전은 사라졌습니다 — 다음 방향 표본에서 다시 맞춤
+      return;                              // 끊겼다가 돌아온 값은 버림
+    }
     const dt = clamp(gap, 0.004, 0.08);
     track.lastMotEv = now;
     if (!track.motionSeen) {
@@ -3624,6 +3681,8 @@
     track.rot[0] += rate(rr.alpha) * dt;    // X축 — 위아래 끄덕임 → 고도
     track.rot[1] += rate(rr.beta) * dt;     // Y축 — 좌우 돌리기 → 방위
     track.rot[2] += rate(rr.gamma) * dt;    // Z축 — 화면 비틀기(롤)
+    // 움직임 판정 — 세 축 각속도의 크기(°/초). 이 값이 7°/s 를 넘으면 드리프트 보정을 끕니다.
+    noteMotion(Math.hypot(rate(rr.alpha), rate(rr.beta), rate(rr.gamma)), now);
     liveDirty = true;
     trackStart();
   }
@@ -3689,7 +3748,11 @@
   // 화면 구조 개편·테스트에서 쓰는 공개 API
   window.LiveSky = {
     state: function () {
-      return { az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen, compass: track.comp, cal: track.calAz };
+      return {
+        az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen,
+        compass: track.comp, cal: track.calAz,
+        moving: sNow() < track.movingUntil, gate: track.gate, angVel: track.angVel
+      };
     },
     pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
     resume: function () { liveResize(); liveDirty = true; kickLive(); },
@@ -3704,27 +3767,40 @@
     disableSensor: disableSensor,
     /* -- 검증용 — 합성 센서 표본을 '실제' 처리 경로(onOrientation·onMotion)에 넣고
        그 자리에서 한 프레임(dt초)을 진행합니다. 도구 검사가 이 훅으로 리얼 타이머 없이
-       '지평선 아래로 내렸다 올리기' 시퀀스를 같은 순서로 재현합니다.
-       (두 스로틀만 되감아 표본이 버려지지 않게 합니다. 그 외에는 실제 코드 경로 그대로) */
+       '지평선 아래로 내렸다 올리기'·'움직이는 중 나침반 잡음' 시퀀스를 같은 순서로 재현합니다.
+       (가상 시계와 두 스로틀만 되감습니다. 그 외에는 실제 코드 경로 그대로) */
     feed: function (s, dt) {
       const step = dt || 0.016;
-      if (s.beta != null) {
-        track.lastOriEv = 0;                      // 6ms 스로틀 통과
-        onOrientation({
-          type: 'deviceorientation', absolute: true,
-          alpha: s.alpha == null ? 0 : s.alpha,
-          beta: s.beta, gamma: s.gamma == null ? 0 : s.gamma,
-          webkitCompassHeading: s.heading, webkitCompassAccuracy: 6
-        });
+      // 가상 시계 — 한 걸음(step)씩만 흐르게 해, 리얼 타이머 없이 같은 경로를 씁니다.
+      if (track.feedT == null) track.feedT = performance.now();
+      track.feedT += step * 1000;
+      const vnow = track.feedT;
+      track.clock = vnow;
+      try {
+        if (s.beta != null) {
+          track.lastOriEv = 0;                      // 6ms 스로틀 통과
+          onOrientation({
+            type: 'deviceorientation', absolute: true,
+            alpha: s.alpha == null ? 0 : s.alpha,
+            beta: s.beta, gamma: s.gamma == null ? 0 : s.gamma,
+            webkitCompassHeading: s.heading, webkitCompassAccuracy: s.acc == null ? 6 : s.acc
+          });
+        }
+        if (s.rate) {
+          if (track.lastMotEv) track.lastMotEv = vnow - step * 1000;
+          onMotion({ rotationRate: s.rate });
+        }
+        trackCorrect(step);
+        if (trackApply(step)) liveDraw();
+        const cam = track.q ? camDir(track.q) : null;
+        return {
+          alt: track.alt, az: track.az, cam: cam ? { az: cam.az, alt: cam.alt } : null,
+          raw: track.rawAlt, target: track.altTarget,
+          gate: track.gate, angVel: track.angVel, moving: vnow < track.movingUntil
+        };
+      } finally {
+        track.clock = null;
       }
-      if (s.rate) {
-        if (track.lastMotEv) track.lastMotEv = performance.now() - step * 1000;
-        onMotion({ rotationRate: s.rate });
-      }
-      trackCorrect(step);
-      if (trackApply(step)) liveDraw();
-      const cam = track.q ? camDir(track.q) : null;
-      return { alt: track.alt, az: track.az, cam: cam ? { az: cam.az, alt: cam.alt } : null, raw: track.rawAlt, target: track.altTarget };
     },
   };
 
@@ -5925,7 +6001,12 @@
     initExtra();
     // '지금' 시각을 분 단위로 따라갑니다(탭으로 돌아오면 바로 한 번).
     setInterval(tickLiveClock, 5000);
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) tickLiveClock(); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      tickLiveClock();
+      // 화면을 다시 열면 센서 표본이 끊긴 사이의 회전이 사라져 자세가 어긋날 수 있습니다.
+      if (live.sensor) track.resync = true;
+    });
     window.addEventListener('resize', function () {
       if ($('#skyMap')) {
         try { renderSkyMap(state.last); } catch (e) {}
