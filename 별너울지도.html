@@ -9088,8 +9088,12 @@ window.Astro = (function () {
           ? '강수확률 <b>' + Math.round(rainAgg.prob) + '%</b> · 밤 합계 <b>' + nf(rainAgg.mm, 1) + 'mm</b>'
           : '강수확률 <b>' + Math.round(rainAgg.prob) + '%</b>')
         : '강수 정보 없음';
+      // 손가락 화면에는 마우스 호버가 없으니 안내 문구를 화면에 맞춥니다.
+      const hintTxt = document.documentElement.getAttribute('data-layout') === 'mobile'
+        ? '막대 위 숫자가 그 시각 구름양(%)이고, 파란 막대가 강수량입니다.'
+        : '막대에 마우스를 올리면 그 시각 구름양·강수량·강수확률이 보입니다. 파란 막대가 강수량입니다.';
       foot.innerHTML = '밤 평균 구름 <b>' + shown + '</b> · ' + rainTxt + ' — 달·광공해와 함께 관측 지수에 반영됩니다. ' +
-        '<span class="cc-hint">막대에 마우스를 올리면 그 시각 구름양·강수량·강수확률이 보입니다. 파란 막대가 강수량입니다.</span> ' +
+        '<span class="cc-hint">' + hintTxt + '</span> ' +
         '<button class="mini-btn cc-refresh" type="button" id="cloudRefresh">예보 새로고침</button>';
       const rb = $('#cloudRefresh');
       if (rb) rb.addEventListener('click', function () {
