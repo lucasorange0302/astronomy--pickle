@@ -2779,9 +2779,10 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
 .dial-center {
   position: absolute; inset: 0; display: grid; place-content: center; gap: 2px;
   pointer-events: none; text-align: center;
+  max-width: 100%; padding: 0 8px; box-sizing: border-box;
 }
-.dial-val { font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
-.dial-sub { font-size: .68rem; color: var(--faint); letter-spacing: .01em; }
+.dial-val { font-size: 1rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; max-width: 100%; }
+.dial-sub { font-size: .68rem; color: var(--faint); letter-spacing: .01em; max-width: 100%; overflow-wrap: anywhere; }
 
 /* 시간 카드 안의 다이얼 */
 .ltc-dial { display: grid; place-items: center; margin: 4px 0 10px; }
@@ -2790,14 +2791,23 @@ body.red .con-open-hint, body.red .con-card:hover .con-open-hint { color: #ffb59
 
 /* 학습관 실험실의 다이얼 조절기 */
 .sim-ctrl.is-dial {
-  grid-template-columns: 1fr; justify-items: center; gap: 6px;
+  grid-template-columns: 1fr; grid-template-areas: none;   /* 좁은 화면의 'label val' 2단 배치를 되돌립니다 */
+  justify-items: center; gap: 6px;
   background: rgba(255, 255, 255, .02); border: 1px solid var(--border); border-radius: 14px;
-  padding: 12px 10px 10px; margin: 0;
+  padding: 12px 10px 10px; margin: 0; max-width: 100%; box-sizing: border-box;
 }
-.sim-ctrl.is-dial .sim-ctrl-label { font-size: .78rem; color: var(--muted); }
-.sim-dial { display: grid; place-items: center; width: 100%; }
-.sim-ctrl.is-dial .dial-val { font-size: .9rem; }
-.sim-ctrl.is-dial .sim-ctrl-val { text-align: center; order: 3; }
+.sim-ctrl.is-dial .sim-ctrl-label { font-size: .78rem; color: var(--muted); grid-area: auto; text-align: center; }
+.sim-ctrl.is-dial .sim-ctrl-sub { display: block; font-size: .66rem; color: var(--faint); font-weight: 600; margin-top: 2px; line-height: 1.3; }
+.sim-dial { display: grid; place-items: center; width: 100%; min-width: 0; }
+/* 카드 폭이 좁으면(320px 화면 등) 다이얼도 함께 줄어 카드 밖으로 나가지 않게 합니다. */
+.sim-dial .dial { width: min(126px, 100%) !important; height: auto !important; aspect-ratio: 1 / 1; max-width: 100%; }
+.sim-ctrl.is-dial .dial-val { font-size: clamp(.78rem, 3vw, .92rem); max-width: 100%; overflow-wrap: anywhere; }
+.sim-ctrl.is-dial .dial-sub { display: none; }   /* 카드에서는 삭망월 같은 주기를 라벨 아래에 한 번만 보여 줍니다 */
+.sim-ctrl.is-dial .sim-ctrl-val {
+  grid-area: auto; order: 3; text-align: center; justify-self: center;
+  width: 100%; max-width: 100%; font-size: clamp(.7rem, 2.9vw, .82rem);
+  overflow-wrap: anywhere; white-space: normal;
+}
 .sim-dial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 6px; }
 @media (max-width: 560px) {
   .sim-dial-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -18347,7 +18357,8 @@ window.Astro = (function () {
     // 한 바퀴 도는 값(계절·달·공전 위치)은 직선 슬라이더 대신 원형 다이얼로 만집니다.
     var dials = (cfg.controls || []).filter(function (c) { return c.cycle; }).map(function (c) {
       return '<div class="sim-ctrl is-dial">' +
-        '<span class="sim-ctrl-label">' + esc(c.label) + '</span>' +
+        '<span class="sim-ctrl-label">' + esc(c.label) +
+        (c.sub ? '<small class="sim-ctrl-sub">' + esc(c.sub) + '</small>' : '') + '</span>' +
         '<div class="sim-dial" data-dial="' + c.k + '"></div>' +
         '<output class="sim-ctrl-val" data-out="' + c.k + '"></output></div>';
     }).join('');
@@ -18549,7 +18560,7 @@ window.Astro = (function () {
     createSim(host, {
       id: 'moon', title: '🌙 달의 위상과 일·월식', height: 340,
       controls: [
-        { k: 'day', label: '달의 나이', min: 0, max: 29.5, step: 0.1, value: 7.4, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
+        { k: 'day', label: '삭망 주기', min: 0, max: 29.5, step: 0.1, value: 7.4, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
         { k: 'tilt', label: '달 궤도 기울기', min: 0, max: 12, step: 0.5, value: 5.1, fmt: function (v) { return v.toFixed(1) + '°'; } }
       ],
       buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
@@ -18631,7 +18642,7 @@ window.Astro = (function () {
         var k = (1 - Math.cos(S.day / 29.5 * Math.PI * 2)) / 2;
         var phase = (S.day / 29.5 * 360);
         return [
-          ['달의 나이', S.day.toFixed(1) + '일 / 29.5일'],
+          ['삭망 주기', '삭에서 ' + S.day.toFixed(1) + '일 지남 · 29.5일 주기'],
           ['지구에서 보이는 밝은 비율', Math.round(k * 100) + '%'],
           ['위상각(태양–달–지구)', phase.toFixed(0) + '°'],
           ['한 달(삭망월)', '29.53일']

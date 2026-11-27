@@ -77,7 +77,8 @@
     // 한 바퀴 도는 값(계절·달·공전 위치)은 직선 슬라이더 대신 원형 다이얼로 만집니다.
     var dials = (cfg.controls || []).filter(function (c) { return c.cycle; }).map(function (c) {
       return '<div class="sim-ctrl is-dial">' +
-        '<span class="sim-ctrl-label">' + esc(c.label) + '</span>' +
+        '<span class="sim-ctrl-label">' + esc(c.label) +
+        (c.sub ? '<small class="sim-ctrl-sub">' + esc(c.sub) + '</small>' : '') + '</span>' +
         '<div class="sim-dial" data-dial="' + c.k + '"></div>' +
         '<output class="sim-ctrl-val" data-out="' + c.k + '"></output></div>';
     }).join('');
@@ -279,7 +280,7 @@
     createSim(host, {
       id: 'moon', title: '🌙 달의 위상과 일·월식', height: 340,
       controls: [
-        { k: 'day', label: '달의 나이', min: 0, max: 29.5, step: 0.1, value: 7.4, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
+        { k: 'day', label: '삭망 주기', min: 0, max: 29.5, step: 0.1, value: 7.4, cycle: true, sub: '삭망월 29.53일', fmt: function (v) { return v.toFixed(1) + '일'; } },
         { k: 'tilt', label: '달 궤도 기울기', min: 0, max: 12, step: 0.5, value: 5.1, fmt: function (v) { return v.toFixed(1) + '°'; } }
       ],
       buttons: [{ k: 'play', label: '▶ 재생' }, { k: 'reset', label: '초기화' }],
@@ -361,7 +362,7 @@
         var k = (1 - Math.cos(S.day / 29.5 * Math.PI * 2)) / 2;
         var phase = (S.day / 29.5 * 360);
         return [
-          ['달의 나이', S.day.toFixed(1) + '일 / 29.5일'],
+          ['삭망 주기', '삭에서 ' + S.day.toFixed(1) + '일 지남 · 29.5일 주기'],
           ['지구에서 보이는 밝은 비율', Math.round(k * 100) + '%'],
           ['위상각(태양–달–지구)', phase.toFixed(0) + '°'],
           ['한 달(삭망월)', '29.53일']
