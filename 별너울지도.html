@@ -12974,9 +12974,10 @@ window.Astro = (function () {
       const disc = b2 * b2 - 4 * a2 * c2;
       if (disc <= 0) return a2 < 0 ? [[-Infinity, Infinity]] : [];   // 행 전체가 땅 또는 하늘
       const sq = Math.sqrt(disc);
-      const u1 = (-b2 - sq) / (2 * a2), u2 = (-b2 + sq) / (2 * a2);
-      if (a2 > 0) return [[toX(u1), toX(u2)]];                       // 두 근 사이가 땅
-      return [[-Infinity, toX(u1)], [toX(u2), Infinity]];            // 두 근 바깥이 땅
+      const r1 = (-b2 - sq) / (2 * a2), r2 = (-b2 + sq) / (2 * a2);
+      const lo = Math.min(r1, r2), hi = Math.max(r1, r2);           // a2 부호에 따라 근의 순서가 뒤집힘
+      if (a2 > 0) return [[toX(lo), toX(hi)]];                       // 두 근 사이가 땅
+      return [[-Infinity, toX(lo)], [toX(hi), Infinity]];            // 두 근 바깥이 땅
     }
     function drawGround() {
       const stepY = 3;
