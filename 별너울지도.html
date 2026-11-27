@@ -3915,7 +3915,7 @@ body.red .next-event { background: linear-gradient(120deg, rgba(255, 106, 61, .1
     <div class="section-head">
       <p class="eyebrow">전천 지도</p>
       <h2>지금 하늘을 <span class="grad">한 장에</span></h2>
-      <p class="section-sub">머리 위 하늘 전체를 펼쳐 보여 줍니다. 별·행성·달·성운을 누르면 그 자리의 실시간 고도·방위·출몰을 보여 주고, 아래 도크로 밤새 하늘이 움직이는 모습을 재생할 수 있습니다.</p>
+      <p class="section-sub">머리 위 하늘 전체를 펼쳐 보여 줍니다. 지도에 그려진 <b>모든 별</b>(어두운 별까지)과 행성·달·성운을 누르면 그 자리의 실시간 고도·방위·출몰을 보여 주고, 아래 도크로 밤새 하늘이 움직이는 모습을 재생할 수 있습니다.</p>
     </div>
     <div class="grid-1">
       <!-- 전천 지도 -->
@@ -3925,7 +3925,7 @@ body.red .next-event { background: linear-gradient(120deg, rgba(255, 106, 61, .1
           <span class="panel-note" id="skyMapNote">—</span>
         </div>
         <div class="skymap-wrap">
-          <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도"></svg>
+          <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도 — 별을 누르면 그 별의 정보가 열립니다"></svg>
         </div>
         <div class="tm-dock" data-tm>
           <button class="tm-play" data-tm-play type="button" aria-pressed="false" aria-label="밤하늘 타임랩스 재생">▶</button>
@@ -10980,6 +10980,61 @@ window.Astro = (function () {
   }
   function isWarm(bv) { return bv != null && bv > 0.7; }
 
+  // ---------------------------------------------------- 전천 지도 터치 판정
+  // 대표 별 18개의 투명 원만 두던 예전 방식과 달리, 지도에 그려진 모든 별을
+  // 누를 수 있게 한다. 별은 등급별로 한 묶음 path 로 그려져 개별 요소가 없으므로,
+  // 화면 좌표에서 가장 가까운 별을 찾아 고른다(밝을수록 그려진 점도 판정 반경도 크다).
+  // 지도가 작아 별 800여 개가 빽빽하므로 반경은 라이브 뷰보다 좀게 잡는다(단위: CSS px).
+  function skyMapStarRadius(mag) {
+    return mag <= 2.5 ? 18 : mag <= 4 ? 14 : mag <= 5.2 ? 11 : 9;
+  }
+  // scale: CSS px → SVG 사용자 좌표 배율(도형이 화면에 작게 그려질수록 커진다)
+  function skyMapPickStar(x, y, hits, count, scale) {
+    const exact = 6 * scale;      // 손가락·마우스로 별을 정확히 짚은 경우
+    let exactHit = null, exactD = Infinity, near = null, nearScore = Infinity;
+    for (let i = 0; i < count; i++) {
+      const h = hits[i];
+      const dx = h.x - x, dy = h.y - y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > h.r * scale) continue;
+      if (d <= exact && d < exactD) { exactD = d; exactHit = h; }
+      // 조금 빗나갔을 때는 '가까운 별 → 밝은 별' 순(어두운 별은 조금 불리하게)
+      const score = d + (h.mag + 1.5) * 1.6;
+      if (score < nearScore) { nearScore = score; near = h; }
+    }
+    return exactHit || near;
+  }
+  function skyMapTap(ev) {
+    const svg = ev.currentTarget;
+    const count = svg._skyHitCount || 0;
+    const hits = svg._skyHits;
+    const rect = svg.getBoundingClientRect();
+    if (!hits || !count || !rect.width || !rect.height) return;
+    if (ev.clientX == null || ev.clientY == null) return;
+    if (ev.clientX < rect.left || ev.clientX > rect.right || ev.clientY < rect.top || ev.clientY > rect.bottom) return;
+    const vb = 420;   // viewBox 0 0 420 420
+    const sx = vb / rect.width, sy = vb / rect.height;
+    const x = (ev.clientX - rect.left) * sx;
+    const y = (ev.clientY - rect.top) * sy;
+    const scale = Math.max(sx, sy);
+    const star = skyMapPickStar(x, y, hits, count, scale);
+    const el = ev.target && ev.target.closest ? ev.target.closest('[data-sky]') : null;
+    if (el) {
+      const v = el.getAttribute('data-sky').split(':');
+      const kind = v[0], key = v.slice(1).join(':');
+      if (kind === 'star') { showInspector('star', key); return; }
+      // 별자리 선은 별 위를 지나므로, 별을 정확히 짚었을 때만 별이 우선한다.
+      // 그 밖의 달·행성·딥스카이·별자리 동작은 예전 그대로 둔다.
+      if (kind === 'con' && star) {
+        const dx = star.x - x, dy = star.y - y;
+        if (Math.sqrt(dx * dx + dy * dy) <= 8 * scale) { showInspector('star', star.name); return; }
+      }
+      showInspector(kind, key);
+      return;
+    }
+    if (star) showInspector('star', star.name);
+  }
+
   function renderSkyMap(c) {
     const svg = $('#skyMap');
     const lat = state.site.lat, lon = state.site.lon, jd = c.jd;
@@ -11024,12 +11079,19 @@ window.Astro = (function () {
     const visibleStars = {};
     const pos = new Array(D.stars.length);
     const dots = {};
+    // 터치·클릭 판정용 — 지평선 위로 실제로 그려진 모든 별의 좌표(화면 좌표)와 등급.
+    // 매 렌더마다 1,600여 개 객체를 새로 만들지 않도록 svg 에 붙인 풀을 재사용한다.
+    const hitPool = svg._starHitPool || (svg._starHitPool = []);
+    let hitN = 0;
     D.stars.forEach(function (st, i) {
       const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
       if (h.alt <= 0) return;
       const p = proj(h.alt, h.az);
       pos[i] = p;
       visibleStars[st[0]] = p;
+      const hit = hitPool[hitN] || (hitPool[hitN] = { x: 0, y: 0, name: '', mag: 0, r: 9 });
+      hit.x = p.x; hit.y = p.y; hit.name = st[0]; hit.mag = st[3]; hit.r = skyMapStarRadius(st[3]);
+      hitN++;
       const mag = st[3];
       if (mag <= 2.0) {
         const size = mag < 0.4 ? 2.9 : mag < 1.4 ? 2.3 : 1.9;
@@ -11187,13 +11249,13 @@ window.Astro = (function () {
     }
     svg.innerHTML = s;
     svg.style.touchAction = 'manipulation';
-    $$('#skyMap [data-sky]').forEach(function (el) {
-      el.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        const v = el.getAttribute('data-sky').split(':');
-        showInspector(v[0], v.slice(1).join(':'));
-      });
-    });
+    // 그려진 별 전체를 터치 판정 대상으로 넘긴다(위임 리스너는 한 번만 붙인다).
+    svg._skyHits = hitPool;
+    svg._skyHitCount = hitN;
+    if (!svg._skyTapBound) {
+      svg._skyTapBound = true;
+      svg.addEventListener('click', skyMapTap);
+    }
     $('#skyMapNote').textContent = state.simJd != null
       ? A.fmtClock(state.simJd) + ' KST (타임랩스)'
       : (state.timeStr ? state.timeStr + ' KST' : (state.dateStr === todayKST() ? '현재 시각' : '22:00 KST'));
