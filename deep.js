@@ -4,10 +4,11 @@
    한 개의 스위치(DeepSky.on)로 두 단계를 함께 켜고 끕니다.
 
    1단계 · 로컬 확장 성도 (지연 로딩 타일)
-     assets/data/deep/manifest.json  +  d-<RA칸>-<적위띠>.json (72칸)
-     HYG v4.1 원본에서 5.0~8.5등급 별 6만여 개. 현재 화면(적경·적위 반경)에
+     assets/data/deep/manifest.json  +  d-<RA칸>-<적위띠>.json (144칸)
+     HYG v4.1 원본에서 5.0~12.0등급 별 11만 6천여 개. 현재 화면(적경·적위 반경)에
      걸치는 타일만 fetch 합니다. 오프라인·PWA 에서도 한 번 받은 타일은 다시
      쓰이므로 확대할수록 부드러워집니다.
+     이름이 없는 별은 실제 카탈로그 번호(HIP/HD/HR/HYG)로 보여 줍니다.
 
    2단계 · Gaia DR3 실시간 조회 (약 18억 개 전체 카탈로그)
      CORS 를 허용하는 VizieR asu-tsv(I/355/gaiadr3)를 먼저 쓰고, 실패하면
@@ -31,7 +32,7 @@
   var SKY_LOCAL_ZOOM = 1.5;    // 전천 지도: 이 배율 이상에서 로컬 타일
   var SKY_GAIA_ZOOM = 3.2;     // 전천 지도: 이 배율 이상에서 Gaia
   var GAIA_MAX = 400;          // 한 번에 받을 별 수
-  var GAIA_MAG_MIN = 6.0, GAIA_MAG_MAX = 18.0;
+  var GAIA_MAG_MIN = 6.0, GAIA_MAG_MAX = 20.8;   // Gaia DR3 실관측 한계(20.7등)까지
   var GAIA_DEBOUNCE = 420;
   var GAIA_TIMEOUT = 9000;
   var EP_KEY = 'bw.gaia.ep';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(6시간)
@@ -164,6 +165,20 @@
     return n;
   }
 
+  /** 타일의 짧은 카탈로그 토큰 → 사람이 읽는 이름 (H12345 → HIP 12345).
+      이름(고유명·바이어/플램스티드)이 없는 별의 제목으로 씁니다. */
+  function catalogName(tok) {
+    if (!tok) return '';
+    var t = String(tok);
+    var head = t.charAt(0);
+    var num = t.slice(1);
+    if (head === 'H') return 'HIP ' + num;
+    if (head === 'D') return 'HD ' + num;
+    if (head === 'R') return 'HR ' + num;
+    if (head === 'Y') return 'HYG ' + num;
+    return t;
+  }
+
   /** 지금 받아 둔 타일에서 (ra, dec) 반경 안의 별 — 등급 오름차순 */
   function starsIn(raDeg, decDeg, radiusDeg, magLimit) {
     if (!on) return [];
@@ -183,7 +198,8 @@
         if (Math.abs(dRa) * cosD > radiusDeg) continue;
         var a = dRa * cosD;
         if (a * a + dDec * dDec > radiusDeg * radiusDeg) continue;
-        out.push({ ra: s[0], dec: s[1], mag: s[2], ci: s[3], name: s[4] || '', tile: near[i].k });
+        out.push({ ra: s[0], dec: s[1], mag: s[2], ci: s[3],
+                   name: s[4] || catalogName(s[5]) || '확장 성도 별', cat: s[5] || '', tile: near[i].k });
       }
     }
     out.sort(function (a, b) { return a.mag - b.mag; });
@@ -369,7 +385,7 @@
   /** 디바운스된 Gaia 조회 — 같은 구역은 다시 묻지 않고, 이전 요청은 취소합니다. */
   function ensureGaia(raDeg, decDeg, rDeg, magMax) {
     if (!on) return;
-    var r = clamp(rDeg, 0.5, 4);
+    var r = clamp(rDeg, 0.02, 4);        // 1′ 시야에서도 넓은 구역을 묻지 않게
     var hi = clamp(magMax == null ? GAIA_MAG_MAX : magMax, 10, GAIA_MAG_MAX);
     var key = gaiaKey(raDeg, decDeg, r) + '|' + hi.toFixed(1);
     /* 같은 구역은 성공·실패와 상관없이 한 번만 묻습니다(실패하면 조용히 로컬 타일만). */
@@ -489,6 +505,7 @@
     subscribe: function (fn) { subs.push(fn); try { fn(on); } catch (e) {} },
     ensure: ensure,
     starsIn: starsIn,
+    catalogName: catalogName,
     ensureGaia: ensureGaia,
     gaiaCone: function (raDeg, decDeg, rDeg, max) {
       if (!on) return Promise.resolve({ rows: [], endpoint: '' });

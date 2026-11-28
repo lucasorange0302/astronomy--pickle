@@ -436,13 +436,17 @@ html[data-layout="mobile"] #live .live-quick .lq-btn { min-height: 38px; padding
 @media (max-width: 360px) {
 html[data-layout="mobile"] #live .live-quick .lq-btn { padding: 5px 7px; font-size: .62rem; }
 }
-html[data-layout="mobile"] #live .live-hud-top { top: 10px; left: 10px; right: 10px; }
+html[data-layout="mobile"] #live .live-hud-top { top: calc(10px + var(--sat-top, 0px)); left: 10px; right: 10px; }
+/* 딥스카이 확장 칩도 HUD 칩 줄 아래(JS 가 잰 --live-hud-b)에 — 상태바 블러 안으로 올라가지 않게 */
+html[data-layout="mobile"] #live .live-deep-chip { top: calc(var(--live-hud-b, 44px) + 8px); right: 10px; }
+/* 🎯 조준 안내 바도 HUD·딥칩 줄 아래에서 시작합니다 */
+html[data-layout="mobile"] #live .lguide-bar { top: calc(var(--live-hud-b, 40px) + 36px); }
 /* 시야 중앙 카드 — ⚙ 조작·🎯 방향 맞추기 버튼 줄 바로 위, 확대/축소 열과는 옆으로 비켜 놓습니다 */
 html[data-layout="mobile"] #live .live-center-card { bottom: 58px; max-width: calc(100% - 104px); }
 
 /* 조작 시트가 열리면 확대/축소 버튼은 시트 위(오른쪽 위)로 올립니다 */
 html[data-layout="mobile"] #live .live-panel.is-controls-open .live-zoom {
-  bottom: auto; top: 62px; right: 10px;
+  bottom: auto; top: calc(var(--live-hud-b, 40px) + 46px); right: 10px;
 }
 html[data-layout="mobile"] #live .live-panel.is-controls-open .live-hud-top { right: 58px; }
 html[data-layout="mobile"] #live .live-panel.is-controls-open .live-quick { display: none; }
@@ -540,7 +544,7 @@ html[data-layout="mobile"] .li-card .sg-shot { max-height: 32dvh; }
   html[data-layout="mobile"] { --live-top: 0px; }
   html[data-layout="mobile"] #live .live-hud-top { top: calc(10px + var(--sat-top, 0px)); }
   html[data-layout="mobile"] #live .live-panel.is-controls-open .live-zoom {
-    top: calc(62px + var(--sat-top, 0px));
+    top: calc(var(--live-hud-b, 40px) + 46px);
   }
   /* 상태바 자리 불투명 띠는 다른 화면에서만 — 라이브 하늘에서는 캔버스 맨 위를 가리지 않게 감춥니다 */
   html[data-layout="mobile"][data-screen="live"] body::before { display: none; }
@@ -598,7 +602,7 @@ html[data-layout="mobile"][data-standalone="1"] #live .live-hud-top {
 }
 /* 조작 시트를 열 때 오른쪽 위로 올라가는 확대/축소 열도 같은 높이를 지키게 */
 html[data-layout="mobile"][data-standalone="1"] #live .live-panel.is-controls-open .live-zoom {
-  top: calc(62px + var(--sat-top, 0px));
+  top: calc(var(--live-hud-b, 40px) + 46px);
 }
 html[data-layout="mobile"][data-standalone="1"][data-screen="live"] body::before { display: none; }
 html[data-layout="mobile"][data-standalone="1"] #live .live-stage {
@@ -650,7 +654,8 @@ html[data-layout="mobile"][data-standalone="1"] .pwa-sheet-card {
    ========================================================================= */
 html[data-layout="mobile"][data-screen="live"] .first-visit-wrap {
   position: fixed; top: 0; left: 0; right: 0;
-  padding: calc(46px + var(--sat-top, 0px)) 10px 0;
+  /* HUD 칩 줄 + 딥스카이 확장 칩 줄 아래에서 시작 — 두 줄을 가리지 않게 */
+  padding: calc(var(--live-hud-b, 40px) + 36px) 10px 0;
   max-width: none; z-index: 96; pointer-events: none;
 }
 html[data-layout="mobile"][data-screen="live"] .first-visit-wrap .first-visit {

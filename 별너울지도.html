@@ -1247,6 +1247,21 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
   backdrop-filter: blur(6px); pointer-events: none;
 }
 .live-center-card b { color: var(--accent); }
+/* 시야 중앙에 잡힌 천체 이름 — 누르면 그 천체의 정보 창(#liveInfo)이 열리는 버튼.
+   카드 자체는 pointer-events:none 이라, 천체가 잡혔을 때만 이름 버튼이 클릭을 받습니다. */
+.live-center-card .lc-name {
+  pointer-events: auto; cursor: pointer;
+  font: inherit; font-weight: 800; color: var(--accent);
+  background: rgba(255, 212, 121, .13); border: 1px solid rgba(255, 212, 121, .38);
+  border-radius: 8px; padding: 1px 7px; margin: 0 1px;
+  text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
+.live-center-card .lc-name:hover { background: rgba(255, 212, 121, .22); }
+.live-center-card .lc-name:active { transform: scale(.96); }
+body.red .live-center-card .lc-name {
+  color: #ffb08a; background: rgba(255, 150, 110, .16); border-color: rgba(255, 150, 110, .42);
+}
 .live-zoom {
   position: absolute; right: 10px; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
@@ -3759,23 +3774,23 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
   transition: background .18s ease, box-shadow .18s ease;
 }
 .deep-toggle { gap: 6px; }
-.deep-toggle .dt-state, .deep-switch-txt em, .more-item b em, .live-deep-chip b, .sky-deep-btn b {
+.deep-toggle .dt-state, .deep-switch-txt em, .more-item b em, .live-deep-chip b {
   font-style: normal; font-weight: 800;
 }
 .deep-toggle[aria-pressed="false"] .dt-dot,
 .deep-switch[aria-pressed="false"] .dt-dot,
 .live-deep-chip[aria-pressed="false"] .dt-dot,
-.sky-deep-btn[aria-pressed="false"] .dt-dot,
 #deepMenuBtn[aria-pressed="false"] .dt-dot { background: #7c88a3; box-shadow: 0 0 0 2px rgba(124, 136, 163, .16); }
 .deep-toggle[aria-pressed="false"] .dt-state,
 .deep-switch[aria-pressed="false"] em,
 .live-deep-chip[aria-pressed="false"] b,
-.sky-deep-btn[aria-pressed="false"] b,
 #deepMenuBtn[aria-pressed="false"] #deepMenuState { color: #9aa6c0; }
 
-/* 라이브 뷰 상단 — 딥스카이 확장 칩 */
+/* 라이브 뷰 상단 — 딥스카이 확장 칩
+   top 은 JS 가 잰 HUD 칩 줄의 실제 아래쪽 끝(--live-hud-b) + 8px.
+   상태바 블러·노치 안으로 올라가지 않고, 방위·고도·센서 칩과도 겹치지 않습니다. */
 .live-deep-chip {
-  position: absolute; top: 46px; right: 12px; z-index: 6;
+  position: absolute; top: calc(var(--live-hud-b, 44px) + 8px); right: 12px; z-index: 6;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 10px; border-radius: 999px;
   font: 700 .68rem/1.2 system-ui, sans-serif;
@@ -3785,8 +3800,6 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
 }
 .live-deep-chip[aria-pressed="false"] { color: #b9c2d4; border-color: rgba(150, 165, 190, .3); }
 .live-deep-chip:active { transform: scale(.97); }
-
-.sky-deep-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
 
 /* 확장 도감 탭 */
 .deep-shell { display: flex; flex-direction: column; gap: 12px; }
@@ -3831,7 +3844,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
   .deep-search input { flex: 1 1 100%; }
   .deep-search .btn { width: 100%; }
   .deep-list { grid-template-columns: 1fr 1fr; }
-  .live-deep-chip { top: 44px; right: 10px; font-size: .64rem; padding: 4px 8px; }
+  .live-deep-chip { right: 10px; font-size: .64rem; padding: 4px 8px; }
 }
 @media (max-width: 340px) {
   .deep-list { grid-template-columns: 1fr; }
@@ -4169,7 +4182,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
         <button class="icon-btn icon-btn-sm" id="fsDown" aria-label="글자 작게" title="글자 작게">A−</button>
         <button class="icon-btn icon-btn-sm" id="fsUp" aria-label="글자 크게" title="글자 크게">A+</button>
       </div>
-      <button class="icon-btn deep-toggle" id="deepExtBtn" aria-pressed="true" title="딥스카이 확장 — 확대할 때 어두운 별 6만여 개와 Gaia DR3 실시간 조회를 켜고 끕니다 (데이터·배터리 절약)">
+      <button class="icon-btn deep-toggle" id="deepExtBtn" aria-pressed="true" title="딥스카이 확장 — 확대할 때 어두운 별 11만 6천여 개와 Gaia DR3 실시간 조회를 켜고 끕니다 (데이터·배터리 절약)">
         <span class="dt-dot" aria-hidden="true"></span>
         <span class="tool-label">딥스카이 <b class="dt-state" id="deepExtState">ON</b></span>
       </button>
@@ -4268,7 +4281,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
             <p class="more-title"><span aria-hidden="true">🌌</span> 딥스카이</p>
             <button type="button" class="more-item" id="deepMenuBtn" role="menuitem" aria-pressed="true">
               <span class="mi-ico" aria-hidden="true">🌌</span>
-              <span class="mi-txt"><b>딥스카이 확장 <em id="deepMenuState">ON</em></b><small id="deepMenuNote">확장 성도 6만 + Gaia 실시간</small></span>
+              <span class="mi-txt"><b>딥스카이 확장 <em id="deepMenuState">ON</em></b><small id="deepMenuNote">확장 성도 11.6만 + Gaia 실시간</small></span>
             </button>
           </div>
           <div class="more-group" role="group" aria-label="의견 보내기">
@@ -4646,7 +4659,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
           <label class="live-field"><span>고도 <b id="liveAltVal">30°</b></span>
             <input type="range" id="liveAlt" min="-85" max="89" step="1" value="30"></label>
           <label class="live-field"><span>시야 <b id="liveFovVal2">65°</b></span>
-            <input type="range" id="liveFov" min="15" max="120" step="5" value="65"></label>
+            <input type="range" id="liveFov" min="0" max="1000" step="1" value="65" aria-label="시야 배율 (왼쪽 넓게 115°, 오른쪽 1′까지)"></label>
         </div>
 
         <div class="live-actions">
@@ -4692,7 +4705,6 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
         <div class="panel-head">
           <h2>지금 하늘 (전천 지도)</h2>
           <span class="panel-note" id="skyMapNote">—</span>
-          <button class="mini-btn sky-deep-btn" id="skyDeepChip" type="button" aria-pressed="true" title="딥스카이 확장 — 확대하면 확장 성도·Gaia를 그립니다"><span class="dt-dot" aria-hidden="true"></span>확장 <b id="skyDeepState">ON</b></button>
         </div>
         <div class="skymap-wrap">
           <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도 — 별을 누르면 그 별의 정보가 열립니다"></svg>
@@ -4802,7 +4814,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
           <p class="deep-note" id="deepStatus">확장 성도 상태를 확인하고 있어요…</p>
         </div>
         <p class="cat-panel-lead">
-          <b>1단계</b> 하늘 전체를 72칸으로 나눠 <b>화면에 걸치는 칸만</b> 받아 옵니다 — HYG 원본에서 5~12등급 별 <b>11만 6,006개</b>. 확대할수록 8.5 → 9.5 → 10.5 → 12등급으로 <b>단계적으로</b> 더 어두운 별이 떠오릅니다.
+          <b>1단계</b> 하늘 전체를 30°×15° 144칸으로 나눠 <b>화면에 걸치는 칸만</b> 받아 옵니다 — HYG 원본에서 5~12등급 별 <b>11만 6,006개</b>. 확대할수록 6.4등부터 12등까지 <b>2배마다 1.45등씩</b> 매끄럽게 더 어두운 별이 떠오릅니다. 이름이 없는 별은 <b>HIP·HD·HR·HYG</b> 실제 카탈로그 번호로 보입니다.
           <b>2단계</b> 라이브 시야 20° 아래로 더 좁히거나(14~18등) 아래에서 Gaia DR3 ID·좌표를 넣으면 <b>ESA Gaia DR3(약 18억 개)</b>를 실시간으로 조회합니다.
           이 탭의 별은 <b>퀴즈·기본 도감(2,571종)·별자리 88</b>과 완전히 분리되어 있어 퀴즈에는 나오지 않습니다.
         </p>
@@ -11092,10 +11104,11 @@ window.Astro = (function () {
    한 개의 스위치(DeepSky.on)로 두 단계를 함께 켜고 끕니다.
 
    1단계 · 로컬 확장 성도 (지연 로딩 타일)
-     assets/data/deep/manifest.json  +  d-<RA칸>-<적위띠>.json (72칸)
-     HYG v4.1 원본에서 5.0~8.5등급 별 6만여 개. 현재 화면(적경·적위 반경)에
+     assets/data/deep/manifest.json  +  d-<RA칸>-<적위띠>.json (144칸)
+     HYG v4.1 원본에서 5.0~12.0등급 별 11만 6천여 개. 현재 화면(적경·적위 반경)에
      걸치는 타일만 fetch 합니다. 오프라인·PWA 에서도 한 번 받은 타일은 다시
      쓰이므로 확대할수록 부드러워집니다.
+     이름이 없는 별은 실제 카탈로그 번호(HIP/HD/HR/HYG)로 보여 줍니다.
 
    2단계 · Gaia DR3 실시간 조회 (약 18억 개 전체 카탈로그)
      CORS 를 허용하는 VizieR asu-tsv(I/355/gaiadr3)를 먼저 쓰고, 실패하면
@@ -11119,7 +11132,7 @@ window.Astro = (function () {
   var SKY_LOCAL_ZOOM = 1.5;    // 전천 지도: 이 배율 이상에서 로컬 타일
   var SKY_GAIA_ZOOM = 3.2;     // 전천 지도: 이 배율 이상에서 Gaia
   var GAIA_MAX = 400;          // 한 번에 받을 별 수
-  var GAIA_MAG_MIN = 6.0, GAIA_MAG_MAX = 18.0;
+  var GAIA_MAG_MIN = 6.0, GAIA_MAG_MAX = 20.8;   // Gaia DR3 실관측 한계(20.7등)까지
   var GAIA_DEBOUNCE = 420;
   var GAIA_TIMEOUT = 9000;
   var EP_KEY = 'bw.gaia.ep';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(6시간)
@@ -11252,6 +11265,20 @@ window.Astro = (function () {
     return n;
   }
 
+  /** 타일의 짧은 카탈로그 토큰 → 사람이 읽는 이름 (H12345 → HIP 12345).
+      이름(고유명·바이어/플램스티드)이 없는 별의 제목으로 씁니다. */
+  function catalogName(tok) {
+    if (!tok) return '';
+    var t = String(tok);
+    var head = t.charAt(0);
+    var num = t.slice(1);
+    if (head === 'H') return 'HIP ' + num;
+    if (head === 'D') return 'HD ' + num;
+    if (head === 'R') return 'HR ' + num;
+    if (head === 'Y') return 'HYG ' + num;
+    return t;
+  }
+
   /** 지금 받아 둔 타일에서 (ra, dec) 반경 안의 별 — 등급 오름차순 */
   function starsIn(raDeg, decDeg, radiusDeg, magLimit) {
     if (!on) return [];
@@ -11271,7 +11298,8 @@ window.Astro = (function () {
         if (Math.abs(dRa) * cosD > radiusDeg) continue;
         var a = dRa * cosD;
         if (a * a + dDec * dDec > radiusDeg * radiusDeg) continue;
-        out.push({ ra: s[0], dec: s[1], mag: s[2], ci: s[3], name: s[4] || '', tile: near[i].k });
+        out.push({ ra: s[0], dec: s[1], mag: s[2], ci: s[3],
+                   name: s[4] || catalogName(s[5]) || '확장 성도 별', cat: s[5] || '', tile: near[i].k });
       }
     }
     out.sort(function (a, b) { return a.mag - b.mag; });
@@ -11457,7 +11485,7 @@ window.Astro = (function () {
   /** 디바운스된 Gaia 조회 — 같은 구역은 다시 묻지 않고, 이전 요청은 취소합니다. */
   function ensureGaia(raDeg, decDeg, rDeg, magMax) {
     if (!on) return;
-    var r = clamp(rDeg, 0.5, 4);
+    var r = clamp(rDeg, 0.02, 4);        // 1′ 시야에서도 넓은 구역을 묻지 않게
     var hi = clamp(magMax == null ? GAIA_MAG_MAX : magMax, 10, GAIA_MAG_MAX);
     var key = gaiaKey(raDeg, decDeg, r) + '|' + hi.toFixed(1);
     /* 같은 구역은 성공·실패와 상관없이 한 번만 묻습니다(실패하면 조용히 로컬 타일만). */
@@ -11577,6 +11605,7 @@ window.Astro = (function () {
     subscribe: function (fn) { subs.push(fn); try { fn(on); } catch (e) {} },
     ensure: ensure,
     starsIn: starsIn,
+    catalogName: catalogName,
     ensureGaia: ensureGaia,
     gaiaCone: function (raDeg, decDeg, rDeg, max) {
       if (!on) return Promise.resolve({ rows: [], endpoint: '' });
@@ -12573,11 +12602,6 @@ window.Astro = (function () {
         if (it) showInspector('wide', key);
         return;
       }
-      if (kind === 'deep') {
-        const f = key.split('|');
-        openDeepStar({ ra: Number(f[0]), dec: Number(f[1]), mag: Number(f[2]), name: decodeURIComponent(f[3] || '') });
-        return;
-      }
       if (star && starD <= 5 * scale) { showInspector('star', star.name); return; }
       showInspector(kind, key);
       return;
@@ -12628,8 +12652,6 @@ window.Astro = (function () {
       smz.layer = lv;
       if (smz.ready && state.last) setTimeout(function () { renderSkyMap(state.last); }, 0);
     }
-    /* 확장 성도는 배율에 따라 한계 등급이 이어지므로, 손을 멈춘 뒤 한 번 더 그려 깊이를 맞춥니다. */
-    scheduleSkyDeep();
     const wrap = el.parentNode;
     if (wrap && wrap.classList) wrap.classList.toggle('is-zoomed', smz.s > 1.001);
     el.style.touchAction = smz.s > 1.001 ? 'none' : 'pan-y';
@@ -12639,21 +12661,6 @@ window.Astro = (function () {
       btn.textContent = smz.s.toFixed(1) + '× · 원래대로';
     }
   }
-  /* 확대가 멈춘 뒤 200ms 에 한 번만 다시 그립니다 — 핀치 중 60fps 를 지키면서
-     배율이 깊어질수록 더 어두운 별이 이어서 나타나게 합니다. */
-  let skyDeepTimer = null;
-  function scheduleSkyDeep() {
-    if (smz.s < DEEP.skyLocalZoom) {
-      if (smz.ready && state.last && smz.layer !== -1) { /* 넓게 보면 확장 점만 사라집니다 */ }
-      return;
-    }
-    clearTimeout(skyDeepTimer);
-    skyDeepTimer = setTimeout(function () {
-      skyDeepTimer = null;
-      if (smz.ready && state.last && deepOn()) renderSkyMap(state.last);
-    }, 220);
-  }
-
   function skyMapReset(animate) {
     const el = skyMapEl();
     if (!el) return;
@@ -12930,9 +12937,8 @@ window.Astro = (function () {
       });
     }
 
-    /* 🌌 딥스카이 확장 — 확대(2× 이상)했을 때만 확장 성도·Gaia 를 더 그립니다.
-       OFF 면 skyDeepSvg 가 곟바로 빈 문자열을 돌려주고, 타일 요청도 가지 않습니다. */
-    s += skyDeepSvg(c, smLayer, proj);
+    /* 🌌 딥스카이 확장은 라이브 하늘에서만 — 전천 지도는 기본 별 1,643개와
+       확대 시 메시에·NGC(2,571종)만 그립니다(11만 타일·Gaia 요청 없음). */
 
     // ── 이름표 배치: 밝은 별 → 딥스카이 → 별자리. 겹치면 뒤 순위는 포기한다.
     ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스', '안타레스',
@@ -14509,8 +14515,27 @@ window.Astro = (function () {
     return { fwd: fwd, right: right, up: up };
   }
 
-  // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계
-  const LIVE_FOV_MIN = 15, LIVE_FOV_MAX = 115;
+  // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계.
+  //   아래 끝은 1′ (1각분 = 1/60°) — 달·행성 표면을 보는 배율까지 들어갑니다.
+  const LIVE_FOV_MIN = 1 / 60, LIVE_FOV_MAX = 115;
+  /* 시야 → 슬라이더(0~1000, 로그). 선형 슬라이더로는 1° 아래가 뭉개져서
+     시야가 절반(2배 확대)이 될 때마다 같은 폭으로 움직이는 로그 눈금을 씁니다. */
+  const FOV_SLIDER_MAX = 1000;
+  function fovToSlider(fov) {
+    const f = clamp(fov, LIVE_FOV_MIN, LIVE_FOV_MAX);
+    return Math.round(FOV_SLIDER_MAX * Math.log(LIVE_FOV_MAX / f) / Math.log(LIVE_FOV_MAX / LIVE_FOV_MIN));
+  }
+  function sliderToFov(v) {
+    const t = clamp(Number(v) / FOV_SLIDER_MAX, 0, 1);
+    return clamp(LIVE_FOV_MAX * Math.pow(LIVE_FOV_MIN / LIVE_FOV_MAX, t), LIVE_FOV_MIN, LIVE_FOV_MAX);
+  }
+  /* 시야 표시 — 1° 아래는 각분(′), 그 위는 도(°). 10° 아래는 소수 한 자리. */
+  function fmtFov(fov) {
+    const f = Math.max(LIVE_FOV_MIN, Number(fov) || LIVE_FOV_MIN);
+    if (f < 1) return Math.max(1, Math.round(f * 60)) + '′';
+    if (f < 10) return (Math.round(f * 10) / 10).toFixed(1) + '°';
+    return Math.round(f) + '°';
+  }
 
   // deviceorientation 의 beta·gamma 만으로 카메라(-Z)의 고도를 계산합니다.
   //   카메라의 지구 z성분 = −cosβ·cosγ  →  고도 = asin(−cosβ·cosγ)
@@ -14805,9 +14830,38 @@ window.Astro = (function () {
     cv.height = Math.round(live.h * dpr);
     live.ctx = cv.getContext('2d');
     live.dpr = dpr;
+    liveHudBottom();   // 상단 HUD 칩 줄의 실제 아래쪽 끝 — 딥칩·깊이 문구의 기준선
     liveDirty = true;
     aimFit();          // 조준 유도 캔버스·안전 영역도 같은 크기로
     kickLive();
+  }
+
+  /* 라이브 상단 기준선 — 방위·고도·센서 칩 줄의 실제 아래쪽 끝(무대 기준 CSS px).
+     · 무대(캔버스)는 화면 맨 위(y=0)부터 차지만, iPhone 홈 화면 앱의 상태바 블러·
+       다이나믹 아일랜드 안에는 글자·칩이 들어가면 안 됩니다. CSS 의 HUD top 은
+       env(safe-area-inset-top) 만큼 내려 있고, 그 실제 높이는 기기·시야각·글자 폭에
+       따라 달라지므로(칩이 줄바꿈되기도 합니다) 화면에서 잰 값을 씁니다.
+     · 잰 값은 무대의 --live-hud-b 로도 넘겨, HTML 칩(.live-deep-chip)이 같은
+       기준선 아래에 앉게 합니다. */
+  function liveHudBottom() {
+    const stage = $('#liveStage');
+    const hud = stage && stage.querySelector('.live-hud-top');
+    if (!stage || !hud) return 0;
+    const sr = stage.getBoundingClientRect(), hr = hud.getBoundingClientRect();
+    if (hr.height < 2 || sr.height < 2) return live.hudBottom || 0;
+    const b = Math.max(0, Math.round(hr.bottom - sr.top));
+    live.hudBottom = b;
+    if (stage.style.getPropertyValue('--live-hud-b') !== b + 'px') {
+      stage.style.setProperty('--live-hud-b', b + 'px');
+    }
+    return b;
+  }
+
+  /* 캔버스 좌상단 깊이 문구의 첫 줄 baseline — HUD 칩 줄 아래 8px 에서 시작합니다.
+     (예전에는 52·66 으로 박아 두어 상태바 블러 안에 걸렸습니다) */
+  function liveDeepTopY() {
+    const b = live.hudBottom || liveHudBottom();
+    return (b > 0 ? b + 8 : 44) + 9;
   }
 
   function kickLive() {
@@ -14841,12 +14895,12 @@ window.Astro = (function () {
     const azR = Math.round(A.mod(live.az, 360));
     if (azEl && document.activeElement !== azEl) azEl.value = String(azR);
     if (altEl && document.activeElement !== altEl) altEl.value = String(Math.round(live.alt));
-    if (fovEl && document.activeElement !== fovEl) fovEl.value = String(Math.round(live.fov));
+    if (fovEl && document.activeElement !== fovEl) fovEl.value = String(fovToSlider(live.fov));
     const set = function (sel, txt) { const e = $(sel); if (e) e.textContent = txt; };
     set('#liveAzVal', azR + '°');
     set('#liveAltVal', Math.round(live.alt) + '°');
-    set('#liveFovVal', Math.round(live.fov) + '°');
-    set('#liveFovVal2', Math.round(live.fov) + '°');
+    set('#liveFovVal', fmtFov(live.fov));
+    set('#liveFovVal2', fmtFov(live.fov));
     set('#liveAzChip', '방위 ' + azR + '° ' + dirName(azR));
     set('#liveAltChip', '고도 ' + Math.round(live.alt) + '°');
   }
@@ -15852,7 +15906,7 @@ window.Astro = (function () {
       });
     }
 
-    /* 🌌 딥스카이 확장 — 로컬 확장 성도(6만여 개)·Gaia DR3 실시간.
+    /* 🌌 딥스카이 확장 — 로컬 확장 성도(11만 6천여 개)·Gaia DR3 실시간.
        OFF면 그리지도, 요청하지도 않습니다. */
     drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal);
     live.deepCount = DEEP.liveHits.length;
@@ -16040,15 +16094,21 @@ window.Astro = (function () {
     ctx.moveTo(cx, cy + 5); ctx.lineTo(cx, cy + 15);
     ctx.stroke();
 
-    /* 시야 안내 */
+    /* 시야 안내 — 중앙에 천체가 잡히면 그 이름이 버튼이 되어, 누르면 캔버스에서 그 천체를
+       직접 누른 것과 똑같이 정보 창(#liveInfo)이 열립니다. */
     inView.sort(function (a, b) { return a.d - b.d; });
     const nearest = inView.length ? inView[0] : null;
     const card = $('#liveCenterCard');
     if (card) {
-      const txt = nearest && nearest.d < Math.min(W, H) * 0.42
-        ? '시야 중앙 <b>' + esc(nearest.name) + '</b> · ' + dirName(nearest.az) + ' ' + nf(nearest.alt, 0) + '°'
+      const locked = !!(nearest && nearest.d < Math.min(W, H) * 0.42);
+      const txt = locked
+        ? '시야 중앙 <button type="button" class="lc-name" data-lc-kind="' + esc(nearest.kind) +
+          '" data-lc-key="' + esc(nearest.key) + '" data-lc-name="' + esc(nearest.name) +
+          '" title="' + esc(nearest.name) + ' 정보 보기" aria-label="' + esc(nearest.name) + ' 정보 보기">' +
+          esc(nearest.name) + '</button> · ' + dirName(nearest.az) + ' ' + nf(nearest.alt, 0) + '°'
         : '시야 중앙 — ' + dirName(live.az) + ' ' + nf(live.alt, 0) + '° (천체를 눌러 보세요)';
       if (txt !== live.lastCenter) { card.innerHTML = txt; live.lastCenter = txt; }
+      card.classList.toggle('is-hit', locked);
     }
     const hint = $('#liveDayHint');
     if (hint) hint.hidden = !(dayF > 0.02);
@@ -16096,6 +16156,18 @@ window.Astro = (function () {
     });
     if (best) openLiveInfo(best);
     else { live.selected = null; liveDirty = true; kickLive(); }
+  }
+
+  /* 시야 중앙 카드의 천체 이름 버튼 — 캔버스에서 그 천체를 직접 누른 것과 같은 경로(openLiveInfo)로
+     정보 창을 엽니다. live.hits 에 같은 천체가 있으면 그 항목을 써서 사진·거리까지 같게 뜨고,
+     없으면 종류·키만으로 정보를 찾습니다. */
+  function openCenterObject(kind, key, name) {
+    if (!kind) return;
+    const k = key == null ? '' : String(key);
+    const hit = (live.hits || []).find(function (h) {
+      return h.kind === kind && String(h.key == null ? '' : h.key) === k;
+    });
+    openLiveInfo(hit || { kind: kind, key: k, name: name || '' });
   }
 
 
@@ -16172,13 +16244,13 @@ window.Astro = (function () {
 
   /* ======================================================================
      🌌 딥스카이 확장 (하이브리드 카탈로그)                    2026-11-28
-     · 1단계 — 로컬 확장 성도 6만여 개(5.0~8.5등급, 72칸 타일)를 화면 구역만 지연 로딩
+     · 1단계 — 로컬 확장 성도 11만 6천여 개(5.0~12.0등급, 144칸 타일)를 화면 구역만 지연 로딩
      · 2단계 — 더 깊게 확대하면 Gaia DR3(약 18억 개)를 실시간 조회
      · 상단 「딥스카이 확장 ON/OFF」 하나로 두 단계를 함께 끕니다(네트워크 요청 0건).
      · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
      ====================================================================== */
   const DEEP = {
-    liveLocalFov: 60, liveGaiaFov: 20, skyLocalZoom: 1.5, skyGaiaZoom: 3.2,
+    liveLocalFov: 60, liveGaiaFov: 6,
     hitPool: [], panel: { mode: 'region', idx: 0, q: '' }, timer: null, lastPaint: 0
   };
 
@@ -16202,7 +16274,6 @@ window.Astro = (function () {
       DEEP.timer = null;
       if (!deepOn()) return;
       liveDirty = true; kickLive();
-      if (smz.ready && state.last && smz.s >= DEEP.skyLocalZoom) renderSkyMap(state.last);
       const pd = $('#panelDeep');
       if (pd && !pd.hidden) deepPaintPanel();
     }, 70);
@@ -16210,7 +16281,7 @@ window.Astro = (function () {
 
   function deepSyncUi() {
     const on = deepOn();
-    [['#deepExtBtn', '#deepExtState'], ['#liveDeepChip', '#liveDeepState'], ['#skyDeepChip', '#skyDeepState'],
+    [['#deepExtBtn', '#deepExtState'], ['#liveDeepChip', '#liveDeepState'],
       ['#deepPanelToggle', '#deepPanelState'], ['#deepMenuBtn', '#deepMenuState']].forEach(function (pair) {
         const b = $(pair[0]);
         if (b) b.setAttribute('aria-pressed', String(on));
@@ -16219,11 +16290,10 @@ window.Astro = (function () {
       });
     document.body.classList.toggle('deep-off', !on);
     const note = $('#deepMenuNote');
-    if (note) note.textContent = on ? '확장 성도 6만 + Gaia 실시간' : '꺼짐 · 기본 별만 (데이터 절약)';
+    if (note) note.textContent = on ? '확장 성도 11.6만 + Gaia 실시간' : '꺼짐 · 기본 별만 (데이터 절약)';
     const st = $('#deepStatus');
     if (st) st.textContent = deepStatusText();
     liveDirty = true; kickLive();
-    if (smz.ready && state.last) renderSkyMap(state.last);
   }
 
   function deepToggleClick() {
@@ -16231,44 +16301,35 @@ window.Astro = (function () {
     const next = DeepSky.toggle();
     deepSyncUi();
     toast(next
-      ? '🌌 딥스카이 확장 ON — 확대하면 6만여 별과 Gaia DR3가 나옵니다.'
+      ? '🌌 딥스카이 확장 ON — 확대하면 11만 6천여 별과 Gaia DR3가 나옵니다.'
       : '🌌 딥스카이 확장 OFF — 기본 별만 표시하고 확장 데이터를 받지 않습니다.');
   }
 
   /* -------------------------------------------------- 라이브 뷰 확장 그리기 */
-  /* 시야각(도) → 보이는 확장 성도의 한계 등급.
-     넓게 볼 때는 밝은 별만, 좁힐수록 단계적으로 더 어두운 별까지 — 사이 값은 부드럽게 잇습니다.
-     fov 55° 8.5등 → 40° 9.5등 → 28° 10.5등 → 20° 12.0등 (그 아래는 Gaia가 이어받습니다) */
-  const DEEP_FOV_STOPS = [[60, 6.8], [55, 8.5], [40, 9.5], [28, 10.5], [20, 12.0], [15, 13.0]];
-  function deepMagLimit(fovDeg) {
-    const st = DEEP_FOV_STOPS;
-    if (fovDeg >= st[0][0]) return st[0][1];
-    for (let i = 1; i < st.length; i++) {
-      if (fovDeg >= st[i][0]) {
-        const a = st[i - 1], b = st[i];
-        const t = (a[0] - fovDeg) / Math.max(0.001, a[0] - b[0]);
-        return a[1] + (b[1] - a[1]) * t;
-      }
-    }
-    return st[st.length - 1][1];
+  /* 시야각(도) → 보이는 확장 성도의 한계 등급 — 배율(2배) 곡선.
+     65°에서 6.4등(기본 성도와 자연스럽게 이어짐), 시야가 절반이 될 때마다 +1.45등.
+     각도 선형 보간으로 두면 60→55°에서만 1.7등이 뛰어 별이 우수수 쏟아지고
+     좁은 시야에서는 변화가 둔했습니다 — 로그 곡선은 어느 배율에서나 같은 손맛입니다.
+     로컬 타일은 12.0등까지, 그 아래(더 좁은 시야)는 Gaia DR3(20.7등)가 이어받습니다. */
+  const DEEP_MAG_BASE = 6.4, DEEP_MAG_SLOPE = 1.45, DEEP_MAG_BASE_FOV = 65;
+  function deepMagCurve(fovDeg) {
+    const f = clamp(fovDeg, LIVE_FOV_MIN, DEEP_MAG_BASE_FOV);
+    return DEEP_MAG_BASE + DEEP_MAG_SLOPE * Math.log2(DEEP_MAG_BASE_FOV / f);
   }
-  /* 전천 지도 배율 → 한계 등급 (같은 원리) */
-  const DEEP_ZOOM_STOPS = [[1.5, 7.6], [2.0, 8.5], [2.4, 9.5], [3.0, 10.5], [3.5, 12.0]];
-  function deepMagLimitSky(zoom) {
-    const st = DEEP_ZOOM_STOPS;
-    if (zoom <= st[0][0]) return st[0][1];
-    for (let i = 1; i < st.length; i++) {
-      if (zoom <= st[i][0]) {
-        const a = st[i - 1], b = st[i];
-        const t = (zoom - a[0]) / Math.max(0.001, b[0] - a[0]);
-        return a[1] + (b[1] - a[1]) * t;
-      }
-    }
-    return st[st.length - 1][1];
+  function deepMagLimit(fovDeg) { return Math.min(deepMagCurve(fovDeg), DeepSky.tileMag); }
+  /** 한계 등급에 가까운 별일수록 흐리게 — 등급대마다 페이드 폭을 다르게.
+      밝은 별(≤9등)은 또렷하게 좁게, 중간(≤11등)은 1.5등, 가장 많은 어두운 별은 2.0등에
+      걸쳐 아주 은은하게 떠올라, 어느 배율에서도 화면이 갑자기 별바다가 되지 않습니다. */
+  function deepFade(limit, mag) {
+    const span = mag <= 9 ? 1.0 : mag <= 11 ? 1.5 : 2.0;
+    return clamp((limit - mag) / span, 0, 1);
   }
-  /** 한계 등급에 가까운 별일수록 흐리게 — 시야를 좁히면 어두운 별이 서서히 떠오릅니다. */
-  function deepFade(limit, mag, span) {
-    return clamp((limit - mag) / (span || 1.15), 0, 1);
+  /** 등급대별 최대 밝기·크기 — 어두운 별은 작고 흐리게(같은 알파라도 덜 튀게) */
+  function deepGradeTone(mag) {
+    if (mag <= 6.5) return { r: 1.5, a: 0.78 };
+    if (mag <= 9) return { r: 1.25, a: 0.66 };
+    if (mag <= 11) return { r: 1.0, a: 0.5 };
+    return { r: 0.8, a: 0.36 };
   }
 
   function drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal) {
@@ -16282,7 +16343,7 @@ window.Astro = (function () {
     /* 1단계 — 로컬 타일 (한계 등급은 시야에 따라 단계적으로 깊어짐) */
     let shownN = 0, shownLim = 0;
     if (fovDeg <= DEEP.liveLocalFov) {
-      const rad = clamp(fovDeg * 0.8, 2, 45);
+      const rad = clamp(fovDeg * 0.9, Math.max(0.05, fovDeg * 1.2), 45);
       DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
       const lim = Math.min(deepMagLimit(fovDeg), DeepSky.tileMag);
       shownLim = lim;
@@ -16299,9 +16360,9 @@ window.Astro = (function () {
         if (h.alt < -90) continue;
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
-        const r = s.mag <= 6.5 ? 1.45 : s.mag <= 8.5 ? 1.2 : 1.0;
+        const tone = deepGradeTone(s.mag);
         const k = Math.max(1, Math.round(a * 5));
-        const key = k + '|' + r;
+        const key = k + '|' + tone.a + '|' + tone.r;
         (buckets[key] = buckets[key] || []).push(p);
         shownN++;
         if (hitN < 900 && a >= 0.4) {
@@ -16314,8 +16375,8 @@ window.Astro = (function () {
       }
       Object.keys(buckets).forEach(function (key) {
         const parts = key.split('|');
-        const k = Number(parts[0]), r = Number(parts[1]);
-        ctx.globalAlpha = (k / 5) * 0.62;
+        const k = Number(parts[0]), aMax = Number(parts[1]), r = Number(parts[2]);
+        ctx.globalAlpha = (k / 5) * aMax;
         ctx.fillStyle = col + '1)';
         ctx.beginPath();
         const arr = buckets[key];
@@ -16332,7 +16393,7 @@ window.Astro = (function () {
     /* 2단계 — Gaia DR3 실시간(중앙 정밀 구역) — 로컬 한계(12등)보다 어두운 별을 이어서 */
     let gaiaN = 0;
     if (fovDeg <= DEEP.liveGaiaFov) {
-      const gr = clamp(fovDeg * 0.25, 1.0, 2.5);
+      const gr = clamp(fovDeg * 0.35, 0.02, 2.5);   // 1′ 시야에서도 정밀하게 이 구역만
       DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, deepGaiaMag(fovDeg));
       const gs = DeepSky.gaiaStars();
       const gLim = deepGaiaMag(fovDeg);
@@ -16342,14 +16403,14 @@ window.Astro = (function () {
         const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
         const dDec = g.dec - ctr.dec;
         if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(dDec) > gr * 1.45) continue;
-        const a = clamp((gLim - g.mag) / 1.6, 0.08, 1);
+        const a = clamp((gLim - g.mag) / 2.0, 0.06, 1);
         const h = A.equatorialToHorizontal(g.ra / 15, g.dec, lat, lon, jd);
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
         ctx.globalAlpha = a;
         ctx.fillStyle = isRed() ? 'rgba(255,196,150,.92)' : 'rgba(255,214,140,.92)';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, g.mag <= 14 ? 1.3 : 1.0, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, g.mag <= 14 ? 1.2 : g.mag <= 17 ? 1.0 : 0.8, 0, Math.PI * 2);
         ctx.fill();
         const hit = DEEP.hitPool[1200 + i] || (DEEP.hitPool[1200 + i] = { kind: 'gaia' });
         hit.x = p.x; hit.y = p.y; hit.mag = g.mag; hit.ra = g.ra; hit.dec = g.dec;
@@ -16360,31 +16421,33 @@ window.Astro = (function () {
       ctx.globalAlpha = 1;
     }
 
-    /* 지금 어느 깊이까지 보고 있는지 — 확대 단계가 바뀔 때만 한 줄로 알려 줍니다. */
+    /* 지금 어느 깊이까지 보고 있는지 — 확대 단계가 바뀔 때만 한 줄로 알려 줍니다.
+       기준선은 화면에서 잰 HUD 칩 줄 아래 — 노치·상태바 블러에 걸리지 않습니다. */
     if (live.labels && (shownN || gaiaN)) {
       const meta = DeepSky.gaiaMeta();
+      const topY = liveDeepTopY();
+      live.deepTextY = topY;         // 검증용 — 깊이 문구 첫 줄이 그려지는 y(CSS px)
       ctx.save();
       ctx.globalAlpha = 0.62;
       ctx.font = '600 10px system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillStyle = isRed() ? 'rgba(255,190,160,.9)' : 'rgba(206,224,255,.85)';
-      if (shownN) ctx.fillText('확장 성도 ' + shownN.toLocaleString('en-US') + '개 · ' + shownLim.toFixed(1) + '등급까지', 12, 52);
+      if (shownN) ctx.fillText('확장 성도 ' + shownN.toLocaleString('en-US') + '개 · ' + shownLim.toFixed(1) + '등급까지', 12, topY);
       if (fovDeg <= DEEP.liveGaiaFov) {
         ctx.fillStyle = isRed() ? '#ffb08a' : '#ffd479';
         const txt = meta.busy ? 'Gaia DR3 조회 중…'
           : gaiaN ? 'Gaia DR3 ' + gaiaN + '개 · ' + deepGaiaMag(fovDeg).toFixed(1) + '등급까지'
             : 'Gaia DR3 — 이 구역 응답 없음(로컬 확장 성도만)';
-        ctx.fillText(txt, 12, 66);
+        ctx.fillText(txt, 12, topY + 14);
       }
       ctx.restore();
     }
   }
 
-  /** 시야에 따른 Gaia 한계 등급 — 좁힐수록 14 → 18등까지 */
+  /** 시야에 따른 Gaia 한계 등급 — 1′까지 이어서 20.7등(Gaia DR3 실관측 한계)까지 깊어집니다.
+      20° 8.9등 … 6° 11.4등 … 1° 15.1등 … 15′ 18.0등 … 1′ 20.8등(포화). */
   function deepGaiaMag(fovDeg) {
-    if (fovDeg <= 15) return 18;
-    if (fovDeg >= 20) return 15;
-    return 15 + (20 - fovDeg) / 5 * 3;   // 20° 15등 → 15° 18등
+    return clamp(deepMagCurve(fovDeg), 11.5, 20.8);
   }
 
   /* 확장 별·Gaia 별 → 정보 창 모양으로 */
@@ -16403,7 +16466,9 @@ window.Astro = (function () {
     if (typeof bv === 'number') {
       facts.push([isGaia ? '색지수 BP−RP' : '색지수 B−V', nf(bv, 2) + (bv > 1.2 ? ' · 붉은 별' : bv < 0.4 ? ' · 푸른 별' : ' · 흰빛 별')]);
     }
-    facts.push(['카탈로그', isGaia ? 'Gaia DR3 (약 18억 개) · 실시간 조회' : 'HYG v4.1 확장 성도 · 로컬 타일']);
+    facts.push(['카탈로그', isGaia ? 'Gaia DR3 (약 18억 개) · 실시간 조회'
+      : (hit.cat && window.DeepSky ? DeepSky.catalogName(hit.cat) + ' · HYG v4.1 확장 성도(로컬 타일)'
+        : 'HYG v4.1 확장 성도 · 로컬 타일')]);
     return {
       kind: 'star',
       key: isGaia ? 'gaia:' + hit.id : 'deep:' + raH.toFixed(3) + '/' + decD.toFixed(3),
@@ -16414,7 +16479,7 @@ window.Astro = (function () {
         ? 'HYG 원본 카탈로그의 이름 있는 별입니다. 확장 성도·Gaia는 퀴즈와 기본 도감(2,571종)에 섞이지 않습니다.'
         : (isGaia
           ? 'Gaia DR3에서 방금 받아 온 별입니다. 지금 본 시야의 중심 구역을 실시간으로 조회한 결과이고, 네트워크가 없으면 로컬 확장 성도만 남습니다.'
-          : 'HYG 원본 카탈로그의 5~8.5등급 별입니다. 화면에 걸치는 타일만 받아 그립니다.'),
+          : 'HYG 원본 카탈로그의 5~12등급 별입니다. 화면에 걸치는 타일만 받아 그립니다.'),
       mag: hit.mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni,
       deep: true,
       facts: facts
@@ -16424,7 +16489,8 @@ window.Astro = (function () {
   /** 전천 지도에서 확장 별을 눌렀을 때 — 같은 정보 카드(모달)를 엽니다. */
   function openDeepStar(o) {
     if (!o || !isFinite(o.ra) || !isFinite(o.dec)) return;
-    openSkyCard(deepStarInfo({ kind: 'deepstar', ra: o.ra, dec: o.dec, mag: o.mag, ci: null, name: o.name || '', id: null }));
+    openSkyCard(deepStarInfo({ kind: 'deepstar', ra: o.ra, dec: o.dec, mag: o.mag, ci: o.ci == null ? null : o.ci,
+      name: o.name || '', cat: o.cat || '', id: null }));
   }
 
   /* -------------------------------------------------- 확장 도감 탭 (panelDeep) */
@@ -16460,7 +16526,8 @@ window.Astro = (function () {
     const nm = o.name || (isGaia ? 'Gaia DR3 ' + o.id : '확장 별');
     const key = isGaia
       ? ' data-deep-gaia="' + esc(String(o.id)) + '" data-ra="' + o.ra + '" data-dec="' + o.dec + '" data-mag="' + o.mag + '" data-bprp="' + (o.bp_rp == null ? '' : o.bp_rp) + '" data-plx="' + (o.plx == null ? '' : o.plx) + '"'
-      : ' data-deep-star="1" data-ra="' + o.ra + '" data-dec="' + o.dec + '" data-mag="' + o.mag + '" data-name="' + esc(o.name || '') + '"';
+      : ' data-deep-star="1" data-ra="' + o.ra + '" data-dec="' + o.dec + '" data-mag="' + o.mag +
+        '" data-name="' + esc(o.name || '') + '" data-cat="' + esc(o.cat || '') + '" data-ci="' + (o.ci == null ? '' : o.ci) + '"';
     return '<button class="deep-card" type="button"' + key + '>' +
       '<b>' + esc(nm) + '</b>' +
       '<small>' + fmtRA(raH) + ' · ' + fmtDec(o.dec) + ' · ' + nf(o.mag, 2) + '등</small>' +
@@ -16552,7 +16619,7 @@ window.Astro = (function () {
   }
 
   function wireDeep() {
-    ['#deepExtBtn', '#liveDeepChip', '#skyDeepChip', '#deepPanelToggle', '#deepMenuBtn'].forEach(function (sel) {
+    ['#deepExtBtn', '#liveDeepChip', '#deepPanelToggle', '#deepMenuBtn'].forEach(function (sel) {
       const b = $(sel);
       if (b) b.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); deepToggleClick(); });
     });
@@ -16589,110 +16656,14 @@ window.Astro = (function () {
           ci: bp === '' ? null : Number(bp), plx: plx === '' ? null : Number(plx), name: ''
         }));
       } else {
-        openDeepStar({ ra: ra, dec: dec, mag: mag, name: b.getAttribute('data-name') || '' });
+        const ciRaw = b.getAttribute('data-ci');
+        openDeepStar({ ra: ra, dec: dec, mag: mag, name: b.getAttribute('data-name') || '',
+          cat: b.getAttribute('data-cat') || '', ci: ciRaw === '' || ciRaw == null ? null : Number(ciRaw) });
       }
     });
     if (window.DeepSky) {
       DeepSky.subscribe(function () { deepSyncUi(); deepSchedule(); });
     }
-  }
-
-  /* -------------------------------------------------- 전천 지도 확장 그리기 */
-  /** 확대한 전천 지도의 화면 가운데가 가리키는 하늘(고도·방위)과 보이는 반경(도) */
-  function skyMapViewCenter() {
-    const el = skyMapEl();
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    if (!r.width) return null;
-    const s = smz.applied || 1;
-    /* 변환: p' = (p − L)·s + L + t,  바뀐 사각형 중심 = L + t
-       ⇒ 기준 좌표 p = (V − 바뀐 사각형 중심)/s + L */
-    const bcx = r.left + r.width / 2 - smz.tx, bcy = r.top + r.height / 2 - smz.ty;
-    const vw = window.innerWidth || r.width, vh = window.innerHeight || r.height;
-    const vx = Math.max(r.left, Math.min(r.right, vw / 2));
-    const vy = Math.max(r.top, Math.min(r.bottom, vh / 2));
-    const bx = 210 + (vx - bcx) / s, by = 206 + (vy - bcy) / s;
-    const dx = bx - 210, dy = by - 206;
-    const rr = Math.hypot(dx, dy);
-    const alt = 90 * (1 - Math.min(1, rr / 184));
-    const az = A.mod(Math.atan2(-dx, -dy) * 180 / Math.PI, 360);
-    /* 화면에 실제로 보이는 반경(SVG 단위) → 각도(도) — 화면 반높이 ÷ 배율 */
-    const half = Math.min(window.innerWidth || 400, window.innerHeight || 400) / 2;
-    const units = half * 420 / Math.max(1, r.width);
-    const radius = Math.min(95, units * (90 / 184));
-    return { alt: alt, az: az, radius: radius };
-  }
-
-  function skyDeepSvg(c, smLayer, proj) {
-    if (!deepOn() || smz.s < DEEP.skyLocalZoom) return '';   // 넓게 볼 때는 확장 타일을 부르지 않습니다
-    const vc = skyMapViewCenter();
-    if (!vc) return '';
-    const ctr = altAzToRaDec(vc.alt, vc.az, c.jd);
-    const rad = Math.min(95, Math.max(8, vc.radius * 1.3));
-    DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
-    /* 배율이 커질수록 단계적으로 더 어두운 별까지 — 한계에 가까운 별은 흐리게 떠오릅니다. */
-    const lim = Math.min(deepMagLimitSky(smz.s), DeepSky.tileMag);
-    const list = DeepSky.starsIn(ctr.raDeg, ctr.dec, rad, lim);
-    window.__skyDeep = { limit: lim, zoom: smz.s, candidates: list.length };
-    const red = isRed();
-    const base = red ? [255, 170, 140] : [206, 224, 255];
-    let out = '';
-    let n = 0;
-    const buckets = {};      // 알파 단계별 path 문자열
-    const taps = [];
-    for (let i = 0; i < list.length && n < 5000; i++) {
-      const s = list[i];
-      const a = deepFade(lim, s.mag);
-      if (a <= 0.06) continue;
-      const h = A.equatorialToHorizontal(s.ra / 15, s.dec, state.site.lat, state.site.lon, c.jd);
-      if (h.alt <= 0) continue;
-      const p = proj(h.alt, h.az);
-      const rr = s.mag <= 7 ? 1.25 : s.mag <= 9.5 ? 1.0 : 0.8;
-      const k = Math.max(1, Math.round(a * 4));
-      const d = 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-      (buckets[k + '|' + rr] = buckets[k + '|' + rr] || []).push(d);
-      if (a >= 0.4 && taps.length < 220) taps.push({ s: s, p: p });
-      n++;
-    }
-    if (window.__skyDeep) window.__skyDeep.shown = n;
-    Object.keys(buckets).forEach(function (key) {
-      const parts = key.split('|');
-      const k = Number(parts[0]), rr = Number(parts[1]);
-      const op = ((k / 4) * 0.75).toFixed(2);
-      out += '<path d="' + buckets[key].join('') + '" fill="none" stroke="rgba(' +
-        base[0] + ',' + base[1] + ',' + base[2] + ',' + op + ')" stroke-width="' + (rr * 2).toFixed(1) +
-        '" stroke-linecap="round"/>';
-    });
-    for (let i = 0; i < taps.length; i++) {
-      const t = taps[i];
-      const key = t.s.ra.toFixed(3) + '|' + t.s.dec.toFixed(3) + '|' + t.s.mag.toFixed(2) + '|' + encodeURIComponent(t.s.name || '');
-      out += '<circle cx="' + t.p.x.toFixed(1) + '" cy="' + t.p.y.toFixed(1) + '" r="6" fill="transparent" data-sky="deep:' + key + '" style="cursor:pointer"/>';
-    }
-    /* 2단계 — Gaia DR3 (3.2× 이상) — 로컬 12등보다 어두운 별을 이어서 */
-    if (smz.s >= DEEP.skyGaiaZoom) {
-      const gLim = clamp(15 + (smz.s - 3.2) / 0.3 * 3, 15, 18);
-      const gr = clamp(vc.radius * 0.45, 1.2, 4);
-      DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, gLim);
-      const gs = DeepSky.gaiaStars();
-      const cosD = Math.cos(ctr.dec * RAD);
-      const gcol = red ? '255,196,150,' : '255,214,140,';
-      const gb = {};
-      for (let i = 0; i < gs.length; i++) {
-        const g = gs[i];
-        const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
-        if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(g.dec - ctr.dec) > gr * 1.45) continue;
-        const h = A.equatorialToHorizontal(g.ra / 15, g.dec, state.site.lat, state.site.lon, c.jd);
-        if (h.alt <= 0) continue;
-        const p = proj(h.alt, h.az);
-        const k = Math.max(1, Math.round(clamp((gLim - g.mag) / 1.6, 0.08, 1) * 4));
-        (gb[k] = gb[k] || []).push('M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1));
-      }
-      Object.keys(gb).forEach(function (k) {
-        const op = ((Number(k) / 4) * 0.9).toFixed(2);
-        out += '<path d="' + gb[k].join('') + '" fill="none" stroke="rgba(' + gcol + op + ')" stroke-width="1.8" stroke-linecap="round"/>';
-      });
-    }
-    return out;
   }
 
   /** 전체 도감 항목 하나를 라이브 정보 창·상세 카드용으로 변환합니다. */
@@ -17216,6 +17187,10 @@ window.Astro = (function () {
     },
     aimTick: function () { aim.fitAt = 0; return aimUpdate(); },
     aimClear: function (silent) { aimClear(silent === undefined ? true : silent); },
+    /* 시야 표시·슬라이더 변환 — 화면·검증에서 같은 규칙을 씁니다. */
+    fovToSlider: fovToSlider,
+    sliderToFov: sliderToFov,
+    fmtFov: fmtFov,
     /* 검증용 — 센서 없이 시선을 옮깁니다(드래그와 같은 경로: targetAz/Alt 도 함께). */
     setView: function (az, alt, fov) {
       if (az != null) { live.az = live.targetAz = A.mod(az, 360); }
@@ -17538,6 +17513,11 @@ window.Astro = (function () {
     window.addEventListener('resize', function () { liveResize(); });
     if (window.ResizeObserver) {
       try { new ResizeObserver(function () { liveResize(); }).observe($('#liveStage')); } catch (e) { }
+      /* 칩 글자가 길어져 줄이 바뀌면 무대 크기는 그대로라 위 관찰자가 못 잡습니다. */
+      const hudTop = document.querySelector('#liveStage .live-hud-top');
+      if (hudTop) {
+        try { new ResizeObserver(function () { liveHudBottom(); }).observe(hudTop); } catch (e) { }
+      }
     }
     setSensorUi(false, 'off', '센서 꺼짐');
     syncLiveInputs();
@@ -17546,6 +17526,15 @@ window.Astro = (function () {
     if (guideX) guideX.addEventListener('click', function (ev) {
       ev.stopPropagation();
       aimClear();
+    });
+    /* 시야 중앙 카드 — 강조된 천체 이름을 누르면 그 천체 정보 창이 열립니다.
+       (천체가 잡히지 않은 기본 안내일 때는 카드가 pointer-events:none 이라 클릭을 막지 않습니다) */
+    const centerCard = $('#liveCenterCard');
+    if (centerCard) centerCard.addEventListener('click', function (ev) {
+      const b = ev.target && ev.target.closest ? ev.target.closest('[data-lc-kind]') : null;
+      if (!b) return;
+      ev.preventDefault(); ev.stopPropagation();
+      openCenterObject(b.getAttribute('data-lc-kind'), b.getAttribute('data-lc-key'), b.getAttribute('data-lc-name'));
     });
     liveDirty = true;
     kickLive();
@@ -17688,15 +17677,16 @@ window.Astro = (function () {
     };
     bindRange('#liveAz', function (v) { live.az = v; live.targetAz = v; });
     bindRange('#liveAlt', function (v) { live.alt = v; live.targetAlt = v; });
-    bindRange('#liveFov', function (v) { live.fov = v; });
+    bindRange('#liveFov', function (v) { live.fov = sliderToFov(v); });
+    /* ＋/－ 는 비율로 — 115°에서 1′까지 끊김 없이 이어집니다(넓은 시야는 보폭을 조금 크게). */
     $('#liveZoomIn').addEventListener('click', function () {
       inertCancel();
-      live.fov = clamp(live.fov - 10, LIVE_FOV_MIN, LIVE_FOV_MAX);
+      live.fov = clamp(live.fov * (live.fov > 20 ? 0.78 : 0.82), LIVE_FOV_MIN, LIVE_FOV_MAX);
       liveDirty = true; kickLive();
     });
     $('#liveZoomOut').addEventListener('click', function () {
       inertCancel();
-      live.fov = clamp(live.fov + 10, LIVE_FOV_MIN, LIVE_FOV_MAX);
+      live.fov = clamp(live.fov * (live.fov > 20 ? 1.28 : 1.22), LIVE_FOV_MIN, LIVE_FOV_MAX);
       liveDirty = true; kickLive();
     });
     $('#liveLabelsBtn').addEventListener('click', function () {

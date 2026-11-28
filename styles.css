@@ -1176,6 +1176,21 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
   backdrop-filter: blur(6px); pointer-events: none;
 }
 .live-center-card b { color: var(--accent); }
+/* 시야 중앙에 잡힌 천체 이름 — 누르면 그 천체의 정보 창(#liveInfo)이 열리는 버튼.
+   카드 자체는 pointer-events:none 이라, 천체가 잡혔을 때만 이름 버튼이 클릭을 받습니다. */
+.live-center-card .lc-name {
+  pointer-events: auto; cursor: pointer;
+  font: inherit; font-weight: 800; color: var(--accent);
+  background: rgba(255, 212, 121, .13); border: 1px solid rgba(255, 212, 121, .38);
+  border-radius: 8px; padding: 1px 7px; margin: 0 1px;
+  text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
+.live-center-card .lc-name:hover { background: rgba(255, 212, 121, .22); }
+.live-center-card .lc-name:active { transform: scale(.96); }
+body.red .live-center-card .lc-name {
+  color: #ffb08a; background: rgba(255, 150, 110, .16); border-color: rgba(255, 150, 110, .42);
+}
 .live-zoom {
   position: absolute; right: 10px; bottom: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
@@ -3688,23 +3703,23 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
   transition: background .18s ease, box-shadow .18s ease;
 }
 .deep-toggle { gap: 6px; }
-.deep-toggle .dt-state, .deep-switch-txt em, .more-item b em, .live-deep-chip b, .sky-deep-btn b {
+.deep-toggle .dt-state, .deep-switch-txt em, .more-item b em, .live-deep-chip b {
   font-style: normal; font-weight: 800;
 }
 .deep-toggle[aria-pressed="false"] .dt-dot,
 .deep-switch[aria-pressed="false"] .dt-dot,
 .live-deep-chip[aria-pressed="false"] .dt-dot,
-.sky-deep-btn[aria-pressed="false"] .dt-dot,
 #deepMenuBtn[aria-pressed="false"] .dt-dot { background: #7c88a3; box-shadow: 0 0 0 2px rgba(124, 136, 163, .16); }
 .deep-toggle[aria-pressed="false"] .dt-state,
 .deep-switch[aria-pressed="false"] em,
 .live-deep-chip[aria-pressed="false"] b,
-.sky-deep-btn[aria-pressed="false"] b,
 #deepMenuBtn[aria-pressed="false"] #deepMenuState { color: #9aa6c0; }
 
-/* 라이브 뷰 상단 — 딥스카이 확장 칩 */
+/* 라이브 뷰 상단 — 딥스카이 확장 칩
+   top 은 JS 가 잰 HUD 칩 줄의 실제 아래쪽 끝(--live-hud-b) + 8px.
+   상태바 블러·노치 안으로 올라가지 않고, 방위·고도·센서 칩과도 겹치지 않습니다. */
 .live-deep-chip {
-  position: absolute; top: 46px; right: 12px; z-index: 6;
+  position: absolute; top: calc(var(--live-hud-b, 44px) + 8px); right: 12px; z-index: 6;
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 10px; border-radius: 999px;
   font: 700 .68rem/1.2 system-ui, sans-serif;
@@ -3714,8 +3729,6 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
 }
 .live-deep-chip[aria-pressed="false"] { color: #b9c2d4; border-color: rgba(150, 165, 190, .3); }
 .live-deep-chip:active { transform: scale(.97); }
-
-.sky-deep-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
 
 /* 확장 도감 탭 */
 .deep-shell { display: flex; flex-direction: column; gap: 12px; }
@@ -3760,7 +3773,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
   .deep-search input { flex: 1 1 100%; }
   .deep-search .btn { width: 100%; }
   .deep-list { grid-template-columns: 1fr 1fr; }
-  .live-deep-chip { top: 44px; right: 10px; font-size: .64rem; padding: 4px 8px; }
+  .live-deep-chip { right: 10px; font-size: .64rem; padding: 4px 8px; }
 }
 @media (max-width: 340px) {
   .deep-list { grid-template-columns: 1fr; }
