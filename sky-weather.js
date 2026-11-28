@@ -88,6 +88,13 @@
     return null;
   }
 
+  /** 요청 마지막 날 — Open-Meteo 예보 제공 범위(오늘~오늘+15일)를 넘기면 400이 나므로 잘라 줍니다. */
+  function clampEnd(endDate, today) {
+    var p = String(today).split('-').map(Number);
+    var maxEnd = new Date(Date.UTC(p[0], p[1] - 1, p[2] + 15)).toISOString().slice(0, 10);
+    return endDate > maxEnd ? maxEnd : endDate;
+  }
+
   /** 캐시에 있는 값만 (네트워크 호출 없음). 없으면 null */
   function cached(lat, lon, date) { return rawCached(lat, lon, date); }
 
@@ -112,7 +119,7 @@
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
       '&hourly=cloud_cover,precipitation,precipitation_probability' +
-      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + addDay(date);
+      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + clampEnd(addDay(date), today);
 
     function finish(snap) {
       mem[k] = { ts: Date.now(), snap: snap };
@@ -238,7 +245,7 @@
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
       '&hourly=cloud_cover,precipitation,precipitation_probability' +
-      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + addDay(endDate);
+      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + clampEnd(addDay(endDate), today);
 
     var done = false;
     function finish(json) {
