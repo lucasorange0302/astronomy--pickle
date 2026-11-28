@@ -2584,12 +2584,14 @@
      ====================================================================== */
   const live = {
     az: 180, alt: 32, fov: 65, targetAz: 180, targetAlt: 32,
+    roll: 0,                        // 센서 추적 중 폰을 옆으로 기운 만큼의 화면 기울기(도). 수동은 0
     labels: true, deep: true, sensor: false, gotEvent: false,
     grid: true, gridA: 0.55, gridLast: 0.55,   // 격자 표시 · 진하기(0~1) · 끄기 전 값
     w: 0, h: 0, dpr: 1, canvas: null, ctx: null,
     raf: null, hits: [], starHitPool: [], lastIv: 0, lastCenter: '', selected: null
   };
   let liveDirty = true;
+  let liveRollRaf = null;      // 센서를 꺼을 때 기울기를 0으로 되돌리는 애니메이션 핸들
 
   /* ----------------------------------------------------------------------
      센서 추적 엔진 — 스텔라리움식 융합
@@ -2817,22 +2819,70 @@
     return Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], ang), q));
   }
   /* 화면 기준틀 — 시선(방위·고도)에서 오른쪽·위 벡터를 만듭니다.
-     · 오른쪽 벡터는 언제나 '방위가 정하는 수평 방향'=(cosA, −sinA, 0) 입니다.
+     · 오른쪽 벡터의 기본값은 언제나 '방위가 정하는 수평 방향'=(cosA, −sinA, 0) 입니다.
        (fwd × [0,0,1] 을 정규화한 값과 같고, 고도가 ±90°에 가도 방향이 흔들리지 않습니다.)
      · 예전에는 고도가 87.4°(|fwd.z| > 0.999)를 넘는 순간 기준 벡터를 [0,0,1] → [0,1,0]
        으로 바꿔 오른쪽 벡터를 다시 만들었습니다. 그 전환 자체가 방위축 둘레로 90° 가까운
        회전이라, 천정을 보려고 고도를 올리면 하늘 전체가 홱 돌아 보였습니다
-       (남현님 제보 '최고 각도 높이로 올라가면 각도가 자꾸 급변'). 그래서 전환을 없앴습니다. */
-  function camBasis(azDeg, altDeg) {
+       (남현님 제보 '최고 각도 높이로 올라가면 각도가 자꾸 급변'). 그래서 전환을 없앴습니다.
+     · rollDeg — 시선(fwd) 둘레의 화면 기울기. 0 이면 지평선이 화면과 나란하고(수동 드래그),
+       실시간 센서 추적 중에는 폰을 옆으로 기울인 만큼(right·up 벡터를 fwd 둘레로 회전)
+       지평선과 별자리가 실제 땅·하늘 방향에 고정됩니다. (v3.1 — 제보 '폰을 옆으로 돌리면
+       지구의 지평선이 같이 돌아간다') */
+  function rotAbout(k, v, c, s) {
+    // 로드리게스 공식 — 축 k(단위벡터) 둘레로 v 를 각(cos=c, sin=s)만큼 회전
+    const kv = [k[1] * v[2] - k[2] * v[1], k[2] * v[0] - k[0] * v[2], k[0] * v[1] - k[1] * v[0]];
+    const kd = k[0] * v[0] + k[1] * v[1] + k[2] * v[2];
+    return [
+      v[0] * c + kv[0] * s + k[0] * kd * (1 - c),
+      v[1] * c + kv[1] * s + k[1] * kd * (1 - c),
+      v[2] * c + kv[2] * s + k[2] * kd * (1 - c)
+    ];
+  }
+  function camBasis(azDeg, altDeg, rollDeg) {
     const a = clamp(altDeg, -90, 90) * RAD, z = azDeg * RAD;
     const fwd = [Math.cos(a) * Math.sin(z), Math.cos(a) * Math.cos(z), Math.sin(a)];
-    const right = [Math.cos(z), -Math.sin(z), 0];
-    const up = [
+    let right = [Math.cos(z), -Math.sin(z), 0];
+    let up = [
       right[1] * fwd[2] - right[2] * fwd[1],
       right[2] * fwd[0] - right[0] * fwd[2],
       right[0] * fwd[1] - right[1] * fwd[0]
     ];
-    return { fwd: fwd, right: right, up: up };
+    const roll = Number(rollDeg) || 0;
+    if (roll) {
+      const r = roll * RAD, c = Math.cos(r), s = Math.sin(r);
+      right = rotAbout(fwd, right, c, s);
+      up = rotAbout(fwd, up, c, s);
+    }
+    return { fwd: fwd, right: right, up: up, roll: roll };
+  }
+
+  /* 화면이 지금 어느 쪽을 '위'로 보고 있는가 — screen.orientation.angle 만큼 기기 축을 돌립니다.
+     0(세로) → 기기 +Y, 90(반시계로 눕힘) → +X, 180 → −Y, 270 → −X. */
+  function screenAngleDeg() {
+    try {
+      const o = window.screen && window.screen.orientation;
+      if (o && typeof o.angle === 'number') return o.angle;
+    } catch (e) { }
+    return (typeof window.orientation === 'number') ? window.orientation : 0;
+  }
+  /* 기기 자세(track.q)에서 '화면 위'가 실제로 기운 각도를 뽑습니다.
+     camBasis(az, alt, 0).up 을 기준으로, 그 축 둘레에서 실제 화면 위 벡터까지의 부호 있는 각도. */
+  function rollFromQuat(q, azDeg, altDeg) {
+    if (!q) return 0;
+    const fwd = camBasis(azDeg, altDeg).fwd;
+    const th = screenAngleDeg() * RAD;
+    const upDev = Q.rot(q, [Math.sin(th), Math.cos(th), 0]);
+    const kd = upDev[0] * fwd[0] + upDev[1] * fwd[1] + upDev[2] * fwd[2];
+    let u = [upDev[0] - fwd[0] * kd, upDev[1] - fwd[1] * kd, upDev[2] - fwd[2] * kd];
+    const n = Math.hypot(u[0], u[1], u[2]);
+    if (n < 0.02) return 0;            // 시선과 화면 위가 거의 나란함(짐벌) — 롤을 정할 수 없음
+    u = [u[0] / n, u[1] / n, u[2] / n];
+    const b = camBasis(azDeg, altDeg).up;
+    const cr = [b[1] * u[2] - b[2] * u[1], b[2] * u[0] - b[0] * u[2], b[0] * u[1] - b[1] * u[0]];
+    const sn = cr[0] * fwd[0] + cr[1] * fwd[1] + cr[2] * fwd[2];
+    const cs = b[0] * u[0] + b[1] * u[1] + b[2] * u[2];
+    return Math.atan2(sn, cs) / RAD;
   }
 
   // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계.
@@ -2900,6 +2950,7 @@
     realignT: 0,                   // 그 정렬 직후 이 시각까지는 오일러 자세를 그대로 따라감
     compReset: false,              // 다음 나침반을 이상치 차단 없이 새 기준으로 받을 표시
     az: 180, alt: 30,
+    roll: 0,                       // 화면에 반영한 기울기(도) — 센서 추적 중에만 0 이 아닙니다
     sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
     clock: null, feedT: null,      // 검증 훅(feed)의 가상 시계 — 실기기에서는 null
     suspendUntil: 0,
@@ -2908,6 +2959,8 @@
 
   function trackReset() {
     track.q = null; track.ready = false; track.rot = [0, 0, 0];
+    track.roll = 0;
+    live.roll = 0;
     track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
     track.acc = null; track.altTarget = null; track.rawAlt = null; track.calAz = 0;
     track.eulerQ = null; track.eulerT = 0; track.pinned = false;
@@ -3096,11 +3149,27 @@
     const cap = (gyroLive ? 300 : 140) * dt;
     const sAz = clamp(dAz * k, -cap, cap);
     const sAlt = clamp(dAlt * k, -cap, cap);
-    if (!sAz && !sAlt) return false;
-    track.az = A.mod(track.az + sAz, 360);
-    track.alt = clamp(track.alt + sAlt, ALT_MIN, ALT_MAX);
-    live.az = track.az;
-    live.alt = track.alt;
+    /* 화면 기울기(롤) — 기기 자세에서 실제 '화면 위'가 기운 각도를 뽑아 같은 방식(데드존·저역통과·
+       최대 각속도)으로 따라갑니다. 방위·고도가 실제로 바뀌지 않아도 폰을 옆으로 돌리면
+       이 값만 움직여 지평선과 별자리가 땅·하늘 방향에 고정됩니다.
+       천정·천저 근처(polarGain 0)는 방위와 마찬가지로 롤도 재우는 것이 맞습니다 —
+       그 자리에는 지평선이 보이지 않고, 방위가 특이점이라 롤 기준도 같이 흔들립니다. */
+    const rTarget = rollFromQuat(track.q, track.az + sAz, track.alt + sAlt);
+    const rollGain = polarGain(track.alt + sAlt);
+    let dRoll = rollGain > 0.001 ? shortestDelta(track.roll, rTarget) * rollGain : 0;
+    if (Math.abs(dRoll) < 0.3) dRoll = 0;                 // 손떨림 데드존
+    const sRoll = clamp(dRoll * k, -cap, cap);
+    if (!sAz && !sAlt && !sRoll) return false;
+    if (sAz || sAlt) {
+      track.az = A.mod(track.az + sAz, 360);
+      track.alt = clamp(track.alt + sAlt, ALT_MIN, ALT_MAX);
+      live.az = track.az;
+      live.alt = track.alt;
+    }
+    if (sRoll) {
+      track.roll = A.mod(track.roll + sRoll + 180, 360) - 180;
+      live.roll = track.roll;
+    }
     return true;
   }
 
@@ -3272,7 +3341,7 @@
     const W = live.w, H = live.h, cx = W / 2, cy = H / 2;
     const fovDeg = clamp(live.fov, LIVE_FOV_MIN, 130);
     const fov = fovDeg * RAD;
-    const basis = camBasis(live.az, live.alt);
+    const basis = camBasis(live.az, live.alt, live.sensor ? live.roll : 0);
     const fwd = basis.fwd, right = basis.right, up = basis.up;
     const kS = (H / 2) / Math.tan(fov / 4);
     function project(alt, az) {
@@ -4417,85 +4486,110 @@
         return { x: cx - rr * (ex / hyp), y: cy - rr * (ny / hyp), alt: alt };
       };
     }
+    /* 전천 지도용 은하수 이미지 — 라이브 뷰 텍스처를 천정 중심 방위각·거리 투영 그대로 샘플링합니다.
+       · 캔버스 한 장(지도 원을 꽉 채우는 정사각) → toDataURL → SVG <image> 로 넣습니다.
+       · 캐시 키 = 위도|경도|10분 단위 jd|색 모드|크기 (지도는 시간이 바뀔 때만 다시 그립니다)
+       · 텍스처·계산 결과는 라이브 뷰와 같은 것이라 지도와 라이브 하늘이 같은 얼굴을 갖습니다. */
+    let mapCv = null, mapCache = {}, mapCacheN = 0, mapLast = { px: 0, ms: 0, bytes: 0 };
+    function mapTexPx(R) { return Math.round(clamp(R * 2 + 4, 160, 460)); }
+    function mapTexture(o) {
+      const R = o.R;
+      if (!(R > 0)) return null;
+      if (!texN) { if (!bakeTexture()) return null; }
+      const side = mapTexPx(R);
+      const lat = Number(o.lat) || 0, lon = Number(o.lon) || 0, jd = Number(o.jd) || 0;
+      const key = lat.toFixed(2) + '|' + lon.toFixed(2) + '|' + Math.round(jd * 144) + '|' +
+        (o.red ? 'r' : 'n') + '|' + side;
+      if (mapCache[key] !== undefined) { mapLast.hit = true; return mapCache[key]; }
+      const t0 = nowMs();
+      const lst = A.lstHours(jd, lon) * 15 * RAD;
+      const cl = Math.cos(lst), sl = Math.sin(lst);
+      const p = lat * RAD, sp = Math.sin(p), cp = Math.cos(p);
+      /* 로컬 지평 기준틀(등·북·천정) — mapProjector 의 역방향 */
+      const Ex = -sl, Ey = cl, Ez = 0;
+      const Nx = -sp * cl, Ny = -sp * sl, Nz = cp;
+      const Ux = cp * cl, Uy = cp * sl, Uz = sp;
+      if (!mapCv) mapCv = document.createElement('canvas');
+      mapCv.width = side; mapCv.height = side;
+      const g = mapCv.getContext('2d');
+      const img = g.createImageData(side, side);
+      const dat = img.data;
+      const tex = o.red ? texR : texN;
+      const TW = TEX_W, TH = TEX_H;
+      const half = side / 2;
+      const k = o.red ? 1.02 : 1.0;           // 텍스처 자체가 옅어 라이브 뷰와 같은 세기로 얹습니다
+      let n = 0;
+      for (let j = 0; j < side; j++) {
+        const dy = (j + 0.5) - half;
+        for (let i = 0; i < side; i++) {
+          const dx = (i + 0.5) - half;
+          const rr = Math.hypot(dx, dy);
+          if (rr > half - 0.5) continue;                    // 원 밖
+          const alt = (90 - 90 * rr / half) * RAD;
+          const ca = Math.cos(alt), sa = Math.sin(alt);
+          const uE = rr > 1e-6 ? -(dx / rr) : 0;
+          const uN = rr > 1e-6 ? -(dy / rr) : 0;
+          const ex = ca * uE, ny = ca * uN, uz = sa;
+          const vx = ex * Ex + ny * Nx + uz * Ux;
+          const vy = ex * Ey + ny * Ny + uz * Uy;
+          const vz = ex * Ez + ny * Nz + uz * Uz;
+          const gz = vx * GZ[0] + vy * GZ[1] + vz * GZ[2];
+          if (gz > 0.64 || gz < -0.64) continue;            // 띠 밖(라이브와 같은 24° 날개보다 조금 넓게)
+          const gx = vx * GX[0] + vy * GX[1] + vz * GX[2];
+          const gy = vx * GY[0] + vy * GY[1] + vz * GY[2];
+          let l = Math.atan2(gy, gx) * DEG;
+          if (l < 0) l += 360;
+          const b = Math.asin(gz) * DEG;
+          /* 이중선형 샘플 (경도 0/360 이음매 처리) */
+          const tx = l * PX_L - 0.5;
+          let ty = (90 - b) * PX_B - 0.5;
+          if (ty < 0) ty = 0; else if (ty > TH - 1.001) ty = TH - 1.001;
+          const y0 = ty | 0, fy = ty - y0;
+          const xi = Math.floor(tx), fx = tx - xi;
+          let x0 = xi % TW; if (x0 < 0) x0 += TW;
+          const x1 = (x0 + 1) % TW;
+          const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy);
+          const w01 = (1 - fx) * fy, w11 = fx * fy;
+          const r0 = y0 * TW * 3, r1 = (y0 + 1) * TW * 3;
+          const a0 = x0 * 3, a1 = x1 * 3;
+          const i00 = r0 + a0, i10 = r0 + a1, i01 = r1 + a0, i11 = r1 + a1;
+          const cr = tex[i00] * w00 + tex[i10] * w10 + tex[i01] * w01 + tex[i11] * w11;
+          const cg = tex[i00 + 1] * w00 + tex[i10 + 1] * w10 + tex[i01 + 1] * w01 + tex[i11 + 1] * w11;
+          const cb = tex[i00 + 2] * w00 + tex[i10 + 2] * w10 + tex[i01 + 2] * w01 + tex[i11 + 2] * w11;
+          const lum = cr + cg + cb;
+          if (lum < 0.7) continue;                          // 사실상 빈 하늘
+          /* 라이브 뷰는 'lighter'(더하기)로 얹지만 SVG <image> 는 그렇게 못 하므로,
+             밝은 곳은 불투명하게 깔고 어두운 곳은 알파로 부드럽게 사라지게 해 같은 결을 냅니다. */
+          const al = clamp((lum - 4) / 12, 0, 1);           // 띠의 몸통은 불투명, 아주 옅은 가장자리만 부드럽게
+          const add = o.red ? 11 : 15;
+          const o4 = ((j * side) + i) * 4;
+          dat[o4] = cr * k + add; dat[o4 + 1] = cg * k + add; dat[o4 + 2] = cb * k + add;
+          dat[o4 + 3] = Math.round(255 * Math.pow(al, 1.4));
+          n++;
+        }
+      }
+      g.putImageData(img, 0, 0);
+      const url = mapCv.toDataURL('image/png');
+      if (mapCacheN > 8) { mapCache = {}; mapCacheN = 0; }       // 캐시가 커지지 않게
+      mapCache[key] = url; mapCacheN++;
+      mapLast = { hit: false, px: side, px_drawn: n, ms: +(nowMs() - t0).toFixed(1), bytes: url.length };
+      return url;
+    }
+
     function paintMap(o) {
       const proj = mapProjector(o.lat, o.lon, o.jd, o.cx, o.cy, o.R);
       const red = !!o.red;
       const out = [];
 
-      /* 띠 — 위도 고리를 겹쳐 그려 부드러운 가장자리를 만듭니다.
-         라이브 뷰와 같은 밝기 감각으로, 예전보다 30% 낮춰 은은하게. */
-      [[22, 0.020, '184,204,250'], [18.5, 0.022, '190,208,250'], [15.5, 0.024, '196,212,250'],
-       [12.8, 0.026, '204,216,248'], [10.4, 0.028, '214,222,246'],
-       [8.2, 0.030, '226,230,242'], [6.2, 0.030, '238,234,232'],
-       [4.4, 0.032, '248,236,218'], [2.8, 0.032, '255,238,206'], [1.5, 0.030, '255,236,200']
-      ].forEach(function (lay) {
-        const half = lay[0];
-        const front = [], back = [];
-        for (let i = 0; i <= 180; i++) {
-          const L = (i * 2) % 360;
-          front.push(proj(galVec(L, half)));
-          back.push(proj(galVec(L, -half)));
-        }
-        let d = '', started = false, any = false;
-        for (let i = 0; i < front.length; i++) {
-          const p = front[i];
-          if (p.alt <= 0.5) { started = false; continue; }
-          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-          started = true; any = true;
-        }
-        for (let i = back.length - 1; i >= 0; i--) {
-          const p = back[i];
-          if (p.alt <= 0.5) { started = false; continue; }
-          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-          started = true; any = true;
-        }
-        if (any) out.push('<path d="' + d + 'Z" fill="rgba(' + (red ? '255,150,116' : lay[2]) + ',' + lay[1] + ')"/>');
-      });
-
-      /* 팽대부 — 은하 중심의 따뜻한 빛 */
-      const gc = proj(gcVec);
-      if (gc.alt > -8) {
-        const rr = Math.max(5, o.R * 13 / 90);
-        out.push('<circle cx="' + gc.x.toFixed(1) + '" cy="' + gc.y.toFixed(1) + '" r="' + rr.toFixed(1) +
-          '" fill="url(#mwWarm)" opacity="' + (gc.alt > 0 ? 0.55 : 0.22) + '"/>');
+      /* 🌌 은하수 — 라이브 뷰와 같은 은하좌표 파노라마 텍스처를 투영에 맞춰 픽셀 샘플링한 한 장.
+         (예전의 10겹 SVG 다각형 띠·별구름 타원·팽대부 원은 경계선이 인위적으로 보여 걷어냈습니다.) */
+      const texUrl = mapTexture(o);
+      if (texUrl) {
+        const side = mapTexPx(o.R);
+        out.push('<image href="' + texUrl + '" x="' + (o.cx - side / 2).toFixed(1) +
+          '" y="' + (o.cy - side / 2).toFixed(1) + '" width="' + side + '" height="' + side +
+          '" preserveAspectRatio="none"/>');
       }
-      /* 밝은 별구름 — 띠의 접선 방향으로 늘인 타원 */
-      [[6.0, -4.2, 5.6], [15.5, -3.6, 4.4], [26.5, -2.0, 4.8], [78.0, 0.3, 7.5],
-       [45.0, -6.0, 5.0], [287.5, -0.8, 5.0], [330.0, -1.0, 5.2]].forEach(function (c) {
-        const p = proj(galVec(c[0], c[1]));
-        if (p.alt <= 1) return;
-        const t1 = proj(galVec(c[0] + 3, c[1])), t2 = proj(galVec(c[0] - 3, c[1]));
-        const ang = Math.atan2(t1.y - t2.y, t1.x - t2.x) * 180 / Math.PI;
-        const rx = Math.max(2.4, o.R * c[2] / 90), ry = rx * 0.62;
-        out.push('<ellipse cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" rx="' + rx.toFixed(1) +
-          '" ry="' + ry.toFixed(1) + '" fill="url(#mwCloud)" opacity="0.5" transform="rotate(' +
-          ang.toFixed(0) + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')"/>');
-      });
-      /* 암흑대 — 먼지 띠는 선으로(가늘고 옅게), 개별 성운은 덩이로 */
-      let dn = '';
-      for (let i = 0; i < lanes.length; i++) {
-        const vs = lanes[i].v;
-        let d = '', started = false, any = false;
-        for (let k = 0; k < vs.length; k++) {
-          const p = proj(vs[k]);
-          if (p.alt <= 0.5) { started = false; continue; }
-          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-          started = true; any = true;
-        }
-        if (any) dn += d;
-      }
-      if (dn) out.push('<path d="' + dn + '" fill="none" stroke="rgba(3,5,12,0.5)" stroke-width="' +
-        Math.max(1.1, o.R * 1.3 / 90).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>');
-      let dk = '';
-      for (let i = 0; i < dark.length; i++) {
-        const bl = dark[i];
-        if (bl.a < 0.3) continue;                  // 큰 덩이만 (지도는 작습니다)
-        const p = proj(bl.v);
-        if (p.alt <= 1) continue;
-        const rr = Math.max(1.2, o.R * bl.r * 1.1 / 90);
-        dk += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + rr.toFixed(1) + '"/>';
-      }
-      if (dk) out.push('<g fill="url(#mwDark)" opacity="0.9">' + dk + '</g>');
 
       /* 미세 잔별 — 지평선 위의 것만 한 줄 path 로 */
       let d = '', cnt = 0;
@@ -4513,6 +4607,8 @@
 
     return {
       cameraMtx: cameraMtx, paintLive: paintLive, paintMap: paintMap,
+      /* 검증용 — 지도 은하수 이미지를 마지막으로 만들었을 때의 크기·픽셀 수·소요(ms)·캐시 여부 */
+      mapTex: function () { return mapLast; },
       /* 낮·박명처럼 은하수를 그리지 않는 프레임 — 기록을 지워 '그린 수'가 남지 않게 */
       clear: clearLast,
       /* 검증용 — 적도 단위벡터 하나를 카메라 행렬로 돌려 (x, y, z, 고도, den) 을 돌려줍니다.
@@ -5442,10 +5538,10 @@
      · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
      ====================================================================== */
   /* 표시용 수정판 번호 — README 업데이트 이력의 **누적 배포 번호**입니다(30 → v3.0, 31 → v3.1 …).
-     배포할 때 sw.js 의 VERSION(빌드 번호 2026-11-28.21)과 함께 올리고, build.py 가
-     「v3.0 (30번째) · 캐시 2026-11-28.21」을 같이 찍어 두 값이 같은 배포인지 확인합니다.
+     배포할 때 sw.js 의 VERSION(빌드 번호 2026-11-29.01)과 함께 올리고, build.py 가
+     「v3.1 (31번째) · 캐시 2026-11-29.01」을 같이 찍어 두 값이 같은 배포인지 확인합니다.
      ☰ 더보기 하단·공유 카드 하단의 [data-app-version] 에 자동으로 채워집니다. */
-  const APP_RELEASE = '30';
+  const APP_RELEASE = '31';
   function appVersionLabel() {
     const n = parseInt(APP_RELEASE, 10) || 0;
     return '별너울 v' + Math.floor(n / 10) + '.' + (n % 10);      // 30 → v3.0 · 31 → v3.1
@@ -6521,8 +6617,26 @@
     /* 지금 보고 있던 방위·고도를 그대로 유지 — 예전 수동 위치로 되돌아가지 않습니다. */
     live.targetAz = live.az;
     live.targetAlt = live.alt;
+    easeRollOut();
     if (!silent && was) toast('센서를 껐습니다. 드래그·버튼으로 둘러보세요.');
     kickLive();
+  }
+
+  /* 센서를 꺼을 때 화면 기울기를 부드럽게 수평(roll → 0)으로 되돌립니다. */
+  function easeRollOut() {
+    if (liveRollRaf) { cancelAnimationFrame(liveRollRaf); liveRollRaf = null; }
+    if (!live.roll) { live.roll = 0; return; }
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const step = function () {
+      if (live.sensor) { liveRollRaf = null; return; }   // 다시 켰으면 센서 쪽이 주인
+      const t = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+      const r = live.roll * 0.78;
+      live.roll = (Math.abs(r) < 0.2 || t > 700) ? 0 : r;   // 0.7초가 지나면 반드시 수평
+      liveDirty = true;
+      liveDraw();
+      liveRollRaf = live.roll ? requestAnimationFrame(step) : null;
+    };
+    liveRollRaf = requestAnimationFrame(step);
   }
 
   // 화면 구조 개편·테스트에서 쓰는 공개 API
@@ -6530,6 +6644,7 @@
     state: function () {
       return {
         az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen,
+        roll: live.roll,
         compass: track.comp, cal: track.calAz,
         moving: sNow() < track.movingUntil, gate: track.gate, angVel: track.angVel
       };
@@ -6587,6 +6702,7 @@
     mw: function () { return MW.stats(); },
     /* -- 검증용 — 은하좌표 (l, b) 의 텍스처 값 [r, g, b] (더해지는 값, 0~255). */
     mwTex: function (l, b) { return MW.texSample(l, b); },
+    mwMapTex: function () { return MW.mapTex(); },   // 지도 은하수 이미지 생성 시간·크기·캐시 여부
     /* -- 검증용 — 이번 프레임에 그린 달·해·행성·별의 반지름(px). 비율 검사용. */
     bodies: function () { return live.bodies || null; },
     /* -- 검증용 — 확장 성도: 이번 프레임에 그린 수·색을 아는 별 수. */
@@ -6616,8 +6732,8 @@
     /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.
        천정·천저를 지날 때 이 기준틀이 끊김 없이 이어지는지 수치로 확인합니다. */
     basis: function () {
-      const b = camBasis(live.az, clamp(live.alt, ALT_MIN, ALT_MAX));
-      return { fwd: b.fwd.slice(), right: b.right.slice(), up: b.up.slice(), az: live.az, alt: live.alt };
+      const b = camBasis(live.az, clamp(live.alt, ALT_MIN, ALT_MAX), live.sensor ? live.roll : 0);
+      return { fwd: b.fwd.slice(), right: b.right.slice(), up: b.up.slice(), roll: b.roll, az: live.az, alt: live.alt };
     },
     enableSensor: enableSensor,
     disableSensor: disableSensor,
@@ -6653,7 +6769,7 @@
           alt: track.alt, az: track.az, cam: cam ? { az: cam.az, alt: cam.alt } : null,
           raw: track.rawAlt, target: track.altTarget,
           gate: track.gate, angVel: track.angVel, moving: vnow < track.movingUntil,
-          rot: track.rot.slice(), pinned: track.pinned,
+          rot: track.rot.slice(), pinned: track.pinned, roll: live.roll,
           eulerAlt: track.eulerQ ? camDir(track.eulerQ).alt : null
         };
       } finally {
@@ -8241,7 +8357,7 @@
         '<p class="bwshare-sub">링크를 보내거나, 아래 QR을 그대로 보여 주세요.</p>' +
         '<div class="bwshare-qr" data-share-qr>' + qrSvgMarkup(232) + '</div>' +
         '<p class="bwshare-url">' + QR_URL + '</p>' +
-        '<p class="bwshare-ver" data-app-version>별너울 v3.0</p>' +
+        '<p class="bwshare-ver" data-app-version>' + appVersionLabel() + '</p>' +
         '<div class="bwshare-btns">' +
           '<button type="button" class="bwshare-btn primary" data-share-copy>🔗 링크 복사</button>' +
           (navigator.share ? '<button type="button" class="bwshare-btn" data-share-sys>📤 공유 시트</button>' : '') +

@@ -3625,6 +3625,11 @@ body.red .quiz-kind { color: var(--accent-2); background: var(--accent-soft); }
   .quiz-count { min-width: 0; flex: 1 1 calc(20% - 5px); min-height: 36px; padding: 7px 4px; font-size: .76rem; }
   .quiz-level { flex-direction: row; align-items: baseline; gap: 8px; min-height: 48px; }
   .quiz-level small { font-size: .74rem; }
+  .quiz-level-note { flex: 0 0 auto; font-size: .68rem; }
+  .qr-row { grid-template-columns: 22px minmax(0, 1fr) auto 42px; gap: 6px; font-size: .78rem; padding: 6px 5px; }
+  .qr-time { font-size: .7rem; }
+  .quiz-nick-row { flex-wrap: wrap; }
+  .quiz-nick-row .btn-primary { flex: 1 1 100%; }
   .quiz-how { padding: 12px 14px 12px 30px; font-size: .82rem; }
   .quiz-q { font-size: 1rem; }
   .quiz-opt { font-size: .92rem; padding: 11px 12px; }
@@ -3632,6 +3637,61 @@ body.red .quiz-kind { color: var(--accent-2); background: var(--accent-soft); }
   .qf-row > button { flex: 1 1 132px; }
   .quiz-actions > button { flex: 1 1 140px; }
 }
+
+/* =========================================================================
+   🏆 퀴즈 온라인 랭킹 (2026-11-29 · v3.1) — 종목별 TOP 20 · 내 기기 최고 기록
+   ========================================================================= */
+.quiz-level-note { font-style: normal; font-size: .66rem; line-height: 1.25; color: var(--muted); opacity: .72; }
+.quiz-level.is-active .quiz-level-note { color: var(--text); opacity: .72; }
+.quiz-rank-slot { margin-top: 14px; }
+.quiz-rank {
+  padding: 12px 13px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: rgba(255, 255, 255, .03); text-align: left;
+}
+.qr-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qr-head b { font-size: .88rem; }
+.qr-sub { font-size: .72rem; color: var(--muted); }
+.qr-refresh {
+  margin-left: auto; min-width: 30px; min-height: 30px; padding: 0 8px; cursor: pointer;
+  border-radius: 9px; border: 1px solid var(--border); background: rgba(255, 255, 255, .04);
+  color: var(--muted); font: inherit; font-size: .82rem;
+}
+.qr-refresh:hover { color: var(--text); border-color: var(--border-hi); }
+.qr-refresh.is-busy { opacity: .5; }
+.qr-body { margin-top: 8px; }
+.qr-wait, .qr-note, .qr-empty { margin: 6px 0 0; font-size: .78rem; line-height: 1.6; color: var(--muted); }
+.qr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.qr-row {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) auto 56px; align-items: center; gap: 8px;
+  padding: 6px 7px; border-radius: 9px; font-size: .82rem;
+}
+.qr-row:nth-child(odd) { background: rgba(255, 255, 255, .03); }
+.qr-row.is-me { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.qr-n { font-weight: 900; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.qr-row:nth-child(1) .qr-n { color: #ffd479; }
+.qr-row:nth-child(2) .qr-n { color: #cfd6e6; }
+.qr-row:nth-child(3) .qr-n { color: #d9a066; }
+.qr-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qr-score { font-variant-numeric: tabular-nums; color: var(--muted); }
+.qr-score b { color: var(--text); }
+.qr-time { font-size: .74rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.quiz-nick { margin: 10px 0 4px; }
+.quiz-nick label { display: block; margin-bottom: 5px; font-size: .74rem; font-weight: 800; color: var(--muted); }
+.quiz-nick-row { display: flex; gap: 7px; }
+.quiz-nick-row input {
+  flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 9px 12px; border-radius: 11px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .05); color: var(--text);
+  font: inherit; font-size: .9rem;
+}
+.quiz-nick-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.quiz-nick-row .btn-primary { flex: 0 0 auto; min-height: 44px; padding: 0 16px; font-size: .88rem; }
+.quiz-nick-msg { margin: 6px 0 0; font-size: .76rem; line-height: 1.5; color: var(--muted); }
+.quiz-nick-msg.is-no { color: var(--danger); }
+.quiz-nick-msg.is-ok { color: var(--ok); }
+.quiz-sent { margin: 8px 0 0; font-size: .84rem; line-height: 1.55; color: var(--text); }
+.quiz-sent b { color: var(--accent); }
+.quiz-dur { margin: 2px 0 4px; font-size: .84rem; color: var(--muted); }
+.quiz-dur b { color: var(--text); }
 
 /* =========================================================================
    🏆 우주 최고 기록관 (2026-11-28) — 어린이용 큰 글씨 카드 + 직접 그린 도해
@@ -4360,7 +4420,7 @@ body.red .bwshare-btn.primary { background: #ff8a5c; border-color: #ff8a5c; colo
               <span class="mi-txt"><b>별너울 공유하기</b><small>링크 보내기 · 친구에게 추천</small></span>
             </button>
           </div>
-          <p class="more-ver" id="appVer" data-app-version title="지금 보고 있는 수정판">별너울 v3.0</p>
+          <p class="more-ver" id="appVer" data-app-version title="지금 보고 있는 수정판">별너울 v3.1</p>
         </div>
       </div>
     </div>
@@ -4820,7 +4880,7 @@ body.red .bwshare-btn.primary { background: #ff8a5c; border-color: #ff8a5c; colo
       <button class="cat-tab is-active" type="button" id="tabObjects" role="tab" aria-selected="true" aria-controls="panelObjects" data-cat-tab="objects">🌌 천체 도감 <span class="cat-tab-num">2,571종</span></button>
       <button class="cat-tab" type="button" id="tabConst" role="tab" aria-selected="false" aria-controls="panelConstellations" data-cat-tab="const" tabindex="-1">✨ 별자리 88 <span class="cat-tab-num">IAU 전체</span></button>
       <button class="cat-tab" type="button" id="tabDeep" role="tab" aria-selected="false" aria-controls="panelDeep" data-cat-tab="deep" tabindex="-1">🌌 확장 성도 · Gaia <span class="cat-tab-num">11만 + 18억</span></button>
-      <button class="cat-tab" type="button" id="tabQuiz" role="tab" aria-selected="false" aria-controls="panelQuiz" data-cat-tab="quiz" tabindex="-1">🎯 퀴즈 <span class="cat-tab-num">8문제</span></button>
+      <button class="cat-tab" type="button" id="tabQuiz" role="tab" aria-selected="false" aria-controls="panelQuiz" data-cat-tab="quiz" tabindex="-1">🎯 퀴즈 <span class="cat-tab-num">5~100문제</span></button>
     </div>
 
     <div class="cat-panel" id="panelObjects" role="tabpanel" aria-labelledby="tabObjects">
@@ -14547,12 +14607,14 @@ window.Astro = (function () {
      ====================================================================== */
   const live = {
     az: 180, alt: 32, fov: 65, targetAz: 180, targetAlt: 32,
+    roll: 0,                        // 센서 추적 중 폰을 옆으로 기운 만큼의 화면 기울기(도). 수동은 0
     labels: true, deep: true, sensor: false, gotEvent: false,
     grid: true, gridA: 0.55, gridLast: 0.55,   // 격자 표시 · 진하기(0~1) · 끄기 전 값
     w: 0, h: 0, dpr: 1, canvas: null, ctx: null,
     raf: null, hits: [], starHitPool: [], lastIv: 0, lastCenter: '', selected: null
   };
   let liveDirty = true;
+  let liveRollRaf = null;      // 센서를 꺼을 때 기울기를 0으로 되돌리는 애니메이션 핸들
 
   /* ----------------------------------------------------------------------
      센서 추적 엔진 — 스텔라리움식 융합
@@ -14780,22 +14842,70 @@ window.Astro = (function () {
     return Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], ang), q));
   }
   /* 화면 기준틀 — 시선(방위·고도)에서 오른쪽·위 벡터를 만듭니다.
-     · 오른쪽 벡터는 언제나 '방위가 정하는 수평 방향'=(cosA, −sinA, 0) 입니다.
+     · 오른쪽 벡터의 기본값은 언제나 '방위가 정하는 수평 방향'=(cosA, −sinA, 0) 입니다.
        (fwd × [0,0,1] 을 정규화한 값과 같고, 고도가 ±90°에 가도 방향이 흔들리지 않습니다.)
      · 예전에는 고도가 87.4°(|fwd.z| > 0.999)를 넘는 순간 기준 벡터를 [0,0,1] → [0,1,0]
        으로 바꿔 오른쪽 벡터를 다시 만들었습니다. 그 전환 자체가 방위축 둘레로 90° 가까운
        회전이라, 천정을 보려고 고도를 올리면 하늘 전체가 홱 돌아 보였습니다
-       (남현님 제보 '최고 각도 높이로 올라가면 각도가 자꾸 급변'). 그래서 전환을 없앴습니다. */
-  function camBasis(azDeg, altDeg) {
+       (남현님 제보 '최고 각도 높이로 올라가면 각도가 자꾸 급변'). 그래서 전환을 없앴습니다.
+     · rollDeg — 시선(fwd) 둘레의 화면 기울기. 0 이면 지평선이 화면과 나란하고(수동 드래그),
+       실시간 센서 추적 중에는 폰을 옆으로 기울인 만큼(right·up 벡터를 fwd 둘레로 회전)
+       지평선과 별자리가 실제 땅·하늘 방향에 고정됩니다. (v3.1 — 제보 '폰을 옆으로 돌리면
+       지구의 지평선이 같이 돌아간다') */
+  function rotAbout(k, v, c, s) {
+    // 로드리게스 공식 — 축 k(단위벡터) 둘레로 v 를 각(cos=c, sin=s)만큼 회전
+    const kv = [k[1] * v[2] - k[2] * v[1], k[2] * v[0] - k[0] * v[2], k[0] * v[1] - k[1] * v[0]];
+    const kd = k[0] * v[0] + k[1] * v[1] + k[2] * v[2];
+    return [
+      v[0] * c + kv[0] * s + k[0] * kd * (1 - c),
+      v[1] * c + kv[1] * s + k[1] * kd * (1 - c),
+      v[2] * c + kv[2] * s + k[2] * kd * (1 - c)
+    ];
+  }
+  function camBasis(azDeg, altDeg, rollDeg) {
     const a = clamp(altDeg, -90, 90) * RAD, z = azDeg * RAD;
     const fwd = [Math.cos(a) * Math.sin(z), Math.cos(a) * Math.cos(z), Math.sin(a)];
-    const right = [Math.cos(z), -Math.sin(z), 0];
-    const up = [
+    let right = [Math.cos(z), -Math.sin(z), 0];
+    let up = [
       right[1] * fwd[2] - right[2] * fwd[1],
       right[2] * fwd[0] - right[0] * fwd[2],
       right[0] * fwd[1] - right[1] * fwd[0]
     ];
-    return { fwd: fwd, right: right, up: up };
+    const roll = Number(rollDeg) || 0;
+    if (roll) {
+      const r = roll * RAD, c = Math.cos(r), s = Math.sin(r);
+      right = rotAbout(fwd, right, c, s);
+      up = rotAbout(fwd, up, c, s);
+    }
+    return { fwd: fwd, right: right, up: up, roll: roll };
+  }
+
+  /* 화면이 지금 어느 쪽을 '위'로 보고 있는가 — screen.orientation.angle 만큼 기기 축을 돌립니다.
+     0(세로) → 기기 +Y, 90(반시계로 눕힘) → +X, 180 → −Y, 270 → −X. */
+  function screenAngleDeg() {
+    try {
+      const o = window.screen && window.screen.orientation;
+      if (o && typeof o.angle === 'number') return o.angle;
+    } catch (e) { }
+    return (typeof window.orientation === 'number') ? window.orientation : 0;
+  }
+  /* 기기 자세(track.q)에서 '화면 위'가 실제로 기운 각도를 뽑습니다.
+     camBasis(az, alt, 0).up 을 기준으로, 그 축 둘레에서 실제 화면 위 벡터까지의 부호 있는 각도. */
+  function rollFromQuat(q, azDeg, altDeg) {
+    if (!q) return 0;
+    const fwd = camBasis(azDeg, altDeg).fwd;
+    const th = screenAngleDeg() * RAD;
+    const upDev = Q.rot(q, [Math.sin(th), Math.cos(th), 0]);
+    const kd = upDev[0] * fwd[0] + upDev[1] * fwd[1] + upDev[2] * fwd[2];
+    let u = [upDev[0] - fwd[0] * kd, upDev[1] - fwd[1] * kd, upDev[2] - fwd[2] * kd];
+    const n = Math.hypot(u[0], u[1], u[2]);
+    if (n < 0.02) return 0;            // 시선과 화면 위가 거의 나란함(짐벌) — 롤을 정할 수 없음
+    u = [u[0] / n, u[1] / n, u[2] / n];
+    const b = camBasis(azDeg, altDeg).up;
+    const cr = [b[1] * u[2] - b[2] * u[1], b[2] * u[0] - b[0] * u[2], b[0] * u[1] - b[1] * u[0]];
+    const sn = cr[0] * fwd[0] + cr[1] * fwd[1] + cr[2] * fwd[2];
+    const cs = b[0] * u[0] + b[1] * u[1] + b[2] * u[2];
+    return Math.atan2(sn, cs) / RAD;
   }
 
   // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계.
@@ -14863,6 +14973,7 @@ window.Astro = (function () {
     realignT: 0,                   // 그 정렬 직후 이 시각까지는 오일러 자세를 그대로 따라감
     compReset: false,              // 다음 나침반을 이상치 차단 없이 새 기준으로 받을 표시
     az: 180, alt: 30,
+    roll: 0,                       // 화면에 반영한 기울기(도) — 센서 추적 중에만 0 이 아닙니다
     sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
     clock: null, feedT: null,      // 검증 훅(feed)의 가상 시계 — 실기기에서는 null
     suspendUntil: 0,
@@ -14871,6 +14982,8 @@ window.Astro = (function () {
 
   function trackReset() {
     track.q = null; track.ready = false; track.rot = [0, 0, 0];
+    track.roll = 0;
+    live.roll = 0;
     track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
     track.acc = null; track.altTarget = null; track.rawAlt = null; track.calAz = 0;
     track.eulerQ = null; track.eulerT = 0; track.pinned = false;
@@ -15059,11 +15172,27 @@ window.Astro = (function () {
     const cap = (gyroLive ? 300 : 140) * dt;
     const sAz = clamp(dAz * k, -cap, cap);
     const sAlt = clamp(dAlt * k, -cap, cap);
-    if (!sAz && !sAlt) return false;
-    track.az = A.mod(track.az + sAz, 360);
-    track.alt = clamp(track.alt + sAlt, ALT_MIN, ALT_MAX);
-    live.az = track.az;
-    live.alt = track.alt;
+    /* 화면 기울기(롤) — 기기 자세에서 실제 '화면 위'가 기운 각도를 뽑아 같은 방식(데드존·저역통과·
+       최대 각속도)으로 따라갑니다. 방위·고도가 실제로 바뀌지 않아도 폰을 옆으로 돌리면
+       이 값만 움직여 지평선과 별자리가 땅·하늘 방향에 고정됩니다.
+       천정·천저 근처(polarGain 0)는 방위와 마찬가지로 롤도 재우는 것이 맞습니다 —
+       그 자리에는 지평선이 보이지 않고, 방위가 특이점이라 롤 기준도 같이 흔들립니다. */
+    const rTarget = rollFromQuat(track.q, track.az + sAz, track.alt + sAlt);
+    const rollGain = polarGain(track.alt + sAlt);
+    let dRoll = rollGain > 0.001 ? shortestDelta(track.roll, rTarget) * rollGain : 0;
+    if (Math.abs(dRoll) < 0.3) dRoll = 0;                 // 손떨림 데드존
+    const sRoll = clamp(dRoll * k, -cap, cap);
+    if (!sAz && !sAlt && !sRoll) return false;
+    if (sAz || sAlt) {
+      track.az = A.mod(track.az + sAz, 360);
+      track.alt = clamp(track.alt + sAlt, ALT_MIN, ALT_MAX);
+      live.az = track.az;
+      live.alt = track.alt;
+    }
+    if (sRoll) {
+      track.roll = A.mod(track.roll + sRoll + 180, 360) - 180;
+      live.roll = track.roll;
+    }
     return true;
   }
 
@@ -15235,7 +15364,7 @@ window.Astro = (function () {
     const W = live.w, H = live.h, cx = W / 2, cy = H / 2;
     const fovDeg = clamp(live.fov, LIVE_FOV_MIN, 130);
     const fov = fovDeg * RAD;
-    const basis = camBasis(live.az, live.alt);
+    const basis = camBasis(live.az, live.alt, live.sensor ? live.roll : 0);
     const fwd = basis.fwd, right = basis.right, up = basis.up;
     const kS = (H / 2) / Math.tan(fov / 4);
     function project(alt, az) {
@@ -16380,85 +16509,110 @@ window.Astro = (function () {
         return { x: cx - rr * (ex / hyp), y: cy - rr * (ny / hyp), alt: alt };
       };
     }
+    /* 전천 지도용 은하수 이미지 — 라이브 뷰 텍스처를 천정 중심 방위각·거리 투영 그대로 샘플링합니다.
+       · 캔버스 한 장(지도 원을 꽉 채우는 정사각) → toDataURL → SVG <image> 로 넣습니다.
+       · 캐시 키 = 위도|경도|10분 단위 jd|색 모드|크기 (지도는 시간이 바뀔 때만 다시 그립니다)
+       · 텍스처·계산 결과는 라이브 뷰와 같은 것이라 지도와 라이브 하늘이 같은 얼굴을 갖습니다. */
+    let mapCv = null, mapCache = {}, mapCacheN = 0, mapLast = { px: 0, ms: 0, bytes: 0 };
+    function mapTexPx(R) { return Math.round(clamp(R * 2 + 4, 160, 460)); }
+    function mapTexture(o) {
+      const R = o.R;
+      if (!(R > 0)) return null;
+      if (!texN) { if (!bakeTexture()) return null; }
+      const side = mapTexPx(R);
+      const lat = Number(o.lat) || 0, lon = Number(o.lon) || 0, jd = Number(o.jd) || 0;
+      const key = lat.toFixed(2) + '|' + lon.toFixed(2) + '|' + Math.round(jd * 144) + '|' +
+        (o.red ? 'r' : 'n') + '|' + side;
+      if (mapCache[key] !== undefined) { mapLast.hit = true; return mapCache[key]; }
+      const t0 = nowMs();
+      const lst = A.lstHours(jd, lon) * 15 * RAD;
+      const cl = Math.cos(lst), sl = Math.sin(lst);
+      const p = lat * RAD, sp = Math.sin(p), cp = Math.cos(p);
+      /* 로컬 지평 기준틀(등·북·천정) — mapProjector 의 역방향 */
+      const Ex = -sl, Ey = cl, Ez = 0;
+      const Nx = -sp * cl, Ny = -sp * sl, Nz = cp;
+      const Ux = cp * cl, Uy = cp * sl, Uz = sp;
+      if (!mapCv) mapCv = document.createElement('canvas');
+      mapCv.width = side; mapCv.height = side;
+      const g = mapCv.getContext('2d');
+      const img = g.createImageData(side, side);
+      const dat = img.data;
+      const tex = o.red ? texR : texN;
+      const TW = TEX_W, TH = TEX_H;
+      const half = side / 2;
+      const k = o.red ? 1.02 : 1.0;           // 텍스처 자체가 옅어 라이브 뷰와 같은 세기로 얹습니다
+      let n = 0;
+      for (let j = 0; j < side; j++) {
+        const dy = (j + 0.5) - half;
+        for (let i = 0; i < side; i++) {
+          const dx = (i + 0.5) - half;
+          const rr = Math.hypot(dx, dy);
+          if (rr > half - 0.5) continue;                    // 원 밖
+          const alt = (90 - 90 * rr / half) * RAD;
+          const ca = Math.cos(alt), sa = Math.sin(alt);
+          const uE = rr > 1e-6 ? -(dx / rr) : 0;
+          const uN = rr > 1e-6 ? -(dy / rr) : 0;
+          const ex = ca * uE, ny = ca * uN, uz = sa;
+          const vx = ex * Ex + ny * Nx + uz * Ux;
+          const vy = ex * Ey + ny * Ny + uz * Uy;
+          const vz = ex * Ez + ny * Nz + uz * Uz;
+          const gz = vx * GZ[0] + vy * GZ[1] + vz * GZ[2];
+          if (gz > 0.64 || gz < -0.64) continue;            // 띠 밖(라이브와 같은 24° 날개보다 조금 넓게)
+          const gx = vx * GX[0] + vy * GX[1] + vz * GX[2];
+          const gy = vx * GY[0] + vy * GY[1] + vz * GY[2];
+          let l = Math.atan2(gy, gx) * DEG;
+          if (l < 0) l += 360;
+          const b = Math.asin(gz) * DEG;
+          /* 이중선형 샘플 (경도 0/360 이음매 처리) */
+          const tx = l * PX_L - 0.5;
+          let ty = (90 - b) * PX_B - 0.5;
+          if (ty < 0) ty = 0; else if (ty > TH - 1.001) ty = TH - 1.001;
+          const y0 = ty | 0, fy = ty - y0;
+          const xi = Math.floor(tx), fx = tx - xi;
+          let x0 = xi % TW; if (x0 < 0) x0 += TW;
+          const x1 = (x0 + 1) % TW;
+          const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy);
+          const w01 = (1 - fx) * fy, w11 = fx * fy;
+          const r0 = y0 * TW * 3, r1 = (y0 + 1) * TW * 3;
+          const a0 = x0 * 3, a1 = x1 * 3;
+          const i00 = r0 + a0, i10 = r0 + a1, i01 = r1 + a0, i11 = r1 + a1;
+          const cr = tex[i00] * w00 + tex[i10] * w10 + tex[i01] * w01 + tex[i11] * w11;
+          const cg = tex[i00 + 1] * w00 + tex[i10 + 1] * w10 + tex[i01 + 1] * w01 + tex[i11 + 1] * w11;
+          const cb = tex[i00 + 2] * w00 + tex[i10 + 2] * w10 + tex[i01 + 2] * w01 + tex[i11 + 2] * w11;
+          const lum = cr + cg + cb;
+          if (lum < 0.7) continue;                          // 사실상 빈 하늘
+          /* 라이브 뷰는 'lighter'(더하기)로 얹지만 SVG <image> 는 그렇게 못 하므로,
+             밝은 곳은 불투명하게 깔고 어두운 곳은 알파로 부드럽게 사라지게 해 같은 결을 냅니다. */
+          const al = clamp((lum - 4) / 12, 0, 1);           // 띠의 몸통은 불투명, 아주 옅은 가장자리만 부드럽게
+          const add = o.red ? 11 : 15;
+          const o4 = ((j * side) + i) * 4;
+          dat[o4] = cr * k + add; dat[o4 + 1] = cg * k + add; dat[o4 + 2] = cb * k + add;
+          dat[o4 + 3] = Math.round(255 * Math.pow(al, 1.4));
+          n++;
+        }
+      }
+      g.putImageData(img, 0, 0);
+      const url = mapCv.toDataURL('image/png');
+      if (mapCacheN > 8) { mapCache = {}; mapCacheN = 0; }       // 캐시가 커지지 않게
+      mapCache[key] = url; mapCacheN++;
+      mapLast = { hit: false, px: side, px_drawn: n, ms: +(nowMs() - t0).toFixed(1), bytes: url.length };
+      return url;
+    }
+
     function paintMap(o) {
       const proj = mapProjector(o.lat, o.lon, o.jd, o.cx, o.cy, o.R);
       const red = !!o.red;
       const out = [];
 
-      /* 띠 — 위도 고리를 겹쳐 그려 부드러운 가장자리를 만듭니다.
-         라이브 뷰와 같은 밝기 감각으로, 예전보다 30% 낮춰 은은하게. */
-      [[22, 0.020, '184,204,250'], [18.5, 0.022, '190,208,250'], [15.5, 0.024, '196,212,250'],
-       [12.8, 0.026, '204,216,248'], [10.4, 0.028, '214,222,246'],
-       [8.2, 0.030, '226,230,242'], [6.2, 0.030, '238,234,232'],
-       [4.4, 0.032, '248,236,218'], [2.8, 0.032, '255,238,206'], [1.5, 0.030, '255,236,200']
-      ].forEach(function (lay) {
-        const half = lay[0];
-        const front = [], back = [];
-        for (let i = 0; i <= 180; i++) {
-          const L = (i * 2) % 360;
-          front.push(proj(galVec(L, half)));
-          back.push(proj(galVec(L, -half)));
-        }
-        let d = '', started = false, any = false;
-        for (let i = 0; i < front.length; i++) {
-          const p = front[i];
-          if (p.alt <= 0.5) { started = false; continue; }
-          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-          started = true; any = true;
-        }
-        for (let i = back.length - 1; i >= 0; i--) {
-          const p = back[i];
-          if (p.alt <= 0.5) { started = false; continue; }
-          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-          started = true; any = true;
-        }
-        if (any) out.push('<path d="' + d + 'Z" fill="rgba(' + (red ? '255,150,116' : lay[2]) + ',' + lay[1] + ')"/>');
-      });
-
-      /* 팽대부 — 은하 중심의 따뜻한 빛 */
-      const gc = proj(gcVec);
-      if (gc.alt > -8) {
-        const rr = Math.max(5, o.R * 13 / 90);
-        out.push('<circle cx="' + gc.x.toFixed(1) + '" cy="' + gc.y.toFixed(1) + '" r="' + rr.toFixed(1) +
-          '" fill="url(#mwWarm)" opacity="' + (gc.alt > 0 ? 0.55 : 0.22) + '"/>');
+      /* 🌌 은하수 — 라이브 뷰와 같은 은하좌표 파노라마 텍스처를 투영에 맞춰 픽셀 샘플링한 한 장.
+         (예전의 10겹 SVG 다각형 띠·별구름 타원·팽대부 원은 경계선이 인위적으로 보여 걷어냈습니다.) */
+      const texUrl = mapTexture(o);
+      if (texUrl) {
+        const side = mapTexPx(o.R);
+        out.push('<image href="' + texUrl + '" x="' + (o.cx - side / 2).toFixed(1) +
+          '" y="' + (o.cy - side / 2).toFixed(1) + '" width="' + side + '" height="' + side +
+          '" preserveAspectRatio="none"/>');
       }
-      /* 밝은 별구름 — 띠의 접선 방향으로 늘인 타원 */
-      [[6.0, -4.2, 5.6], [15.5, -3.6, 4.4], [26.5, -2.0, 4.8], [78.0, 0.3, 7.5],
-       [45.0, -6.0, 5.0], [287.5, -0.8, 5.0], [330.0, -1.0, 5.2]].forEach(function (c) {
-        const p = proj(galVec(c[0], c[1]));
-        if (p.alt <= 1) return;
-        const t1 = proj(galVec(c[0] + 3, c[1])), t2 = proj(galVec(c[0] - 3, c[1]));
-        const ang = Math.atan2(t1.y - t2.y, t1.x - t2.x) * 180 / Math.PI;
-        const rx = Math.max(2.4, o.R * c[2] / 90), ry = rx * 0.62;
-        out.push('<ellipse cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" rx="' + rx.toFixed(1) +
-          '" ry="' + ry.toFixed(1) + '" fill="url(#mwCloud)" opacity="0.5" transform="rotate(' +
-          ang.toFixed(0) + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')"/>');
-      });
-      /* 암흑대 — 먼지 띠는 선으로(가늘고 옅게), 개별 성운은 덩이로 */
-      let dn = '';
-      for (let i = 0; i < lanes.length; i++) {
-        const vs = lanes[i].v;
-        let d = '', started = false, any = false;
-        for (let k = 0; k < vs.length; k++) {
-          const p = proj(vs[k]);
-          if (p.alt <= 0.5) { started = false; continue; }
-          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-          started = true; any = true;
-        }
-        if (any) dn += d;
-      }
-      if (dn) out.push('<path d="' + dn + '" fill="none" stroke="rgba(3,5,12,0.5)" stroke-width="' +
-        Math.max(1.1, o.R * 1.3 / 90).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>');
-      let dk = '';
-      for (let i = 0; i < dark.length; i++) {
-        const bl = dark[i];
-        if (bl.a < 0.3) continue;                  // 큰 덩이만 (지도는 작습니다)
-        const p = proj(bl.v);
-        if (p.alt <= 1) continue;
-        const rr = Math.max(1.2, o.R * bl.r * 1.1 / 90);
-        dk += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + rr.toFixed(1) + '"/>';
-      }
-      if (dk) out.push('<g fill="url(#mwDark)" opacity="0.9">' + dk + '</g>');
 
       /* 미세 잔별 — 지평선 위의 것만 한 줄 path 로 */
       let d = '', cnt = 0;
@@ -16476,6 +16630,8 @@ window.Astro = (function () {
 
     return {
       cameraMtx: cameraMtx, paintLive: paintLive, paintMap: paintMap,
+      /* 검증용 — 지도 은하수 이미지를 마지막으로 만들었을 때의 크기·픽셀 수·소요(ms)·캐시 여부 */
+      mapTex: function () { return mapLast; },
       /* 낮·박명처럼 은하수를 그리지 않는 프레임 — 기록을 지워 '그린 수'가 남지 않게 */
       clear: clearLast,
       /* 검증용 — 적도 단위벡터 하나를 카메라 행렬로 돌려 (x, y, z, 고도, den) 을 돌려줍니다.
@@ -17405,10 +17561,10 @@ window.Astro = (function () {
      · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
      ====================================================================== */
   /* 표시용 수정판 번호 — README 업데이트 이력의 **누적 배포 번호**입니다(30 → v3.0, 31 → v3.1 …).
-     배포할 때 sw.js 의 VERSION(빌드 번호 2026-11-28.21)과 함께 올리고, build.py 가
-     「v3.0 (30번째) · 캐시 2026-11-28.21」을 같이 찍어 두 값이 같은 배포인지 확인합니다.
+     배포할 때 sw.js 의 VERSION(빌드 번호 2026-11-29.01)과 함께 올리고, build.py 가
+     「v3.1 (31번째) · 캐시 2026-11-29.01」을 같이 찍어 두 값이 같은 배포인지 확인합니다.
      ☰ 더보기 하단·공유 카드 하단의 [data-app-version] 에 자동으로 채워집니다. */
-  const APP_RELEASE = '30';
+  const APP_RELEASE = '31';
   function appVersionLabel() {
     const n = parseInt(APP_RELEASE, 10) || 0;
     return '별너울 v' + Math.floor(n / 10) + '.' + (n % 10);      // 30 → v3.0 · 31 → v3.1
@@ -18484,8 +18640,26 @@ window.Astro = (function () {
     /* 지금 보고 있던 방위·고도를 그대로 유지 — 예전 수동 위치로 되돌아가지 않습니다. */
     live.targetAz = live.az;
     live.targetAlt = live.alt;
+    easeRollOut();
     if (!silent && was) toast('센서를 껐습니다. 드래그·버튼으로 둘러보세요.');
     kickLive();
+  }
+
+  /* 센서를 꺼을 때 화면 기울기를 부드럽게 수평(roll → 0)으로 되돌립니다. */
+  function easeRollOut() {
+    if (liveRollRaf) { cancelAnimationFrame(liveRollRaf); liveRollRaf = null; }
+    if (!live.roll) { live.roll = 0; return; }
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const step = function () {
+      if (live.sensor) { liveRollRaf = null; return; }   // 다시 켰으면 센서 쪽이 주인
+      const t = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+      const r = live.roll * 0.78;
+      live.roll = (Math.abs(r) < 0.2 || t > 700) ? 0 : r;   // 0.7초가 지나면 반드시 수평
+      liveDirty = true;
+      liveDraw();
+      liveRollRaf = live.roll ? requestAnimationFrame(step) : null;
+    };
+    liveRollRaf = requestAnimationFrame(step);
   }
 
   // 화면 구조 개편·테스트에서 쓰는 공개 API
@@ -18493,6 +18667,7 @@ window.Astro = (function () {
     state: function () {
       return {
         az: live.az, alt: live.alt, fov: live.fov, sensor: live.sensor, gyro: track.motionSeen,
+        roll: live.roll,
         compass: track.comp, cal: track.calAz,
         moving: sNow() < track.movingUntil, gate: track.gate, angVel: track.angVel
       };
@@ -18550,6 +18725,7 @@ window.Astro = (function () {
     mw: function () { return MW.stats(); },
     /* -- 검증용 — 은하좌표 (l, b) 의 텍스처 값 [r, g, b] (더해지는 값, 0~255). */
     mwTex: function (l, b) { return MW.texSample(l, b); },
+    mwMapTex: function () { return MW.mapTex(); },   // 지도 은하수 이미지 생성 시간·크기·캐시 여부
     /* -- 검증용 — 이번 프레임에 그린 달·해·행성·별의 반지름(px). 비율 검사용. */
     bodies: function () { return live.bodies || null; },
     /* -- 검증용 — 확장 성도: 이번 프레임에 그린 수·색을 아는 별 수. */
@@ -18579,8 +18755,8 @@ window.Astro = (function () {
     /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.
        천정·천저를 지날 때 이 기준틀이 끊김 없이 이어지는지 수치로 확인합니다. */
     basis: function () {
-      const b = camBasis(live.az, clamp(live.alt, ALT_MIN, ALT_MAX));
-      return { fwd: b.fwd.slice(), right: b.right.slice(), up: b.up.slice(), az: live.az, alt: live.alt };
+      const b = camBasis(live.az, clamp(live.alt, ALT_MIN, ALT_MAX), live.sensor ? live.roll : 0);
+      return { fwd: b.fwd.slice(), right: b.right.slice(), up: b.up.slice(), roll: b.roll, az: live.az, alt: live.alt };
     },
     enableSensor: enableSensor,
     disableSensor: disableSensor,
@@ -18616,7 +18792,7 @@ window.Astro = (function () {
           alt: track.alt, az: track.az, cam: cam ? { az: cam.az, alt: cam.alt } : null,
           raw: track.rawAlt, target: track.altTarget,
           gate: track.gate, angVel: track.angVel, moving: vnow < track.movingUntil,
-          rot: track.rot.slice(), pinned: track.pinned,
+          rot: track.rot.slice(), pinned: track.pinned, roll: live.roll,
           eulerAlt: track.eulerQ ? camDir(track.eulerQ).alt : null
         };
       } finally {
@@ -20204,7 +20380,7 @@ window.Astro = (function () {
         '<p class="bwshare-sub">링크를 보내거나, 아래 QR을 그대로 보여 주세요.</p>' +
         '<div class="bwshare-qr" data-share-qr>' + qrSvgMarkup(232) + '</div>' +
         '<p class="bwshare-url">' + QR_URL + '</p>' +
-        '<p class="bwshare-ver" data-app-version>별너울 v3.0</p>' +
+        '<p class="bwshare-ver" data-app-version>' + appVersionLabel() + '</p>' +
         '<div class="bwshare-btns">' +
           '<button type="button" class="bwshare-btn primary" data-share-copy>🔗 링크 복사</button>' +
           (navigator.share ? '<button type="button" class="bwshare-btn" data-share-sys>📤 공유 시트</button>' : '') +
@@ -26898,15 +27074,16 @@ window.Astro = (function () {
   var LAT = 37.2;               // 한국(오산) 기준 위도 — 적위 문제의 기준
   var SEASONS = ['봄', '여름', '가을', '겨울'];
 
+  // key 는 온라인 랭킹의 종목 이름(mode_key = 범위|난이도|문제 수)에 그대로 들어갑니다.
   var SCOPES = [
-    { v: 1, name: '대표 도감', sub: '48종 · 사진·설명 카드' },
-    { v: 2, name: '도감 + 88별자리', sub: '48종 + IAU 별자리 88' },
-    { v: 3, name: '전체 도감', sub: '2,571종 전체' }
+    { v: 1, key: 'basic', name: '대표 도감', sub: '48종 · 사진·설명 카드' },
+    { v: 2, key: 'catalog', name: '도감 + 88별자리', sub: '48종 + IAU 별자리 88' },
+    { v: 3, key: 'all', name: '전체 도감', sub: '2,571종 전체', note: '확장 성도·Gaia 미포함' }
   ];
   var LEVELS = [
-    { v: 1, name: '쉬움', sub: '기본 4유형' },
-    { v: 2, name: '보통', sub: '+ 번호·소거형' },
-    { v: 3, name: '어려움', sub: '색다른 유형 다수' }
+    { v: 1, key: 'easy', name: '쉬움', sub: '기본 4유형' },
+    { v: 2, key: 'medium', name: '보통', sub: '+ 번호·소거형' },
+    { v: 3, key: 'hard', name: '어려움', sub: '색다른 유형 다수' }
   ];
 
   /* ------------------------------------------------------------- 자료형 표 */
@@ -27802,33 +27979,223 @@ window.Astro = (function () {
   }
 
   /* ------------------------------------------------------------- 상태 */
-  var st = { scope: 1, level: 1, total: DEFAULT_TOTAL, qs: [], i: 0, score: 0, answered: false, wrong: [], short: 0 };
+  var st = {
+    scope: 1, level: 1, total: DEFAULT_TOTAL, qs: [], i: 0, score: 0, answered: false, wrong: [], short: 0,
+    t0: 0, dur: 0,               // 이번 판 시작 시각 · 걸린 시간(ms)
+    submitted: false,            // 이번 판을 온라인 랭킹에 올렸는지
+    myId: null, myRank: 0,       // 방금 올린 기록의 id · 전체 순위
+    nick: '', sending: false, sendMsg: '', sendFail: false
+  };
 
   function bestKey(scope, level, total) {
     return (scope || st.scope) + ':' + (level || st.level) + ':' + (total || st.total);
   }
   function best(scope, level, total) {
-    var b = store.get('quiz.best', {}) || {};
+    var r = bestRec(scope, level, total);
+    if (r) return r.s;
+    var b = store.get('quiz.best', {}) || {};       // 예전(점수만 저장하던) 기록 — 읽기만 합니다
     var n = total || st.total;
     var v = b[bestKey(scope, level, n)];
-    if (v == null && n === 8) v = b[(scope || st.scope) + ':' + (level || st.level)];   // 예전 8문제 기록
+    if (v == null && n === 8) v = b[(scope || st.scope) + ':' + (level || st.level)];
     return Number(v || 0);
-  }
-  function saveBest(scope, level, score) {
-    var b = store.get('quiz.best', {}) || {};
-    var k = bestKey(scope, level, quizN());
-    if (!b[k] || score > b[k]) { b[k] = score; store.set('quiz.best', b); return true; }
-    return false;
   }
   function scopeMeta(v) { return SCOPES[(v || st.scope) - 1] || SCOPES[0]; }
   function levelMeta(v) { return LEVELS[(v || st.level) - 1] || LEVELS[0]; }
+
+  /* =====================================================================
+     🏆 온라인 전체 랭킹 — Supabase(PostgREST) REST + anon 키만 사용합니다.
+     · 종목(mode_key) = 범위|난이도|문제 수  (예: all|hard|20)
+     · 순위 = 점수 높은 순 → 풀이 시간 짧은 순 → 먼저 등록한 순 (서버 정렬 그대로)
+     · anon 키는 공개되어도 되는 키입니다. 실제 방어는 DB의 RLS·CHECK 제약이 합니다
+       (닉네임 1~16자, 0 ≤ score ≤ total, total ∈ {5,10,20,50,100}, duration_ms ≥ total×300 등).
+     · 인터넷이 없거나 file:// 로 열었으면 네트워크를 아예 건드리지 않고 안내 문구로 대체합니다.
+     ===================================================================== */
+  var RANK = {
+    url: 'https://plwiefzmfqsfsriohzpd.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsd2llZnptZnFzZnNyaW9oenBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU4NzIzMDEsImV4cCI6MjExMTQ0ODMwMX0.YAIBoLDJXtyMeLP_m1EaoSkPgBakinksFDrDEL1mIJM',
+    top: 20,          // 화면에 보이는 순위 수
+    find: 100,        // 내 순위를 찾을 때 훑는 범위
+    ttl: 25000,       // 같은 종목을 이 시간 안에 다시 볼 때는 저장해 둔 값을 씁니다
+    timeout: 7000,
+    maxNick: 16
+  };
+  var rankCache = {}, rankWaits = {};
+
+  function scopeKeyOf(v) { return (SCOPES[(v || st.scope) - 1] || SCOPES[0]).key; }
+  function levelKeyOf(v) { return (LEVELS[(v || st.level) - 1] || LEVELS[0]).key; }
+  function modeKey(scope, level, total) {
+    return scopeKeyOf(scope) + '|' + levelKeyOf(level) + '|' + (total || st.total);
+  }
+  function modeLabel(scope, level, total) {
+    return scopeMeta(scope).name + ' · ' + levelMeta(level).name + ' · ' + (total || st.total) + '문제';
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function fmtDur(ms) {
+    var s = Math.max(0, Math.round((Number(ms) || 0) / 1000));
+    if (s < 60) return s + '초';
+    return Math.floor(s / 60) + '분 ' + pad2(s % 60) + '초';
+  }
+  function fmtDurShort(ms) {
+    var s = Math.max(0, Math.round((Number(ms) || 0) / 1000));
+    return Math.floor(s / 60) + ':' + pad2(s % 60);
+  }
+
+  /* --- 내 기기 최고 기록 (종목별 점수·최단 시간·등록 시각) --- */
+  function bestRec(scope, level, total) {
+    var b = store.get('quiz.best2', {}) || {};
+    return b[modeKey(scope, level, total)] || null;
+  }
+  function isBetter(rec, score, ms) {
+    if (!rec) return true;
+    if (score > rec.s) return true;
+    if (score === rec.s && ms < (rec.d || Infinity)) return true;
+    return false;
+  }
+  function saveBestRec(scope, level, total, score, ms) {
+    var b = store.get('quiz.best2', {}) || {};
+    var k = modeKey(scope, level, total), rec = b[k] || null;
+    var better = isBetter(rec, score, ms);
+    if (better) {
+      b[k] = { s: score, d: ms, t: Date.now(), n: (total || st.total) };
+      store.set('quiz.best2', b);
+    }
+    return { better: better, prev: rec };
+  }
+  function fmtDay(ts) {
+    var d = new Date(ts || Date.now());
+    return (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+  }
+
+  /* --- 닉네임 검사: 길이·글자 + 부적절한 말·사칭 방지 --- */
+  var BAD_WORDS = [
+    '시발', '씨발', '시팔', '씨팔', '십창', '좆', '좇', '지랄', '병신', '엠창', '개새끼', '새끼',
+    '니미', '엿같', '창녀', '보지', '자지', '섹스', '야동', '강간', '죽어', '꺼져',
+    'fuck', 'fuk', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'pussy', 'whore', 'slut',
+    'nigger', 'rape', 'porn', 'sex'
+  ];
+  var BAD_JAMO = ['ㅅㅂ', 'ㅆㅂ', 'ㅂㅅ', 'ㅈㄹ', 'ㄷㅊ', 'ㅁㅊ'];
+  var RESERVED = ['관리자', '운영자', '어드민', 'admin', 'administrator', 'official', '공식', 'system'];
+  var RESERVED_EXACT = ['별너울', 'byeolneoul'];   // 사이트 이름 그대로만 막습니다(‘별너울러버’ 같은 애칭은 허용)
+
+  function normNick(s) {
+    var t = String(s == null ? '' : s).toLowerCase();
+    t = t.replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/7/g, 't');
+    t = t.replace(/[\s\u200b\u200c\u200d\.\-_~!@#$%^&*()+=|\\/?:;"'`<>,{}\[\]]/g, '');
+    return t;
+  }
+  function checkNick(raw) {
+    var s = String(raw == null ? '' : raw).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!s) return { ok: false, msg: '랭킹에 올릴 닉네임을 입력해 주세요.' };
+    if (s.length > RANK.maxNick) return { ok: false, msg: '닉네임은 ' + RANK.maxNick + '자까지 쓸 수 있습니다.' };
+    var nameish = /[0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ]/.test(s) || /[\u2190-\u2BFF\uD800-\uDBFF]/.test(s);
+    if (!nameish) return { ok: false, msg: '닉네임에 글자나 숫자를 넣어 주세요.' };
+    var n = normNick(s);
+    var i;
+    for (i = 0; i < BAD_WORDS.length; i++) {
+      if (n.indexOf(BAD_WORDS[i]) >= 0) return { ok: false, msg: '쓸 수 없는 표현이 들어 있습니다. 다른 닉네임으로 해 주세요.' };
+    }
+    for (i = 0; i < BAD_JAMO.length; i++) {
+      if (n.indexOf(BAD_JAMO[i]) >= 0) return { ok: false, msg: '쓸 수 없는 표현이 들어 있습니다. 다른 닉네임으로 해 주세요.' };
+    }
+    for (i = 0; i < RESERVED.length; i++) {
+      if (n.indexOf(RESERVED[i]) >= 0) return { ok: false, msg: '운영자·공식 이름처럼 보이는 닉네임은 쓸 수 없습니다.' };
+    }
+    for (i = 0; i < RESERVED_EXACT.length; i++) {
+      if (n === RESERVED_EXACT[i]) return { ok: false, msg: '운영자·공식 이름처럼 보이는 닉네임은 쓸 수 없습니다.' };
+    }
+    return { ok: true, value: s };
+  }
+
+  /* --- 중복 제출 방지: 한 판은 한 번, 같은 점수·시간은 10분에 한 번 --- */
+  function alreadySent(mk, score, ms) {
+    var m = store.get('quiz.sent', {}) || {}, v = m[mk];
+    if (!v) return false;
+    return v.s === score && Number(v.d) === Number(ms) && (Date.now() - (v.t || 0)) < 10 * 60 * 1000;
+  }
+  function markSent(mk, score, ms) {
+    var m = store.get('quiz.sent', {}) || {};
+    m[mk] = { s: score, d: Number(ms), t: Date.now() };
+    store.set('quiz.sent', m);
+  }
+
+  /* --- 네트워크 --- */
+  function rankOnline() {
+    try { return location.protocol !== 'file:' && typeof window.fetch === 'function'; } catch (e) { return false; }
+  }
+  function rankHeaders(json) {
+    var h = { apikey: RANK.key, Authorization: 'Bearer ' + RANK.key, Accept: 'application/json' };
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+  }  function withTimeout(promise, ms, fallback) {
+    return new Promise(function (resolve) {
+      var done = false;
+      var t = setTimeout(function () { if (!done) { done = true; resolve(fallback); } }, ms);
+      promise.then(function (v) { if (!done) { done = true; clearTimeout(t); resolve(v); } },
+        function (v) { if (!done) { done = true; clearTimeout(t); resolve(v); } });
+    });
+  }
+  function rankGet(mk, limit) {
+    var url = RANK.url + '/rest/v1/quiz_scores?mode_key=eq.' + encodeURIComponent(mk) +
+      '&select=id,nickname,score,total,duration_ms,created_at' +
+      '&order=score.desc,duration_ms.asc,created_at.asc&limit=' + (limit || RANK.top);
+    return withTimeout(
+      fetch(url, { headers: rankHeaders(false), cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }),
+      RANK.timeout,
+      { error: 'timeout' }
+    ).then(function (rows) {
+      if (rows && rows.error) return rows;
+      return { rows: Array.isArray(rows) ? rows : [] };
+    }, function (e) { return { error: String((e && e.message) || e) }; });
+  }
+  /** 종목 랭킹 — 잠깐 사이에 여러 곳(인트로·결과)에서 불려도 요청은 한 번만 보냅니다. */
+  function loadRank(mk, force, cb) {
+    if (!rankOnline()) { cb({ offline: true, rows: [] }); return; }
+    var now = Date.now();
+    if (!force && rankCache[mk] && now - rankCache[mk].at < RANK.ttl) { cb(rankCache[mk]); return; }
+    if (rankWaits[mk]) { rankWaits[mk].push(cb); return; }
+    rankWaits[mk] = [cb];
+    rankGet(mk, RANK.top).then(function (res) {
+      res.at = Date.now();
+      rankCache[mk] = res;
+      var list = rankWaits[mk] || [];
+      delete rankWaits[mk];
+      for (var i = 0; i < list.length; i++) { try { list[i](res); } catch (e) { } }
+    });
+  }
+  function sendScore(payload) {
+    return withTimeout(
+      fetch(RANK.url + '/rest/v1/quiz_scores', {
+        method: 'POST',
+        headers: (function () {
+          var h = rankHeaders(true);
+          h.Prefer = 'return=representation';   // 끼운 행을 그대로 돌려받아 id·시각을 확인합니다
+          return h;
+        })(),
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        return r.text().then(function (txt) { return { ok: r.ok, status: r.status, body: txt }; });
+      }),
+      RANK.timeout,
+      { error: 'timeout' }
+    ).then(function (res) {
+      if (!res || res.error) return res || { error: 'network' };
+      if (!res.ok) return { error: 'HTTP ' + res.status, detail: res.body };
+      var row = null;
+      try { var arr = JSON.parse(res.body); row = Array.isArray(arr) ? arr[0] : arr; } catch (e) { }
+      return { row: row };
+    }, function (e) { return { error: String((e && e.message) || e) }; });
+  }
 
   /* ------------------------------------------------------------- 화면 */
 
   function scopeBtn(s) {
     var on = st.scope === s.v;
     return '<button type="button" class="quiz-level' + (on ? ' is-active' : '') + '" data-scope="' + s.v +
-      '" aria-pressed="' + on + '"><b>' + esc(s.name) + '</b><small>' + esc(s.sub) + '</small></button>';
+      '" aria-pressed="' + on + '"><b>' + esc(s.name) + '</b><small>' + esc(s.sub) + '</small>' +
+      (s.note ? '<em class="quiz-level-note">' + esc(s.note) + '</em>' : '') + '</button>';
   }
   function levelBtn(l) {
     var on = st.level === l.v;
@@ -27842,11 +28209,80 @@ window.Astro = (function () {
       '" aria-pressed="' + on + '">' + n + '문제</button>';
   }
 
-  function bestLine() {
-    var b = best();
-    var head = '‘' + scopeMeta().name + ' · ' + levelMeta().name + ' · ' + st.total + '문제’ 최고 기록';
-    if (!b) return head + ' · 아직 없음 — ' + st.total + '문제 중 몇 개를 맞히는지 확인해 보세요.';
-    return head + ' · ' + st.total + '문제 중 <b>' + b + '개</b>';
+  function bestLine(total) {
+    var t = total || st.total;
+    var rec = bestRec(st.scope, st.level, t);
+    if (!rec) {
+      return '내 기기 최고 기록 · <b>아직 없음</b> — ' + t + '문제 중 몇 개를 맞히는지 확인해 보세요.';
+    }
+    return '내 기기 최고 기록 · <b>' + rec.s + ' / ' + (rec.n || t) + '</b> · ' + fmtDur(rec.d) +
+      (rec.t ? ' · ' + fmtDay(rec.t) + ' 등록' : '');
+  }
+
+  /* ------------------------------------------------------------- 랭킹 카드 */
+  function rankHeadHtml() {
+    return '<div class="qr-head">' +
+      '<b>🏆 온라인 전체 랭킹</b>' +
+      '<span class="qr-sub">' + esc(modeLabel()) + '</span>' +
+      '<button type="button" class="qr-refresh" data-rank-refresh aria-label="랭킹 새로고침" title="새로고침">↻</button>' +
+      '</div>';
+  }
+  function rankRowsHtml(rows, myId) {
+    if (!rows || !rows.length) {
+      return '<p class="qr-empty">아직 이 종목에 올라온 기록이 없습니다. 첫 기록의 주인공이 되어 보세요!</p>';
+    }
+    var out = '<ol class="qr-list">';
+    rows.forEach(function (r, i) {
+      var me = myId && r.id === myId;
+      out += '<li class="qr-row' + (me ? ' is-me' : '') + '">' +
+        '<span class="qr-n">' + (i + 1) + '</span>' +
+        '<span class="qr-name">' + esc(r.nickname) + '</span>' +
+        '<span class="qr-score"><b>' + (Number(r.score) || 0) + '</b>/' + (Number(r.total) || 0) + '</span>' +
+        '<span class="qr-time">' + fmtDurShort(r.duration_ms) + '</span></li>';
+    });
+    return out + '</ol>';
+  }
+  function rankBodyHtml(res, myId) {
+    if (!res) return '<p class="qr-wait">랭킹을 불러오는 중…</p>';
+    if (res.offline) {
+      return '<p class="qr-note">오프라인(단일 파일)판에서는 온라인 랭킹을 볼 수 없습니다. 퀴즈와 내 기기 최고 기록은 그대로 동작합니다.</p>';
+    }
+    if (res.error) {
+      return '<p class="qr-note">랭킹 서버에 연결할 수 없습니다. 잠시 뒤 ↻ 를 눌러 다시 시도해 주세요. 퀴즈와 내 기기 최고 기록은 그대로 동작합니다.</p>';
+    }
+    return rankRowsHtml(res.rows, myId);
+  }
+  /** 랭킹 카드를 slot 안에 그리고, 종목(mk)이 바뀌면 이전 응답은 버립니다. */
+  function mountRank(slot, mk, opts) {
+    if (!slot) return;
+    opts = opts || {};
+    slot.className = 'quiz-rank';
+    slot.setAttribute('data-mode', mk);
+    slot.innerHTML = rankHeadHtml() +
+      (opts.above || '') +
+      '<div class="qr-body">' + rankBodyHtml(null) + '</div>' +
+      (opts.below || '');
+    var draw = function (res) {
+      if (slot.getAttribute('data-mode') !== mk) return;
+      var body = slot.querySelector('.qr-body');
+      if (body) body.innerHTML = rankBodyHtml(res, opts.myId);
+    };
+    var btn = slot.querySelector('[data-rank-refresh]');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.classList.add('is-busy');
+        loadRank(mk, true, function (res) {
+          btn.disabled = false;
+          btn.classList.remove('is-busy');
+          draw(res);
+        });
+      });
+    }
+    loadRank(mk, !!opts.force, draw);
+    if (opts.after) opts.after(slot);
+    return slot;
   }
 
   function howList() {
@@ -27908,6 +28344,7 @@ window.Astro = (function () {
           '</div>' +
           '<button type="button" class="btn-primary quiz-start" id="quizStart">퀴즈 시작</button>' +
           '<p class="quiz-best" id="quizBest">' + bestLine() + '</p>' +
+          '<div class="quiz-rank-slot" id="quizRank" aria-live="polite"></div>' +
         '</div>' +
         '<div class="quiz-how-wrap">' + howList() + '</div>' +
       '</div>';
@@ -27924,12 +28361,16 @@ window.Astro = (function () {
     });
     var startBtn = $('#quizStart');
     if (startBtn) startBtn.addEventListener('click', start);
+    mountRank($('#quizRank'), modeKey());
   }
 
   function start() {
     st.qs = buildQuestions(st.scope, st.level, st.total);
     st.i = 0; st.score = 0; st.answered = false; st.wrong = [];
     st.short = st.qs.length < st.total ? st.total : 0;
+    st.t0 = Date.now(); st.dur = 0;
+    st.submitted = false; st.myId = null; st.myRank = 0;
+    st.sending = false; st.sendMsg = ''; st.sendFail = false;
     if (!st.qs.length) { renderIntro(); return; }
     renderQuestion();
   }
@@ -28080,15 +28521,138 @@ window.Astro = (function () {
     });
   }
 
+  /* ------------------------------------------------------------- 결과 화면 */
+  function nickFormHtml() {
+    var saved = st.nick || store.get('quiz.nick', '') || '';
+    return '<form class="quiz-nick" id="quizNickForm" autocomplete="off" novalidate>' +
+      '<label for="quizNick">랭킹에 올릴 닉네임</label>' +
+      '<div class="quiz-nick-row">' +
+        '<input id="quizNick" name="nick" type="text" maxlength="16" ' +
+          'placeholder="1~16자" value="' + esc(saved) + '" aria-describedby="quizNickMsg">' +
+        '<button type="submit" class="btn-primary" id="quizNickSend">랭킹에 등록</button>' +
+      '</div>' +
+      '<p class="quiz-nick-msg" id="quizNickMsg" role="status">' + esc(st.sendMsg || '') + '</p>' +
+      '</form>';
+  }
+  function setNickMsg(text, ok) {
+    st.sendMsg = text;
+    st.sendFail = !ok;
+    var p = $('#quizNickMsg');
+    if (!p) return;
+    p.textContent = text;
+    p.className = 'quiz-nick-msg' + (ok ? ' is-ok' : (text ? ' is-no' : ''));
+  }
+
+  /** 결과 화면의 랭킹 카드 — 등록 전에는 닉네임 입력, 등록 뒤에는 내 기록·순위. */
+  function paintResultRank(mk, myScore, n, opts) {
+    var slot = $('#quizRank');
+    if (!slot) return;
+    var above;
+    if (st.submitted) {
+      above = '<p class="quiz-sent">🏆 <b>' + esc(st.nick) + '</b> · ' + myScore + '/' + n + ' · ' + fmtDur(st.dur) +
+        (st.myRank ? ' · <b>현재 ' + st.myRank + '위</b>' : '') + '</p>';
+    } else {
+      above = nickFormHtml();
+    }
+    mountRank(slot, mk, {
+      above: above, myId: st.myId, force: !!(opts && opts.force),
+      after: function () { bindNickForm(mk, myScore, n); }
+    });
+  }
+
+  function bindNickForm(mk, myScore, n) {
+    var form = $('#quizNickForm');
+    if (!form) return;
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      submitScore(mk, myScore, n);
+    });
+  }
+
+  function findRank(mk, id, cb) {
+    rankGet(mk, RANK.find).then(function (res) {
+      if (!res || !res.rows) { cb(0); return; }
+      rankCache[mk] = { rows: res.rows.slice(0, RANK.top), at: Date.now() };   // 목록도 최신으로
+      for (var i = 0; i < res.rows.length; i++) {
+        if (res.rows[i] && res.rows[i].id === id) { cb(i + 1); return; }
+      }
+      cb(0);
+    });
+  }
+
+  function submitScore(mk, myScore, n) {
+    if (st.sending) return;
+    if (st.submitted) { setNickMsg('이미 이번 판을 랭킹에 올렸습니다.', false); return; }
+    var input = $('#quizNick');
+    var chk = checkNick(input ? input.value : '');
+    if (!chk.ok) {
+      setNickMsg(chk.msg, false);
+      if (input && input.focus) input.focus();
+      return;
+    }
+    st.nick = chk.value;
+    store.set('quiz.nick', chk.value);
+    if (!rankOnline()) {
+      setNickMsg('오프라인(단일 파일)판에서는 랭킹에 올릴 수 없습니다. 내 기기 최고 기록은 저장해 두었습니다.', false);
+      return;
+    }
+    if (alreadySent(mk, myScore, st.dur)) {
+      st.submitted = true;
+      setNickMsg('방금 같은 기록을 올렸습니다. 랭킹을 새로 불러옵니다.', true);
+      paintResultRank(mk, myScore, n, { force: true });
+      return;
+    }
+    st.sending = true;
+    setNickMsg('등록하는 중…', true);
+    var btn = $('#quizNickSend');
+    if (btn) btn.disabled = true;
+    sendScore({
+      mode_key: mk,
+      scope: scopeKeyOf(st.scope),
+      difficulty: levelKeyOf(st.level),
+      total: n,
+      score: myScore,
+      duration_ms: Math.round(st.dur),
+      nickname: chk.value
+    }).then(function (res) {
+      st.sending = false;
+      if (btn) btn.disabled = false;
+      if (!res || res.error) {
+        var why = res && res.error ? ' (' + res.error + ')' : '';
+        setNickMsg('등록하지 못했습니다' + why + '. 잠시 뒤 다시 시도해 주세요.', false);
+        return;
+      }
+      st.submitted = true;
+      st.myId = res.row ? (res.row.id || null) : null;
+      markSent(mk, myScore, st.dur);
+      setNickMsg('랭킹에 올렸습니다!', true);
+      paintResultRank(mk, myScore, n, { force: true });
+      if (st.myId) {
+        findRank(mk, st.myId, function (pos) {
+          st.myRank = pos || 0;
+          paintResultRank(mk, myScore, n);
+        });
+      }
+    });
+  }
+
   function renderDone() {
     var shell = $('#quizShell');
     var s = st.score, n = st.qs.length;
-    var newRecord = saveBest(st.scope, st.level, s);
+    st.dur = st.t0 ? Math.max(0, Date.now() - st.t0) : 0;
+    var rec = saveBestRec(st.scope, st.level, n, s, st.dur);
+    var newRecord = rec.better;
     var msg, star;
     if (s === n) { msg = '전부 맞혔습니다. 하늘 지도 없이도 오늘 밤 별을 찾아갈 수 있겠어요.'; star = '🏆'; }
     else if (s >= n - 2) { msg = '아주 좋습니다. 틀린 문제만 다시 보면 완성입니다.'; star = '🌟'; }
     else if (s >= Math.ceil(n / 2)) { msg = '기본은 잡혔습니다. 틀린 천체를 도감에서 한 번씩 열어 보세요.'; star = '✨'; }
     else { msg = '처음이면 충분합니다. 쉬움부터 다시 하면 금방 늘어요.'; star = '🌱'; }
+
+    /* 온라인 랭킹에 올릴 수 있는 판인가 — 문제 수가 5·10·20·50·100 이고, 시간이 문항당 0.3초 이상.
+       (제약은 DB에도 같은 값으로 걸려 있고, 여기서는 그 전에 안내만 합니다) */
+    var mk = modeKey(st.scope, st.level, n);
+    var canRank = COUNTS.indexOf(n) >= 0;
+    var okTime = st.dur >= n * 300;
 
     var wrongHtml = '';
     if (st.wrong.length) {
@@ -28107,18 +28671,25 @@ window.Astro = (function () {
           '<p class="quiz-scorebig"><b>' + s + '</b> / ' + n + '</p>' +
           '<p class="quiz-ctx-line">' + esc(scopeMeta().name) + ' · ' + esc(levelMeta().name) + '</p>' +
           '<p class="quiz-msg">' + msg + '</p>' +
+          '<p class="quiz-dur">걸린 시간 <b>' + fmtDur(st.dur) + '</b> · 문제당 ' + fmtDur(st.dur / Math.max(1, n)) + '</p>' +
           (newRecord ? '<p class="quiz-new">새 최고 기록입니다!</p>'
-            : '<p class="quiz-best">이 설정의 최고 기록 · ' + best(st.scope, st.level, n) + ' / ' + n + '</p>') +
+            : '<p class="quiz-best">' + bestLine(n) + '</p>') +
           '<div class="quiz-actions">' +
             '<button type="button" class="btn-primary" id="quizRetry">같은 설정 다시</button>' +
             '<button type="button" class="btn-ghost" id="quizOther">범위·난이도 바꾸기</button>' +
           '</div>' +
         '</div>' +
         wrongHtml +
+        (canRank && okTime
+          ? '<div class="quiz-rank-slot" id="quizRank" aria-live="polite"></div>'
+          : '<div class="quiz-rank-slot" id="quizRank"><p class="quiz-nick-msg">' +
+            (canRank ? '이번 판은 시간이 너무 짧아 랭킹에 올릴 수 없습니다.' : '이번 판은 중복 없이 ' + n + '문제로 진행되어 랭킹에 올릴 수 없습니다.') +
+            '</p></div>') +
       '</div>';
     $('#quizRetry').addEventListener('click', start);
     $('#quizOther').addEventListener('click', function () { renderIntro(); });
     bindLinks(shell);
+    if (canRank && okTime) paintResultRank(mk, s, n);
   }
 
   /* ------------------------------------------------------------- 시작 */
@@ -28142,7 +28713,16 @@ window.Astro = (function () {
     scopes: SCOPES,
     levels: LEVELS,
     bestKey: bestKey,
-    kinds: function () { return Object.keys(GENS); }
+    kinds: function () { return Object.keys(GENS); },
+    /* 랭킹 검증용 */
+    modeKey: function (scope, level, total) { return modeKey(scope, level, total); },
+    checkNick: checkNick,
+    bestRec: function (scope, level, total) { return bestRec(scope, level, total); },
+    fmtDur: fmtDur,
+    loadRank: loadRank,
+    submitScore: submitScore,
+    online: rankOnline,
+    dur: function () { return st.dur; }
   };
 })();
 
