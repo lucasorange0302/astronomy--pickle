@@ -34,7 +34,8 @@
 
 ### 4) ✅ 배포
 - 서비스 워커 캐시 `2026-11-28.11`, `python3 astronomy-site/build.py` 로 모바일판·데스크톱판·단일 파일판(`별너울지도.html`) 재빌드.
-- 실서버(헤드리스) 검증: `https://byeolneoul.vercel.app`·`https://lucasorange0302.github.io/byeolbam/` 두 곳 모두 관성 16개 확인 전부 통과, 단일 파일판도 통과, 콘솔 오류 0건.
+- 실서버(헤드리스) 검증: `https://byeolneoul.vercel.app`·`https://lucasorange0302.github.io/byeolbam/` 두 곳 모두 관성 16개 확인 전부 통과, 빠른 줄 10개 확인 전부 통과, 단일 파일판도 통과, 콘솔 오류 0건. `tools/test_live_guide.py` 도 실서버에서 A~I + 레이아웃 5종 통과(빠른 줄 네 개).
+- 커밋 `9fe73e8` (관성 회전 · 「🌙 밤 22시」 정리 · 캐시 2026-11-28.11).
 
 ## 2026-11-28 오후 업데이트 (18) — 🎯 라이브 뷰 조준 유도: 방향 화살표·유도등 · 조준 링 · 도착 강조
 
