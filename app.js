@@ -4937,6 +4937,12 @@
       const b = $(sel);
       if (b) b.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); deepToggleClick(); });
     });
+    /* ☰ 더보기 안에서 눌렀으면 메뉴를 닫아 상태 변화가 바로 보이게 */
+    const menuBtn = $('#deepMenuBtn');
+    if (menuBtn) menuBtn.addEventListener('click', function () {
+      const menu = $('#moreMenu'), b = $('#btnMore');
+      if (menu && !menu.hidden) { menu.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
+    });
     const regions = $('#deepRegions');
     if (regions) regions.addEventListener('click', function (ev) {
       const b = ev.target.closest('[data-deep-region]');
