@@ -7,7 +7,7 @@
    ========================================================================= */
 (function () {
   var VIEWS = ['live', 'today', 'skymap', 'catalog', 'spacearchive', 'calendar',
-    'sites', 'lab', 'guide', 'science', 'learn', 'news', 'plan'];
+    'sites', 'lab', 'guide', 'science', 'learn', 'records', 'news', 'plan'];
   var META = {
     live: ['🧭', '라이브 하늘', '지금 이 방향의 하늘'],
     today: ['🌙', '오늘 밤', '관측 지수 · 구름 · 행성'],
@@ -20,6 +20,7 @@
     guide: ['📖', '가이드', '초보자 · 용어사전'],
     science: ['🔬', '원리', '암순응 · 광학 · 시상'],
     learn: ['🎓', '학습관', '교육과정 · 실험 · 천문학사'],
+    records: ['🏆', '최고 기록관', '제일 큰 것 · 제일 밝은 것'],
     news: ['📰', '뉴스', '천문학 · 우주탐사'],
     plan: ['✅', '체크리스트', '관측 준비 · 로그']
   };
@@ -27,7 +28,7 @@
     today: 'today', live: 'live', skymap: 'skymap', catalog: 'catalog',
     constellations: 'catalog', spacearchive: 'spacearchive', calendar: 'calendar',
     sites: 'sites', lab: 'lab', guide: 'guide', glossary: 'guide',
-    science: 'science', learn: 'learn', news: 'news', plan: 'plan', plan_: 'plan'
+    science: 'science', learn: 'learn', records: 'records', news: 'news', plan: 'plan', plan_: 'plan'
   };
   var DEFAULT = 'live';
 

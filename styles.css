@@ -3344,3 +3344,135 @@ body.red .quiz-kind { color: var(--accent-2); background: var(--accent-soft); }
   .qf-row > button { flex: 1 1 132px; }
   .quiz-actions > button { flex: 1 1 140px; }
 }
+
+/* =========================================================================
+   🏆 우주 최고 기록관 (2026-11-28) — 어린이용 큰 글씨 카드 + 직접 그린 도해
+   ========================================================================= */
+.rec-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+.rec-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.rec-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  min-height: 38px; padding: 7px 14px;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--panel);
+  color: var(--muted); font: inherit; font-size: .86rem; font-weight: 700;
+  cursor: pointer; transition: border-color .15s, color .15s, background .15s;
+}
+.rec-chip:hover { color: var(--text); border-color: var(--border-hi); }
+.rec-chip.is-active { background: var(--accent-soft); color: var(--accent); border-color: rgba(255, 212, 121, .45); }
+.rec-lucky {
+  min-height: 38px; padding: 7px 15px; border-radius: 999px;
+  border: 1px solid rgba(126, 224, 192, .4); background: var(--accent-2-soft);
+  color: var(--accent-2); font: inherit; font-size: .86rem; font-weight: 800; cursor: pointer;
+}
+.rec-lucky:hover { filter: brightness(1.12); }
+.rec-guide { margin: 0 0 14px; color: var(--muted); font-size: .86rem; line-height: 1.6; }
+.rec-guide b { color: var(--accent); }
+.rec-count { color: var(--faint); font-weight: 700; margin-left: 6px; }
+
+.rec-list { display: flex; flex-direction: column; gap: 10px; }
+.rec-card {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--panel); overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+.rec-card.is-open { border-color: var(--border-hi); box-shadow: var(--shadow); }
+.rec-head {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  padding: 13px 15px; background: none; border: 0; color: inherit;
+  font: inherit; text-align: left; cursor: pointer;
+}
+.rec-head:hover { background: rgba(255, 255, 255, .03); }
+.rec-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.rec-ico {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px;
+  display: grid; place-items: center; font-size: 1.35rem; line-height: 1;
+  background: var(--accent-soft); border: 1px solid rgba(255, 212, 121, .22);
+}
+.rec-title { flex: 1 1 auto; min-width: 0; display: block; }
+.rec-tag { display: block; color: var(--accent); font-size: .74rem; font-weight: 800; letter-spacing: .01em; }
+.rec-name { display: block; color: var(--text); font-size: 1.04rem; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+.rec-value {
+  flex: 0 0 auto; text-align: right; color: var(--accent-2);
+  font-size: clamp(1.05rem, 4.4vw, 1.5rem); font-weight: 900; line-height: 1.12;
+  letter-spacing: -.02em;
+}
+.rec-value em { display: block; font-style: normal; font-size: .58em; font-weight: 700; color: var(--muted); letter-spacing: 0; }
+.rec-chev { flex: 0 0 auto; color: var(--faint); font-size: .9rem; transition: transform .18s; }
+.rec-card.is-open .rec-chev { transform: rotate(180deg); color: var(--accent); }
+
+.rec-body { padding: 2px 15px 18px; }
+.rec-lead { margin: 0 0 12px; color: var(--text); font-size: .95rem; line-height: 1.66; }
+.rec-analogy {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin: 0 0 14px; padding: 12px 14px; border-radius: 14px;
+  background: var(--accent-soft); border: 1px solid rgba(255, 212, 121, .28);
+}
+.rec-aico { font-size: 1.3rem; line-height: 1.1; }
+.rec-analogy p { margin: 0; font-size: .92rem; line-height: 1.66; color: var(--text); }
+.rec-analogy b { color: var(--accent); }
+
+.rec-fig { margin: 0 0 16px; padding: 8px 8px 4px; border-radius: 14px; border: 1px solid var(--border); background: rgba(0, 0, 0, .24); }
+.rec-fig svg { display: block; width: 100%; height: auto; }
+.rec-fig figcaption { margin: 6px 4px 8px; color: var(--faint); font-size: .78rem; line-height: 1.58; }
+
+.rec-facts { list-style: none; margin: 0 0 14px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; }
+.rec-facts li { padding: 9px 11px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255, 255, 255, .035); min-width: 0; }
+.rec-facts span { display: block; color: var(--faint); font-size: .73rem; font-weight: 600; }
+.rec-facts b { display: block; color: var(--text); font-size: .92rem; line-height: 1.45; overflow-wrap: anywhere; }
+
+.rec-qa { margin: 0 0 12px; }
+.rec-qa details { border: 1px solid var(--border); border-radius: 12px; background: rgba(255, 255, 255, .03); padding: 10px 12px; margin-bottom: 8px; }
+.rec-qa details[open] { border-color: var(--border-hi); }
+.rec-qa summary { cursor: pointer; font-size: .9rem; font-weight: 800; color: var(--text); }
+.rec-qa summary::marker { color: var(--accent); }
+.rec-qa p { margin: 8px 0 0; color: var(--muted); font-size: .89rem; line-height: 1.68; }
+
+.rec-doubt { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(138, 182, 255, .34); background: rgba(138, 182, 255, .09); color: var(--muted); font-size: .84rem; line-height: 1.6; }
+.rec-doubt b { display: block; color: var(--accent-3); font-size: .78rem; margin-bottom: 2px; }
+
+.rec-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.rec-see { margin: 0 0 10px; padding: 9px 12px; border-radius: 12px; border: 1px dashed var(--border-hi); color: var(--faint); font-size: .82rem; line-height: 1.55; }
+.rec-btn {
+  min-height: 42px; padding: 9px 15px; border-radius: 12px; word-break: keep-all;
+  border: 1px solid var(--border-hi); background: var(--panel-hi); color: var(--text);
+  font: inherit; font-size: .88rem; font-weight: 800; cursor: pointer;
+}
+.rec-btn:hover { border-color: var(--accent); color: var(--accent); }
+.rec-btn-aim { background: var(--accent-soft); border-color: rgba(255, 212, 121, .45); color: var(--accent); }
+.rec-src { margin: 12px 0 0; color: var(--faint); font-size: .72rem; line-height: 1.5; }
+.rec-foot { margin: 14px 0 0; color: var(--faint); font-size: .78rem; line-height: 1.6; }
+.rec-foot b { color: var(--accent-3); }
+
+/* 학습관에서 기록관으로 건너가는 카드 */
+.learn-xlink {
+  display: flex; align-items: center; gap: 12px;
+  margin: 0 0 18px; padding: 13px 16px; border-radius: var(--radius);
+  border: 1px solid rgba(255, 212, 121, .34); background: var(--accent-soft);
+  color: var(--text); text-decoration: none;
+}
+.learn-xlink:hover { border-color: var(--accent); }
+.lx-ico { font-size: 1.7rem; line-height: 1; }
+.lx-txt { flex: 1 1 auto; min-width: 0; }
+.lx-txt b { display: block; font-size: .98rem; font-weight: 800; color: var(--accent); }
+.lx-txt small { display: block; color: var(--muted); font-size: .79rem; line-height: 1.5; }
+.lx-go { flex: 0 0 auto; font-size: .8rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
+
+body.red .rec-chip.is-active { background: rgba(255, 106, 61, .18); border-color: rgba(255, 106, 61, .5); }
+body.red .rec-lucky { background: rgba(255, 138, 92, .14); border-color: rgba(255, 138, 92, .45); }
+body.red .rec-doubt { background: rgba(255, 95, 69, .12); border-color: rgba(255, 95, 69, .4); }
+body.red .rec-fig { background: rgba(20, 3, 2, .5); }
+
+@media (max-width: 640px) {
+  .rec-head { gap: 9px; padding: 12px 12px; }
+  .rec-ico { width: 34px; height: 34px; font-size: 1.15rem; border-radius: 10px; }
+  .rec-tag { font-size: .7rem; }
+  .rec-name { font-size: .96rem; }
+  .rec-value { font-size: clamp(1rem, 5vw, 1.24rem); }
+  .rec-body { padding: 2px 12px 16px; }
+  .rec-analogy { padding: 11px 12px; }
+  .rec-analogy p { font-size: .88rem; }
+  .rec-facts { grid-template-columns: 1fr; }
+  .rec-btn { flex: 1 1 140px; justify-content: center; }
+  .learn-xlink { flex-wrap: wrap; }
+  .lx-go { width: 100%; text-align: right; }
+}
