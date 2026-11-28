@@ -5475,24 +5475,12 @@
     const red = store.get('red', false);
     document.body.classList.toggle('red', !!red);
     $('#btnRed').setAttribute('aria-pressed', String(!!red));
-    // 헤더 버튼이 숨는 모바일에서는 더보기 메뉴의 같은 항목으로 켜고 끕니다.
-    function syncRedMenu(on) {
-      const m = $('#btnRedMenu'), l = $('#btnRedMenuLabel');
-      if (m) { m.setAttribute('aria-checked', String(!!on)); m.classList.toggle('is-on', !!on); }
-      if (l) l.textContent = on ? '레드라이트 모드 끄기' : '레드라이트 모드 켜기';
-    }
-    syncRedMenu(!!red);
     $('#btnRed').addEventListener('click', function () {
       const on = !document.body.classList.contains('red');
       document.body.classList.toggle('red', on);
       $('#btnRed').setAttribute('aria-pressed', String(on));
-      syncRedMenu(on);
       store.set('red', on);
       toast(on ? '레드라이트 모드 — 암순응을 보호합니다.' : '일반 모드로 돌아왔습니다.');
-    });
-    const redMenu = $('#btnRedMenu');
-    if (redMenu) redMenu.addEventListener('click', function () {
-      $('#btnRed').click();
     });
 
     // 글자 크기 (접근성)

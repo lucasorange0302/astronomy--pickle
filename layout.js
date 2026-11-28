@@ -123,7 +123,7 @@
     scr.setAttribute('aria-label', '화면과 공유');
     scr.innerHTML =
       '<p class="more-title"><span aria-hidden="true">🎛️</span> 화면 · 공유</p>' +
-      '<button type="button" class="more-item" data-trigger="btnRed" role="menuitem">' +
+      '<button type="button" class="more-item" data-trigger="btnRed" role="menuitemcheckbox" aria-checked="false">' +
       '  <span class="mi-ico" aria-hidden="true">🔴</span>' +
       '  <span class="mi-txt"><b class="ms-red">레드라이트 모드</b><small>암순응 보호 · 붉은 화면으로 전환</small></span>' +
       '</button>' +
@@ -143,6 +143,8 @@
       var on = document.body.classList.contains('red');
       var lb = scr.querySelector('.ms-red');
       if (lb) lb.textContent = on ? '레드라이트 모드 끄기' : '레드라이트 모드 켜기';
+      var item = scr.querySelector('[data-trigger="btnRed"]');
+      if (item) item.setAttribute('aria-checked', on ? 'true' : 'false');
     };
     scr.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-trigger]');
