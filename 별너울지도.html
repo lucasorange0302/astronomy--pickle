@@ -2405,7 +2405,11 @@ html.has-views { scroll-padding-top: 84px; }
   border: 1px solid var(--border-hi); backdrop-filter: blur(8px);
   font: 700 .74rem var(--font); white-space: nowrap;
 }
-.live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* 호버가 남는 터치 기기(iOS 는 탭한 버튼에 :hover 를 붙여 둡니다)에서 꺼진 버튼이
+   켜진 것처럼 금색 테두리로 남지 않도록, 실제 마우스 환경에서만 호버 색을 줍니다. */
+@media (hover: hover) and (pointer: fine) {
+  .live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+}
 #liveSensorChip { cursor: pointer; pointer-events: auto; }
 #liveSensorChip:hover { border-color: var(--accent-2); color: var(--accent-2); }
 
@@ -4745,7 +4749,7 @@ body.red .bwshare-btn.primary { background: #ff8a5c; border-color: #ff8a5c; colo
     <div class="section-head">
       <p class="eyebrow">전천 지도</p>
       <h2>지금 하늘을 <span class="grad">한 장에</span></h2>
-      <p class="section-sub">머리 위 하늘 전체를 펼쳐 보여 줍니다. 지도에 그려진 <b>모든 별</b>(어두운 별까지)과 행성·달·성운을 누르면 그 자리의 실시간 고도·방위·출몰을 보여 주고, 아래 도크로 밤새 하늘이 움직이는 모습을 재생할 수 있습니다.</p>
+      <p class="section-sub">머리 위 하늘 전체를 펼쳐 보여 줍니다. 지도에 그려진 <b>모든 별</b>(어두운 별까지)과 행성·달을 누르면 그 자리의 실시간 고도·방위·출몰을 보여 주고, 아래 도크로 밤새 하늘이 움직이는 모습을 재생할 수 있습니다.</p>
     </div>
     <div class="grid-1">
       <!-- 전천 지도 -->
@@ -4783,7 +4787,7 @@ body.red .bwshare-btn.primary { background: #ff8a5c; border-color: #ff8a5c; colo
             <span class="tm-dial-val" data-tm-speed>5분/초</span>
           </div>
         </div>
-        <p class="panel-foot">가운데가 머리 위(천정), 테두리가 지평선입니다. 동쪽이 왼쪽인 것은 하늘을 올려다보는 방향이기 때문입니다. <b>별·행성·달·성운을 눌러 보세요</b> — 그 자리에서 실시간 고도·방위·출몰을 보여 줍니다.</p>
+        <p class="panel-foot">가운데가 머리 위(천정), 테두리가 지평선입니다. 동쪽이 왼쪽인 것은 하늘을 올려다보는 방향이기 때문입니다. <b>별·행성·달을 눌러 보세요</b> — 그 자리에서 실시간 고도·방위·출몰을 보여 줍니다.</p>
         <div class="sky-inspector" id="skyInspector"></div>
       </div>
 
@@ -12754,12 +12758,8 @@ window.Astro = (function () {
     el.style.transform = (smz.s === 1 && !smz.tx && !smz.ty) ? ''
       : 'translate(' + smz.tx.toFixed(1) + 'px,' + smz.ty.toFixed(1) + 'px) scale(' + smz.s.toFixed(3) + ')';
     smz.applied = smz.s;
-    /* 확대 단계가 바뀌면 딥스카이를 더 그려야 합니다 — 단계가 바뀔 때만 다시 그립니다. */
-    const lv = smz.s >= 3.2 ? 3 : smz.s >= 2.4 ? 2 : smz.s >= 1.5 ? 1 : 0;
-    if (lv !== smz.layer) {
-      smz.layer = lv;
-      if (smz.ready && state.last) setTimeout(function () { renderSkyMap(state.last); }, 0);
-    }
+    /* 전천 지도는 확대해도 내용이 같습니다(딥스카이를 그리지 않으므로) — 다시 그리지 않고
+       CSS transform 만으로 확대·이동합니다. */
     const wrap = el.parentNode;
     if (wrap && wrap.classList) wrap.classList.toggle('is-zoomed', smz.s > 1.001);
     el.style.touchAction = smz.s > 1.001 ? 'none' : 'pan-y';
@@ -13031,45 +13031,11 @@ window.Astro = (function () {
       return true;
     }
 
-    // 딥스카이 마커(심볼) — 이름표는 나중에 겹치지 않게 배치
-    const dsoPts = [];
-    D.catalog.filter(function (o) { return o.group === 'dso' && o.mag <= 6.5; }).forEach(function (o) {
-      const h = A.equatorialToHorizontal(o.raH, o.decD, lat, lon, jd);
-      if (h.alt < 3) return;
-      const p = proj(h.alt, h.az);
-      dsoPts.push({ o: o, p: p, alt: h.alt });
-      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.2" fill="none" stroke="' + (red ? RC.dso : 'rgba(126,224,192,.75)') + '" stroke-width="1" stroke-dasharray="1.5 1.5"/>';
-    });
+    /* 🌌 딥스카이(성운·은하·성단)는 전천 지도에 그리지 않습니다(2026-11-29 남현님 요청).
+       확대하든 1×든 초록색 DSO 타원·원·점·이름표·히트 영역은 0개 — 은하수·별·별자리 선과
+       이름·행성·달·태양·방위·고도선만 남깁니다. 딥스카이는 라이브 뷰(drawLive)에서만 보입니다. */
 
-    /* 🔭 확대할수록 더 어두운 딥스카이 — 라이브 뷰와 같은 단계(1.5× / 2.4× / 3.2×). */
-    const zoomS = (smz && smz.s) || 1;
-    const smLayer = zoomS >= 3.2 ? 3 : zoomS >= 2.4 ? 2 : zoomS >= 1.5 ? 1 : 0;
-    if (smLayer > 0) {
-      const lim = smLayer === 3 ? 12.5 : smLayer === 2 ? 10.5 : 8.5;
-      const seenN = {};
-      D.catalog.forEach(function (o) { if (o.name) seenN[o.name] = 1; });
-      const col = red ? RC.dso : 'rgba(126,224,192,.72)';
-      dsoIndex().forEach(function (it) {
-        if (it.m > lim || seenN[it.name]) return;
-        const h = A.equatorialToHorizontal(it.raH, it.dec, lat, lon, jd);
-        if (h.alt < 3) return;
-        const p = proj(h.alt, h.az);
-        const x = p.x.toFixed(1), y = p.y.toFixed(1);
-        let sym;
-        if (it.k === 'gal') sym = '<ellipse cx="' + x + '" cy="' + y + '" rx="3.4" ry="2" fill="none" stroke="' + col + '" stroke-width=".9"/>';
-        else if (it.k === 'ocl') sym = '<circle cx="' + x + '" cy="' + y + '" r="2.6" fill="none" stroke="' + col + '" stroke-width=".9" stroke-dasharray="1.2 1.4"/>';
-        else if (it.k === 'gcl') sym = '<circle cx="' + x + '" cy="' + y + '" r="2.6" fill="none" stroke="' + col + '" stroke-width=".9"/><path d="M' + x + ' ' + (p.y - 3.6).toFixed(1) + 'L' + x + ' ' + (p.y + 3.6).toFixed(1) + '" stroke="' + col + '" stroke-width=".8"/>';
-        else sym = '<rect x="' + (p.x - 2.4).toFixed(1) + '" y="' + (p.y - 2.4).toFixed(1) + '" width="4.8" height="4.8" fill="none" stroke="' + col + '" stroke-width=".9" stroke-dasharray="1.2 1.4"/>';
-        s += '<g data-sky="wide:' + esc(it.id) + '" style="cursor:pointer">' + sym +
-          '<circle cx="' + x + '" cy="' + y + '" r="' + (smLayer >= 2 ? 7 : 5) + '" fill="transparent"/></g>';
-        if (smLayer >= 2) dsoPts.push({ o: { name: it.name, mag: it.m }, p: p, alt: h.alt });
-      });
-    }
-
-    /* 🌌 딥스카이 확장은 라이브 하늘에서만 — 전천 지도는 기본 별 1,643개와
-       확대 시 메시에·NGC(2,571종)만 그립니다(11만 타일·Gaia 요청 없음). */
-
-    // ── 이름표 배치: 밝은 별 → 딥스카이 → 별자리. 겹치면 뒤 순위는 포기한다.
+    // ── 이름표 배치: 밝은 별 → 별자리. 겹치면 뒤 순위는 포기한다.
     ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스', '안타레스',
       '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카노푸스', '아케르나르'].forEach(function (nm) {
       const p = visibleStars[nm];
@@ -13078,14 +13044,6 @@ window.Astro = (function () {
       if (p.x + 5 + w > W - 3 || overlaps(p.x + 3, p.y - 11, w, 10)) return;
       boxes.push({ x: p.x + 3, y: p.y - 11, w: w, h: 10 });
       s += '<text x="' + (p.x + 5).toFixed(1) + '" y="' + (p.y - 4).toFixed(1) + '" class="sky-star-label">' + nm + '</text>';
-    });
-
-    dsoPts.sort(function (a, b) { return a.o.mag - b.o.mag; }).slice(0, 10).forEach(function (it) {
-      const txt = it.o.name.replace(' 성단', '').replace(' 대성운', '');
-      const w = txt.length * 7.6 * 0.98;
-      if (it.p.x + 7 + w > W - 3 || overlaps(it.p.x + 5, it.p.y - 5, w, 10)) return;
-      boxes.push({ x: it.p.x + 5, y: it.p.y - 5, w: w, h: 10 });
-      s += '<text x="' + (it.p.x + 6).toFixed(1) + '" y="' + (it.p.y + 3).toFixed(1) + '" class="sky-dso-label">' + esc(txt) + '</text>';
     });
 
     conCand.sort(function (a, b) { return a.con.rank - b.con.rank || b.frac - a.frac || b.alt - a.alt; });
@@ -13128,12 +13086,6 @@ window.Astro = (function () {
       if (!p) return;
       s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="11" fill="transparent" data-sky="star:' + esc(nm) + '" style="cursor:pointer"/>';
     });
-    D.catalog.filter(function (o) { return o.group === 'dso' && o.mag <= 6.5; }).forEach(function (o) {
-      const h = A.equatorialToHorizontal(o.raH, o.decD, lat, lon, jd);
-      if (h.alt < 3) return;
-      const p = proj(h.alt, h.az);
-      s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="11" fill="transparent" data-sky="dso:' + esc(o.id) + '" style="cursor:pointer"/>';
-    });
     c.planets.forEach(function (p) {
       if (p.hor.alt <= 0) return;
       const q = proj(p.hor.alt, p.hor.az);
@@ -13145,7 +13097,6 @@ window.Astro = (function () {
     }
     svg.innerHTML = s;
     smz.ready = true;
-    smz.layer = smLayer;
     // 그려진 별 전체를 터치 판정 대상으로 넘긴다(위임 리스너는 한 번만 붙인다).
     svg._skyHits = hitPool;
     svg._skyHitCount = hitN;
@@ -14942,6 +14893,11 @@ window.Astro = (function () {
   function trackStop() {
     if (track.raf) { cancelAnimationFrame(track.raf); track.raf = null; }
     track.rot = [0, 0, 0];
+    /* 추적이 멈춘 자리에서 시선을 그대로 둡니다 — 추적 중에는 live.az/alt 만 움직이고
+       targetAz/targetAlt 는 예전 수동 이동 위치에 머물러 있어, 센서를 끄면 liveTick 이
+       그 옛 위치로 시선을 되돌리던 문제(2026-11-29 실기기 제보)를 막습니다. */
+    live.targetAz = live.az;
+    live.targetAlt = live.alt;
   }
 
   function shortestDelta(from, to) { return A.mod(to - from + 180, 360) - 180; }
@@ -17090,15 +17046,19 @@ window.Astro = (function () {
        직접 누른 것과 똑같이 정보 창(#liveInfo)이 열립니다. */
     inView.sort(function (a, b) { return a.d - b.d; });
     const nearest = inView.length ? inView[0] : null;
+    /* 중앙 초록 조준원(반지름 9px + 눈금 15px) 안에 실제로 들어온 천체만 '시야 중앙'으로 인정합니다.
+       예전에는 화면 짧은 변의 42%(390px 폰에서 164px)까지 받아, 초록 원 밖 멀리 있는 행성도
+       '시야 중앙 [행성]'으로 떴습니다(2026-11-29 실기기 제보 IMG_2596). */
+    const LIVE_CENTER_HIT = 20;
     const card = $('#liveCenterCard');
     if (card) {
-      const locked = !!(nearest && nearest.d < Math.min(W, H) * 0.42);
+      const locked = !!(nearest && nearest.d <= LIVE_CENTER_HIT);
       const txt = locked
         ? '시야 중앙 <button type="button" class="lc-name" data-lc-kind="' + esc(nearest.kind) +
           '" data-lc-key="' + esc(nearest.key) + '" data-lc-name="' + esc(nearest.name) +
           '" title="' + esc(nearest.name) + ' 정보 보기" aria-label="' + esc(nearest.name) + ' 정보 보기">' +
           esc(nearest.name) + '</button> · ' + dirName(nearest.az) + ' ' + nf(nearest.alt, 0) + '°'
-        : '시야 중앙 — ' + dirName(live.az) + ' ' + nf(live.alt, 0) + '° (천체를 눌러 보세요)';
+        : '시야 중앙 — ' + dirName(live.az) + ' ' + nf(live.alt, 0) + '° (천체를 중앙 원에 맞춰 보세요)';
       if (txt !== live.lastCenter) { card.innerHTML = txt; live.lastCenter = txt; }
       card.classList.toggle('is-hit', locked);
     }
@@ -17376,6 +17336,27 @@ window.Astro = (function () {
     const t = clamp(dm / 1.5, 0, 1);
     return { r: 0.45 + 0.3 * t, a: 0.26 + 0.34 * t, halo: 0 };
   }
+  /* 로컬 확장 성도(5~12등)가 1° 이하 초고배율에서 주별만 해지지 않도록 —
+     1~4등 주별(1.05~3.0px)보다 작은 2.4px에서 멈춥니다. */
+  const DEEP_LOCAL_R_MAX = 2.4;
+
+  /* 🌌 Gaia DR3 별(11.5~20.8등)은 로컬 확장 성도(≤12등)보다도 훨씬 어두운 심우주 별입니다.
+     2026-11-29 남현님 제보 "가이아 별들 크기가 너무 크고 기존 별들이랑 너무 비슷하게 보여" —
+     밝은 별 후광·큰 반지름을 주던 deepStarShape 대신, 등급 비율대로 0.30~0.85px 의
+     작고 은은한 점으로만 그립니다(알파 0.22~0.58 · 후광 없음 · 확대해도 커지지 않음).
+     시각 위계: 1~4등 주별(1.05~3.0px) > 로컬 확장(≤12등, ≤2.4px) > Gaia(≤0.85px). */
+  function gaiaStarShape(mag) {
+    if (mag <= 14) {
+      const t = clamp((14 - mag) / 2.5, 0, 1);          // 11.5등 0.85px → 14등 0.78px
+      return { r: 0.78 + 0.07 * t, a: 0.52 + 0.06 * t };
+    }
+    if (mag <= 17) {
+      const t = clamp((17 - mag) / 3, 0, 1);            // 14등 0.55px → 17등 0.45px
+      return { r: 0.45 + 0.10 * t, a: 0.34 + 0.06 * t };
+    }
+    const t = clamp((20.8 - mag) / 3.8, 0, 1);          // 17등 0.40px → 20.8등 0.30px
+    return { r: 0.30 + 0.10 * t, a: 0.22 + 0.08 * t };
+  }
 
   function drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal) {
     DEEP.liveHits = [];
@@ -17412,7 +17393,7 @@ window.Astro = (function () {
         if (!inBox(p, 6)) continue;
         const ci = bvBucket(s.ci);
         if (ci !== 7) colorN++;
-        const r = Math.round(sh.r * fovK * 10) / 10;
+        const r = Math.round(Math.min(sh.r * fovK, DEEP_LOCAL_R_MAX) * 10) / 10;
         const qa = Math.round(a * 10) / 10;
         const key = ci + '|' + r + '|' + qa;
         (buckets[key] = buckets[key] || []).push(p);
@@ -17469,20 +17450,17 @@ window.Astro = (function () {
         const dDec = g.dec - ctr.dec;
         if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(dDec) > gr * 1.45) continue;
         const dm = gLim - g.mag;
-        const sh = deepStarShape(dm, g.mag);
-        const a = clamp(sh.a * clamp(dm / 2.0, 0.08, 1), 0, 1);
+        const sh = gaiaStarShape(g.mag);
+        /* 한계 등급 바로 아래 별만 살짝 더 옅게 — 밝기 차이가 자연스럽게 사라집니다. */
+        const a = clamp(sh.a * clamp(dm / 0.8, 0.7, 1), 0, 1);
         const h = A.equatorialToHorizontal(g.ra / 15, g.dec, lat, lon, jd);
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
         const ci = bvBucket(gaiaBv(g));
-        const r = Math.round(sh.r * 10) / 10;
-        const key = ci + '|' + r + '|' + (Math.round(a * 10) / 10);
+        const r = Math.round(sh.r * 20) / 20;
+        const qa = Math.round(a * 50) / 50;
+        const key = ci + '|' + r + '|' + qa;
         (gBuckets[key] = gBuckets[key] || []).push(p);
-        if (sh.halo > 0) {
-          const hr = sh.halo;
-          ctx.globalAlpha = 0.18;
-          ctx.drawImage(deepGlow(ci), p.x - hr, p.y - hr, hr * 2, hr * 2);
-        }
         const hit = DEEP.hitPool[1200 + i] || (DEEP.hitPool[1200 + i] = { kind: 'gaia' });
         hit.x = p.x; hit.y = p.y; hit.mag = g.mag; hit.ra = g.ra; hit.dec = g.dec;
         hit.ci = g.bp_rp; hit.name = ''; hit.id = g.id; hit.plx = g.plx;
@@ -18231,14 +18209,26 @@ window.Astro = (function () {
   }
 
   function disableSensor(silent) {
-    if (!live.sensor) return;
+    const was = live.sensor;
     live.sensor = false;
     trackStop();
     window.removeEventListener('deviceorientation', onOrientation, true);
     window.removeEventListener('deviceorientationabsolute', onOrientation, true);
     window.removeEventListener('devicemotion', onMotion, true);
     setSensorUi(false, 'off', '센서 꺼짐');
-    if (!silent) toast('센서를 껐습니다. 드래그·버튼으로 둘러보세요.');
+    /* 버튼 상태를 한 번 더 즉시 맞춥니다 — 어떤 경로로 꺼졌든(권한 회수·일시정지·두 버튼 중 하나)
+       바깥「🧭 추적」과 ⚙ 조작의 센서 버튼 불빛이 남지 않게. 탭 직후 남는 :hover·포커스 테두리도 풀어 줍니다. */
+    ['#liveTrackBtnQ', '#liveSensorBtn'].forEach(function (sel) {
+      const b = $(sel);
+      if (!b) return;
+      b.classList.remove('is-on');
+      b.setAttribute('aria-pressed', 'false');
+      try { b.blur(); } catch (e) { }
+    });
+    /* 지금 보고 있던 방위·고도를 그대로 유지 — 예전 수동 위치로 되돌아가지 않습니다. */
+    live.targetAz = live.az;
+    live.targetAlt = live.alt;
+    if (!silent && was) toast('센서를 껐습니다. 드래그·버튼으로 둘러보세요.');
     kickLive();
   }
 
@@ -18308,6 +18298,11 @@ window.Astro = (function () {
     bodies: function () { return live.bodies || null; },
     /* -- 검증용 — 확장 성도: 이번 프레임에 그린 수·색을 아는 별 수. */
     deepStats: function () { return { shown: live.deepShown || 0, colored: live.deepColorN || 0, limit: live.deepLimit || 0 }; },
+    /* -- 검증용 — 별 하나의 반지름·알파(등급 위계 검사): 1~4등 주별 1.05~3.0px >
+       로컬 확장(≤12등, ≤2.4px) > Gaia(≤0.85px). */
+    deepShape: function (kind, mag) {
+      return kind === 'gaia' ? gaiaStarShape(mag) : deepStarShape(12 - mag, mag);
+    },
     mwProbe: function (raH, decD, fov) {
       const c = state.last || computeNight();
       const P = liveProjector();

@@ -2334,7 +2334,11 @@ html.has-views { scroll-padding-top: 84px; }
   border: 1px solid var(--border-hi); backdrop-filter: blur(8px);
   font: 700 .74rem var(--font); white-space: nowrap;
 }
-.live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* 호버가 남는 터치 기기(iOS 는 탭한 버튼에 :hover 를 붙여 둡니다)에서 꺼진 버튼이
+   켜진 것처럼 금색 테두리로 남지 않도록, 실제 마우스 환경에서만 호버 색을 줍니다. */
+@media (hover: hover) and (pointer: fine) {
+  .live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
+}
 #liveSensorChip { cursor: pointer; pointer-events: auto; }
 #liveSensorChip:hover { border-color: var(--accent-2); color: var(--accent-2); }
 
