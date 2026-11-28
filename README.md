@@ -43,6 +43,7 @@
 - 회귀: `tools/test_live_motion.py` **시나리오 9개(A~I) + 대조군 전부 통과**, `tools/test_live_ground_grid.py` **37건**, `tools/test_live_sun.py` **17건** 통과, 콘솔 오류 0건.
 - 스크린샷: `screenshots/live-guide/guide-edge-390.png`(시야 밖 유도등), `guide-arrived-390.png`(도착 강조), `guide-track-on-390.png`(🧭 추적 켜짐), `guide-320.png`, `guide-844x390.png`, `guide-1280.png`.
 - 서비스 워커 캐시 `2026-11-28.10`, `build.py` 로 모바일판·데스크톱판·단일 파일판(`별너울지도.html`) 재빌드.
+- 실서버(헤드리스) 검증: `https://byeolneoul.vercel.app`·`https://lucasorange0302.github.io/byeolbam/` 두 곳 모두 A~I 전부 통과, 단일 파일판(`별너울지도.html`)도 통과, 콘솔 오류 0건. 커밋 `dd52f7f`(조준 유도) · `9b84f1d`(🧭 추적 버튼).
 
 ### 6) 남은 것
 - iOS 실기기 자이로에서 유도등이 손떨림 없이 따라오는지는 제가 직접 볼 수 없습니다 — 남현님 아이폰에서 한 번 봐 주세요(특히 폰을 크게 돌릴 때).
