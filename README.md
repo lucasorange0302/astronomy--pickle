@@ -54,7 +54,12 @@
 - Gaia 응답은 **VizieR asu-tsv(I/355/gaiadr3) 형식 그대로 되돌려 주는 목**으로 검증했습니다. 목 안의 300개 별 값은 **실제 ESA Gaia DR3**(ARI Heidelberg TAP, 2026-11-28 조회)에서 받은 표본 `tools/fixtures/gaia_dr3_sample.json` 을 요청 좌표 주변으로 옮겨 쓴 것입니다.
 
 ### 7) ✅ 배포 · 실서버 검증
-- 서비스 워커 캐시 `2026-11-28.14`(`deep.js` 코어 목록 추가), `python3 astronomy-site/build.py` 로 모바일판·데스크톱판·단일 파일판 재빌드, `assets/data/deep/`(72칸·3.2MB) 함께 배포.
+- 서비스 워커 캐시 `2026-11-28.14`(`deep.js` 코어 목록 추가), `python3 astronomy-site/build.py` 로 모바일판·데스크톱판·단일 파일판 재빌드, `assets/data/deep/`(72칸·3.2MB) 함께 배포. 커밋 `02266f5` → `main` 푸시.
+- **https://byeolneoul.vercel.app** · **https://lucasorange0302.github.io/byeolbam/** 두 곳 모두:
+  - `sw.js` **2026-11-28.14**, `deep.js` 200, `assets/data/deep/manifest.json` 200 확인.
+  - `tools/test_hybrid_gaia.py` **50개 확인 전부 통과**(두 서버 각각) — OFF 0요청 · ON 단계 로딩 · Gaia 300개 그리기·터치 · 시야/배율 사다리 · 분리 · 레이아웃 5종 · 단일 파일판 · 저장 · 전체 도감 검색.
+  - 목 없이 실서버 그대로 확인: 라이브 15°에서 `DeepSky.stats()` — 확장 타일 4칸(7,948개) 정상, Gaia 요청 1회, **콘솔 오류 0건**. 확장 도감에서 실제 Gaia DR3 ID `3209521209381041024` 를 조회하니 **`05h 35m · −5° 15′ · 13.82등`** 실데이터가 VizieR(I/355/gaiadr3)에서 그대로 돌아왔습니다.
+  - 이 실행 환경에서는 그 VizieR 미러의 **원뿔(좌표 반경) 검색**이 0건을 돌려줍니다(ID 검색은 정상). 앱은 이를 「이 구역 응답 없음 — 로컬 확장 성도만」으로 조용히 처리하며, 다른 서버로 넘어가 콘솔 경고를 만들지 않습니다.
 
 
 ## 2026-11-28 밤 업데이트 (23) — 🌟 퀴즈 문제 수 · 라이브 확장(별자리·마커·클리핑·확대 딥스카이)
