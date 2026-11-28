@@ -5546,7 +5546,10 @@
     /* 2단계 — Gaia DR3 실시간(중앙 정밀 구역) — 로컬 한계(12등)보다 어두운 별을 이어서 */
     let gaiaN = 0;
     if (fovDeg <= DEEP.liveGaiaFov) {
-      const gr = clamp(fovDeg * 0.35, 0.02, 2.5);   // 1′ 시야에서도 정밀하게 이 구역만
+      /* 조회 반경 — 세로로 긴 폰 화면은 세로 반각이 fov/2, 대각 반각은 fov의 약 0.55배라
+         fov×1.15 면 화면 네 귀통이까지 덮습니다. (예전 0.35배는 가운데 작은 원만 받아,
+         확대할수록 가장자리 별이 사라졌습니다.) 1′ 시야에서는 0.03°(1.8′) 이상은 묻습니다. */
+      const gr = clamp(fovDeg * 1.15, 0.03, 2.5);
       DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, deepGaiaMag(fovDeg));
       const gs = DeepSky.gaiaStars();
       const gLim = deepGaiaMag(fovDeg);

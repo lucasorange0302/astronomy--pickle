@@ -9,7 +9,7 @@
    배포할 때마다 아래 VERSION 을 올리세요. 올리면 install 에서 코어 캐시를 새로 받습니다.
    ========================================================================= */
 
-var VERSION = '2026-11-28.17';
+var VERSION = '2026-11-28.18';
 var CORE_CACHE = 'byeolneoul-core-' + VERSION;
 var ASSET_CACHE = 'byeolneoul-assets-v1';
 var DATA_CACHE = 'byeolneoul-data-' + VERSION;   // 도감·쿠키 JSON 청크(지연 로딩)
@@ -140,13 +140,17 @@ async function networkFirst(req) {
 
 async function dataFirst(req) {
   var cache = await caches.open(DATA_CACHE);
-  var hit = await cache.match(req, { ignoreSearch: true });
+  /* 주소를 그대로 맞춰 봅니다 — 타일은 ?v=<타일 판> 을 달고 오므로, 판이 바뀌면
+     예전 타일(별 이름이 없던 판)을 돌려주지 않고 새로 받습니다. */
+  var hit = await cache.match(req);
   if (hit) return hit;
   try {
     var res = await fetch(req);
     if (res && res.ok && res.type === 'basic') await put(DATA_CACHE, req, res.clone());
     return res;
   } catch (err) {
+    var loose = await cache.match(req, { ignoreSearch: true });   // 오프라인 — 판 번호만 다른 같은 파일
+    if (loose) return loose;
     return new Response('', { status: 504, statusText: 'offline' });
   }
 }

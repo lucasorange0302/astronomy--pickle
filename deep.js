@@ -26,6 +26,11 @@
   try { on = localStorage.getItem(KEY) !== '0'; } catch (e) { /* 사생활 보호 모드 */ }
 
   var TILE_DIR = 'assets/data/deep/';
+  /* 타일 데이터 판 — 파일 이름이 예전(72칸) 판과 겹치므로(d-00-00.json …) 주소에
+     판 번호를 붙여 브라우저 HTTP 디스크 캐시·서비스 워커 캐시가 옛 타일을
+     돌려주지 못하게 합니다. 타일을 새로 만들면 이 값을 올리세요. */
+  var TILE_VER = '20261128.18';
+  var TILE_Q = '?v=' + TILE_VER;
   var TILE_MAG = 12;           // 로컬 타일 한계 등급(12등까지 11만 6천여 개)
   var LIVE_LOCAL_FOV = 60;     // 라이브 뷰: 이 시야(도) 이하에서 로컬 타일을 그립니다
   var LIVE_GAIA_FOV = 20;      // 라이브 뷰: 이 시야 이하에서 Gaia 실시간 조회
@@ -56,7 +61,7 @@
   var gaiaCache = {};          // key -> {list, ra, dec, r, at, endpoint}
   var gaiaOrder = [];
   var gaiaTried = {};          // key -> 마지막 시도 시각(실패 쿨다운)
-  var gi = { key: null, ctrl: null, timer: null, list: [], ra: 0, dec: 0, r: 0, at: 0, endpoint: '', busy: false, err: null };
+  var gi = { key: null, ctrl: null, timer: null, list: [], ra: 0, dec: 0, r: 0, at: 0, endpoint: '', busy: false, err: null, stale: false };
   var stats = { tileReq: 0, tileOk: 0, tileErr: 0, gaiaReq: 0, gaiaOk: 0, gaiaFail: 0, stars: 0, lastEndpoint: '', lastErr: null };
   var subs = [];
 
@@ -80,7 +85,7 @@
       /* OFF — 진행 중인 요청을 즉시 끊고, 메모리 캐시는 그대로 두되 그리지 않습니다. */
       abortGaia();
       clearTimeout(gi.timer); gi.timer = null; gi.key = null;
-      gi.list = [];
+      gi.list = []; gi.stale = false;
     }
     if (!silent) emit();
     return on;
@@ -91,7 +96,7 @@
   function loadManifest() {
     if (manifest) return Promise.resolve(manifest);
     if (manifestP) return manifestP;
-    manifestP = fetch(TILE_DIR + 'manifest.json', { cache: 'no-cache' })
+    manifestP = fetch(TILE_DIR + 'manifest.json' + TILE_Q, { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error('manifest ' + r.status); return r.json(); })
       .then(function (m) { manifest = m; manifestErr = null; return m; })
       .catch(function (e) { manifestP = null; manifestErr = String(e && e.message || e); stats.lastErr = manifestErr; throw e; });
@@ -126,7 +131,7 @@
     if (tiles[key] || tileState[key] === 'loading') return;
     tileState[key] = 'loading';
     stats.tileReq++;
-    fetch(TILE_DIR + key + '.json', { cache: 'force-cache' })
+    fetch(TILE_DIR + key + '.json' + TILE_Q, { cache: 'default' })
       .then(function (r) { if (!r.ok) throw new Error(key + ' ' + r.status); return r.json(); })
       .then(function (doc) {
         tiles[key] = doc;
@@ -207,8 +212,19 @@
   }
 
   /* ------------------------------------------------------------ Gaia I/O */
+  /** 조회 구역 키 — 반경이 작을수록 중심을 더 촘촘히 나눔니다(1′ 시야에서 화면을 조금
+      밀어도 새 별을 받아 오도록). 반경은 toFixed(2) — 0.03° 가 0.0 으로 뭉개지지 않게. */
   function gaiaKey(raDeg, decDeg, rDeg) {
-    return (Math.round(raDeg * 4) / 4) + '|' + (Math.round(decDeg * 4) / 4) + '|' + (Math.round(rDeg * 10) / 10);
+    var step = rDeg >= 0.5 ? 0.25 : rDeg >= 0.12 ? 0.05 : 0.01;
+    var q = function (v) { return (Math.round(v / step) * step).toFixed(3); };
+    return q(raDeg) + '|' + q(decDeg) + '|' + rDeg.toFixed(2);
+  }
+
+  /** 두 좌표 사이 각거리(도) */
+  function angDeg(ra1, dec1, ra2, dec2) {
+    var c = Math.sin(dec1 * RAD) * Math.sin(dec2 * RAD) +
+      Math.cos(dec1 * RAD) * Math.cos(dec2 * RAD) * Math.cos((ra1 - ra2) * RAD);
+    return Math.acos(clamp(c, -1, 1)) / RAD;
   }
 
   function abortGaia() {
@@ -244,23 +260,33 @@
     };
   }
 
+  /* VizieR asu-tsv 원뿔 조회 주소.
+     · `-c=` 는 중심 좌표(적경 적위, 도)
+     · `-c.rd=` 는 **반경(도)** — 예전 코드의 `-c.rs=` 는 **반경(각분)** 이라
+       0.35도 자리에 0.35각분(≈0.0058도)을 물어 보고 있었고, 그래서 늘 0건이 왔습니다.
+     · `-sort=Gmag` — -out.max 에 걸릴 때 밝은 별부터 받습니다(화면에 보이는 별이 됩니다). */
   function vizierUrl(base, raDeg, decDeg, rDeg, max, magMin, magMax) {
     const lo = magMin == null ? GAIA_MAG_MIN : magMin;
     const hi = magMax == null ? GAIA_MAG_MAX : magMax;
     return base + '/viz-bin/asu-tsv?-source=I/355/gaiadr3'
       + '&-c=' + encodeURIComponent(raDeg.toFixed(6) + ' ' + decDeg.toFixed(6))
-      + '&-c.rs=' + rDeg.toFixed(3)
+      + '&-c.rd=' + rDeg.toFixed(4)
       + '&-out=Source,RA_ICRS,DE_ICRS,Gmag,BP-RP,Plx'
       + '&-out.max=' + max
       + '&Gmag=' + lo.toFixed(1) + '..' + hi.toFixed(1)
-      + '&-out.form=%7C';
+      + '&-out.form=%7C'
+      + '&-sort=Gmag';
   }
 
-  /** VizieR asu-tsv 응답 → [{id, ra, dec, mag, bp_rp, plx}] */
+  /** VizieR asu-tsv 응답 → [{id, ra, dec, mag, bp_rp, plx}]
+      점검·차단 HTML 이 HTTP 200 으로 오는 경우가 있어, 표(헤더)가 아니면 **예외**를 던져
+      다음 서버로 넘어가게 합니다(0건과 구별). */
   function parseVizier(text, magMin, magMax) {
     const lo = magMin == null ? GAIA_MAG_MIN : magMin;
     const hi = magMax == null ? GAIA_MAG_MAX : magMax;
-    var lines = String(text || '').split(/\r?\n/);
+    var src = String(text || '');
+    if (/^\s*</.test(src) || /<html[\s>]/i.test(src.slice(0, 600))) throw new Error('VizieR HTML 응답');
+    var lines = src.split(/\r?\n/);
     var rows = [], head = null;
     for (var i = 0; i < lines.length; i++) {
       var ln = lines[i];
@@ -284,6 +310,7 @@
         src: 'vizier'
       });
     }
+    if (!head) throw new Error('VizieR TSV 헤더 없음');
     return rows;
   }
 
@@ -389,13 +416,13 @@
     var hi = clamp(magMax == null ? GAIA_MAG_MAX : magMax, 10, GAIA_MAG_MAX);
     var key = gaiaKey(raDeg, decDeg, r) + '|' + hi.toFixed(1);
     /* 같은 구역은 성공·실패와 상관없이 한 번만 묻습니다(실패하면 조용히 로컬 타일만). */
-    if (gi.key === key && (gi.busy || gi.list.length || gi.err)) return;
+    if (gi.key === key && (gi.busy || (gi.list.length && !gi.stale))) return;
     var last = gaiaTried[key];
     if (last && Date.now() - last < 120000) return;      // 2분 안에 실패한 구역은 다시 묻지 않음
     var hit = gaiaCache[key];
     if (hit) {
       gi.key = key; gi.list = hit.list; gi.ra = hit.ra; gi.dec = hit.dec; gi.r = hit.r;
-      gi.at = hit.at; gi.endpoint = hit.endpoint; gi.err = null;
+      gi.at = hit.at; gi.endpoint = hit.endpoint; gi.err = null; gi.stale = false;
       emit();
       return;
     }
@@ -420,13 +447,20 @@
         stats.gaiaOk++;
         stats.lastEndpoint = res.endpoint;
         gi.list = res.rows; gi.ra = raDeg; gi.dec = decDeg; gi.r = rDeg; gi.at = Date.now();
-        gi.endpoint = res.endpoint;
+        gi.endpoint = res.endpoint; gi.stale = false;
         gaiaCache[key] = { list: res.rows, ra: raDeg, dec: decDeg, r: rDeg, at: gi.at, endpoint: res.endpoint };
         gaiaOrder.push(key);
         while (gaiaOrder.length > GAIA_MAX_CACHE) { var old = gaiaOrder.shift(); if (old !== key) delete gaiaCache[old]; }
       } else {
         stats.gaiaFail++;
-        gi.list = []; gi.at = Date.now(); gi.endpoint = '';
+        gi.at = Date.now(); gi.endpoint = '';
+        /* 새 구역에서 0건·실패가 왔더라도, 지난 목록이 지금 중심에서 2° 안이면 그대로
+           그립니다 — 확대·이동 중에 별이 갑자기 사라지지 않게. */
+        if (gi.list.length && angDeg(gi.ra, gi.dec, raDeg, decDeg) <= 2) {
+          gi.stale = true;                  // 지난 구역 목록을 보여 주는 중(잠시 뒤 다시 묻습니다)
+        } else {
+          gi.list = []; gi.stale = false;
+        }
         gi.err = 'Gaia 응답 없음';
         stats.lastErr = 'Gaia 응답 없음';
       }
@@ -467,7 +501,7 @@
   }
 
   function gaiaStars() { return on ? (gi.list || []) : []; }
-  function gaiaMeta() { return { ra: gi.ra, dec: gi.dec, r: gi.r, at: gi.at, endpoint: gi.endpoint, busy: gi.busy, err: gi.err, n: (gi.list || []).length }; }
+  function gaiaMeta() { return { ra: gi.ra, dec: gi.dec, r: gi.r, at: gi.at, endpoint: gi.endpoint, busy: gi.busy, err: gi.err, stale: gi.stale, n: (gi.list || []).length }; }
 
   /* --------------------------------------------------------- 이름 색인 */
   var namesP = null, namesDoc = null;
@@ -475,7 +509,7 @@
     if (namesDoc) return Promise.resolve(namesDoc);
     if (namesP) return namesP;
     if (!on) return Promise.resolve(null);
-    namesP = fetch(TILE_DIR + 'names.json', { cache: 'force-cache' })
+    namesP = fetch(TILE_DIR + 'names.json' + TILE_Q, { cache: 'default' })
       .then(function (r) { if (!r.ok) throw new Error('names ' + r.status); return r.json(); })
       .then(function (d) { namesDoc = d; return d; })
       .catch(function () { namesP = null; return null; });
@@ -536,7 +570,7 @@
     /* 검증용 — 네트워크를 타지 않고 캐시를 비웁니다 */
     _reset: function () {
       abortGaia();
-      clearTimeout(gi.timer); gi.timer = null; gi.key = null; gi.list = []; gi.busy = false;
+      clearTimeout(gi.timer); gi.timer = null; gi.key = null; gi.list = []; gi.busy = false; gi.stale = false;
       tiles = {}; tileState = {}; tileOrder = []; gaiaCache = {}; gaiaOrder = []; gaiaTried = {};
       stats.tileReq = stats.tileOk = stats.tileErr = stats.gaiaReq = stats.gaiaOk = stats.gaiaFail = 0;
     }
