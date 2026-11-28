@@ -1149,7 +1149,24 @@
     s += '<defs><radialGradient id="skyG" cx="50%" cy="45%" r="60%">' +
       '<stop offset="0%" stop-color="' + (red ? RC.sky0 : 'rgba(30,48,90,.55)') + '"/>' +
       '<stop offset="100%" stop-color="' + (red ? RC.sky1 : 'rgba(6,10,20,.9)') + '"/>' +
-      '</radialGradient></defs>';
+      '</radialGradient>' +
+      /* 🌌 은하수 지도용 그라디언트 — 팽대부·별구름·먼지 띠 + 지평선 원 클립 */
+      '<radialGradient id="mwWarm" cx="50%" cy="50%" r="50%">' +
+        '<stop offset="0%" stop-color="' + (red ? 'rgba(255,176,140,.85)' : 'rgba(255,226,176,.85)') + '"/>' +
+        '<stop offset="45%" stop-color="' + (red ? 'rgba(255,150,116,.36)' : 'rgba(255,222,176,.32)') + '"/>' +
+        '<stop offset="100%" stop-color="rgba(255,210,160,0)"/>' +
+      '</radialGradient>' +
+      '<radialGradient id="mwCloud" cx="50%" cy="50%" r="50%">' +
+        '<stop offset="0%" stop-color="' + (red ? 'rgba(255,190,150,.55)' : 'rgba(255,248,228,.62)') + '"/>' +
+        '<stop offset="100%" stop-color="rgba(255,244,220,0)"/>' +
+      '</radialGradient>' +
+      '<radialGradient id="mwDark" cx="50%" cy="50%" r="50%">' +
+        '<stop offset="0%" stop-color="rgba(3,5,12,.95)"/>' +
+        '<stop offset="70%" stop-color="rgba(3,5,12,.55)"/>' +
+        '<stop offset="100%" stop-color="rgba(3,5,12,0)"/>' +
+      '</radialGradient>' +
+      '<clipPath id="mwClip"><circle cx="' + cx + '" cy="' + cy + '" r="' + R + '"/></clipPath>' +
+      '</defs>';
     s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="url(#skyG)" stroke="' + (red ? RC.ring : 'rgba(255,255,255,.18)') + '" stroke-width="1"/>';
     [30, 60].forEach(function (alt) {
       const r = R * (90 - alt) / 90;
@@ -1165,6 +1182,10 @@
       const p = proj(-4.5, d[1]);
       s += '<text x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" class="sky-cardinal">' + d[0] + '</text>';
     });
+
+    /* 🌌 은하수 — 팽대부·별구름·먼지 띠·미세 잔별 (별보다 먼저 깔아 별이 그 위에 오게) */
+    const mwMap = MW.paintMap({ lat: lat, lon: lon, jd: jd, cx: cx, cy: cy, R: R, W: W, red: red });
+    s += mwMap.svg;
 
     // 별 — 1,600여 개. 밝은 별은 하나씩, 나머지는 등급·색 묶음별 path 하나로 그려 DOM을 줄인다.
     const visibleStars = {};
@@ -3701,6 +3722,815 @@
     if (aim.raf) { cancelAnimationFrame(aim.raf); aim.raf = null; }
   }
 
+  /* ===== MW-MODEL-START ===== */
+  /* ======================================================================
+     🌌 우리은하 — 은하좌표(l, b)로 만든 구조 모델 (라이브 뷰 · 전천 지도 공용)
+     ---------------------------------------------------------------- 근거
+     · 은하 중심(l=0°, b=0° = 궁수자리 A*, RA 17h45m40s · Dec −28°56′)과
+       은하 북극(RA 12h51m26s · Dec +27°08′)으로 직교 기저를 만들고, (l, b)를
+       넣어 적도 단위벡터를 **한 번만** 만들어 둡니다.
+     · 매 프레임은 그 벡터를 카메라 행렬(3×4)로만 돌립니다 — 삼각함수 0회.
+       (예전에는 은하수 한 점마다 equatorialToHorizontal + project 를 다시 셌습니다)
+     · 띠는 위도 고리(반두께 24°→0.9°)를 겹쳐 채우고, 안쪽 두 고리는 은하경도
+       2~4°마다 알파를 흔들어 별구름의 덩이를 만듭니다(사진의 얼룩).
+     · 그 위에 부드러운 빛덩이를 'lighter'로 더해 팽대부·성운 구름·입자를 얹고,
+       먼지 띠는 'destination-out'으로 띠의 빛을 깎아 은하수를 두 갈래로 가릅니다.
+     · 넓고 부드러운 띠는 1/3 해상도 층에 그린 뒤 한 번에 확대해 얹어,
+       모바일에서도 프레임 비용이 낮습니다(띠의 흐릿함은 실제 모습과 같습니다).
+     · 잔별(미세 별 구름)은 시드 고정 난수로 만든 4,600개 — 새로고침해도 같은 하늘.
+     ====================================================================== */
+  const MW = (function () {
+    const RAD = Math.PI / 180;
+
+    /* ---------------------------------------------------- 은하좌표 기저 */
+    function eqVec(raDeg, decDeg) {
+      const a = raDeg * RAD, d = decDeg * RAD;
+      return [Math.cos(d) * Math.cos(a), Math.cos(d) * Math.sin(a), Math.sin(d)];
+    }
+    const GX = eqVec(266.40499, -28.93617);   // 은하 중심 (l=0°, b=0°)
+    const GZ = eqVec(192.85948, 27.12825);    // 은하 북극 (b=+90°)
+    const GY = (function () {                 // l=+90° 방향 = 북극 × 중심
+      const c = [GZ[1] * GX[2] - GZ[2] * GX[1], GZ[2] * GX[0] - GZ[0] * GX[2], GZ[0] * GX[1] - GZ[1] * GX[0]];
+      const n = Math.hypot(c[0], c[1], c[2]) || 1;
+      return [c[0] / n, c[1] / n, c[2] / n];
+    })();
+    function galVec(lDeg, bDeg) {
+      const l = lDeg * RAD, b = bDeg * RAD;
+      const cl = Math.cos(l), sl = Math.sin(l), cb = Math.cos(b), sb = Math.sin(b);
+      return [
+        GX[0] * cl * cb + GY[0] * sl * cb + GZ[0] * sb,
+        GX[1] * cl * cb + GY[1] * sl * cb + GZ[1] * sb,
+        GX[2] * cl * cb + GY[2] * sl * cb + GZ[2] * sb
+      ];
+    }
+    /* 시드 고정 난수 — 같은 하늘을 늘 다시 만듭니다. */
+    function prng(seed) {
+      let s = seed >>> 0;
+      return function () {
+        s = (s + 0x6D2B79F5) >>> 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function dAng(a, b) {              // 은하경도 차 0~180°
+      return Math.abs((((a - b) % 360) + 540) % 360 - 180);
+    }
+    /* 은하경도별 밝기 — 궁수자리 팽대부가 가장 밝고, 백조·방패·용골 별구름이 이어집니다. */
+    function lonBright(L) {
+      const g = function (c, w) { const d = dAng(L, c) / w; return Math.exp(-d * d); };
+      return 0.26 + 1.85 * g(0, 28) + 0.80 * g(80, 24) + 0.50 * g(30, 15) +
+             0.42 * g(288, 22) + 0.30 * g(320, 17) + 0.26 * g(45, 14) + 0.14 * g(180, 45);
+    }
+    function lonHalf(L) {              // 띠의 세로 반두께(도) — 중심부가 더 두껍습니다
+      return 3.3 + 2.6 * Math.exp(-Math.pow(dAng(L, 0) / 26, 2));
+    }
+
+    /* ------------------------------------------------------- 색조·스프라이트 */
+    const COOL = 0, MID = 1, WARM = 2, WHITE = 3;
+    /* 색조 — [일반, 레드라이트]. 레드라이트에서는 은하수도 붉은 톤만 씁니다
+       (푸른·흰 빛이 섞이면 암순응이 깨집니다). */
+    const TONE_RGB = [
+      ['182,208,255', '224,230,248', '255,238,206', '255,252,246'],
+      ['168,74,56', '206,104,76', '240,138,104', '250,156,120']
+    ];
+    const sprites = {};
+    function sprite(key, red) {
+      const kk = (key === 'd' ? 'd' : key === 'k' ? (red ? 'kr' : 'k') : (red ? 'r' : 'n') + key);
+      if (sprites[kk]) return sprites[kk];
+      const S = 128;
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = S;
+      const g = cv.getContext('2d');
+      const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+      if (key === 'k') {                       // 별구름 알갱이 — 작고 또렷한 밝은 덩이
+        const kc = (kk === 'kr') ? ['250,168,136', '238,150,118', '228,140,108'] : ['255,250,238', '255,246,228', '255,242,220'];
+        gr.addColorStop(0, 'rgba(' + kc[0] + ',0.95)');
+        gr.addColorStop(0.30, 'rgba(' + kc[1] + ',0.55)');
+        gr.addColorStop(0.58, 'rgba(' + kc[2] + ',0.18)');
+        gr.addColorStop(0.80, 'rgba(' + kc[2] + ',0.04)');
+        gr.addColorStop(1, 'rgba(' + kc[2] + ',0)');
+      } else if (key === 'd') {                // 암흑성운 — 가장자리가 조금 더 또렷하게
+        gr.addColorStop(0, 'rgba(2,3,7,1)');
+        gr.addColorStop(0.42, 'rgba(2,3,7,0.96)');
+        gr.addColorStop(0.66, 'rgba(2,3,7,0.72)');
+        gr.addColorStop(0.85, 'rgba(2,3,7,0.26)');
+        gr.addColorStop(1, 'rgba(2,3,7,0)');
+      } else {
+        const rgb = TONE_RGB[kk.charAt(0) === 'r' ? 1 : 0][Math.max(0, Math.min(3, Number(key) || 0))];
+        gr.addColorStop(0, 'rgba(' + rgb + ',1)');
+        gr.addColorStop(0.17, 'rgba(' + rgb + ',0.62)');
+        gr.addColorStop(0.36, 'rgba(' + rgb + ',0.26)');
+        gr.addColorStop(0.60, 'rgba(' + rgb + ',0.075)');
+        gr.addColorStop(0.84, 'rgba(' + rgb + ',0.015)');
+        gr.addColorStop(1, 'rgba(' + rgb + ',0)');
+      }
+      g.fillStyle = gr;
+      g.fillRect(0, 0, S, S);
+      sprites[kk] = cv;
+      return cv;
+    }
+
+    /* ---------------------------------------------- 띠 중심선·위도 고리 벡터 */
+    const BAND_STEP = 2;                       // 은하경도 표본 간격(도)
+    const BAND_N = Math.round(360 / BAND_STEP) + 1;   // 0 … 360 (닫힌 고리)
+    function ringVec(halfDeg) {
+      const a = new Float32Array(BAND_N * 3);
+      for (let i = 0; i < BAND_N; i++) {
+        const v = galVec(i * BAND_STEP, halfDeg);
+        a[i * 3] = v[0]; a[i * 3 + 1] = v[1]; a[i * 3 + 2] = v[2];
+      }
+      return a;
+    }
+    /* 띠의 세로 밝기 곡선 — 실제 사진의 프로필을 따릅니다.
+       중심 0.68 → 4.6°에서 1/e → 12° 0.09 → 24° 0.005 */
+    function PROFILE(bd) {
+      return 0.68 * Math.exp(-Math.pow(Math.abs(bd) / 4.6, 1.35)) + 0.0032;
+    }
+    /* 위도 경계 — 알파가 0.018 넘게 변하지 않도록 촘촘히(곡선이 가파른 곳일수록 촘촘).
+       겹치지 않는 '띠(strip)'로 채우므로 경계가 겹쳐 밝아지거나 계단이 생기지 않습니다. */
+    const EDGES = (function () {
+      const out = [0];
+      let b = 0;
+      let guard = 0;
+      while (b < 26 && guard++ < 200) {
+        const d = Math.abs((PROFILE(b + 0.06) - PROFILE(b)) / 0.06) || 0.002;
+        let step = 0.011 / d;
+        step = Math.max(0.30, Math.min(2.4, step));
+        b += step;
+        out.push(Math.min(26, b));
+      }
+      return out;
+    })();
+    const EDGE_V = EDGES.map(function (bd) { return ringVec(bd); });
+    const EDGE_V2 = EDGES.map(function (bd) { return ringVec(-bd); });
+    const STRIPS = (function () {
+      const out = [];
+      for (let i = 0; i < EDGES.length - 1; i++) {
+        const mid = (EDGES[i] + EDGES[i + 1]) / 2;
+        const tone = mid <= 2.2 ? WARM : mid <= 6 ? WHITE : mid <= 12 ? MID : COOL;
+        out.push({ a: PROFILE(mid), t: tone });
+      }
+      return out;
+    })();
+    /* --------------------------------------------------- 빛덩이·암흑대 자료 */
+    const glow = [];        // { v, r:도, a:투명도, t:색조 }
+    const dark = [];        // 암흑성운 덩어리
+    const knots = [];       // 별구름 알갱이 — { v, r:도, a }
+    const lanes = [];       // 먼지 띠(폴리라인) — { v:[...], w:폭(도), a:진하기 }
+    const gcVec = galVec(0, 0);
+    (function buildModel() {
+      const rnd = prng(20261128);
+      /* ① 은하경도별 큰 빛 — 띠 전체 폭을 덮는 부드러운 덩이(경계선 없이 밝기 변화) */
+      for (let l = 0; l < 360; l += 6.5) {
+        const L = l + (rnd() - 0.5) * 3;
+        const br = lonBright(L);
+        const f = clamp((br - 0.26) / 1.85, 0, 1);
+        glow.push({
+          v: galVec(L, (rnd() - 0.5) * 1.6),
+          r: 4.4 + rnd() * 2.6,
+          a: 0.014 + 0.048 * f + rnd() * 0.008,
+          t: f > 0.62 ? WARM : f > 0.3 ? WHITE : MID
+        });
+      }
+      /* ② 띠 중심의 밝은 능선 — 별구름이 이어지는 자리 */
+      for (let l = 0; l < 360; l += 2.4) {
+        const L = l + (rnd() - 0.5) * 1.8;
+        const br = lonBright(L);
+        const hb = lonHalf(L);
+        const f = clamp((br - 0.26) / 1.85, 0, 1);
+        glow.push({
+          v: galVec(L, (rnd() * 2 - 1) * hb * 0.5),
+          r: 1.2 + rnd() * 1.9 + f * 1.2,
+          a: 0.022 + 0.090 * f * (0.5 + 0.8 * rnd()),
+          t: f > 0.8 && dAng(L, 0) < 16 ? WARM : WHITE
+        });
+      }
+      /* ③ 띠 양옆의 옅은 날개 — 원반의 빛이 넓게 번지는 부분 */
+      for (let l = 0; l < 360; l += 7) {
+        const L = l + (rnd() - 0.5) * 3;
+        const hb = lonHalf(L);
+        for (let s = -1; s <= 1; s += 2) {
+          glow.push({
+            v: galVec(L, s * (hb * 0.8 + rnd() * 3.0)),
+            r: 2.0 + rnd() * 2.4,
+            a: 0.005 + rnd() * 0.009,
+            t: COOL
+          });
+        }
+      }
+      /* ③-2 구름 덩이 — 띠를 따라 둥글고 부드러운 밝은/어두운 얼룩 */
+      for (let l = 0; l < 360; l += 1.5) {
+        const L = l + (rnd() - 0.5) * 1.2;
+        const hb = lonHalf(L);
+        const br = lonBright(L);
+        const f = clamp((br - 0.26) / 1.85, 0, 1);
+        for (let k = 0; k < 2; k++) {
+          glow.push({
+            v: galVec(L, (rnd() * 2 - 1) * hb * 0.75),
+            r: 1.3 + rnd() * 2.6,
+            a: (0.010 + 0.055 * rnd() * rnd()) * (0.45 + f),
+            t: rnd() < 0.5 ? WHITE : rnd() < 0.6 ? WARM : MID
+          });
+        }
+      }
+      /* ④ 결 — 작은 알갱이로 실제 사진의 거친 입자를 만듭니다. */
+      for (let l = 0; l < 360; l += 1.7) {
+        const L = l + rnd() * 1.7;
+        const hb = lonHalf(L);
+        const br = lonBright(L);
+        const f = clamp((br - 0.26) / 1.85, 0, 1);
+        for (let k = 0; k < 2; k++) {
+          glow.push({
+            v: galVec(L, (rnd() * 2 - 1) * hb * 0.9),
+            r: 0.38 + rnd() * 0.95,
+            a: (0.03 + 0.15 * rnd() * rnd()) * (0.3 + f),
+            t: rnd() < 0.55 ? WHITE : rnd() < 0.5 ? MID : WARM
+          });
+        }
+      }
+      /* ④-2 별구름 알갱이 — 띠를 따라 촘촘한 밝은 점덩이(사진의 입자)
+         별구름이 밝은 곳에 더 많이·더 밝게 모입니다. */
+      for (let l = 0; l < 360; l += 0.6) {
+        const L = l + (rnd() - 0.5) * 0.5;
+        const hb = lonHalf(L);
+        const br = lonBright(L);
+        const f = clamp((br - 0.26) / 1.85, 0, 1);
+        const n = f > 0.55 ? 3 : 2;
+        for (let k = 0; k < n; k++) {
+          knots.push({
+            v: galVec(L, (rnd() * 2 - 1) * hb * (0.55 + 0.5 * rnd())),
+            r: 0.28 + rnd() * 0.75,
+            a: (0.05 + 0.24 * rnd() * rnd()) * (0.22 + f)
+          });
+        }
+      }
+      /* ⑤ 실제로 밝게 뭉치는 별구름 (은하경도·위도는 실제 위치) */
+      [
+        [0.0, -0.6, 9.0, 0.120, WARM],   // 은하 중심 팽대부
+        [3.0, -2.6, 5.5, 0.110, WARM],
+        [6.0, -4.2, 3.8, 0.130, WARM],   // 큰 궁수자리 별구름
+        [15.5, -3.6, 3.0, 0.110, WARM],  // 작은 궁수자리 별구름(M24)
+        [26.5, -2.0, 3.4, 0.115, WARM],  // 방패자리 별구름
+        [30.0, -0.6, 2.4, 0.070, WHITE],
+        [78.0, 0.3, 5.2, 0.070, WHITE],  // 백조자리 별구름
+        [45.0, -6.0, 4.2, 0.038, MID],   // 독수리자리
+        [287.5, -0.8, 4.2, 0.062, WARM], // 용골자리(에타 카리나)
+        [270.0, -2.0, 3.6, 0.040, MID],  // 돛자리
+        [330.0, -1.0, 4.2, 0.048, WARM], // 노름자리
+        [352.0, 4.0, 3.6, 0.038, WHITE]  // 전갈자리
+      ].forEach(function (c) {
+        glow.push({ v: galVec(c[0], c[1]), r: c[2], a: c[3], t: c[4] });
+      });
+
+      /* ⑥ 암흑대 — 백조자리에서 궁수자리로 이어지는 큰 틈(Great Rift)과
+         남쪽 먼지 띠. 덩이 대신 **선**으로 그어야 사진처럼 '띠'가 됩니다. */
+      const RIFT = [
+        [97, 4.6], [91, 3.6], [85, 2.8], [79, 2.2], [73, 1.7], [67, 1.1], [61, 0.7],
+        [55, 0.3], [49, 0.1], [43, -0.3], [37, -0.8], [31, -1.3], [25, -1.9],
+        [19, -2.3], [14, -2.4], [10, -1.8], [6, -0.9], [2, 0.3], [358, 1.2],
+        [354, 2.0], [350, 2.8], [346, 3.7], [341, 4.7], [336, 5.7], [330, 6.7],
+        [324, 7.7], [318, 8.7], [312, 9.6], [306, 10.4]
+      ];
+      const rd = prng(5150);
+      function laneOf(pts, width, a, jit) {
+        const jl = [], jb = [];
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[i], p1 = pts[i + 1];
+          let dl = p1[0] - p0[0];
+          if (dl > 180) dl -= 360;
+          if (dl < -180) dl += 360;
+          const n = Math.max(1, Math.round(Math.abs(dl) / 2));
+          for (let k = 0; k < n; k++) {
+            const t = k / n;
+            jl.push(p0[0] + dl * t);
+            jb.push(p0[1] + (p1[1] - p0[1]) * t);
+          }
+        }
+        jl.push(pts[pts.length - 1][0]); jb.push(pts[pts.length - 1][1]);
+        const out = [];
+        for (let i = 0; i < jl.length; i++) {
+          const wob = jit ? Math.sin(i * 0.42 + jit) * 0.85 + Math.sin(i * 1.15 + jit * 2) * 0.35 + (rd() - 0.5) * 0.7 : 0;
+          out.push(galVec(jl[i], jb[i] + wob));
+        }
+        return { v: out, w: width, a: a };
+      }
+      lanes.push(laneOf(RIFT, 3.4, 0.52, 1.2));            // 넓은 틈 — 은하수를 가르는 어둠
+      lanes.push(laneOf(RIFT, 1.5, 0.55, 2.1));            // 그 안의 좁고 진한 먼지 줄기
+      lanes.push(laneOf(RIFT, 0.7, 0.5, 3.7));
+      lanes.push(laneOf([[84, 3.0], [78, 4.0], [73, 4.6], [68, 5.0]], 0.9, 0.45, 3.4));
+      lanes.push(laneOf([[34, 0.2], [29, 0.6], [24, 1.0], [20, 1.6]], 0.8, 0.42, 5.1));
+      lanes.push(laneOf([[56, 1.4], [49, 2.2], [43, 2.6], [37, 3.2], [32, 3.6]], 0.7, 0.40, 2.2));
+      lanes.push(laneOf([[96, 2.6], [90, 4.2], [86, 5.4], [82, 6.2]], 0.8, 0.38, 4.4));
+      lanes.push(laneOf([[9, 1.4], [5, 2.4], [1, 3.2], [357, 4.0]], 0.7, 0.42, 0.7));
+      /* 개별 암흑성운 — 석탄자루·뱀주인자리·파이프 */
+      [
+        [300.0, -1.0, 2.6, 0.42],   // 석탄자루(Coalsack)
+        [353.0, 16.0, 4.6, 0.15],   // 뱀주인자리 ρ Oph 암흑복합체
+        [356.0, 7.0, 2.2, 0.30],    // 파이프 성운
+        [12.0, -6.0, 1.6, 0.16],
+        [70.0, -1.6, 1.8, 0.16],
+        [280.0, 1.2, 2.0, 0.14],
+        [318.0, -3.4, 2.0, 0.14]
+      ].forEach(function (d) {
+        dark.push({ v: galVec(d[0], d[1]), r: d[2], a: d[3] });
+      });
+    })();
+
+    /* --------------------------------------------------- 잔별(미세 별 구름) */
+    const FINE_COLORS = ['#aec8ff', '#d5e2ff', '#f2f5ff', '#fff2df', '#ffdfb9'];
+    const FINE_N = 7200;
+    const FINE = new Float32Array(FINE_N * 7);   // [x, y, z, 크기(px), 알파, 색, 예비]
+    (function buildFine() {
+      const rnd = prng(77123);
+      let n = 0, guard = 0;
+      while (n < FINE_N && guard++ < FINE_N * 14) {
+        const field = rnd() < 0.12;                       // 12% 는 띠 밖 하늘에도
+        const L = rnd() * 360;
+        let b;
+        if (field) {
+          b = (rnd() * 2 - 1) * 78;
+          if (Math.abs(b) < 9) continue;
+        } else {
+          const hb = lonHalf(L) * (1.25 + 0.85 * rnd());
+          const u1 = Math.max(1e-6, rnd()), u2 = rnd();
+          b = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2) * hb;
+          if (Math.abs(b) > 26) continue;
+        }
+        const v = galVec(L, b);
+        const big = rnd() < 0.07;
+        const mag = 5.0 + rnd() * 2.4;                    // 14~18등 느낌의 아주 어두운 잔별
+        const o = n * 7;
+        FINE[o] = v[0]; FINE[o + 1] = v[1]; FINE[o + 2] = v[2];
+        FINE[o + 3] = big ? 1.25 : (0.9 + rnd() * 0.25);
+        FINE[o + 4] = clamp(0.62 - (mag - 5.0) * 0.14 + rnd() * 0.10, 0.22, 0.7);
+        const cr = rnd();
+        FINE[o + 5] = cr < 0.20 ? 0 : cr < 0.52 ? 1 : cr < 0.82 ? 2 : cr < 0.94 ? 3 : 4;
+        n++;
+      }
+    })();
+
+    /* ---------------------------------------------- 적도 벡터 → 카메라 행렬 */
+    /*  rows: [화면 오른쪽, 화면 안쪽, 화면 위, 천정]  (천정 행 = sin(고도)) */
+    function cameraMtx(P, latDeg, lonDeg, jd) {
+      const lst = A.lstHours(jd, lonDeg) * 15 * RAD;
+      const cl = Math.cos(lst), sl = Math.sin(lst);
+      const p = latDeg * RAD, sp = Math.sin(p), cp = Math.cos(p);
+      /* 적도 → 지평 (동, 북, 천정). 동 = −cos(dec)sin(H),
+         북 = cos(lat)sin(dec) − sin(lat)cos(dec)cos(H),
+         천정 = sin(lat)sin(dec) + cos(lat)cos(dec)cos(H) */
+      const H = [
+        [-sl, cl, 0],
+        [-sp * cl, -sp * sl, cp],
+        [cp * cl, cp * sl, sp]
+      ];
+      const rows = [P.right, P.fwd, P.up];
+      const out = [];
+      for (let i = 0; i < 3; i++) {
+        const b = rows[i];
+        out.push([
+          b[0] * H[0][0] + b[1] * H[1][0] + b[2] * H[2][0],
+          b[0] * H[0][1] + b[1] * H[1][1] + b[2] * H[2][1],
+          b[0] * H[0][2] + b[1] * H[1][2] + b[2] * H[2][2]
+        ]);
+      }
+      out.push(H[2].slice());
+      return out;
+    }
+
+    /* ------------------------------------------------------------ 라이브 뷰 */
+    let layer = null;
+    const NE = EDGES.length;
+    /* 경계마다 화면 좌표 — 앞 절반(+b)과 뒤 절반(−b)을 모두 담습니다. */
+    const SX = new Float32Array(2 * NE * BAND_N * 2);
+    const SY = new Float32Array(2 * NE * BAND_N * 2);
+    const RING0 = ringVec(0);
+    const last = { glow: 0, knot: 0, dark: 0, soft: 0, fine: 0, ms: 0, band: 0, lane: 0, t: {} };
+    function paintLive(ctx, o) {
+      const fade = o.fade;
+      if (!(fade > 0.02)) {                 // 낮·박명 — 아무것도 그리지 않고 기록도 지웁니다
+        last.glow = 0; last.knot = 0; last.dark = 0; last.lane = 0;
+        last.fine = 0; last.band = 0; last.ms = 0; last.fade = +fade.toFixed(3);
+        return null;
+      }
+      const nowMs = function () { return (window.performance && performance.now) ? performance.now() : 0; };
+      const t0 = nowMs();
+      const m = o.mtx, W = o.W, H = o.H, cx = o.cx, cy = o.cy, kS = o.kS;
+      const dpr = o.dpr || 1, q = o.quality || 3;
+      const red = !!o.red;
+      const m00 = m[0][0], m01 = m[0][1], m02 = m[0][2];
+      const m10 = m[1][0], m11 = m[1][1], m12 = m[1][2];
+      const m20 = m[2][0], m21 = m[2][1], m22 = m[2][2];
+      const m30 = m[3][0], m31 = m[3][1], m32 = m[3][2];
+      const DEN_BAND = 0.55;      // 띠 폴리곤 — 화면 밖 먼 곳(투영 특이점)은 자릅니다
+      const DEN_SPR = 0.30;       // 빛덩이
+      const MAXR = Math.max(W, H) * 2.2;
+
+      /* 1) 띠 — 1/3 해상도 층에 그려 한 번에 확대합니다(넓고 부드럽게). */
+      const lw = Math.max(96, Math.ceil(W * dpr / q)), lh = Math.max(96, Math.ceil(H * dpr / q));
+      if (!layer) layer = document.createElement('canvas');
+      if (layer.width !== lw || layer.height !== lh) { layer.width = lw; layer.height = lh; }
+      const g = layer.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, lw, lh);
+      const sc = dpr / q;
+      g.setTransform(sc, 0, 0, sc, 0, 0);
+      g.lineJoin = 'round';
+      g.lineCap = 'round';
+
+      let pxRadSum = 0, pxRadN = 0, visRuns = 0;
+      /* 경계(위도)마다 화면 좌표를 한 번만 계산합니다. +b 는 앞 절반, −b 는 뒤 절반. */
+      for (let e = 0; e < NE; e++) {
+        const rvP = EDGE_V[e], rvM = EDGE_V2[e];
+        const oP = e * BAND_N * 2, oM = (NE + e) * BAND_N * 2;
+        for (let i = 0; i < BAND_N; i++) {
+          let v0 = rvP[i * 3], v1 = rvP[i * 3 + 1], v2 = rvP[i * 3 + 2];
+          let y = m10 * v0 + m11 * v1 + m12 * v2;
+          let den = 1 + y;
+          if (den < DEN_BAND) { SX[oP + i * 2] = NaN; SY[oP + i * 2] = NaN; }
+          else {
+            const x = m00 * v0 + m01 * v1 + m02 * v2;
+            const z = m20 * v0 + m21 * v1 + m22 * v2;
+            const k = kS / den;
+            SX[oP + i * 2] = cx + x * k; SY[oP + i * 2] = cy - z * k;
+            if (e === 0) { pxRadSum += k; pxRadN++; }
+          }
+          v0 = rvM[i * 3]; v1 = rvM[i * 3 + 1]; v2 = rvM[i * 3 + 2];
+          y = m10 * v0 + m11 * v1 + m12 * v2;
+          den = 1 + y;
+          if (den < DEN_BAND) { SX[oM + i * 2] = NaN; SY[oM + i * 2] = NaN; }
+          else {
+            const x = m00 * v0 + m01 * v1 + m02 * v2;
+            const z = m20 * v0 + m21 * v1 + m22 * v2;
+            const k = kS / den;
+            SX[oM + i * 2] = cx + x * k; SY[oM + i * 2] = cy - z * k;
+          }
+        }
+      }
+      /* 겹치지 않는 위도 띠를 하나씩 — 경계가 겹쳐 밝아지지 않고 계단도 생기지 않습니다. */
+      function stripPath(oIn, oOut) {
+        /* 이어지는 구간마다 따로 닫습니다 — 화면을 가로지르는 긴 현(chord)이 생기지 않게 */
+        function emit(run) {
+          g.moveTo(SX[oIn + run[0] * 2], SY[oIn + run[0] * 2]);
+          for (let k2 = 1; k2 < run.length; k2++) {
+            g.lineTo(SX[oIn + run[k2] * 2], SY[oIn + run[k2] * 2]);
+          }
+          for (let k2 = run.length - 1; k2 >= 0; k2--) {
+            g.lineTo(SX[oOut + run[k2] * 2], SY[oOut + run[k2] * 2]);
+          }
+          g.closePath();
+        }
+        const okAt = function (i) {
+          return SX[oIn + i * 2] === SX[oIn + i * 2] && SX[oOut + i * 2] === SX[oOut + i * 2];
+        };
+        let s0 = -1;
+        for (let i = 0; i < BAND_N; i++) if (!okAt(i)) { s0 = i; break; }
+        if (s0 < 0) s0 = 0;
+        let drawn = 0, run = [];
+        for (let step = 0; step <= BAND_N; step++) {
+          const idx = (s0 + step) % BAND_N;
+          if (okAt(idx)) run.push(idx);
+          else {
+            if (run.length >= 3) { emit(run); drawn += run.length; }
+            run = [];
+          }
+        }
+        if (run.length >= 3) { emit(run); drawn += run.length; }
+        return drawn;
+      }
+      for (let k = 0; k < STRIPS.length; k++) {
+        const st = STRIPS[k];
+        const a = st.a * fade;
+        if (a < 0.0025) continue;
+        const tone = red ? (st.t === WARM ? WARM : st.t === WHITE ? MID : MID) : st.t;
+        g.fillStyle = 'rgba(' + TONE_RGB[red ? 1 : 0][tone] + ',' + a.toFixed(4) + ')';
+        g.beginPath();
+        const oP1 = k * BAND_N * 2, oP2 = (k + 1) * BAND_N * 2;
+        const oM1 = (NE + k) * BAND_N * 2, oM2 = (NE + k + 1) * BAND_N * 2;
+        let n1 = stripPath(oP1, oP2);
+        const n2 = stripPath(oM2, oM1);
+        if (n1 + n2 < 6) continue;
+        g.fill();
+        visRuns++;
+      }
+      const pxRad = pxRadN ? pxRadSum / pxRadN : kS;
+      const tBand = nowMs() - t0;
+
+      /* 2) 띠의 빛덩이 — 스프라이트를 'lighter'로 더해 겹치는 곳이 더 밝아집니다. */
+      g.globalCompositeOperation = 'lighter';
+      let nGlow = 0;
+      for (let i = 0; i < glow.length; i++) {
+        const bl = glow[i], v = bl.v;
+        const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
+        const den = 1 + y;
+        if (den < DEN_SPR) continue;
+        const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
+        if (alt < -0.12) continue;
+        const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
+        const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
+        const k = kS / den;
+        const sx = cx + x * k, sy = cy - z * k;
+        const rad = Math.min(MAXR, bl.r * RAD * k);
+        if (sx + rad < -6 || sx - rad > W + 6 || sy + rad < -6 || sy - rad > H + 6) continue;
+        const tone = red ? (bl.t === WARM || bl.t === WHITE ? WARM : MID) : bl.t;
+        const fadeLow = alt < 0 ? clamp(1 + alt / 0.12, 0, 1) : 1;
+        g.globalAlpha = clamp(bl.a * fade * fadeLow, 0, 1);
+        g.drawImage(sprite(String(tone), red), sx - rad, sy - rad, rad * 2, rad * 2);
+        nGlow++;
+      }
+      let nKnot = 0;
+      for (let i = 0; i < knots.length; i++) {
+        const bl = knots[i], v = bl.v;
+        const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
+        const den = 1 + y;
+        if (den < DEN_SPR) continue;
+        const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
+        if (alt < -0.1) continue;
+        const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
+        const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
+        const k = kS / den;
+        const sx = cx + x * k, sy = cy - z * k;
+        const rad = Math.min(MAXR, bl.r * RAD * k);
+        if (sx + rad < -4 || sx - rad > W + 4 || sy + rad < -4 || sy - rad > H + 4) continue;
+        g.globalAlpha = clamp(bl.a * fade, 0, 1);
+        g.drawImage(sprite('k', red), sx - rad, sy - rad, rad * 2, rad * 2);
+        nKnot++;
+      }
+      const tGlow = nowMs() - t0;
+
+      /* 3) 암흑대 — 띠의 빛을 'destination-out'으로 깎아 은하수를 가릅니다.
+         먼지 띠는 선으로 긋고(폭 3겹으로 부드러운 가장자리),
+         개별 암흑성운은 덩이로 얹습니다. */
+      g.globalCompositeOperation = 'destination-out';
+      let nLane = 0, nSoft = 0;
+      for (let i = 0; i < lanes.length; i++) {
+        const ln = lanes[i], vs = ln.v;
+        let started = false, any = false;
+        g.beginPath();
+        for (let k = 0; k < vs.length; k++) {
+          const v = vs[k];
+          const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
+          const den = 1 + y;
+          if (den < 0.3) { started = false; continue; }
+          const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
+          if (alt < -0.12) { started = false; continue; }
+          const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
+          const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
+          const kk = kS / den;
+          const X = cx + x * kk, Y = cy - z * kk;
+          if (started) g.lineTo(X, Y); else { g.moveTo(X, Y); started = true; }
+          any = true;
+        }
+        if (!any) continue;
+        for (let w2 = 0; w2 < 3; w2++) {
+          const wid = ln.w * [1, 1.9, 3.1][w2] * RAD * pxRad;
+          if (!(wid > 0.5)) continue;
+          g.lineWidth = Math.min(MAXR, wid);
+          g.strokeStyle = 'rgba(0,0,0,' + (ln.a * [1, 0.6, 0.32][w2] * fade).toFixed(3) + ')';
+          g.stroke();
+        }
+        nLane++;
+      }
+      for (let i = 0; i < dark.length; i++) {
+        const bl = dark[i], v = bl.v;
+        const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
+        const den = 1 + y;
+        if (den < DEN_SPR) continue;
+        const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
+        if (alt < -0.12) continue;
+        const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
+        const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
+        const k = kS / den;
+        const sx = cx + x * k, sy = cy - z * k;
+        const rad = Math.min(MAXR, bl.r * RAD * k);
+        if (sx + rad < -6 || sx - rad > W + 6 || sy + rad < -6 || sy - rad > H + 6) continue;
+        g.globalAlpha = clamp(bl.a * fade, 0, 1);
+        g.drawImage(sprite('d'), sx - rad, sy - rad, rad * 2, rad * 2);
+        nSoft++;
+      }
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
+      const tDark = nowMs() - t0;
+
+      /* 4) 메인 캔버스에 얹기 — 빛을 더하는 합성으로 겹칩니다.
+         층을 확대하며 살짝 흐리게(blur) 얹어 고리 경계의 계단을 지웁니다. */
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      if (o.blur > 0 && typeof ctx.filter === 'string') {
+        ctx.filter = 'blur(' + o.blur + 'px)';
+      }
+      ctx.drawImage(layer, 0, 0, W, H);
+      ctx.restore();
+      const tComp = nowMs() - t0;
+
+      /* 5) 잔별 — 색·크기·밝기 묶음마다 path 하나로 찍습니다. */
+      const buckets = {};
+      let nFine = 0;
+      const fFade = clamp(fade * (o.fineBoost || 1), 0, 1);
+      for (let i = 0; i < FINE_N; i++) {
+        const o7 = i * 7;
+        const v0 = FINE[o7], v1 = FINE[o7 + 1], v2 = FINE[o7 + 2];
+        const y = m10 * v0 + m11 * v1 + m12 * v2;
+        const den = 1 + y;
+        if (den < 0.22) continue;
+        const alt = m30 * v0 + m31 * v1 + m32 * v2;
+        if (alt < -0.035) continue;
+        const x = m00 * v0 + m01 * v1 + m02 * v2;
+        const z = m20 * v0 + m21 * v1 + m22 * v2;
+        const k = kS / den;
+        const sx = cx + x * k, sy = cy - z * k;
+        if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
+        const size = FINE[o7 + 3], al = FINE[o7 + 4], ci = FINE[o7 + 5] | 0;
+        const key = ci * 4 + (size > 1.1 ? 2 : 0) + (al > 0.42 ? 1 : 0);
+        const arr = buckets[key] || (buckets[key] = []);
+        arr.push(sx, sy);
+        nFine++;
+      }
+      ctx.save();
+      for (const key in buckets) {
+        const bi = Number(key), arr = buckets[key];
+        ctx.fillStyle = red ? ((bi >> 2) >= 3 ? '#ffc2a6' : '#ff9f84') : FINE_COLORS[bi >> 2];
+        const big = (bi & 2) ? 1 : 0;
+        ctx.globalAlpha = clamp(((bi & 1) ? 0.56 : 0.30) * fFade * (big ? 1.1 : 1), 0, 1);
+        ctx.beginPath();
+        const r = big ? 1.35 : 0.92;
+        for (let i = 0; i < arr.length; i += 2) ctx.rect(arr[i] - r / 2, arr[i + 1] - r / 2, r, r);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
+      // 이름표를 붙일 자리 — 화면 가운데에 가장 가까운 띠 위의 점
+      let anchor = null, bestD = Infinity;
+      for (let i = 0; i < BAND_N; i += 2) {
+        const v0 = RING0[i * 3], v1 = RING0[i * 3 + 1], v2 = RING0[i * 3 + 2];
+        const y = m10 * v0 + m11 * v1 + m12 * v2;
+        const den = 1 + y;
+        if (den < DEN_BAND) continue;
+        const x = m00 * v0 + m01 * v1 + m02 * v2;
+        const z = m20 * v0 + m21 * v1 + m22 * v2;
+        const k = kS / den;
+        const X = cx + x * k, Y = cy - z * k;
+        if (X < 24 || X > W - 24 || Y < 22 || Y > H - 22) continue;
+        const d = Math.hypot(X - cx, Y - cy);
+        if (d < bestD) { bestD = d; anchor = { x: X, y: Y }; }
+      }
+      last.fade = +fade.toFixed(3);
+      last.glow = nGlow; last.knot = nKnot; last.dark = nSoft; last.lane = nLane; last.fine = nFine;
+      last.band = visRuns;
+      last.ms = nowMs() - t0;
+      last.t = {
+        band: +(tBand).toFixed(1), glow: +(tGlow - tBand).toFixed(1),
+        dark: +(tDark - tGlow).toFixed(1), comp: +(tComp - tDark).toFixed(1),
+        fine: +(last.ms - tComp).toFixed(1)
+      };
+      return anchor;
+    }
+
+    /* --------------------------------------------------------- 전천 지도 SVG */
+    /* 지도는 천정 중심 방위각·거리 투영 — 각거리가 그대로 반지름에 비례합니다. */
+    function mapProjector(latDeg, lonDeg, jd, cx, cy, R) {
+      const lst = A.lstHours(jd, lonDeg) * 15 * RAD;
+      const cl = Math.cos(lst), sl = Math.sin(lst);
+      const p = latDeg * RAD, sp = Math.sin(p), cp = Math.cos(p);
+      return function (v) {
+        const ex = -sl * v[0] + cl * v[1];
+        const ny = -sp * cl * v[0] - sp * sl * v[1] + cp * v[2];
+        const uz = cp * cl * v[0] + cp * sl * v[1] + sp * v[2];
+        const alt = Math.asin(clamp(uz, -1, 1)) * 180 / Math.PI;
+        const rr = R * (90 - alt) / 90;
+        const hyp = Math.hypot(ex, ny) || 1;
+        return { x: cx - rr * (ex / hyp), y: cy - rr * (ny / hyp), alt: alt };
+      };
+    }
+    function paintMap(o) {
+      const proj = mapProjector(o.lat, o.lon, o.jd, o.cx, o.cy, o.R);
+      const red = !!o.red;
+      const out = [];
+
+      /* 띠 — 위도 고리를 겹쳐 그려 부드러운 가장자리를 만듭니다. */
+      [[20, 0.055, '186,206,252'], [16, 0.06, '192,210,252'], [12.5, 0.065, '200,216,250'],
+       [9.5, 0.07, '212,222,246'], [7, 0.075, '226,230,242'], [5, 0.085, '242,236,228'],
+       [3.2, 0.095, '255,238,206'], [1.8, 0.09, '255,236,198']].forEach(function (lay) {
+        const half = lay[0];
+        const front = [], back = [];
+        for (let i = 0; i <= BAND_N; i++) {
+          const L = (i * BAND_STEP) % 360;
+          front.push(proj(galVec(L, half)));
+          back.push(proj(galVec(L, -half)));
+        }
+        let d = '', started = false, any = false;
+        for (let i = 0; i < front.length; i++) {
+          const p = front[i];
+          if (p.alt <= 0.5) { started = false; continue; }
+          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
+          started = true; any = true;
+        }
+        for (let i = back.length - 1; i >= 0; i--) {
+          const p = back[i];
+          if (p.alt <= 0.5) { started = false; continue; }
+          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
+          started = true; any = true;
+        }
+        if (any) out.push('<path d="' + d + 'Z" fill="rgba(' + (red ? '255,150,116' : lay[2]) + ',' + lay[1] + ')"/>');
+      });
+
+      /* 팽대부 — 은하 중심의 따뜻한 빛 */
+      const gc = proj(gcVec);
+      if (gc.alt > -8) {
+        const rr = Math.max(6, o.R * 14 / 90);
+        out.push('<circle cx="' + gc.x.toFixed(1) + '" cy="' + gc.y.toFixed(1) + '" r="' + rr.toFixed(1) +
+          '" fill="url(#mwWarm)" opacity="' + (gc.alt > 0 ? 0.9 : 0.35) + '"/>');
+      }
+      /* 밝은 별구름 — 띠의 접선 방향으로 늘인 타원 */
+      [[6.0, -4.2, 5.6], [15.5, -3.6, 4.4], [26.5, -2.0, 4.8], [78.0, 0.3, 7.5],
+       [45.0, -6.0, 5.0], [287.5, -0.8, 5.0], [330.0, -1.0, 5.2]].forEach(function (c) {
+        const p = proj(galVec(c[0], c[1]));
+        if (p.alt <= 1) return;
+        const t1 = proj(galVec(c[0] + 3, c[1])), t2 = proj(galVec(c[0] - 3, c[1]));
+        const ang = Math.atan2(t1.y - t2.y, t1.x - t2.x) * 180 / Math.PI;
+        const rx = Math.max(2.6, o.R * c[2] / 90), ry = rx * 0.62;
+        out.push('<ellipse cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" rx="' + rx.toFixed(1) +
+          '" ry="' + ry.toFixed(1) + '" fill="url(#mwCloud)" opacity="0.8" transform="rotate(' +
+          ang.toFixed(0) + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')"/>');
+      });
+      /* 암흑대 — 먼지 띠는 선으로, 개별 성운은 덩이로 */
+      let dn = '';
+      for (let i = 0; i < lanes.length; i++) {
+        const vs = lanes[i].v;
+        let d = '', started = false, any = false;
+        for (let k = 0; k < vs.length; k++) {
+          const p = proj(vs[k]);
+          if (p.alt <= 0.5) { started = false; continue; }
+          d += (started ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
+          started = true; any = true;
+        }
+        if (any) dn += d;
+      }
+      if (dn) out.push('<path d="' + dn + '" fill="none" stroke="rgba(3,5,12,0.72)" stroke-width="' +
+        Math.max(1.4, o.R * 1.7 / 90).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>');
+      let dk = '';
+      for (let i = 0; i < dark.length; i++) {
+        const bl = dark[i];
+        if (bl.a < 0.3) continue;                  // 큰 덩이만 (지도는 작습니다)
+        const p = proj(bl.v);
+        if (p.alt <= 1) continue;
+        const rr = Math.max(1.2, o.R * bl.r * 1.1 / 90);
+        dk += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + rr.toFixed(1) + '"/>';
+      }
+      if (dk) out.push('<g fill="url(#mwDark)" opacity="0.95">' + dk + '</g>');
+
+      /* 미세 잔별 — 지평선 위의 것만 한 줄 path 로 */
+      let d = '', cnt = 0;
+      for (let i = 0; i < FINE_N; i += 2) {
+        const o7 = i * 7;
+        const p = proj([FINE[o7], FINE[o7 + 1], FINE[o7 + 2]]);
+        if (p.alt <= 2) continue;
+        d += 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'h.1';
+        cnt++;
+      }
+      if (d) out.push('<path d="' + d + '" fill="none" stroke="' + (red ? '#ff9d80' : '#d7e3ff') +
+        '" stroke-width="0.8" stroke-linecap="round" opacity="' + (red ? 0.5 : 0.42) + '"/>');
+      return { svg: '<g clip-path="url(#mwClip)">' + out.join('') + '</g>', stars: cnt };
+    }
+
+    return {
+      cameraMtx: cameraMtx, paintLive: paintLive, paintMap: paintMap,
+      /* 낮·박명처럼 은하수를 그리지 않는 프레임 — 기록을 지워 '그린 수'가 남지 않게 */
+      clear: function () {
+        last.glow = 0; last.knot = 0; last.dark = 0; last.lane = 0;
+        last.fine = 0; last.band = 0; last.ms = 0; last.fade = 0;
+      },
+      /* 검증용 — 적도 단위벡터 하나를 카메라 행렬로 돌려 (x, y, z, 고도, den) 을 돌려줍니다.
+         은하 중심이 화면 한가운데로 오는지(은하좌표 변환·투영이 맞는지) 확인합니다. */
+      probe: function (P, lat, lon, jd, v) {
+        const m = cameraMtx(P, lat, lon, jd);
+        const x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2];
+        const y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2];
+        const z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2];
+        const alt = m[3][0] * v[0] + m[3][1] * v[1] + m[3][2] * v[2];
+        return {
+          x: x, y: y, z: z, den: 1 + y,
+          alt: Math.asin(Math.max(-1, Math.min(1, alt))) * 180 / Math.PI
+        };
+      },
+      galVec: galVec, gcVec: gcVec, lonBright: lonBright, lonHalf: lonHalf, dAng: dAng,
+      bandN: BAND_N, bandStep: BAND_STEP,
+      stats: function () {
+        return {
+          glow: glow.length, knots: knots.length, dark: dark.length, lanes: lanes.length,
+          fine: FINE_N, strips: STRIPS.length, edges: EDGES.length,
+          band: BAND_N,
+          last: {
+            fade: last.fade, glow: last.glow, knots: last.knot, dark: last.dark, lanes: last.lane,
+            fine: last.fine, band: last.band, ms: +last.ms.toFixed(2), t: last.t
+          }
+        };
+      }
+    };
+  })();
+  /* ===== MW-MODEL-END ===== */
+
   function liveDraw() {
     const ctx = live.ctx;
     if (!ctx || !live.w || !live.h) return;
@@ -3944,60 +4774,25 @@
       ctx.fillText(d[0] + ' ' + d[1] + '°', p.x + 4, p.y - 8);
     });
 
-    /* 은하수 — IAU 은하좌표계 극·중심으로 계산한 실제 은하면 경로 */
+    /* 🌌 은하수 — 은하좌표(l, b) 구조 모델(MW)로 실사처럼.
+       밝은 띠·팽대부·성운 구름은 빛을 더하고(lighter), 암흑대는 띠의 빛을
+       깎아(destination-out) 은하수를 두 갈래로 가릅니다. 그 위에 미세 잔별
+       2,600개를 얹습니다 — 매 프레임 삼각함수 없이 카메라 행렬만 곱합니다. */
     (function drawMilkyWay() {
-      const gPole = { ra: 192.85948 / 15, dec: 27.12825 };
-      const gCen = { ra: 266.40499 / 15, dec: -28.93617 };
-      function eqVec(raH, decD) {
-        const a = raH * 15 * RAD, d = decD * RAD;
-        return [Math.cos(d) * Math.cos(a), Math.cos(d) * Math.sin(a), Math.sin(d)];
-      }
-      const gp = eqVec(gPole.ra, gPole.dec);
-      const gc = eqVec(gCen.ra, gCen.dec);
-      const side = norm(cross(gp, gc));
-      const pts_n = [], pts_c = [], pts_s = [];
-      for (let l = 0; l <= 360; l += 3) {
-        const cl = Math.cos(l * RAD), sl = Math.sin(l * RAD);
-        const base = [0, 1, 2].map(function (i) { return gc[i] * cl + side[i] * sl; });
-        const lat2 = Math.abs(Math.asin(clamp(gp[0] * base[0] + gp[1] * base[1] + gp[2] * base[2], -1, 1)) * 180 / Math.PI);
-        [pts_n, pts_c, pts_s].forEach(function (arr, k) {
-          const b = (k - 1) * 9; // -9, 0, +9도
-          const off = [0, 1, 2].map(function (i) { return base[i] * Math.cos(b * RAD) + gp[i] * Math.sin(b * RAD); });
-          const ra = Math.atan2(off[1], off[0]) * 180 / Math.PI;
-          const dec = Math.asin(clamp(off[2], -1, 1)) * 180 / Math.PI;
-          const h = A.equatorialToHorizontal(A.mod(ra, 360) / 15, dec, lat, lon, jd);
-          arr.push(h.alt > -3 ? project(h.alt, h.az) : null);
-          void lat2;
-        });
-      }
-      // 밴드: 아주 옅게 여러 겹으로 겹쳐 부드러운 띠처럼
-      const mwFade = 1 - dayF * 0.95;
-      if (mwFade > 0.05) {
-        const base = isRed() ? [255, 150, 110] : [198, 214, 255];
-        const rgba = function (a) { return 'rgba(' + base[0] + ',' + base[1] + ',' + base[2] + ',' + (a * mwFade).toFixed(3) + ')'; };
-        ctx.save();
-        for (let i = 0; i < pts_n.length - 1; i++) {
-          const a = pts_n[i], b2 = pts_n[i + 1], c2 = pts_s[i + 1], d2 = pts_s[i];
-          if (!a || !b2 || !c2 || !d2) continue;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(d2.x, d2.y);
-          ctx.closePath();
-          ctx.fillStyle = rgba(0.012);
-          ctx.fill();
-        }
-        strokePts(pts_c, rgba(0.028), 46);
-        strokePts(pts_c, rgba(0.03), 20);
-        strokePts(pts_c, rgba(0.032), 5);
-        ctx.restore();
-      }
-      if (live.labels) {
-        for (let i = 0; i < pts_c.length; i += 6) {
-          const p0 = pts_c[i];
-          if (p0 && p0.x > 30 && p0.x < W - 30 && p0.y > 20 && p0.y < H - 20) {
-            drawLabel('은하수', p0.x + 6, p0.y - 8, isRed() ? 'rgba(255,170,140,.8)' : 'rgba(205,220,255,.75)', '600 10px system-ui, sans-serif');
-            break;
-          }
-        }
+      /* 밤 1 → 박명 0.5 → 해가 뜨면 0 (낮에는 은하수를 아예 그리지 않습니다) */
+      const mwFade = clamp(1.06 - dayF * 1.12, 0, 1);
+      if (mwFade <= 0.02) { MW.clear(); return; }
+      const mtx = MW.cameraMtx(P, lat, lon, jd);
+      const anchor = MW.paintLive(ctx, {
+        mtx: mtx, W: W, H: H, cx: cx, cy: cy, kS: kS, dpr: live.dpr,
+        fade: mwFade, red: isRed(),
+        blur: fovDeg > 70 ? 3 : 1.6,
+        quality: fovDeg > 70 ? 3 : fovDeg > 30 ? 2.6 : 2,
+        fineBoost: fovDeg < 25 ? 1.12 : 1
+      });
+      if (live.labels && anchor) {
+        drawLabel('은하수', anchor.x + 8, anchor.y - 9,
+          isRed() ? 'rgba(255,186,152,.84)' : 'rgba(218,230,255,.82)', '600 10px system-ui, sans-serif');
       }
     })();
 
@@ -5574,6 +6369,19 @@
     aimMarker: function () { return { on: aim.on, kind: aim.kind, key: aim.key, name: aim.name, marker: aim.on && aim.raH != null && !aimTargetOnCanvas() }; },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
+    /* -- 검증용 — 은하수 모델(띠·구름·암흑대·잔별)과 이번 프레임에 실제로 그린 수. */
+    mw: function () { return MW.stats(); },
+    mwProbe: function (raH, decD, fov) {
+      const c = state.last || computeNight();
+      const P = liveProjector();
+      const a = raH * 15 * RAD, d = decD * RAD;
+      const v = [Math.cos(d) * Math.cos(a), Math.cos(d) * Math.sin(a), Math.sin(d)];
+      const r = MW.probe(P, state.site.lat, state.site.lon, c.jd, v);
+      r.cx = live.w / 2; r.cy = live.h / 2; r.kS = P.kS; r.fov = live.fov;
+      r.sx = r.cx + r.x * P.kS / r.den; r.sy = r.cy - r.z * P.kS / r.den;
+      r.lat = state.site.lat; r.jd = c.jd;
+      return r;
+    },
     /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.
        천정·천저를 지날 때 이 기준틀이 끊김 없이 이어지는지 수치로 확인합니다. */
     basis: function () {
