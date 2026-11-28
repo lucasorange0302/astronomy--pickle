@@ -11139,7 +11139,10 @@ window.Astro = (function () {
   var GAIA_MAX = 400;          // 한 번에 받을 별 수
   var GAIA_MAG_MIN = 6.0, GAIA_MAG_MAX = 20.8;   // Gaia DR3 실관측 한계(20.7등)까지
   var GAIA_DEBOUNCE = 420;
-  var GAIA_TIMEOUT = 9000;
+  /* VizieR 원뿔 조회는 서버가 붐빔 때 2~13초로 흔들립니다(2026-11-28 09~13초 실측).
+     9초로 끊으면 느린 날에 “응답 없음”이 다시 뜨므로 15초까지 기다립니다 —
+     기다리는 동안에는 지난 목록을 그대로 보여 주고(gi.stale), 실패한 서버는 6시간 쉼니다. */
+  var GAIA_TIMEOUT = 15000;
   var EP_KEY = 'bw.gaia.ep';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(6시간)
   var TILE_MAX = 36;           // 메모리에 들고 있을 타일 수(LRU)
   var GAIA_MAX_CACHE = 20;
