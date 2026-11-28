@@ -1748,8 +1748,55 @@
     $('#modalClose').focus();
   }
 
-  function viewsTable(o) {
-    const rows = [
+  /* 대표 도감·전체 도감 어느 쪽에도 없는 어두운 별·천체 — 그 자리에서 바로 상세 카드를 띄웁니다.
+     (라이브 하늘에서 별을 눌렀을 때 「도감에서 보기」가 항상 열리는 길) */
+  function openSkyCard(info) {
+    if (!info || info.raH == null) return;
+    const c = state.last || computeNight();
+    const wide = info.wideId ? { i: info.wideId } : wideMatch(info.raH, info.decD, info.name);
+    const hor = A.equatorialToHorizontal(info.raH, info.decD, state.site.lat, state.site.lon, c.jd);
+    const ni = A.objectNight(info.raH, info.decD, state.site.lat, state.site.lon, state.dateStr);
+    const img = skyviewUrl(info.raH, info.decD, 'DSS2 Red', 0.6, 600);
+    $('#modalBody').innerHTML =
+      '<div class="md-head"><h2 id="modalTitle">' + esc(info.name) + '</h2>' +
+      '<div class="md-sub">' + esc(info.sub || '하늘의 별') + '</div></div>' +
+      '<div class="md-stats">' +
+      stat('지금', dirName(hor.az) + ' ' + nf(hor.alt, 0) + '°', '선택한 관측지·시각 기준입니다.') +
+      stat('오늘 밤 최고', ni.neverUp ? '한국에서 안 보임' : nf(ni.maxAlt, 0) + '° (' + A.fmtClock(ni.maxJd) + ')') +
+      stat('출 / 몰', A.fmtClock(ni.riseJd) + ' / ' + A.fmtClock(ni.setJd)) +
+      stat('적경', fmtRA(info.raH), '하늘의 가로 좌표(24시간 = 360°).') +
+      stat('적위', fmtDec(info.decD), '하늘의 세로 좌표. +90°가 북극성 방향입니다.') +
+      (typeof info.mag === 'number' ? stat('겉보기 등급', (info.mag > 0 ? '+' : '') + nf(info.mag, 2) + '등') : '') +
+      '</div>' +
+      '<div class="md-section"><h3>이 자리의 실제 하늘 사진</h3>' +
+      '<img src="' + esc(img) + '" alt="' + esc(info.name) + ' 주변 하늘" loading="lazy" decoding="async"' +
+      ' style="width:100%;border-radius:12px;display:block;background:#0a1020">' +
+      '<p class="small muted">NASA SkyView(DSS2)가 이 좌표의 실제 하늘을 찍은 사진입니다. 3~20초 걸릴 수 있습니다.</p></div>' +
+      (info.note ? '<div class="md-section"><h3>참고</h3><p>' + esc(info.note) + '</p></div>' : '') +
+      '<div class="con-actions">' +
+      '<button class="btn btn-primary btn-sm" type="button" data-card-aim="' + info.raH + ',' + info.decD + '">🎯 라이브 뷰로 조준</button>' +
+      (wide ? '<button class="mini-btn" type="button" data-card-wide="' + esc(wide.i) + '">전체 도감에서 보기</button>' : '') +
+      '<button class="mini-btn" type="button" data-close="1">닫기</button></div>';
+    const modal = $('#modal');
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    state._lastFocus = document.activeElement;
+    $('#modalClose').focus();
+    const aimBtn = $('#modalBody [data-card-aim]');
+    if (aimBtn) aimBtn.addEventListener('click', function () {
+      const p = aimBtn.getAttribute('data-card-aim').split(',').map(Number);
+      closeModal();
+      aimRaDec(p[0] * 15, p[1], info.name);
+    });
+    const wideBtn = $('#modalBody [data-card-wide]');
+    if (wideBtn) wideBtn.addEventListener('click', function () {
+      const id = wideBtn.getAttribute('data-card-wide');
+      closeModal();
+      if (window.SpaceUI && SpaceUI.openCatalogObject) SpaceUI.openCatalogObject(id);
+    });
+  }
+
+  function viewsTable(o) {   const rows = [
       ['맨눈', o.views.naked],
       ['쌍안경', o.views.bino],
       ['망원경', o.views.scope],
@@ -2300,6 +2347,7 @@
     const lat = state.site.lat, lon = state.site.lon;
     let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null, cells = null;
     let conAbbr = '', members = null, fovDeg = null;
+    let starConAbbr = '', starConName = '';
     if (kind === 'planet') {
       const p = dynPos(key, jd);
       raH = p.raH; decD = p.decD; mag = p.mag; name = p.name;
@@ -2315,8 +2363,12 @@
       const st = D.stars.find(function (x) { return x[0] === key; });
       if (!st) return null;
       raH = st[1]; decD = st[2]; mag = st[3]; name = st[0];
-      sub = '항성 · 적경 ' + fmtRA(raH) + ' · 적위 ' + fmtDec(decD) + ' · 등급 ' + (mag > 0 ? '+' : '') + nf(mag, 2);
-      note = '겉보기 등급은 지구에서 본 밝기입니다. 실제 광도는 거리에 따라 크게 달라집니다 — 등급·거리 계산기에서 확인해 보세요.';
+      const scon = starConOf(key);
+      starConAbbr = scon ? scon.abbr : '';
+      starConName = scon ? scon.name : '';
+      sub = '항성' + (scon ? ' · ' + scon.name : '') + ' · 적경 ' + fmtRA(raH) + ' · 적위 ' + fmtDec(decD) +
+        ' · 등급 ' + (mag > 0 ? '+' : '') + nf(mag, 2);
+      note = (scon ? scon.name + '의 별입니다. ' : '') + '겉보기 등급은 지구에서 본 밝기입니다. 실제 광도는 거리에 따라 크게 달라집니다 — 등급·거리 계산기에서 확인해 보세요.';
     } else if (kind === 'dso') {
       const o = D.catalog.find(function (x) { return x.id === key; });
       if (!o) return null;
@@ -2352,8 +2404,26 @@
     return {
       kind: kind, key: key, name: name, sub: sub, note: note, objId: objId, cells: cells,
       mag: mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni,
-      conAbbr: conAbbr, members: members, fovDeg: fovDeg
+      conAbbr: conAbbr, members: members, fovDeg: fovDeg,
+      starConAbbr: starConAbbr, starConName: starConName
     };
+  }
+
+  /* 별 → 소속 별자리 — 별자리 연결선(con.lines)이 별 목록의 순번을 가리킵니다. */
+  let starConMap = null;
+  function starConOf(name) {
+    if (!starConMap) {
+      starConMap = {};
+      D.constellations.forEach(function (con) {
+        (con.lines || []).forEach(function (pair) {
+          pair.forEach(function (i) {
+            const st = D.stars[i];
+            if (st && !starConMap[st[0]]) starConMap[st[0]] = con;
+          });
+        });
+      });
+    }
+    return starConMap[name] || null;
   }
 
   let inspectorRef = null, inspectorTs = 0;
@@ -3101,8 +3171,58 @@
        · 중앙(AIM_ARRIVE_DEG) 진입 — 도착 강조 링 + 🎯 찾았어요!
      ====================================================================== */
   const AIM_ARRIVE_DEG = 4;
+  /** 기본 캔버스에 이미 그려지는 목표인가 — 별자리·대표 도감·행성·달·태양·기본 별은 그대로 두고,
+      그 밖의 어두운 천체(전체 도감 2,571종 등)만 마커로 찍습니다. */
+  function aimTargetOnCanvas() {
+    if (!aim.on) return true;
+    if (aim.kind === 'con' || aim.kind === 'planet' || aim.kind === 'moon' || aim.kind === 'sun' || aim.kind === 'star') return true;
+    if (aim.kind === 'dso' && aim.key && D.catalog.some(function (o) { return o.id === aim.key && !o.dynamic; })) return true;
+    return false;
+  }
+
+  /** 전체 도감(2,571종)에서 적경·적위(0.15° 이내)와 이름으로 짝을 찾습니다. */
+  function wideMatch(raH, decD, name) {
+    const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
+    if (!items.length || raH == null || decD == null) return null;
+    const raDeg = A.mod(Number(raH) * 15, 360);
+    const nm = String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    let best = null, bestD = 9;
+    items.forEach(function (it) {
+      if (typeof it.ra !== 'number' || typeof it.dec !== 'number') return;
+      const dRa = Math.abs(((it.ra - raDeg + 540) % 360) - 180) * Math.cos(decD * Math.PI / 180);
+      const dd = Math.hypot(dRa, it.dec - decD);
+      if (dd > 0.15) return;
+      let sc = dd;
+      const cand = [it.i, it.ko, it.en, it.M].map(function (v) { return String(v || '').toLowerCase(); });
+      if (nm && cand.indexOf(nm) >= 0) sc -= 1;
+      if (sc < bestD) { bestD = sc; best = it; }
+    });
+    return best;
+  }
+
+  function wideLabel(it) {
+    if (!it) return '';
+    const bits = [it.i];
+    if (it.ko && it.ko !== it.i) bits.push(it.ko);
+    return bits.join(' · ');
+  }
+
+  function aimCardInfo() {
+    const c = state.last || computeNight();
+    const hor = A.equatorialToHorizontal(aim.raH, aim.decD, state.site.lat, state.site.lon, c.jd);
+    const ni = A.objectNight(aim.raH, aim.decD, state.site.lat, state.site.lon, state.dateStr);
+    const wide = wideMatch(aim.raH, aim.decD, aim.name);
+    return {
+      kind: 'aim', key: 'aim', name: aim.name || '조준한 천체',
+      sub: '조준한 천체 · 적경 ' + fmtRA(aim.raH) + ' · 적위 ' + fmtDec(aim.decD) + (wide ? ' · ' + wideLabel(wide) : ''),
+      note: '도감 목록에서 조준한 천체입니다. 기본 성도에는 아주 어두워 점으로 그리지 않고, 조준한 자리에 🎯 마커로 표시합니다. 사진은 NASA SkyView 실제 하늘 사진입니다.',
+      objId: null, wideId: wide ? wide.i : null,
+      mag: null, raH: aim.raH, decD: aim.decD, alt: hor.alt, az: hor.az, ni: ni
+    };
+  }
+
   const aim = {
-    on: false, kind: null, key: null, raH: null, decD: null, name: '',
+    on: false, kind: null, key: null, raH: null, decD: null, name: '', magTxt: '',
     az: 0, alt: 0, angDist: 180, inView: false, arrived: false, below: false,
     theta: 0, sx: null, sy: null,
     raf: null, t: 0, fitAt: 0, insets: null, pw: 84, ph: 24, nameKey: null, belowKey: null, stateKey: null
@@ -3130,6 +3250,7 @@
     aim.raH = (target.raH == null ? null : target.raH);
     aim.decD = (target.decD == null ? null : target.decD);
     aim.name = target.name || '';
+    aim.magTxt = target.magTxt || '';
     aim.nameKey = null; aim.belowKey = null; aim.stateKey = null;
     const c = state.last || computeNight();
     const pt = aimPoint(c.jd);
@@ -3781,6 +3902,53 @@
 
     /* 별자리 선 88종 — 보이는 별의 고도와 중요도(rank)로 진하기를 조절 */
     const conCand = [];
+    /* 별자리 선이 시야 밖으로 넘어갈 때 — 한쪽 별의 screen 점이 없으면(화면 밖·시야 뒤)
+       선 전체를 건너뛰지 않고, 두 별의 카메라 좌표를 이어 시야 평면(z>0.04)에서 잘라
+       시야 안 쪽 끝에서 화면 가장자리로 선이 자연스럽게 뻗게 합니다. */
+    const camOfStar = function (st) {
+      const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
+      const al = h.alt * RAD, z2 = h.az * RAD;
+      const d = [Math.cos(al) * Math.sin(z2), Math.cos(al) * Math.cos(z2), Math.sin(al)];
+      const dx = d[0] * P.right[0] + d[1] * P.right[1] + d[2] * P.right[2];
+      const dy = d[0] * P.fwd[0] + d[1] * P.fwd[1] + d[2] * P.fwd[2];
+      const dz = d[0] * P.up[0] + d[1] * P.up[1] + d[2] * P.up[2];
+      return { dx: dx, dy: dy, dz: dz, den: 1 + dy };
+    };
+    const camPt = function (c3) {
+      const den = c3.den;
+      return { x: cx + c3.dx * P.kS / den, y: cy - c3.dz * P.kS / den };
+    };
+    const PAD = Math.max(W, H) * 2;
+    const clipLine = function (c3a, c3b) {
+      const STEP = 14, m = [];
+      for (let s = 0; s <= STEP; s++) {
+        const t = s / STEP;
+        let dx = c3a.dx + (c3b.dx - c3a.dx) * t;
+        let dy = c3a.dy + (c3b.dy - c3a.dy) * t;
+        let dz = c3a.dz + (c3b.dz - c3a.dz) * t;
+        const len = Math.hypot(dx, dy, dz) || 1;
+        dx /= len; dy /= len; dz /= len;
+        const den = 1 + dy;
+        if (den < 0.04) { m.push(null); continue; }         // 시선 뒤 — 여기서 선이 끊깁니다
+        m.push({
+          x: clamp(cx + dx * P.kS / den, -PAD, W + PAD),
+          y: clamp(cy - dz * P.kS / den, -PAD, H + PAD)
+        });
+      }
+      let run = [];
+      const flush = function () {
+        if (run.length >= 2) {
+          ctx.moveTo(run[0].x, run[0].y);
+          for (let i = 1; i < run.length; i++) ctx.lineTo(run[i].x, run[i].y);
+          live.conClipped = (live.conClipped || 0) + 1;
+        }
+        run = [];
+      };
+      m.forEach(function (pt) { if (pt) run.push(pt); else flush(); });
+      flush();
+      const vis = m.filter(function (x) { return !!x; });
+      return vis.length ? vis : null;
+    };
     ctx.save();
     D.constellations.forEach(function (con) {
       const pts = [];
@@ -3789,13 +3957,25 @@
       con.lines.forEach(function (pair) {
         total++;
         const a = starPts[pair[0]], b = starPts[pair[1]];
-        if (!a || !b) return;
-        if (Math.hypot(a.x - b.x, a.y - b.y) > Math.max(W, H) * 1.4) return;
+        if (a && b) {
+          if (Math.hypot(a.x - b.x, a.y - b.y) > Math.max(W, H) * 1.4) return;
+          shown++;
+          pts.push(a, b);
+          sx += a.x + b.x; sy += a.y + b.y; n += 2;
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          return;
+        }
+        /* 한쪽이 화면 밖 / 시야 뒤 — 보이는 쪽에서 가장자리까지 잘라 그립니다. */
+        const sa = D.stars[pair[0]], sb = D.stars[pair[1]];
+        if (!sa || !sb) return;
+        const vis = clipLine(camOfStar(sa), camOfStar(sb));
+        if (!vis) return;
         shown++;
-        pts.push(a, b);
-        sx += a.x + b.x; sy += a.y + b.y; n += 2;
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        pts.push(vis[0], vis[vis.length - 1]);
+        sx += vis[0].x + vis[vis.length - 1].x;
+        sy += vis[0].y + vis[vis.length - 1].y;
+        n += 2;
       });
       if (!shown) return;
       const frac = shown / total;
@@ -3874,6 +4054,40 @@
         live.hits.push({ x: p.x, y: p.y, kind: 'dso', key: o.id, name: o.name, mag: o.mag });
         inView.push({ kind: 'dso', key: o.id, name: o.name, alt: h.alt, az: h.az, d: Math.hypot(p.x - cx, p.y - cy) });
       });
+    }
+
+    /* 🎯 조준 목표 마커 — 기본 캔버스에 없는 어두운 천체(전체 도감 2,571종·성도에 없는 별)일 때
+       그 자리에 다이아몬드 마커와 이름·등급을 직접 그립니다. 눌러서 정보 창도 열립니다. */
+    if (aim.on && aim.raH != null && !aimTargetOnCanvas()) {
+      const ah = A.equatorialToHorizontal(aim.raH, aim.decD, lat, lon, jd);
+      if (ah.alt >= UNDER) {
+        const ap = project(ah.alt, ah.az);
+        if (ap && ap.x > 12 && ap.x < W - 12 && ap.y > 12 && ap.y < H - 12) {
+          const col = isRed() ? '#ffb08a' : '#ffd479';
+          ctx.save();
+          ctx.strokeStyle = col;
+          ctx.fillStyle = col;
+          ctx.lineWidth = 1.6;
+          ctx.globalAlpha = 0.95;
+          ctx.beginPath();
+          ctx.moveTo(ap.x, ap.y - 8); ctx.lineTo(ap.x + 8, ap.y);
+          ctx.lineTo(ap.x, ap.y + 8); ctx.lineTo(ap.x - 8, ap.y);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.globalAlpha = 0.25;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.beginPath(); ctx.arc(ap.x, ap.y, 1.9, 0, Math.PI * 2); ctx.fill();
+          const magTxt = aim.magTxt ? ' · ' + aim.magTxt : '';
+          if (live.labels) {
+            ctx.globalAlpha = 0.92;
+            drawLabel('🎯 ' + aim.name + magTxt, ap.x + 11, ap.y + 4, col, '700 10px system-ui, sans-serif');
+            ctx.globalAlpha = 1;
+          }
+          live.hits.push({ x: ap.x, y: ap.y, kind: 'aim', key: 'aim', name: aim.name, mag: 99 });
+          inView.push({ kind: 'aim', key: 'aim', name: aim.name, alt: ah.alt, az: ah.az, d: Math.hypot(ap.x - cx, ap.y - cy) });
+        }
+      }
     }
 
     /* 행성 */
@@ -4129,12 +4343,21 @@
     const box = $('#liveInfo');
     if (!box) return;
     const jd = (state.last || computeNight()).jd;
-    const info = skyInfo(hit.kind, hit.key, jd);
+    const info = hit.kind === 'aim' ? aimCardInfo() : skyInfo(hit.kind, hit.key, jd);
     if (!info) return;
     live.selected = { kind: hit.kind, key: hit.key };
     liveDirty = true; kickLive();
 
     const obj = info.objId ? D.catalog.find(function (x) { return x.id === info.objId; }) : null;
+    /* 대표 도감에 없는 별·어두운 천체 — 전체 도감(2,571종)에서 좌표·이름으로 짝을 찾습니다.
+       찾아도 못 찾아도 「도감에서 보기」는 항상 뜨고, 못 찾으면 그 별만의 상세 카드가 열립니다. */
+    const wide = (info.objId || info.wideId || info.raH == null)
+      ? null : wideMatch(info.raH, info.decD, info.name);
+    const objBtn = info.objId
+      ? '<button class="btn btn-primary btn-sm" type="button" data-li-obj="' + esc(info.objId) + '">도감에서 보기</button>'
+      : (wide || info.wideId)
+        ? '<button class="btn btn-primary btn-sm" type="button" data-li-wide="' + esc(info.wideId || wide.i) + '">도감에서 보기</button>'
+        : '<button class="btn btn-primary btn-sm" type="button" data-li-card="1">도감에서 보기</button>';
     const facts = [];
     facts.push(factRow('지금', dirName(info.az) + ' ' + nf(info.alt, 0) + '° (방위 ' + nf(info.az, 0) + '°)'));
     if (typeof info.mag === 'number') facts.push(factRow('겉보기 등급', (info.mag > 0 ? '+' : '') + nf(info.mag, Math.abs(info.mag) >= 10 ? 1 : 2) + '등'));
@@ -4154,6 +4377,7 @@
       facts.push(factRow('표면 온도', '약 5,800 K'));
     }
     if (obj && obj.con && obj.con !== '—') facts.push(factRow('별자리', obj.con));
+    if (info.starConName) facts.push(factRow('별자리', info.starConName));
     if (obj && obj.dist && obj.dist !== '—') facts.push(factRow('거리', obj.dist));
     if (info.kind === 'con' && info.cells) info.cells.slice(0, 3).forEach(function (c) { facts.push(factRow(c[0], c[1])); });
 
@@ -4171,7 +4395,8 @@
       (info.kind === 'sun' ? '<p class="li-sun-warn"><b>⚠️ 태양은 반드시 필터로만</b> — 맨눈 직시도 금지이고, 망원경·쌍안경·카메라로 필터 없이 보면 즉시 실명합니다. 태양 전용 필터(ISO 12312-2)를 끼운 장비로만 관측하고, 접안부 필터는 열로 깨질 수 있어 쓰지 않습니다. 사진은 NASA SDO·GSFC가 찍은 실제 태양입니다.</p>' : '') +
       '  <div class="li-gallery" id="liGallery"></div>' +
       '  <div class="li-actions">' +
-      (info.objId ? '<button class="btn btn-primary btn-sm" type="button" data-li-obj="' + esc(info.objId) + '">도감에서 보기</button>' : '') +
+      objBtn +
+      (info.starConAbbr ? '<button class="mini-btn" type="button" data-li-con="' + esc(info.starConAbbr) + '">✨ ' + esc(info.starConName) + '</button>' : '') +
       '    <button class="mini-btn" type="button" data-li-aim>🎯 라이브 뷰로 조준</button>' +
       '  </div>' +
       '</div>';
@@ -4251,6 +4476,17 @@
       if (th) { renderLivePhoto(Number(th.getAttribute('data-li-i'))); return; }
       const objBtn = t.closest('[data-li-obj]');
       if (objBtn) { closeLiveInfo(); openObject(objBtn.getAttribute('data-li-obj')); return; }
+      const wideBtn = t.closest('[data-li-wide]');
+      if (wideBtn) {
+        const id = wideBtn.getAttribute('data-li-wide');
+        closeLiveInfo();
+        if (window.SpaceUI && SpaceUI.openCatalogObject) SpaceUI.openCatalogObject(id);
+        return;
+      }
+      const cardBtn = t.closest('[data-li-card]');
+      if (cardBtn && li.info) { const i = li.info; closeLiveInfo(); openSkyCard(i); return; }
+      const conBtn = t.closest('[data-li-con]');
+      if (conBtn) { const ab = conBtn.getAttribute('data-li-con'); closeLiveInfo(); openConstellation(ab); return; }
       const aim = t.closest('[data-li-aim]');
       if (aim && li.info) { const i = li.info; closeLiveInfo(); aimAt(i.kind, i.key); }
     });
@@ -4608,6 +4844,11 @@
     cancelInertia: function () { return inertCancel(); },
     /* -- 검증용 — 지금까지 하늘을 그린 횟수(관성 중 한 프레임에 한 번인지 확인). */
     draws: function () { return live.draws || 0; },
+    /* -- 검증용 — 시야 밖/뒤로 넘어간 별자리 선을 잘라 그린 횟수(별자리 선 코너 케이스). */
+    conClipped: function () { return live.conClipped || 0; },
+    conClippedReset: function () { live.conClipped = 0; },
+    /* -- 검증용 — 조준 목표가 기본 캔버스에 없어 마커로 그렸는지. */
+    aimMarker: function () { return { on: aim.on, kind: aim.kind, key: aim.key, name: aim.name, marker: aim.on && aim.raH != null && !aimTargetOnCanvas() }; },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
     /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.

@@ -19,7 +19,9 @@
 (function () {
   'use strict';
 
-  var TOTAL = 8;
+  var DEFAULT_TOTAL = 10;
+  var COUNTS = [5, 10, 20, 50, 100];     // 시작 화면에서 고르는 문제 수
+  var TOTAL = DEFAULT_TOTAL;             // 짧은 표기를 쓰는 곳(안내·기본값)을 위한 별칭
   var LAT = 37.2;               // 한국(오산) 기준 위도 — 적위 문제의 기준
   var SEASONS = ['봄', '여름', '가을', '겨울'];
 
@@ -275,9 +277,23 @@
   }
 
   /* ------------------------------------------------------------- 공통 보기 */
+  /** 큰 풀(전체 도감 2,571종)에서 보기 몇 개만 고를 때 — 풀 전체를 복사·섞지 않고 표본만 뽑습니다(100문제도 빠르게). */
+  function sample(a, n) {
+    if (!a || a.length <= n) return a;
+    var out = [], used = {}, guard = 0;
+    while (out.length < n && guard < n * 30) {
+      guard++;
+      var i = Math.floor(Math.random() * a.length);
+      if (used[i]) continue;
+      used[i] = 1;
+      out.push(a[i]);
+    }
+    return out;
+  }
+
   function nameChoices(pool, o, n) {
     var out = [];
-    shuffle(pool).forEach(function (x) {
+    shuffle(sample(pool, 160)).forEach(function (x) {
       if (out.length >= n) return;
       if (!x || !x.name) return;
       if (namesClash(x.name, o.name)) return;
@@ -299,7 +315,7 @@
   function mk(kind, obj, q, choices, answer, why, key) {
     return {
       kind: kind, obj: obj, q: q, choices: choices, answer: answer, why: why,
-      key: key || (obj && obj.name) || answer
+      key: key || (obj ? kind + ':' + (obj.name || obj.id) : answer)
     };
   }
   function valid(q) {
@@ -428,8 +444,8 @@
     if (withMag.length < 8) return null;
     var mode = Math.random() < 0.5 ? 'limit' : 'faint';
     if (mode === 'limit') {
-      var faint = shuffle(withMag.filter(function (o) { return o.mag >= 7.2; })).slice(0, 1);
-      var bright = shuffle(withMag.filter(function (o) { return o.mag <= 5.4; })).slice(0, 3);
+      var faint = shuffle(sample(withMag.filter(function (o) { return o.mag >= 7.2; }), 80)).slice(0, 1);
+      var bright = shuffle(sample(withMag.filter(function (o) { return o.mag <= 5.4; }), 80)).slice(0, 3);
       if (!faint.length || bright.length < 3) return null;
       var ans = faint[0];
       var names = [ans.name].concat(bright.map(function (o) { return o.name; }));
@@ -461,7 +477,7 @@
     if (withMag.length < 10) return null;
     var RATIO = [2.5, 6.3, 16, 40, 100, 250];   // Δm = 1 … 6
     for (var t = 0; t < 60; t++) {
-      var pair = shuffle(withMag).slice(0, 2);
+      var pair = shuffle(sample(withMag, 120)).slice(0, 2);
       if (pair.length < 2) return null;
       var d = Math.abs(pair[0].mag - pair[1].mag);
       var n = Math.round(d);
@@ -500,8 +516,8 @@
     if (cands.length < 8) return null;
     var mode = Math.random() < 0.5 ? 'never' : 'circ';
     if (mode === 'never') {
-      var far = shuffle(cands.filter(function (o) { return o.dec < -58; })).slice(0, 1);
-      var near = shuffle(cands.filter(function (o) { return o.dec > -40; })).slice(0, 3);
+      var far = shuffle(sample(cands.filter(function (o) { return o.dec < -58; }), 80)).slice(0, 1);
+      var near = shuffle(sample(cands.filter(function (o) { return o.dec > -40; }), 160)).slice(0, 3);
       if (!far.length || near.length < 3) return null;
       var ans = far[0];
       if (near.some(function (o) { return namesClash(o.name, ans.name); })) return null;
@@ -515,8 +531,8 @@
         }).join(' · ') +
         ' — 적위가 약 −53°보다 남쪽이면 한국에서는 최고 고도가 0° 아래라 볼 수 없습니다.');
     }
-    var circ = shuffle(cands.filter(function (o) { return o.dec > 58; })).slice(0, 1);
-    var mid = shuffle(cands.filter(function (o) { return o.dec > -35 && o.dec < 45; })).slice(0, 3);
+    var circ = shuffle(sample(cands.filter(function (o) { return o.dec > 58; }), 80)).slice(0, 1);
+    var mid = shuffle(sample(cands.filter(function (o) { return o.dec > -35 && o.dec < 45; }), 160)).slice(0, 3);
     if (!circ.length || mid.length < 3) return null;
     var ans2 = circ[0];
     if (mid.some(function (o) { return namesClash(o.name, ans2.name); })) return null;
@@ -872,44 +888,62 @@
     return q;
   }
 
-  function buildQuestions(scope, level) {
+  /** 문제 N개 만들기 — 유형 계획을 돌려 가며 중복 키를 피합니다. 후보가 모자라면 가능한 만큼만 돌려줍니다. */
+  function buildQuestions(scope, level, total) {
     scope = scope || 1; level = level || 1;
-    var plan = (PLANS[scope + ':' + level] || PLANS['1:' + level] || []).slice();
-    var out = [], used = {}, tries = {}, guard = 0;
-    while (out.length < TOTAL && guard < 8000) {
+    var want = Math.max(1, Number(total) || TOTAL);
+    var base = (PLANS[scope + ':' + level] || PLANS['1:' + level] || ['type', 'con', 'brief', 'mag']).slice();
+    var plan = [];
+    for (var pi = 0; pi < want; pi++) plan.push(base[pi % base.length]);
+    var out = [], used = {}, tries = {}, guard = 0, stems = {}, offset = 0;
+    while (out.length < want && guard < 30000) {
       guard++;
-      var kind = plan[out.length] || 'type';
+      var idx = (out.length + offset) % plan.length;
+      var kind = plan[idx] || 'type';
       var q = buildOne(kind, scope, level);
-      if (!q || !valid(q) || used[q.key]) {
+      /* 같은 문장이 계속 반복되면 지루합니다 — 앞 80%는 같은 문장을 4번까지만 쓰고,
+         뒤쪽은 남은 후보로 채우도록 풀어 줍니다(문제 수를 끝까지 채우기 위해). */
+      var stem = q ? (q.kind + '|' + q.q) : '';
+      var cap = out.length < want * 0.8 ? 4 : 999;
+      if (!q || !valid(q) || used[q.key] || (stems[stem] || 0) >= cap) {
         tries[kind] = (tries[kind] || 0) + 1;
-        if (tries[kind] > 8) plan[out.length] = FALLBACK[kind] || 'type';
+        if (tries[kind] > 40) plan[idx] = FALLBACK[kind] || 'type';
+        offset++;                    // 같은 유형만 붙들지 말고 다음 유형부터 다시 시도
         continue;
       }
+      offset = 0;
       used[q.key] = 1;
+      stems[stem] = (stems[stem] || 0) + 1;
       out.push(q);
     }
-    // 마지막 안전장치 — 어떤 이유로든 8문제가 안 차면 기본 유형으로 채웁니다.
+    // 마지막 안전장치 — 계획 유형으로 안 채워지면 기본 유형으로 채웁니다.
     var g2 = 0;
-    while (out.length < TOTAL && g2 < 4000) {
+    while (out.length < want && g2 < 30000) {
       g2++;
-      var k2 = pick(['type', 'con', 'brief', 'mag']);
+      var k2 = pick(['type', 'con', 'brief', 'mag', 'cat', 'season', 'dec']);
       var q2 = buildOne(k2, scope, level);
       if (q2 && valid(q2) && !used[q2.key]) { used[q2.key] = 1; out.push(q2); }
     }
+    out.stat = { tries: guard, fill: g2, want: want };   // 검증용 — 몇 번 만에 채웠는지
     return out;
   }
 
   /* ------------------------------------------------------------- 상태 */
-  var st = { scope: 1, level: 1, qs: [], i: 0, score: 0, answered: false, wrong: [] };
+  var st = { scope: 1, level: 1, total: DEFAULT_TOTAL, qs: [], i: 0, score: 0, answered: false, wrong: [], short: 0 };
 
-  function bestKey(scope, level) { return (scope || st.scope) + ':' + (level || st.level); }
-  function best(scope, level) {
+  function bestKey(scope, level, total) {
+    return (scope || st.scope) + ':' + (level || st.level) + ':' + (total || st.total);
+  }
+  function best(scope, level, total) {
     var b = store.get('quiz.best', {}) || {};
-    return Number(b[bestKey(scope, level)] || 0);
+    var n = total || st.total;
+    var v = b[bestKey(scope, level, n)];
+    if (v == null && n === 8) v = b[(scope || st.scope) + ':' + (level || st.level)];   // 예전 8문제 기록
+    return Number(v || 0);
   }
   function saveBest(scope, level, score) {
     var b = store.get('quiz.best', {}) || {};
-    var k = bestKey(scope, level);
+    var k = bestKey(scope, level, quizN());
     if (!b[k] || score > b[k]) { b[k] = score; store.set('quiz.best', b); return true; }
     return false;
   }
@@ -928,12 +962,18 @@
     return '<button type="button" class="quiz-level' + (on ? ' is-active' : '') + '" data-level="' + l.v +
       '" aria-pressed="' + on + '"><b>' + esc(l.name) + '</b><small>' + esc(l.sub) + '</small></button>';
   }
+  function quizN() { return st.qs.length || st.total; }
+  function countBtn(n) {
+    var on = st.total === n;
+    return '<button type="button" class="quiz-count' + (on ? ' is-active' : '') + '" data-count="' + n +
+      '" aria-pressed="' + on + '">' + n + '문제</button>';
+  }
 
   function bestLine() {
     var b = best();
-    var head = '‘' + scopeMeta().name + ' · ' + levelMeta().name + '’ 최고 기록';
-    if (!b) return head + ' · 아직 없음 — ' + TOTAL + '문제 중 몇 개를 맞히는지 확인해 보세요.';
-    return head + ' · ' + TOTAL + '문제 중 <b>' + b + '개</b>';
+    var head = '‘' + scopeMeta().name + ' · ' + levelMeta().name + ' · ' + st.total + '문제’ 최고 기록';
+    if (!b) return head + ' · 아직 없음 — ' + st.total + '문제 중 몇 개를 맞히는지 확인해 보세요.';
+    return head + ' · ' + st.total + '문제 중 <b>' + b + '개</b>';
   }
 
   function howList() {
@@ -976,7 +1016,7 @@
       '<div class="quiz-intro">' +
         '<div class="quiz-hero">' +
           '<p class="quiz-eyebrow">🎯 오늘 밤 하늘 퀴즈</p>' +
-          '<h3>도감에서 배운 것을 <span class="grad">8문제</span>로 확인해 보세요</h3>' +
+          '<h3>도감에서 배운 것을 <span class="grad">' + st.total + '문제</span>로 확인해 보세요</h3>' +
           '<p class="quiz-lead">문제 범위와 난이도를 따로 고릅니다. 문제는 지금 도감에 들어 있는 실제 ' +
             '천체에서 만들어지고, 틀려도 결과 화면에서 그 천체를 바로 찾아가 볼 수 있습니다.</p>' +
           '<div class="quiz-setup">' +
@@ -988,18 +1028,24 @@
             '<div class="quiz-diffs" role="group" aria-label="문제 난이도">' +
               LEVELS.map(levelBtn).join('') +
             '</div>' +
+            '<p class="quiz-step-label"><b>③</b> 문제 개수</p>' +
+            '<div class="quiz-counts" role="group" aria-label="문제 개수">' +
+              COUNTS.map(countBtn).join('') +
+            '</div>' +
           '</div>' +
           '<button type="button" class="btn-primary quiz-start" id="quizStart">퀴즈 시작</button>' +
           '<p class="quiz-best" id="quizBest">' + bestLine() + '</p>' +
         '</div>' +
         '<div class="quiz-how-wrap">' + howList() + '</div>' +
       '</div>';
-    shell.querySelectorAll('.quiz-level').forEach(function (b) {
+    shell.querySelectorAll('.quiz-level, .quiz-count').forEach(function (b) {
       b.addEventListener('click', function () {
         var sc = Number(b.getAttribute('data-scope'));
         var lv = Number(b.getAttribute('data-level'));
+        var ct = Number(b.getAttribute('data-count'));
         if (sc) st.scope = sc;
         if (lv) st.level = lv;
+        if (ct) st.total = ct;
         renderIntro();
       });
     });
@@ -1008,8 +1054,9 @@
   }
 
   function start() {
-    st.qs = buildQuestions(st.scope, st.level);
+    st.qs = buildQuestions(st.scope, st.level, st.total);
     st.i = 0; st.score = 0; st.answered = false; st.wrong = [];
+    st.short = st.qs.length < st.total ? st.total : 0;
     if (!st.qs.length) { renderIntro(); return; }
     renderQuestion();
   }
@@ -1031,6 +1078,8 @@
             '<span class="quiz-ctx">' + esc(scopeMeta().name) + ' · ' + esc(levelMeta().name) + '</span>' +
             '<span class="quiz-score">맞힌 문제 <b>' + st.score + '</b></span></div>' +
         '</div>' +
+        (st.short ? '<p class="quiz-note">이 범위·난이도에서는 중복 없이 <b>' + st.qs.length + '문제</b>까지만 만들 수 있어 ' +
+          st.qs.length + '문제로 진행합니다.</p>' : '') +
         '<p class="quiz-kind">' + kindLabel(q.kind) + '</p>' +
         '<h3 class="quiz-q" id="quizQ">' + esc(q.q) + '</h3>' +
         '<div class="quiz-opts" role="group" aria-labelledby="quizQ">' +
@@ -1186,7 +1235,7 @@
           '<p class="quiz-ctx-line">' + esc(scopeMeta().name) + ' · ' + esc(levelMeta().name) + '</p>' +
           '<p class="quiz-msg">' + msg + '</p>' +
           (newRecord ? '<p class="quiz-new">새 최고 기록입니다!</p>'
-            : '<p class="quiz-best">이 설정의 최고 기록 · ' + best() + ' / ' + n + '</p>') +
+            : '<p class="quiz-best">이 설정의 최고 기록 · ' + best(st.scope, st.level, n) + ' / ' + n + '</p>') +
           '<div class="quiz-actions">' +
             '<button type="button" class="btn-primary" id="quizRetry">같은 설정 다시</button>' +
             '<button type="button" class="btn-ghost" id="quizOther">범위·난이도 바꾸기</button>' +
@@ -1215,7 +1264,8 @@
     build: buildQuestions,
     start: start,
     state: st,
-    total: function () { return TOTAL; },
+    total: function () { return st.total; },
+    counts: COUNTS,
     scopes: SCOPES,
     levels: LEVELS,
     bestKey: bestKey,
