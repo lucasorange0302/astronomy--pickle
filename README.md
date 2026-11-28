@@ -42,8 +42,12 @@
 - `tools/test_hybrid_gaia.py` **54개 전부 통과** — 전천 지도 확장 제거 단언, 2배마다 +1.45등 사다리(60→1°), 1′ 확대, HIP/HD 카탈로그 이름(라이브 터치·확장 도감 카드), 144칸 타일.
 - 회귀: `tools/test_live_guide.py` **ALL OK**(레이아웃 5종 포함), `tools/test_live_sun.py` **17**, `tools/test_live_ground_grid.py` **36/37**(세로 띠 검사 1건은 이 실행 환경의 헤드리스 렌더링에서 이전 배포본에서도 동일하게 실패 — 코드와 무관), 콘솔 오류 0건.
 
-### 8) ✅ 배포
-- 서비스 워커 캐시 `2026-11-28.15` → (딥스카이 곡선 보정) `2026-11-28.16`, `python3 astronomy-site/build.py` 재빌드, `assets/data/deep/`(144칸) 함께 배포.
+### 8) ✅ 배포 · 실서버 검증
+- 서비스 워커 캐시 `2026-11-28.15` → (딥스카이 곡선 보정) `2026-11-28.16`, `python3 astronomy-site/build.py` 재빌드, `assets/data/deep/`(144칸·4.4MB) 함께 배포. 커밋 `a064568`(본 작업) → `f391452`(딥스카이 곡선 보정) → `main` 푸시.
+- **https://byeolneoul.vercel.app** · **https://lucasorange0302.github.io/byeolbam/** 두 곳 모두:
+  - `sw.js` **2026-11-28.16**, `assets/data/deep/manifest.json` 144칸·116,006개 확인.
+  - `tools/test_live_top_safe.py` **26개 통과**(서버별) — 상단 안전영역·시야 중앙 버튼·1′ 확대·전천 지도 확장 없음·레이아웃.
+  - `tools/test_hybrid_gaia.py` **54개 통과**(서버별) — 전천 지도 확장 제거 · 2.05등 사다리 · 1′ · HIP/HD 이름 · 144칸 타일.
 
 
 ## 2026-11-28 밤 업데이트 (24) — 🌌 딥스카이 확장 ON/OFF · 하이브리드 카탈로그(로컬 11.6만 + Gaia DR3) · 시야에 따라 단계적으로 깊어지는 성도
