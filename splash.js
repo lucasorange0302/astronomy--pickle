@@ -241,8 +241,13 @@
       d.classList.add('is-out');
       setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 340);
       if (goToday) {
-        var target = document.getElementById('today');
-        if (target && target.scrollIntoView) target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+        // 화면 구조(뷰) 모드에서는 #today 가 숨겨져 있어 scrollIntoView 로는 아무 일도 일어나지 않습니다.
+        if (window.__VIEWS_MODE__ && window.__views && window.__views.go) {
+          window.__views.go('today');
+        } else {
+          var target = document.getElementById('today');
+          if (target && target.scrollIntoView) target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+        }
       }
     }
     function onEsc(e) { if (e.key === 'Escape') close(false); }

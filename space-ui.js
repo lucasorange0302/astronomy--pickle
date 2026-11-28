@@ -1075,7 +1075,7 @@
     var desc = o.x || '';
     var tdesc = {
       G: '은하입니다. 수백만~수억 광년 밖의 거대한 별의 집합으로, 밝은 중심과 나선팔·먼지띠가 보입니다.',
-      OCl: '산개성단입니다. 같은 가스云에서 태어난 젊은 별들이 느슨하게 모여 있습니다.',
+      OCl: '산개성단입니다. 같은 가스 구름에서 태어난 젊은 별들이 느슨하게 모여 있습니다.',
       GCl: '구상성단입니다. 수십만 개의 늙은 별이 구형으로 빽빽하게 모여 있습니다.',
       PN: '행성상성운입니다. 태양 같은 별이 생애 끝에 뿜어낸 가스 껍질입니다.',
       HII: '전리수소영역입니다. 뜨거운 젊은 별이 수소 가스를 이온화해 붉게 빛납니다.',
@@ -1721,6 +1721,13 @@
   window.SpaceUI = {
     openCookie: openCookie,
     openAI: openAI,
+    // 전체 도감(2,571종) 항목의 상세 카드를 id로 엽니다 — 도감 퀴즈 결과 등에서 사용
+    openCatalogObject: function (id) {
+      var row = findRow(String(id || ''));
+      if (!row) return false;
+      resolveObject(row, function (o) { if (o) openCatalogModal(o); });
+      return true;
+    },
     openGallery: function () {
       closeAll();
       var s = $('#spacearchive');

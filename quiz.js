@@ -66,6 +66,14 @@
     var items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
     var conKo = {};
     (D().constellations || []).forEach(function (c) { conKo[c.abbr] = c.name; });
+    // 같은 천체가 대표 도감(카드·사진·설명)에도 있으면 그 카드로, 없으면 전체 도감 카드로 연결합니다.
+    var rep = {};
+    (D().catalog || []).forEach(function (o) {
+      if (!o || !o.id) return;
+      rep[String(o.id).toUpperCase()] = o.id;
+      var mm = String(o.sub || '').match(/M\s*\d+/);
+      if (mm) rep[mm[0].replace(/\s+/g, '').toUpperCase()] = o.id;
+    });
     return items.filter(function (it) {
       if (!(it.k === 'd' && it.t && TYPE_KO[it.t] && it.x && it.ko)) return false;
       if (/^(NGC|IC)/.test(it.ko) || it.ko.length < 2) return false;
@@ -73,11 +81,16 @@
       if (/카탈로그|좌표|출처|데이터|목록의 천체|자동 생성/.test(it.x)) return false;
       return it.x.trim().length >= 15;
     }).map(function (it) {
+      var repId = rep[String(it.i).toUpperCase()] ||
+        (it.M ? rep[String(it.M).replace(/\s+/g, '').toUpperCase()] : null) || null;
       return {
         name: it.ko + (it.M && it.ko.indexOf(it.M) < 0 ? ' (' + it.M + ')' : ''),
         type: TYPE_KO[it.t], con: conKo[it.c] || '',
         brief: it.x, mag: (typeof it.m === 'number' ? it.m : null),
-        id: null, src: 'wide'
+        id: repId, wide: repId ? null : it.i,
+        ra: (typeof it.ra === 'number' ? it.ra : null),
+        dec: (typeof it.dec === 'number' ? it.dec : null),
+        src: repId ? 'catalog' : 'wide'
       };
     });
   }
@@ -347,6 +360,22 @@
     if (nb && nb.focus) nb.focus();
   }
 
+  // 결과 화면의 '도감·조준' — 대표 도감은 카드 id, 전체 도감 항목은 전체 도감 id와 좌표로 잇습니다.
+  function linksFor(o) {
+    if (!o) return '';
+    if (o.id) {
+      return '<button type="button" class="mini-btn" data-open="' + esc(o.id) + '">도감</button>' +
+        '<button type="button" class="mini-btn" data-aim="' + esc(o.id) + '">🎯 조준</button>';
+    }
+    if (!o.wide) return '';
+    var out = '<button type="button" class="mini-btn" data-open-wide="' + esc(o.wide) + '">도감</button>';
+    if (o.ra != null && o.dec != null) {
+      out += '<button type="button" class="mini-btn" data-aim-radec="' + o.ra + ',' + o.dec +
+        '" data-name="' + esc(o.name) + '">🎯 조준</button>';
+    }
+    return out;
+  }
+
   function renderDone() {
     var shell = $('#quizShell');
     var s = st.score, n = st.qs.length;
@@ -364,10 +393,7 @@
           var o = w.q.obj;
           return '<li><div class="qw-txt"><b>' + esc(o ? o.name : w.q.answer) + '</b>' +
             '<small>정답 · ' + esc(w.q.answer) + (o && o.con && o.con !== w.q.answer ? ' · ' + esc(o.con) : '') + '</small></div>' +
-            '<div class="qw-btns">' +
-              (o && o.id ? '<button type="button" class="mini-btn" data-open="' + esc(o.id) + '">도감</button>' +
-                           '<button type="button" class="mini-btn" data-aim="' + esc(o.id) + '">🎯 조준</button>' : '') +
-            '</div></li>';
+            '<div class="qw-btns">' + linksFor(o) + '</div></li>';
         }).join('') + '</ul></div>';
     }
     shell.innerHTML =
@@ -394,6 +420,21 @@
     shell.querySelectorAll('[data-aim]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (window.OneulBam && window.OneulBam.aimObject) window.OneulBam.aimObject(b.getAttribute('data-aim'));
+      });
+    });
+    shell.querySelectorAll('[data-open-wide]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (window.SpaceUI && window.SpaceUI.openCatalogObject) {
+          window.SpaceUI.openCatalogObject(b.getAttribute('data-open-wide'));
+        }
+      });
+    });
+    shell.querySelectorAll('[data-aim-radec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = String(b.getAttribute('data-aim-radec')).split(',');
+        if (window.OneulBam && window.OneulBam.aimRaDec) {
+          window.OneulBam.aimRaDec(Number(p[0]), Number(p[1]), b.getAttribute('data-name') || '천체');
+        }
       });
     });
   }
