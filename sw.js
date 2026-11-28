@@ -1,5 +1,5 @@
 /* =========================================================================
-   별너울 서비스 워커 (2026-11-27)
+   별너울 서비스 워커 (2026-11-28)
    · 같은 출처(이 사이트 자신)의 정적 파일만 다룹니다.
    · open-meteo.com · images-api.nasa.gov · skyview.gsfc.nasa.gov 등
      외부 API·CDN 요청은 여기서 가로채지 않고 브라우저에 그대로 넘깁니다.
@@ -9,7 +9,7 @@
    배포할 때마다 아래 VERSION 을 올리세요. 올리면 install 에서 코어 캐시를 새로 받습니다.
    ========================================================================= */
 
-var VERSION = '2026-11-28.3';
+var VERSION = '2026-11-28.4';
 var CORE_CACHE = 'byeolneoul-core-' + VERSION;
 var ASSET_CACHE = 'byeolneoul-assets-v1';
 var DATA_CACHE = 'byeolneoul-data-' + VERSION;   // 도감·쿠키 JSON 청크(지연 로딩)

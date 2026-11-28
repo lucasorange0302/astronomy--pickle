@@ -537,7 +537,10 @@
       '별빛을 읽는 법 — 흑체복사와 스펙트럼': ['spectral'],
       'H-R도와 별의 진화': ['hr-evolution'],
       '허블-르메트르 법칙과 우주 팽창': ['hubble'],
-      '우주 거리 사다리': ['ladder', 'cepheid']
+      '우주 거리 사다리': ['ladder', 'cepheid'],
+      '성단과 나이 — 색등급도 전향점이 알려 주는 것': ['cluster-cmd'],
+      '태양계 소천체 — 소행성·카이퍼벨트·혜성': ['small-bodies'],
+      '쌍성·항성계 — 별의 질량을 직접 재는 유일한 방법': ['binary']
     };
     var LEVELS = [E, M, H, F, U];
     Object.keys(FIGMAP).forEach(function (title) {

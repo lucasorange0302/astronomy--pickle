@@ -401,7 +401,7 @@ body.red #btnNow[aria-pressed="true"] { background: rgba(255, 106, 61, .18); col
 .skymap-hint { font-size: .7rem; color: var(--faint); text-align: center; margin: 8px 0 0; }
 .sky-label { font-size: 9px; fill: var(--faint); font-family: var(--font); }
 .sky-cardinal { font-size: 12px; font-weight: 800; fill: var(--muted); font-family: var(--font); }
-.sky-star-label { font-size: 8.5px; fill: rgba(255, 255, 255, .55); font-family: var(--font); }
+.sky-star-label { font-size: 9.5px; font-weight: 600; fill: rgba(255, 255, 255, .82); font-family: var(--font); paint-order: stroke; stroke: rgba(2, 6, 14, .55); stroke-width: 2px; stroke-linejoin: round; }
 .sky-planet-label { font-size: 10px; font-weight: 800; font-family: var(--font); }
 .sky-dso-label { font-size: 8px; fill: rgba(126, 224, 192, .8); font-family: var(--font); }
 
@@ -631,7 +631,7 @@ body.red #btnNow[aria-pressed="true"] { background: rgba(255, 106, 61, .18); col
 .ms-moon svg { width: 100%; height: 100%; }
 .ms-date { font-size: .6rem; color: var(--faint); font-variant-numeric: tabular-nums; }
 .ms-pct { font-size: .58rem; color: var(--muted); }
-.sky-con-name { font-size: 8px; fill: rgba(150, 180, 255, .38); letter-spacing: .04em; font-family: var(--font); }
+.sky-con-name { font-size: 9.5px; font-weight: 700; fill: rgba(176, 204, 255, .78); letter-spacing: .04em; font-family: var(--font); paint-order: stroke; stroke: rgba(2, 6, 14, .5); stroke-width: 2.2px; stroke-linejoin: round; }
 
 /* ------------------------------------------------ 정렬·필터 보조 UI */
 .sort-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
@@ -2224,6 +2224,9 @@ body.red .li-card { background: linear-gradient(180deg, #1b0503, #0b0100 70%); }
 .li-fact span { display: block; font-size: .64rem; color: var(--faint); }
 .li-fact b { font-size: .82rem; font-variant-numeric: tabular-nums; display: block; }
 .li-note { font-size: .84rem; line-height: 1.6; color: var(--muted); margin: 0 0 12px; }
+.li-sun-warn { font-size: .8rem; line-height: 1.65; color: #ffe0a3; background: rgba(255, 190, 80, .10); border: 1px solid rgba(255, 190, 80, .38); border-radius: 10px; padding: 8px 11px; margin: 0 0 12px; }
+.li-sun-warn b { color: #ffd479; }
+body.red .li-sun-warn { color: #ffd0a8; background: rgba(255, 120, 80, .12); border-color: rgba(255, 140, 100, .4); }
 .li-shot {
   position: relative; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden;
   background: #05080f; border: 1px solid var(--border);

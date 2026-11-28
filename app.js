@@ -1149,22 +1149,22 @@
       hitN++;
       const mag = st[3];
       if (mag <= 2.0) {
-        const size = mag < 0.4 ? 2.9 : mag < 1.4 ? 2.3 : 1.9;
+        const size = mag < 0.4 ? 3.4 : mag < 1.4 ? 2.8 : 2.3;
         s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + size +
-          '" fill="' + (red ? RC.brightStar : bvColor(st[4])) + '" opacity=".96"/>';
+          '" fill="' + (red ? RC.brightStar : bvColor(st[4])) + '" opacity="1"/>';
         return;
       }
       const key = (mag <= 3.5 ? 'mid' : mag <= 4.5 ? 'faint' : 'dim') + (isWarm(st[4]) ? 'Warm' : 'Cool');
       (dots[key] = dots[key] || []).push(p);
     });
     const DOT_STYLE = red ? {
-      midCool: [RC.dotCool, 1.8, 0.82], midWarm: [RC.dotWarm, 1.8, 0.82],
-      faintCool: [RC.dotCool, 1.35, 0.6], faintWarm: [RC.dotWarm, 1.35, 0.6],
-      dimCool: [RC.dotCool, 1, 0.4], dimWarm: [RC.dotWarm, 1, 0.4]
+      midCool: [RC.dotCool, 2.2, 0.95], midWarm: [RC.dotWarm, 2.2, 0.95],
+      faintCool: [RC.dotCool, 1.7, 0.8], faintWarm: [RC.dotWarm, 1.7, 0.8],
+      dimCool: [RC.dotCool, 1.3, 0.62], dimWarm: [RC.dotWarm, 1.3, 0.62]
     } : {
-      midCool: ['#dbe6ff', 1.8, 0.82], midWarm: ['#fff0d8', 1.8, 0.82],
-      faintCool: ['#cddcff', 1.35, 0.6], faintWarm: ['#ffe9cc', 1.35, 0.6],
-      dimCool: ['#bccdf0', 1, 0.4], dimWarm: ['#ffdcbc', 1, 0.4]
+      midCool: ['#dbe6ff', 2.2, 0.95], midWarm: ['#fff0d8', 2.2, 0.95],
+      faintCool: ['#cddcff', 1.7, 0.8], faintWarm: ['#ffe9cc', 1.7, 0.8],
+      dimCool: ['#c3d4f5', 1.3, 0.62], dimWarm: ['#ffe0c4', 1.3, 0.62]
     };
     Object.keys(dots).forEach(function (key) {
       const stl = DOT_STYLE[key];
@@ -1187,10 +1187,10 @@
       });
       if (!shown) return;
       const frac = shown / total;
-      const op = (0.08 + 0.12 * frac) * (con.rank === 1 ? 1.45 : con.rank === 2 ? 1.12 : 0.9);
+      const op = (0.16 + 0.16 * frac) * (con.rank === 1 ? 1.5 : con.rank === 2 ? 1.18 : 0.95);
       s += '<g data-sky="con:' + esc(con.abbr) + '" style="cursor:pointer">' +
-        '<path d="' + d + '" fill="none" stroke="' + (red ? RC.con + Math.min(0.5, op * 1.1).toFixed(2) + ')' : 'rgba(140,175,255,' + Math.min(0.42, op).toFixed(2) + ')') + '" stroke-width="' +
-        (con.rank === 1 ? 1.15 : 0.85) + '" stroke-linecap="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + (red ? RC.con + Math.min(0.6, op * 1.1).toFixed(2) + ')' : 'rgba(150,188,255,' + Math.min(0.62, op).toFixed(2) + ')') + '" stroke-width="' +
+        (con.rank === 1 ? 1.5 : 1.15) + '" stroke-linecap="round"/>' +
         '<path d="' + d + '" fill="none" stroke="transparent" stroke-width="9"/></g>';
       const hor = A.equatorialToHorizontal(con.raH, con.decD, lat, lon, jd);
       let lx = n ? sx / n : cx, ly = n ? sy / n : cy, lalt = hor.alt;
@@ -1233,7 +1233,7 @@
       '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카노푸스', '아케르나르'].forEach(function (nm) {
       const p = visibleStars[nm];
       if (!p) return;
-      const w = nm.length * 8.5 * 0.98;
+      const w = nm.length * 9.5 * 0.98;
       if (p.x + 5 + w > W - 3 || overlaps(p.x + 3, p.y - 11, w, 10)) return;
       boxes.push({ x: p.x + 3, y: p.y - 11, w: w, h: 10 });
       s += '<text x="' + (p.x + 5).toFixed(1) + '" y="' + (p.y - 4).toFixed(1) + '" class="sky-star-label">' + nm + '</text>';
@@ -1253,9 +1253,9 @@
       if (drawn >= 24) return;
       if (it.frac < 0.34) return;
       if (it.con.rank === 3 && drawn >= 10) return;
-      const size = it.con.rank === 1 ? 9.2 : it.con.rank === 2 ? 7.8 : 6.9;
-      const op = it.con.rank === 1 ? 0.66 : it.con.rank === 2 ? 0.48 : 0.36;
-      if (putLabel(it.con.name, it.x, it.y, size, red ? 'rgba(255,150,120,' + op + ')' : 'rgba(150,180,255,' + op + ')', 'sky-con-name')) drawn++;
+      const size = it.con.rank === 1 ? 10.5 : it.con.rank === 2 ? 9.2 : 8.2;
+      const op = it.con.rank === 1 ? 0.9 : it.con.rank === 2 ? 0.74 : 0.6;
+      if (putLabel(it.con.name, it.x, it.y, size, red ? 'rgba(255,170,140,' + op + ')' : 'rgba(190,212,255,' + op + ')', 'sky-con-name')) drawn++;
     });
 
     // 행성
@@ -2256,9 +2256,9 @@
       conAbbr = con.abbr; members = conMembers(con); fovDeg = conFov(con);
     } else if (kind === 'sun') {
       const sp = A.sunPos(jd);
-      raH = sp.raH; decD = sp.decD; name = '태양';
-      sub = '항성 · 절대 맨눈·광학기기 직접 관측 금지';
-      note = '태양을 망원경·쌍안경으로 직접 보면 즉시 실명할 수 있습니다. 태양 전용 필터를 갖춘 장비로만 관측하세요.';
+      raH = sp.raH; decD = sp.decD; name = '태양'; mag = -26.7;
+      sub = '항성 · 지름 139만 km(지구의 109배) · 지구까지 ' + nf(sp.distAU, 3) + ' AU · 시지름 약 32′';
+      note = '태양을 맨눈으로 직접 보거나 망원경·쌍안경·카메라 뷰파인더로 들여다보면 즉시 눈이 상해 실명할 수 있습니다. 태양 관측은 태양 전용 필터(ISO 12312-2 안경, 망원경 앞쪽 태양 필터)를 갖춘 장비로만 하고, 필터를 접안부 쪽에 끼우는 방식은 열로 깨질 수 있어 쓰지 않습니다.';
     }
     if (raH == null) return null;
     const hor = A.equatorialToHorizontal(raH, decD, lat, lon, jd);
@@ -2328,7 +2328,7 @@
     if (!info) return;
     state.follow = { kind: kind, key: key };
     live.targetAz = info.az;
-    live.targetAlt = clamp(info.alt, -8, 88);
+    live.targetAlt = clamp(info.alt, ALT_MIN, ALT_MAX);
     liveDirty = true;
     kickLive();
     showInspector(kind, key);
@@ -2339,7 +2339,7 @@
       const sec = $('#live');
       if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    if (info.alt < 0) toast(info.name + josa(info.name, '은', '는') + ' 지금 지평선 아래(' + nf(info.alt, 0) + '°)입니다. 지평선 쪽으로 맞췄습니다.');
+    if (info.alt < -1) toast(info.name + josa(info.name, '은', '는') + ' 지금 지평선 아래(' + nf(info.alt, 0) + '°)입니다. 땅 너머 발밑 하늘에서 보여 드립니다.');
     else if (info.alt < 12) toast(info.name + josa(info.name, '은', '는') + ' 낮은 하늘 ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°에 있습니다.');
     else toast(info.name + ' 방향으로 시선을 맞췄습니다 — ' + dirName(info.az) + ' ' + nf(info.alt, 0) + '°.');
   }
@@ -2411,23 +2411,39 @@
     return { az: az, alt: alt };
   }
 
-  // 라이브 뷰가 다루는 고도 범위 — 지평선 아래 30°부터 천정 89°까지
-  const ALT_MIN = -30, ALT_MAX = 89;
+  /* 라이브 뷰가 다루는 고도 범위 — 발밑(지평선 아래 85°)부터 천정 89°까지.
+     지평선 아래로 내려가 발밑 하늘을 볼 수 있게 한계를 -30° → -85°로 넓혔습니다.
+     -88°까지 내리면 발밑에서 방위축이 흐려지는 짐벌락에 가까워지므로(방위가 튐)
+     -85°에서 멈춥니다. 천정 쪽 89°도 같은 이유의 여유입니다. */
+  const ALT_MIN = -85, ALT_MAX = 89;   // 짐벌락 여유를 남긴 지평선 아래 한계
 
-  /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다.
-     회전축 = up × 시선(지평선과 나란한 축)이고, 그 축 둘레로 +θ 를 돌리면
-     시선의 z성분이 (x²+y²)·sinθ 만큼 줄어들므로 부호는 −diff 입니다.
-     천정·바닥을 정면으로 볼 때는 그 축이 흐려지므로 기기 x축(끄덕임 축)으로 대체합니다. */
+  /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다 — 방위는 그대로 두고 고도만 바꿉니다.
+     · 목표 방향(dir_target)을 계산하고, 지금 시선과 목표 사이의 최소 회전축(dir × target)과
+       각도를 써서 월드 좌표계에서 회전합니다(부호를 따로 다룰 필요가 없음).
+     · 예전에는 up × 시선 축으로 돌렸는데, 발밑(−85° 아래)처럼 시선이 극점에 가까우면
+       그 축이 거의 0이 되어 기기 x축(끄덕임 축)으로 대체했고, 그 대체 축은 시선과 수직이
+       아니어서 고도가 제대로 바뀌지 않았습니다(−89° 자세를 −85°로 붙이지 못하던 원인).
+       목표 방향에서 축을 만들면 극점에서도 축이 또렷합니다. */
   function setCamAlt(q, altDeg) {
     const d = camDir(q);
     const diff = altDeg - d.alt;
     if (Math.abs(diff) < 1e-4) return q;
     const dir = Q.rot(q, [0, 0, -1]);
-    let ax = [-dir[1], dir[0], 0];
-    let n = Math.hypot(ax[0], ax[1], ax[2]);
-    if (n < 0.08) { ax = Q.rot(q, [1, 0, 0]); n = Math.hypot(ax[0], ax[1], ax[2]); }
-    if (n < 1e-6) return q;
-    return Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], -diff), q));
+    const al = altDeg * RAD, az = d.az * RAD;
+    const target = [Math.cos(al) * Math.sin(az), Math.cos(al) * Math.cos(az), Math.sin(al)];
+    let ax = [
+      dir[1] * target[2] - dir[2] * target[1],
+      dir[2] * target[0] - dir[0] * target[2],
+      dir[0] * target[1] - dir[1] * target[0]
+    ];
+    const n = Math.hypot(ax[0], ax[1], ax[2]);
+    if (n < 1e-9) {
+      // 두 방향이 같거나 정반대 — 같으면 위에서 돌아갔고, 정반대(천저↔천정)면 아무 수평축이나 씁니다.
+      ax = [0, 1, 0];
+      return Q.norm(Q.mul(Q.axis(ax, 180), q));
+    }
+    const ang = Math.acos(clamp((dir[0] * target[0] + dir[1] * target[1] + dir[2] * target[2]), -1, 1)) / RAD;
+    return Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], ang), q));
   }
   // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계
   const LIVE_FOV_MIN = 15, LIVE_FOV_MAX = 115;
@@ -2469,6 +2485,8 @@
     calAz: 0,                      // '방향 맞추기'로 잡은 나침반 오차
     altTarget: null,               // 경계에 맞춰 자른 고도 목표(보정용)
     rawAlt: null,                  // beta·gamma 로 계산한 '실제' 기기 고도(자르기 전)
+    eulerQ: null, eulerT: 0,      // 마지막 오일러 자세 — 경계에서 돌아올 때 롤·고도를 다시 맞춤
+    pinned: false,                 // 기기가 고도 경계 밖이라 자세를 경계에 붙들어 둔 상태
     az: 180, alt: 30,
     sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
     clock: null, feedT: null,      // 검증 훅(feed)의 가상 시계 — 실기기에서는 null
@@ -2480,6 +2498,7 @@
     track.q = null; track.ready = false; track.rot = [0, 0, 0];
     track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
     track.acc = null; track.altTarget = null; track.rawAlt = null; track.calAz = 0;
+    track.eulerQ = null; track.eulerT = 0; track.pinned = false;
     track.lastBeta = null;
     track.angVel = 0; track.movingUntil = 0; track.gate = 0; track.resync = false;
     track.clock = null; track.feedT = null;
@@ -2587,13 +2606,33 @@
        고정한 채로는 기기가 더 내려가도(올라가도) 자이로 회전이 q 에 쌓이지 않으므로,
        다시 경계를 지나 올라오는 순간부터 정확히 1:1 로 따라옵니다. */
     if (track.rawAlt != null) {
-      const cur = camDir(track.q).alt;
-      let pin = null;
-      if (track.rawAlt < ALT_MIN) pin = ALT_MIN;              // 기기는 경계 아래 — 경계에 붙임
-      else if (track.rawAlt > ALT_MAX) pin = ALT_MAX;         // 기기는 천정 너머
-      else if (cur < ALT_MIN) pin = ALT_MIN;                  // 관성으로 넘어간 값 되돌림
-      else if (cur > ALT_MAX) pin = ALT_MAX;
-      if (pin != null) track.q = setCamAlt(track.q, pin);
+      const overLow = track.rawAlt < ALT_MIN - 0.05;                   // 기기는 경계보다 아래
+      const overHigh = track.rawAlt > ALT_MAX + 0.05;                  // 기기는 천정 너머
+      if (overLow || overHigh) {
+        /* 기기가 범위 밖을 보고 있는 동안에는 고도를 경계에 붙입니다.
+           이때 자세(q)는 마지막 오일러 자세에서 가져옵니다 — 자이로만으로 붙들면
+           극점(−85°) 근처에서 롤이 뒤집혀, 다시 올라올 때 끄덕임 축이 반대로 작용해
+           표시가 경계에 멈춰 버립니다. 방위는 지금 보는 값(자이로 적분)을 지킵니다. */
+        const pin = overLow ? ALT_MIN : ALT_MAX;
+        if (track.eulerQ && sNow() - track.eulerT < 400) {
+          track.q = setCamAlt(qAlignNorth(track.eulerQ, camDir(track.q).az), pin);
+        } else {
+          track.q = setCamAlt(track.q, pin);
+        }
+        track.pinned = true;
+      } else {
+        if (track.pinned) {
+          /* 기기가 경계 안으로 돌아옴 — 그 순간 한 번만 실제 기기 자세로 고도·롤을 맞춥니다.
+             (방위는 지금 보는 값을 지켜 화면이 튀지 않게) */
+          track.pinned = false;
+          if (track.eulerQ && sNow() - track.eulerT < 400) {
+            track.q = qAlignNorth(track.eulerQ, camDir(track.q).az);
+          }
+        }
+        const cur = camDir(track.q).alt;   // 관성으로 넘어간 값만 되돌림(0.05° 여유)
+        if (cur < ALT_MIN - 0.05) track.q = setCamAlt(track.q, ALT_MIN);
+        else if (cur > ALT_MAX + 0.05) track.q = setCamAlt(track.q, ALT_MAX);
+      }
     }
   }
 
@@ -2731,14 +2770,14 @@
       return {
         bg1: '#1d0805', bg2: '#080101', grid: 'rgba(255,120,90,.13)', gridHi: 'rgba(255,150,110,.34)',
         gridMain: 'rgba(255,160,124,.94)', gridSub: 'rgba(255,146,110,.5)',
-        label: '#c1644a', star: '#ffb9a2', con: 'rgba(255,110,80,.22)', dso: '#ff8a5c',
+        label: '#e2a891', star: '#ffcbb8', con: 'rgba(255,120,90,.42)', dso: '#ff8a5c',
         horizon: 'rgba(255,150,112,.78)', ground: 'rgba(26,4,2,.55)', groundDeep: 'rgba(8,2,1,.88)', planet: '#ffd0b0'
       };
     }
     return {
       bg1: '#0d1c3e', bg2: '#010206', grid: 'rgba(150,180,255,.11)', gridHi: 'rgba(160,200,255,.34)',
       gridMain: 'rgba(182,214,255,.94)', gridSub: 'rgba(162,198,255,.52)',
-      label: '#93a9d4', star: '#ffffff', con: 'rgba(120,160,255,.24)', dso: '#7ee0c0',
+      label: '#c3d4f5', star: '#ffffff', con: 'rgba(130,172,255,.45)', dso: '#7ee0c0',
       horizon: 'rgba(158,198,255,.8)', ground: 'rgba(3,6,14,.55)', groundDeep: 'rgba(1,2,6,.88)', planet: '#ffe8c0'
     };
   }
@@ -2754,8 +2793,10 @@
     const pal = livePalette();
     const fovDeg = clamp(live.fov, LIVE_FOV_MIN, 130);
     const fov = fovDeg * RAD;
-    // 지평선 아래로도 이만큼은 그립니다 — 반투명 땅 너머로 별·별자리가 이어져 보이게.
-    const UNDER = -45;
+    /* 지평선 아래로도 이만큼은 그립니다 — 반투명 땅 너머로 별·별자리·태양이 이어져 보이게.
+       발밑(-85°)까지 내려다볼 수 있게 되었으므로 -90°(천저)까지 그립니다.
+       시선 뒤쪽(den<0.12)은 project()가 null 을 주므로 화면에 없는 점은 그려지지 않습니다. */
+    const UNDER = -90;
 
     ctx.setTransform(live.dpr, 0, 0, live.dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
@@ -2847,8 +2888,10 @@
       if (a2 > 0) return [[toX(lo), toX(hi)]];                       // 두 근 사이가 땅
       return [[-Infinity, toX(lo)], [toX(hi), Infinity]];            // 두 근 바깥이 땅
     }
-    function drawGround() {
-      const stepY = 3;
+    let groundRows = null, groundTop = Infinity;
+    const GROUND_STEP_Y = 3;
+    function buildGroundRows() {
+      const stepY = GROUND_STEP_Y;
       const rows = [];
       let top = Infinity;
       for (let y = -stepY; y <= H + stepY; y += stepY) {
@@ -2863,18 +2906,10 @@
           if (y < top) top = y;
         }
       }
-      if (!rows.length) return;
-      /* 땅 색 — 낮에도 불투명하게 덮지 않습니다.
-         (예전에는 mixHex() 가 알파 없는 rgb() 를 주어 낮에는 땅이 100% 불투명했고,
-          그래서 "밤에는 지평선 아래가 은은히 보이는데 낮에는 안 보인다"는 제보가 왔습니다.)
-         낮에는 같은 색 계열을 0.55 → 0.85 알파로 깔아 해 아래 행성·달·별자리선이 비쳐 보입니다. */
-      const dayMix = clamp(dayF * 0.7, 0, 1);
-      const gTop = dayF > 0.02
-        ? mixRGBA(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayMix, 0.55)
-        : pal.ground;
-      const gBot = dayF > 0.02
-        ? mixRGBA(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#5b6f7c', dayMix, 0.85)
-        : pal.groundDeep;
+      groundRows = rows; groundTop = top;
+      return rows;
+    }
+    function fillRows(rows, top, gTop, gBot) {
       const gr = ctx.createLinearGradient(0, clamp(top, -H, H), 0, H);
       gr.addColorStop(0, gTop);
       gr.addColorStop(1, gBot);
@@ -2886,14 +2921,44 @@
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i];
         for (let k = 0; k < r.sp.length; k++) {
-          ctx.rect(r.sp[k][0], r.y - 0.5, r.sp[k][1] - r.sp[k][0], stepY + 1);   // 줄 사이 틈 방지
+          ctx.rect(r.sp[k][0], r.y - 0.5, r.sp[k][1] - r.sp[k][0], GROUND_STEP_Y + 1);   // 줄 사이 틈 방지
         }
       }
       ctx.fill();
       ctx.restore();
+    }
+    /* 낮에는 땅 아래를 *먼저* 어둡게 깔아 둡니다(천체를 그리기 전).
+       그래야 지평선 아래 별·행성·격자가 어두운 바탕 위에서 또렷하게 보입니다.
+       (밝은 하늘 그라디언트 위에 반투명 땅을 나중에 덮으면, 아래쪽이 회색 안개처럼
+        밝아져 별이 묻혔습니다) */
+    function drawGroundBase() {
+      if (!(dayF > 0.02)) return;
+      const rows = buildGroundRows();
+      if (!rows.length) return;
+      const dayMix = clamp(dayF * 0.7, 0, 1);
+      fillRows(rows, groundTop,
+        mixRGBA(isRed() ? '#120302' : '#04070c', isRed() ? '#2a0b05' : '#131c26', dayMix, 0.80),
+        mixRGBA(isRed() ? '#0b0201' : '#02040a', isRed() ? '#2a0b05' : '#161f2a', dayMix, 0.88));
+    }
+    /* 땅 표면(반투명 베일) — 천체를 다 그린 뒤 덮어 '땅'임을 알립니다.
+       낮에는 아주 옅게(0.10 → 0.20)만 깔아 지평선 아래 천체를 가리지 않고,
+       밤에는 기존대로 은은하게(0.55 → 0.88) 깔아 별이 땅 너머로 비칩니다. */
+    function drawGround() {
+      const rows = groundRows || buildGroundRows();
+      if (!rows.length) return;
+      const dayMix = clamp(dayF * 0.7, 0, 1);
+      const gTop = dayF > 0.02
+        ? mixRGBA(isRed() ? '#1a0402' : '#03060e', isRed() ? '#43140b' : '#4a5a68', dayMix, 0.10)
+        : pal.ground;
+      const gBot = dayF > 0.02
+        ? mixRGBA(isRed() ? '#1a0402' : '#02040a', isRed() ? '#43140b' : '#4a5a68', dayMix, 0.20)
+        : pal.groundDeep;
+      fillRows(rows, groundTop, gTop, gBot);
       // 지평선 경계는 또렷하게 — 위(하늘)·아래(땅) 구분이 한눈에 남습니다.
       strokePts(hzPts, pal.horizon, 2);
     }
+    // 낮에는 땅 아래를 먼저 어둡게 깔고, 그 위에 격자·은하수·별·행성·태양을 그립니다.
+    drawGroundBase();
 
     // 라벨 충돌 방지용
     const labelBoxes = [];
@@ -2933,18 +2998,28 @@
           strokePts(pts, pal.gridSub, 1, [3, 5]);
         });
       }
-      // 방위 30° 간격 세로선 (북·동·남·서는 더 밝게)
+      /* 지평선 아래로 내려다볼 때의 고도 고리 — −30° · −60° · −80°.
+         땅 너머로도 격자가 끊기지 않아, 발밑이 하늘의 연장임을 눈으로 확인할 수 있습니다. */
+      if (live.alt < 5) {
+        [-30, -60, -80].forEach(function (alt) {
+          const pts = [];
+          for (let a = 0; a <= 360; a += 2) pts.push(project(alt, a % 360));
+          strokePts(pts, alt === -30 ? pal.gridMain : pal.gridSub, 1.1 + ga * 0.6, alt === -30 ? null : [3, 5]);
+        });
+      }
+      // 방위 30° 간격 세로선 (북·동·남·서는 더 밝게) — 지평선 아래 −88°까지 이어 그립니다
       for (let a = 0; a < 360; a += 30) {
         const pts = [];
-        for (let alt = 0; alt <= 88; alt += 2) pts.push(project(alt, a));
+        for (let alt = -88; alt <= 88; alt += 2) pts.push(project(alt, a));
         strokePts(pts, a % 90 === 0 ? pal.gridMain : pal.gridSub, a % 90 === 0 ? 1.3 + ga * 0.7 : 1 + ga * 0.4);
       }
       ctx.restore();
-      // 고도 각도 레이블 (30° · 60°) — 화면 가운데를 지나는 자리에 하나씩
+      // 고도 각도 레이블 (30° · 60° · 아래 −30° · −60°) — 화면 가운데를 지나는 자리에 하나씩
       if (ga >= 0.15) {
         ctx.save();
         ctx.globalAlpha = Math.min(1, ga + 0.15);
-        [30, 60].forEach(function (alt) {
+        const rings = live.alt < 5 ? [-60, -30, 30, 60] : [30, 60];
+        rings.forEach(function (alt) {
           const p = project(alt, live.az);
           if (!inBox(p, 8)) return;
           drawLabel(alt + '°', p.x + 7, p.y - 5, pal.gridMain, '700 10px system-ui, sans-serif');
@@ -3021,24 +3096,29 @@
       }
     })();
 
-    /* 별 */
+    /* 별 — 배경에 묻히지 않게 크기·밝기를 올렸습니다.
+       · 낮에도 별이 0.28 수준으로 남아, 밝은 하늘에서도 별자리 모양이 읽힙니다.
+       · 지평선 아래(반투명 땅 너머)의 별은 더 밝게(underFade) 그려 발밑 하늘을 또렷하게. */
     const starPts = new Array(D.stars.length);
     const starByName = {};
     const labelStars = ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스',
       '안타레스', '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카스토르', '미라크', '카노푸스', '아케르나르'];
     const starBuckets = {};
-    const starFade = 1 - dayF * 0.92;
+    const starFade = 1 - dayF * 0.72;
+    const underFade = clamp(starFade + 0.35, 0.55, 1);
     D.stars.forEach(function (st, i) {
       const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
       if (h.alt < UNDER) return;
       const p = project(h.alt, h.az);
       if (!inBox(p, 10)) return;
+      p.under = h.alt < 0;
       starPts[i] = p;
       if (h.alt >= 0) starByName[st[0]] = p;   // 이름표는 지평선 위 별만
-      if (starFade < 0.06) return;
       const mag = st[3];
-      const r = mag <= 2.0 ? 2.6 : mag <= 3.2 ? 1.8 : mag <= 4.2 ? 1.3 : 0.9;
-      const key = bvColor(st[4]) + '|' + r;
+      const r0 = mag <= 2.0 ? 3.0 : mag <= 3.2 ? 2.1 : mag <= 4.2 ? 1.5 : 1.05;
+      // 지평선 아래 별은 한 단계 크게 — 반투명 땅 너머에서도 점이 뭉개지지 않게
+      const r = h.alt < 0 ? Math.round(r0 * 1.35 * 100) / 100 : r0;
+      const key = bvColor(st[4]) + '|' + r + (h.alt < 0 ? '|u' : '');
       (starBuckets[key] = starBuckets[key] || []).push(p);
       /* 화면에 그려지는 별은 모두 터치 대상입니다(예전에는 2.3등급 이하만).
          매 프레임 객체를 새로 만들지 않도록 D.stars 순번별로 하나씩 재사용합니다. */
@@ -3046,10 +3126,23 @@
       hit.x = p.x; hit.y = p.y; hit.key = st[0]; hit.name = st[0]; hit.mag = st[3];
       live.hits.push(hit);
     });
+    /* 밝은 별의 은은한 광휘 — 점으로만 찍히던 별에 빛 번짐을 더해 또렷하게 */
+    D.stars.forEach(function (st, i) {
+      const p = starPts[i];
+      if (!p || st[3] > 3.2) return;
+      const glow = clamp((3.4 - st[3]) * 0.9, 0.4, 2.8);
+      ctx.globalAlpha = 0.18 * (p.under ? underFade : starFade) + 0.05;
+      ctx.fillStyle = isRed() ? pal.star : st[4] == null ? '#ffffff' : bvColor(st[4]);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.2 + glow * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
     Object.keys(starBuckets).forEach(function (key) {
       const parts = key.split('|');
       const r = Number(parts[1]);
-      ctx.globalAlpha = clamp(1.05 - (r < 1 ? 0.52 : r < 1.5 ? 0.34 : r < 2 ? 0.2 : 0.06), 0.25, 1) * starFade;
+      const fade = parts[2] === 'u' ? underFade : starFade;
+      ctx.globalAlpha = clamp(1.08 - (r < 1.2 ? 0.38 : r < 1.7 ? 0.24 : r < 2.4 ? 0.12 : 0.02), 0.42, 1) * fade;
       ctx.fillStyle = isRed() ? pal.star : parts[0];
       ctx.beginPath();
       starBuckets[key].forEach(function (p) { ctx.moveTo(p.x + r, p.y); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); });
@@ -3077,8 +3170,8 @@
       });
       if (!shown) return;
       const frac = shown / total;
-      ctx.strokeStyle = isRed() ? pal.con : 'rgba(120,160,255,' + Math.min(0.46, (0.10 + 0.20 * frac) * (con.rank === 1 ? 1.25 : con.rank === 2 ? 1 : 0.86) * (1 - dayF * 0.7)).toFixed(3) + ')';
-      ctx.lineWidth = con.rank === 1 ? 1.15 : 0.85;
+      ctx.strokeStyle = isRed() ? pal.con : 'rgba(130,172,255,' + Math.min(0.78, (0.28 + 0.26 * frac) * (con.rank === 1 ? 1.3 : con.rank === 2 ? 1.08 : 0.92) * (1 - dayF * 0.45)).toFixed(3) + ')';
+      ctx.lineWidth = con.rank === 1 ? 1.7 : 1.3;
       ctx.stroke();
       const mx = n ? sx / n : cx, my = n ? sy / n : cy;
       const lhor = A.equatorialToHorizontal(con.raH, con.decD, lat, lon, jd);
@@ -3104,7 +3197,7 @@
         if (it.con.rank === 3 && fovDeg > 70) continue;
         const size = it.con.rank === 1 ? 12 : it.con.rank === 2 ? 10.5 : 9.5;
         ctx.font = (it.con.rank === 1 ? '700 ' : '600 ') + size + 'px system-ui, sans-serif';
-        ctx.globalAlpha = it.con.rank === 1 ? 0.85 : it.con.rank === 2 ? 0.68 : 0.52;
+        ctx.globalAlpha = it.con.rank === 1 ? 1 : it.con.rank === 2 ? 0.9 : 0.78;
         if (drawLabel(it.con.name, it.x, it.y, pal.label, ctx.font, 'center')) drawn++;
         ctx.globalAlpha = 1;
       }
@@ -3226,13 +3319,18 @@
       inView.push({ kind: 'moon', key: '', name: '달', alt: moonH.alt, az: moonH.az, d: Math.hypot(moonPt.x - cx, moonPt.y - cy) });
     }
 
-    /* 태양 */
+    /* 태양 — 지평선 위든 아래든(반투명 땅 너머로) 그립니다.
+       지평선 아래로 깊이 내려갈수록 빛무리를 줄여(0.28 하한) 땅속 태양이 화면을 압도하지 않게 하고,
+       원반은 어느 고도에서든 또렷하게 남겨 눌러서 정보를 볼 수 있게 합니다. */
     const sunH = { alt: c.sunHor.alt, az: c.sunHor.az };
-    if (sunH.alt > -8) {
+    if (sunH.alt >= UNDER) {
       const p = project(sunH.alt, sunH.az);
-      if (inBox(p, 50)) {
+      if (inBox(p, 60)) {
         const pxDeg2 = H / live.fov;
-        const sr = Math.max(5, pxDeg2 * 0.27);
+        const sr = Math.max(4.5, pxDeg2 * 0.27);
+        const depth = sunH.alt >= 0 ? 1 : clamp(1 + sunH.alt / 70, 0.28, 1);
+        ctx.save();
+        ctx.globalAlpha = depth;
         const g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sr * 7);
         g2.addColorStop(0, 'rgba(255,244,200,.98)');
         g2.addColorStop(0.18, 'rgba(255,220,140,.55)');
@@ -3242,11 +3340,21 @@
         ctx.beginPath();
         ctx.arc(p.x, p.y, sr * 7, 0, Math.PI * 2);
         ctx.fill();
+        ctx.globalAlpha = 1;
         ctx.fillStyle = 'rgba(255,246,214,.98)';
         ctx.beginPath();
         ctx.arc(p.x, p.y, sr, 0, Math.PI * 2);
         ctx.fill();
-        if (live.labels) drawLabel('태양', p.x + sr + 5, p.y - 3, '#ffe9a8', '700 12px system-ui, sans-serif');
+        ctx.strokeStyle = 'rgba(255,220,150,.85)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, sr + 1.6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        if (live.labels) {
+          drawLabel(sunH.alt < 0 ? '태양 (지평선 아래)' : '태양', p.x + sr + 6, p.y - 3,
+            '#ffe9a8', '700 12px system-ui, sans-serif');
+        }
         live.hits.push({ x: p.x, y: p.y, kind: 'sun', key: '', name: '태양', mag: -26.7 });
         inView.push({ kind: 'sun', key: '', name: '태양', alt: sunH.alt, az: sunH.az, d: Math.hypot(p.x - cx, p.y - cy) });
       }
@@ -3408,7 +3516,22 @@
     const obj = info.objId ? D.catalog.find(function (x) { return x.id === info.objId; }) : null;
     const facts = [];
     facts.push(factRow('지금', dirName(info.az) + ' ' + nf(info.alt, 0) + '° (방위 ' + nf(info.az, 0) + '°)'));
-    if (typeof info.mag === 'number') facts.push(factRow('겉보기 등급', (info.mag > 0 ? '+' : '') + nf(info.mag, 2) + '등'));
+    if (typeof info.mag === 'number') facts.push(factRow('겉보기 등급', (info.mag > 0 ? '+' : '') + nf(info.mag, Math.abs(info.mag) >= 10 ? 1 : 2) + '등'));
+    /* 태양은 일출·일몰·남중 고도·거리처럼 관측에 바로 쓰는 값을 카드에 함께 보여 줍니다. */
+    if (info.kind === 'sun') {
+      const cn = state.last || computeNight();
+      const nt = cn.night || {};
+      const maxSun = (nt.samples && nt.samples.length)
+        ? nt.samples.reduce(function (m, s) { return Math.max(m, s.sun); }, -90)
+        : info.alt;
+      const sp = A.sunPos(jd);
+      facts.push(factRow('오늘 일출', A.fmtClock(nt.sunrise)));
+      facts.push(factRow('오늘 일몰', A.fmtClock(nt.sunset)));
+      facts.push(factRow('남중(정오) 고도', nf(maxSun, 0) + '°'));
+      facts.push(factRow('지구까지', nf(sp.distAU, 3) + ' AU'));
+      facts.push(factRow('시지름', '약 32′ (0.53°)'));
+      facts.push(factRow('표면 온도', '약 5,800 K'));
+    }
     if (obj && obj.con && obj.con !== '—') facts.push(factRow('별자리', obj.con));
     if (obj && obj.dist && obj.dist !== '—') facts.push(factRow('거리', obj.dist));
     if (info.kind === 'con' && info.cells) info.cells.slice(0, 3).forEach(function (c) { facts.push(factRow(c[0], c[1])); });
@@ -3424,6 +3547,7 @@
       '  <div class="li-head"><h3>' + esc(info.name) + '</h3><p>' + esc(info.sub) + '</p></div>' +
       '  <div class="li-facts">' + facts.join('') + '</div>' +
       (info.note ? '<p class="li-note">' + esc(info.note) + '</p>' : '') +
+      (info.kind === 'sun' ? '<p class="li-sun-warn"><b>⚠️ 태양은 반드시 필터로만</b> — 맨눈 직시도 금지이고, 망원경·쌍안경·카메라로 필터 없이 보면 즉시 실명합니다. 태양 전용 필터(ISO 12312-2)를 끼운 장비로만 관측하고, 접안부 필터는 열로 깨질 수 있어 쓰지 않습니다. 사진은 NASA SDO·GSFC가 찍은 실제 태양입니다.</p>' : '') +
       '  <div class="li-gallery" id="liGallery"></div>' +
       '  <div class="li-actions">' +
       (info.objId ? '<button class="btn btn-primary btn-sm" type="button" data-li-obj="' + esc(info.objId) + '">도감에서 보기</button>' : '') +
@@ -3626,15 +3750,21 @@
       track.altTarget = clamp(track.rawAlt, ALT_MIN, ALT_MAX);
     }
 
+    let eulerQ = null;
+    if (ev.alpha != null && ev.beta != null) {
+      eulerQ = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
+      if (track.comp != null) eulerQ = qAlignNorth(eulerQ, track.comp + track.calAz);
+      track.eulerQ = eulerQ;
+      track.eulerT = now;
+    }
+
     /* 자이로가 오래(0.6초 넘게) 끊겼다 돌아오면 — 화면을 다시 열었거나 다른 앱을 다녀왔을 때 —
        그 사이 회전이 통째로 사라져 자세가 크게 어긋납니다. 그때만 오일러 자세로 한 번 다시
        맞춥니다(움직이는 중의 재조정이 아니라, 자이로가 없던 구간을 메우는 한 번의 정렬). */
-    if (track.resync && ev.alpha != null && ev.beta != null) {
-      let qe = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
-      if (track.comp != null) qe = qAlignNorth(qe, track.comp + track.calAz);
-      const cur = camDir(track.q), nxt = camDir(qe);
+    if (track.resync && eulerQ) {
+      const cur = camDir(track.q), nxt = camDir(eulerQ);
       if (Math.abs(shortestDelta(cur.az, nxt.az)) > 25 || Math.abs(nxt.alt - cur.alt) > 25) {
-        track.q = qe;
+        track.q = eulerQ;
         track.alt = clamp(nxt.alt, ALT_MIN, ALT_MAX);
         track.q = setCamAlt(track.q, track.alt);
       }
@@ -3642,12 +3772,10 @@
     }
 
     // 자이로가 없거나 끊긴 경우: 오일러 자세를 목표로 부드럽게 따라갑니다(방위·고도 같은 비율)
-    if (!usingGyro && ev.alpha != null && ev.beta != null) {
-      let qe = qFromEuler(ev.alpha, ev.beta, ev.gamma == null ? 0 : ev.gamma);
-      if (track.comp != null) qe = qAlignNorth(qe, track.comp + track.calAz);
+    if (!usingGyro && eulerQ) {
       // beta가 ±180에서 뒤집히는 순간은 섞지 않고 새 자세로 바로 넘어갑니다
       const flip = prevBeta != null && Math.abs(shortestDelta(prevBeta, ev.beta)) > 90;
-      track.q = flip ? qe : Q.mix(track.q, qe, 0.16);
+      track.q = flip ? eulerQ : Q.mix(track.q, eulerQ, 0.16);
     }
     liveDirty = true;
     trackStart();
@@ -3796,7 +3924,9 @@
         return {
           alt: track.alt, az: track.az, cam: cam ? { az: cam.az, alt: cam.alt } : null,
           raw: track.rawAlt, target: track.altTarget,
-          gate: track.gate, angVel: track.angVel, moving: vnow < track.movingUntil
+          gate: track.gate, angVel: track.angVel, moving: vnow < track.movingUntil,
+          rot: track.rot.slice(), pinned: track.pinned,
+          eulerAlt: track.eulerQ ? camDir(track.eulerQ).alt : null
         };
       } finally {
         track.clock = null;
