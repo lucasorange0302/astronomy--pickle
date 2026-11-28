@@ -17,7 +17,12 @@
 
 ### 3) ✅ 검증
 - 신규 `tools/test_live_extras.py` **30개 확인 전부 통과**(로컬·실서버): 별자리 표시·✨ 이동, 도감 밖 별 카드, 조준 마커 생성·터치, 별자리 선 클리핑(클리핑 827구간·선 픽셀 4,496), 라이브 확대 딥스카이(65° 0개 → 48° 17개), 전천 지도(1× 0개 → 2.5× 226개 → 3.4× 597개) 및 터치 정보 창, 퀴즈 5·20·50·100문제 완주.
-- `tools/test_quiz_v2.py` **67개 전부 통과**(기본 10문제·조합별 `범위:난이도:10` 키·문제 수 5/20/50/100 완주 포함), `tools/test_catalog_search.py` **12개**, `tools/test_weekend_preset.py` **113개**, `tools/test_live_guide.py` **A~I + 레이아웃 5종**, `tools/test_live_handoff.py` **15개**, `tools/test_live_inertia.py` **18개** 모두 통과 · 콘솔 오류 0건.
+### 4) ✅ 배포 · 실서버 검증
+- 서비스 워커 캐시 `2026-11-28.13`. 커밋 `f5dc90f`(퀴즈 문제 수·라이브 확장) → `3529bbe`(README) → `main` 푸시.
+- https://byeolneoul.vercel.app · https://lucasorange0302.github.io/byeolbam/ 두 곳 모두:
+  - `tools/test_live_extras.py` **30개 전부 통과**(별자리·도감 밖 별 카드·조준 마커·선 클리핑·확대 딥스카이·퀴즈 5/20/50/100 완주).
+  - `tools/test_quiz_v2.py` **67개 통과**, `tools/test_catalog_search.py` **12개 통과**, `tools/test_weekend_preset.py` **113개 통과**, `tools/check_live_quick.py` **ALL OK · 콘솔 오류 0건**.
+- - `tools/test_quiz_v2.py` **67개 전부 통과**(기본 10문제·조합별 `범위:난이도:10` 키·문제 수 5/20/50/100 완주 포함), `tools/test_catalog_search.py` **12개**, `tools/test_weekend_preset.py` **113개**, `tools/test_live_guide.py` **A~I + 레이아웃 5종**, `tools/test_live_handoff.py` **15개**, `tools/test_live_inertia.py` **18개** 모두 통과 · 콘솔 오류 0건.
 
 ## 2026-11-28 밤 업데이트 (22) — 🎯 도감 검색 순위(달 → 달) · 태양·달·북극성 도감 추가 · 퀴즈 탭 이름
 
