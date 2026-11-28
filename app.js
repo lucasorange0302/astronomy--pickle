@@ -2417,6 +2417,21 @@
      -85°에서 멈춥니다. 천정 쪽 89°도 같은 이유의 여유입니다. */
   const ALT_MIN = -85, ALT_MAX = 89;   // 짐벌락 여유를 남긴 지평선 아래 한계
 
+  /* 천정·천저 근처 — 시선이 수직에 가까워지면 방위는 (고도 오차)/cos(고도) 만큼 증폭됩니다.
+     고도 85°에서 cos 0.087 → 0.3° 손떨림이 방위 3.4°, 89°에서는 17°로 보입니다.
+     그래서 68° 넘으면 방위를 나침반·오일러로 끌어당기는 힘을 부드럽게 0으로 줄이고,
+     방위 손떨림 판정폭(azTol)도 같은 비율로 키워 자이로 자세만으로 매끄럽게 유지합니다. */
+  const POLAR_SOFT = 68, POLAR_HARD = 84;
+  function polarGain(altDeg) {
+    const a = Math.abs(altDeg || 0);
+    return clamp((POLAR_HARD - a) / (POLAR_HARD - POLAR_SOFT), 0, 1);
+  }
+  // 방위 손떨림 판정폭 — 고도가 높을수록 cos 비율로 넓어집니다(0.25° ÷ cos).
+  function azTol(altDeg) {
+    const c = Math.max(0.0174, Math.cos(clamp(Math.abs(altDeg), 0, 89.5) * RAD));
+    return clamp(0.25 / c, 0.25, 14);
+  }
+
   /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다 — 방위는 그대로 두고 고도만 바꿉니다.
      · 목표 방향(dir_target)을 계산하고, 지금 시선과 목표 사이의 최소 회전축(dir × target)과
        각도를 써서 월드 좌표계에서 회전합니다(부호를 따로 다룰 필요가 없음).
@@ -2445,6 +2460,25 @@
     const ang = Math.acos(clamp((dir[0] * target[0] + dir[1] * target[1] + dir[2] * target[2]), -1, 1)) / RAD;
     return Q.norm(Q.mul(Q.axis([ax[0] / n, ax[1] / n, ax[2] / n], ang), q));
   }
+  /* 화면 기준틀 — 시선(방위·고도)에서 오른쪽·위 벡터를 만듭니다.
+     · 오른쪽 벡터는 언제나 '방위가 정하는 수평 방향'=(cosA, −sinA, 0) 입니다.
+       (fwd × [0,0,1] 을 정규화한 값과 같고, 고도가 ±90°에 가도 방향이 흔들리지 않습니다.)
+     · 예전에는 고도가 87.4°(|fwd.z| > 0.999)를 넘는 순간 기준 벡터를 [0,0,1] → [0,1,0]
+       으로 바꿔 오른쪽 벡터를 다시 만들었습니다. 그 전환 자체가 방위축 둘레로 90° 가까운
+       회전이라, 천정을 보려고 고도를 올리면 하늘 전체가 홱 돌아 보였습니다
+       (남현님 제보 '최고 각도 높이로 올라가면 각도가 자꾸 급변'). 그래서 전환을 없앴습니다. */
+  function camBasis(azDeg, altDeg) {
+    const a = clamp(altDeg, -90, 90) * RAD, z = azDeg * RAD;
+    const fwd = [Math.cos(a) * Math.sin(z), Math.cos(a) * Math.cos(z), Math.sin(a)];
+    const right = [Math.cos(z), -Math.sin(z), 0];
+    const up = [
+      right[1] * fwd[2] - right[2] * fwd[1],
+      right[2] * fwd[0] - right[0] * fwd[2],
+      right[0] * fwd[1] - right[1] * fwd[0]
+    ];
+    return { fwd: fwd, right: right, up: up };
+  }
+
   // 시야(화각) 범위 — 두 손가락 핀치와 ＋/－ 버튼이 함께 지키는 한계
   const LIVE_FOV_MIN = 15, LIVE_FOV_MAX = 115;
 
@@ -2487,6 +2521,9 @@
     rawAlt: null,                  // beta·gamma 로 계산한 '실제' 기기 고도(자르기 전)
     eulerQ: null, eulerT: 0,      // 마지막 오일러 자세 — 경계에서 돌아올 때 롤·고도를 다시 맞춤
     pinned: false,                 // 기기가 고도 경계 밖이라 자세를 경계에 붙들어 둔 상태
+    realign: false, realignUntil: 0,  // 창 복귀·센서 재개 — 다음 표본에서 실제 기기 자세로 한 번에 맞춤
+    realignT: 0,                   // 그 정렬 직후 이 시각까지는 오일러 자세를 그대로 따라감
+    compReset: false,              // 다음 나침반을 이상치 차단 없이 새 기준으로 받을 표시
     az: 180, alt: 30,
     sens: 1,                       // 0.6 민감 / 1 보통 / 1.6 부드럽게
     clock: null, feedT: null,      // 검증 훅(feed)의 가상 시계 — 실기기에서는 null
@@ -2499,11 +2536,40 @@
     track.comp = null; track.compBuf = []; track.spike = 0; track.compT = 0;
     track.acc = null; track.altTarget = null; track.rawAlt = null; track.calAz = 0;
     track.eulerQ = null; track.eulerT = 0; track.pinned = false;
+    track.realign = false; track.realignUntil = 0; track.realignT = 0; track.compReset = false;
     track.lastBeta = null;
     track.angVel = 0; track.movingUntil = 0; track.gate = 0; track.resync = false;
     track.clock = null; track.feedT = null;
     track.az = live.az; track.alt = live.alt;
     track.motionSeen = false; track.lastMotEv = 0; track.lastTs = 0; track.suspendUntil = 0;
+  }
+
+  /* 창을 내렸다 돌아오거나(백그라운드 → 복귀) 센서 표본이 오래 끊겼을 때 —
+     자이로 적분을 이전 각도에서 이어 붙이면, 그사이 폰을 돌려 둔 만큼 화면이 어긋난 채로 남습니다.
+     (자이로는 화면을 보고 있는 동안만 표본이 오므로, 백그라운드에서 돈 회전은 통째로 사라집니다.)
+     여기서는 '복귀했다'는 표시만 해 두고, 실제 정렬은 복귀 직후 들어오는 
+     오일러 표본(alpha·beta·gamma)·나침반으로 onOrientation 이 한 번에 합니다.
+     미리 움직임 게이트·낡은 자이로 델타를 비워 두어 정렬이 게이트에 막히지 않게 합니다. */
+  function trackRealign(reason) {
+    if (!live.sensor) return;
+    track.realign = true;
+    track.realignUntil = sNow() + 2000;   // 2초 안에 자세 표본이 없으면 표시를 버립니다
+    track.realignT = 0;
+    track.compReset = true;               // 나침반도 새 기준으로 — 90°/180° 회전이 '튐'으로 버려지지 않게
+    track.resync = false;                 // 조건부 재조정은 아래 한 번의 정렬이 대신합니다
+    track.rot = [0, 0, 0];                // 복귀 전에 쌓인 낡은 자이로 델타 버리기
+    track.angVel = 0;
+    track.movingUntil = 0;                // 움직임 게이트가 재정렬을 붙잡지 않게
+    track.gate = 0;
+    track.suspendUntil = 0;
+    track.lastTs = 0;
+    track.lastBeta = null;                // ±180° 뒤집힘 판정 기준도 새로
+    liveDirty = true;
+  }
+
+  /* 센서 표본이 이만큼 끊겼는지 — 창 복귀·focus 에서 재정렬이 필요한지 판단합니다. */
+  function sensorStale(ms) {
+    return !track.ready || !track.lastOriEv || (sNow() - track.lastOriEv) > (ms || 500);
   }
 
   /* 드리프트 보정 — '폰이 멈춰 있을 때만' 아주 완만하게 잡습니다.
@@ -2575,7 +2641,8 @@
       if (!bad) {
         const err = shortestDelta(d.az, track.comp + track.calAz);
         const q = (track.acc != null && track.acc >= 0) ? clamp(1 - track.acc / 45, 0.35, 1) : 1;
-        const step = corStep(err, dt) * q;
+        // 천정·천저 근처에서는 방위 기준이 흐려지므로 보정을 부드럽게 꺼 자이로 자세만 씁니다.
+        const step = corStep(err, dt) * q * polarGain(d.alt);
         if (Math.abs(step) > 0.002) track.q = Q.norm(Q.mul(Q.axis([0, 0, 1], -step), track.q));
       }
     }
@@ -2644,7 +2711,10 @@
     const d = camDir(track.q);
     let dAz = shortestDelta(track.az, d.az);
     let dAlt = d.alt - track.alt;
-    if (Math.abs(dAz) < 0.25) dAz = 0;      // 데드존(손떨림)
+    // 천정·천저 근처 — 방위는 고도 손떨림을 1/cos 만큼 증폭해 보여 줍니다.
+    //   판정폭을 같은 비율로 넓히지 않으면, 폰을 안 돌렸는데 화면 방위만 흔들립니다.
+    const dzA = azTol(d.alt);
+    if (Math.abs(dAz) < dzA) dAz = 0;      // 데드존(손떨림)
     if (Math.abs(dAlt) < 0.25) dAlt = 0;
     // 자이로가 살아 있으면 τ 30ms(한 프레임 지체)로 거의 즉시, 끊겼을 때만 부드럽게
     const k = clamp(dt / (gyroLive ? 0.03 : 0.075), 0.22, 0.85);
@@ -2816,14 +2886,13 @@
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    const cAlt = clamp(live.alt, ALT_MIN, ALT_MAX) * RAD, cAz = live.az * RAD;
-    const fwd = [Math.cos(cAlt) * Math.sin(cAz), Math.cos(cAlt) * Math.cos(cAz), Math.sin(cAlt)];
-    const upRef = Math.abs(fwd[2]) > 0.999 ? [0, 1, 0] : [0, 0, 1];
+    const basis = camBasis(live.az, live.alt);
+    const fwd = basis.fwd;
     const cross = function (a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; };
     const dot = function (a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
     const norm = function (a) { const l = Math.sqrt(dot(a, a)) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
-    const right = norm(cross(fwd, upRef));
-    const up = cross(right, fwd);
+    const right = basis.right;
+    const up = basis.up;
     const kS = (H / 2) / Math.tan(fov / 4);
 
     /* 구면(입체, stereographic) 투영 — 모든 시야에서 기본으로 씁니다.
@@ -3686,6 +3755,18 @@
   /* 나침반 값 한 점을 중앙값 버퍼에 넣고, 90° 튐은 차단 */
   function pushCompass(heading, now) {
     if (!isFinite(heading)) return;
+    if (track.compReset || track.realign || (track.realignT && now <= track.realignT)) {
+      /* 창 복귀·센서 재개 — 그사이 폰을 90°/180° 돌렸다면 나침반이 '45° 넘는 튐'으로 보이지만
+         실제 방향입니다. 이상치 차단·중앙값 버퍼를 비우고 이 값을 새 기준으로 받습니다.
+         복귀 직후 정렬 창(realignT) 동안은 매 표본을 그대로 받아, 낡은 나침반이 한 번 더
+         기준을 잡아 버리는 일이 없게 합니다. */
+      track.comp = A.mod(heading, 360);
+      track.compBuf = [A.mod(heading, 360)];
+      track.spike = 0;
+      track.compT = now;
+      track.compReset = false;
+      return;
+    }
     const ref = track.comp != null && isFinite(track.comp) ? track.comp : heading;
     const dev = shortestDelta(ref, heading);
     if (track.comp != null && Math.abs(dev) > 45) {
@@ -3706,6 +3787,7 @@
 
   function onOrientation(ev) {
     if (!live.sensor) return;
+    if (document.hidden) return;                 // 백그라운드에서는 표본을 쌓지 않습니다(복귀 후 정렬이 기준)
     const now = sNow();
     if (now - track.lastOriEv < 6) return;       // ≤ 160Hz
     track.lastOriEv = now;
@@ -3735,6 +3817,7 @@
       track.alt = live.alt = clamp(d.alt, ALT_MIN, ALT_MAX);
       track.q = setCamAlt(track.q, track.alt);   // 자세도 같은 경계에서 시작
       track.ready = true;
+      track.realign = false; track.realignUntil = 0; track.realignT = 0; track.compReset = false;
       setSensorUi(true, 'on', track.motionSeen ? '센서 연결됨' : '나침반 모드');
       trackStart();
       return;
@@ -3758,12 +3841,45 @@
       track.eulerT = now;
     }
 
+    /* 창 복귀 정렬 — 숨겼다 돌아온 직후(또는 표본이 길게 끊긴 뒤)에는 이전 각도에서 이어
+       적분하지 않고, 지금 폰이 실제로 향한 방향으로 track.q 를 한 번에 맞춥니다.
+       방위·고도·롤을 모두 오일러 자세에서 가져오고, 화면 값(track.az·alt)도 그 자리에서 옮겨
+       예전 각도에서 미끄러져 오는 동안이 없게 합니다(지평선 경계는 그대로 존중).
+       정렬한 뒤 0.9초는 오일러·나침반 자세를 그대로 따라가(그동안은 나침반을 새 기준으로), 
+       복귀 직후 백그라운드 큐에서 몰려온 낡은 표본이나 낡은 나침반 기준이 섞여도
+       마지막 실제 자세로 수렴합니다. */
+    if (track.realign && now > track.realignUntil) track.realign = false;
+    if (eulerQ && (track.realign || (track.realignT && now <= track.realignT))) {
+      const d = camDir(eulerQ);
+      const alt = clamp(d.alt, ALT_MIN, ALT_MAX);
+      track.q = setCamAlt(eulerQ, alt);
+      // 화면 값도 같은 자리로 — 큰 차이는 한 번에(90°·180°), 작은 차이는 몇 프레임에 걸쳐
+      //   (천정·천저 근처에서는 방위를 건드리지 않습니다 — 특이점이라 오일러의 방위가 믿을 수 없습니다)
+      const daz = shortestDelta(track.az, d.az);
+      const keepAz = polarGain(alt) <= 0.001;
+      const thz = Math.max(5, azTol(alt));
+      track.az = A.mod(track.az + (keepAz ? 0 : (Math.abs(daz) > thz ? daz : daz * 0.5)), 360);
+      const dalt = alt - track.alt;
+      track.alt = clamp(track.alt + (Math.abs(dalt) > 5 ? dalt : dalt * 0.5), ALT_MIN, ALT_MAX);
+      live.az = track.az; live.alt = track.alt;
+      if (track.realign) {
+        track.realign = false;
+        track.realignT = now + 900;
+        track.pinned = false;
+        track.rot = [0, 0, 0];
+        track.gate = 0;
+      }
+    } else if (track.realignT && now > track.realignT) {
+      track.realignT = 0;
+    }
+
     /* 자이로가 오래(0.6초 넘게) 끊겼다 돌아오면 — 화면을 다시 열었거나 다른 앱을 다녀왔을 때 —
        그 사이 회전이 통째로 사라져 자세가 크게 어긋납니다. 그때만 오일러 자세로 한 번 다시
        맞춥니다(움직이는 중의 재조정이 아니라, 자이로가 없던 구간을 메우는 한 번의 정렬). */
     if (track.resync && eulerQ) {
       const cur = camDir(track.q), nxt = camDir(eulerQ);
-      if (Math.abs(shortestDelta(cur.az, nxt.az)) > 25 || Math.abs(nxt.alt - cur.alt) > 25) {
+      if (polarGain(nxt.alt) > 0.001 &&
+          (Math.abs(shortestDelta(cur.az, nxt.az)) > 25 || Math.abs(nxt.alt - cur.alt) > 25)) {
         track.q = eulerQ;
         track.alt = clamp(nxt.alt, ALT_MIN, ALT_MAX);
         track.q = setCamAlt(track.q, track.alt);
@@ -3773,9 +3889,15 @@
 
     // 자이로가 없거나 끊긴 경우: 오일러 자세를 목표로 부드럽게 따라갑니다(방위·고도 같은 비율)
     if (!usingGyro && eulerQ) {
-      // beta가 ±180에서 뒤집히는 순간은 섞지 않고 새 자세로 바로 넘어갑니다
-      const flip = prevBeta != null && Math.abs(shortestDelta(prevBeta, ev.beta)) > 90;
-      track.q = flip ? eulerQ : Q.mix(track.q, eulerQ, 0.16);
+      if (polarGain(camDir(eulerQ).alt) <= 0.001) {
+        /* 천정·천저 근처는 오일러가 특이점(β≈0·180)이라 방위·롤이 믿을 수 없습니다.
+           방위는 지금 보는 값을 지키고 고도만 따라갑니다. */
+        track.q = setCamAlt(track.q, clamp(camDir(eulerQ).alt, ALT_MIN, ALT_MAX));
+      } else {
+        // beta가 ±180에서 뒤집히는 순간은 섞지 않고 새 자세로 바로 넘어갑니다
+        const flip = prevBeta != null && Math.abs(shortestDelta(prevBeta, ev.beta)) > 90;
+        track.q = flip ? eulerQ : Q.mix(track.q, eulerQ, 0.16);
+      }
     }
     liveDirty = true;
     trackStart();
@@ -3783,13 +3905,14 @@
 
   function onMotion(ev) {
     if (!live.sensor) return;
+    if (document.hidden) return;                 // 백그라운드 표본은 적분하지 않습니다
     const rr = ev.rotationRate;
     const now = sNow();
     if (!rr) return;
     const gap = track.lastMotEv ? (now - track.lastMotEv) / 1000 : 0.016;
     if (gap > 0.25) {
       track.lastMotEv = now;
-      if (gap > 0.6) track.resync = true;   // 그 사이 회전은 사라졌습니다 — 다음 방향 표본에서 다시 맞춤
+      if (gap > 0.6) trackRealign('gyro-gap');   // 그 사이 회전은 사라졌습니다 — 실제 자세로 다시 맞춤
       return;                              // 끊겼다가 돌아온 값은 버림
     }
     const dt = clamp(gap, 0.004, 0.08);
@@ -3798,6 +3921,8 @@
       track.motionSeen = true;
       if (setSensorUi) setSensorUi(true, 'on', '센서 연결됨');
     }
+    // 정렬 중(복귀 직후)의 자이로 델타는 버립니다 — 자세는 오일러 표본이 정합니다.
+    if (track.realign || (track.realignT && now <= track.realignT)) return;
     const rate = function (v) { return clamp(v == null || isNaN(v) ? 0 : v, -600, 600); };
     /* 회전속도의 축 — 브라우저 구현 공통으로 '기기 축' 기준입니다.
          alpha = X축(화면 오른쪽),  beta = Y축(화면 위쪽),  gamma = Z축(화면 바깥)
@@ -3884,6 +4009,8 @@
     },
     pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
     resume: function () { liveResize(); liveDirty = true; kickLive(); },
+    /* 창 복귀 정렬을 직접 부릅니다(검증·외부 재개용). 실기기에서는 visibilitychange·pageshow·focus 가 부릅니다. */
+    realign: function (reason) { trackRealign(reason || 'manual'); },
     calibrate: calibrateLive,
     hits: function () { return live.hits.map(function (h) { return { x: h.x, y: h.y, kind: h.kind, key: h.key, name: h.name, mag: h.mag }; }); },
     info: function (kind, key) { openLiveInfo({ kind: kind, key: key }); },
@@ -3891,6 +4018,12 @@
     sensorOn: function () { return live.sensor; },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
+    /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.
+       천정·천저를 지날 때 이 기준틀이 끊김 없이 이어지는지 수치로 확인합니다. */
+    basis: function () {
+      const b = camBasis(live.az, clamp(live.alt, ALT_MIN, ALT_MAX));
+      return { fwd: b.fwd.slice(), right: b.right.slice(), up: b.up.slice(), az: live.az, alt: live.alt };
+    },
     enableSensor: enableSensor,
     disableSensor: disableSensor,
     /* -- 검증용 — 합성 센서 표본을 '실제' 처리 경로(onOrientation·onMotion)에 넣고
@@ -6135,10 +6268,22 @@
     // '지금' 시각을 분 단위로 따라갑니다(탭으로 돌아오면 바로 한 번).
     setInterval(tickLiveClock, 5000);
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) return;
+      if (document.hidden) {
+        // 창을 내리는 순간 — 돌아왔을 때 이전 각도에서 이어 적분하지 않도록 정렬 표시만 해 둡니다.
+        trackRealign('hidden');
+        return;
+      }
       tickLiveClock();
-      // 화면을 다시 열면 센서 표본이 끊긴 사이의 회전이 사라져 자세가 어긋날 수 있습니다.
-      if (live.sensor) track.resync = true;
+      // 화면을 다시 열면 센서 표본이 끊긴 사이의 회전이 사라졌습니다 — 지금 폰이 향한 방향으로 즉시 재정렬.
+      trackRealign('visible');
+      liveResize();          // 백그라운드에서 화면을 돌렸으면 캔버스 크기도 새로
+      kickLive();
+    });
+    // 뒤로 가기 캐시로 되살아난 경우(폰에서 다른 앱을 다녀온 경우 포함)
+    window.addEventListener('pageshow', function () { trackRealign('pageshow'); });
+    // 창이 다시 앞으로 나왔고 그새 표본이 끊겼을 때만 — 화면을 누르기만 해서 focus 된 경우는 그대로 둡니다.
+    window.addEventListener('focus', function () {
+      if (sensorStale(500)) trackRealign('focus');
     });
     window.addEventListener('resize', function () {
       if ($('#skyMap')) {
