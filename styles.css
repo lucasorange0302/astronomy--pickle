@@ -3476,3 +3476,14 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
   .learn-xlink { flex-wrap: wrap; }
   .lx-go { width: 100%; text-align: right; }
 }
+
+/* 데스크톱: 도해가 너무 커지지 않게, 글줄도 읽기 좋은 폭으로 */
+@media (min-width: 900px) {
+  .rec-fig { max-width: 640px; margin-left: auto; margin-right: auto; }
+  .rec-fig svg { max-width: 560px; margin: 0 auto; }
+  .rec-lead, .rec-analogy p, .rec-qa p, .rec-doubt, .rec-see { max-width: 82ch; }
+  .rec-head { padding: 15px 18px; }
+  .rec-value { font-size: 1.5rem; }
+  .rec-facts { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .rec-list { gap: 12px; }
+}
