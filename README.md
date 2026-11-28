@@ -48,8 +48,14 @@
 - 회귀: `tools/test_live_inertia.py` **18개 전부 통과**(A 33.2°/1678ms · 플릭 160.9°/2217ms · A5 정체 프레임 유지), `tools/check_live_quick.py` **10개 전부 통과**(빠른 줄 4개·넘침 0), `tools/test_live_guide.py` **A~I + 레이아웃 5종 전부 통과**.
 - 이 실행 환경의 시계가 2026-11-28이라 Open-Meteo가 예보 범위를 거절(HTTP 400)합니다 — 앱은 「예보 없음」으로 정상 폴백하며, 콘솔 오류는 그 리소스 실패뿐입니다(앱 오류 0건).
 
-### 5) ✅ 배포
+### 5) ✅ 배포 · 실서버 검증
 - 서비스 워커 캐시 `2026-11-28.13`, `python3 astronomy-site/build.py`로 모바일판·데스크톱판·단일 파일판 재빌드.
+- 커밋 `a32bbd5`(이번 주말·별 보기 좋은 날·관성 0프레임 · 캐시 .13) + `91551cf`(README · 예보 요청 400 수정) → `main` 푸시.
+- **https://byeolneoul.vercel.app** · **https://lucasorange0302.github.io/byeolbam/** 두 곳 모두:
+  - `app.js`(`darkPlanCached`·`weekendSwitch`)·`sky-weather.js`(`clampEnd`)·`sw.js` **.13** 제공 확인.
+  - `tools/test_weekend_preset.py` **113개 전부 통과**(주말 3칩·전환·숨김·별 보기 좋은 날·레이아웃 6종), `tools/test_live_handoff.py` **15개 전부 통과**(첫 프레임 그리기·프레임당 1.00회), `tools/check_live_quick.py` **ALL OK · 콘솔 오류 0건**, `tools/test_live_inertia.py` **ALL OK · 콘솔 오류 0건**.
+- 실시간(오늘 토 11/28 20시) 화면 확인 — 주말 칩 **`토 11/28(추천)` · `일 11/29`**, 이유 `구름 토 14% · 일 35% — 토요일 밤이 가장 좋아요`, 22:00 전환·넘침 0px.
+  - **🌟 별 보기 좋은 날 → 12/9**(구름 8% · 달 0% · 73점). 사용자가 지적한 **12/7은 구름 100%로 후보에서 제외**(10점)됐고, 30일 카드도 `12/9 73점 · 12/14 62점 · 12/15 59점`으로 바뀌었습니다.
 
 ## 2026-11-28 저녁 업데이트 (20) — 🌀 라이브 뷰 관성 — 「더 굴러가게」 길고 부드럽게
 
