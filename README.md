@@ -31,8 +31,17 @@
 ### 4) 🔢 수정판 표기 `v3.1`
 - `APP_RELEASE` 30 → **31**, 화면 표기는 `별너울 v3.1`(10으로 나눈 소수 한 자리 — 32 → v3.2 …). `sw.js` 캐시 `2026-11-29.01`, `mobile.html`·`desktop.html`·`별너울지도.html` 재생성.
 
-### 5) ✅ 배포
-- `python3 astronomy-site/build.py` 재빌드 후 Vercel(`https://byeolneoul.vercel.app`)·GitHub Pages(`https://lucasorange0302.github.io/byeolbam`) 반영, 두 곳에서 랭킹 등록·조회 실측.
+### 5) ✅ 검증 (로컬 · 실서버)
+- **신규** `tools/quiz_rank_check.py` **21/21** — 인트로 최고 기록·랭킹 카드, 종목 전환, 확장 성도·Gaia 고지, 걸린 시간, 내 기기 최고 기록 저장, 부적절 단어·빈 값·17자 거부(서버 요청 0건), 등록 → 내 순위·내 행 강조 → 새로고침 유지, 콘솔 오류 0.
+- **신규** `tools/test_quiz_offline.py` **7/7** — 단일 파일판(file://)에서 랭킹만 안내 문구, 네트워크 요청 0건, 퀴즈·최고 기록 정상.
+- **신규** `tools/test_roll.py` 4/4 · `tools/test_live_motion.py` **10/10**(천정 급변 0.00°).
+- `tools/test_milkyway.py` **22/22**(지도 은하수 = 텍스처 이미지·픽셀 5.5만) · `tools/test_skymap_clean.py` **15/15** · `tools/test_hybrid_gaia.py` **54/54** · `tools/test_live_top_safe.py` **26/26**.
+- 실서버 `tools/test_quiz_live.py` — Vercel·GitHub Pages 두 곳 모두 **11/11**(등록 → 현재 순위 → 새로고침 뒤 TOP 20 유지, 콘솔 오류 0).
+- DB 실측: `score > total` INSERT 는 **401 `row-level security policy` 위반**으로 거부. 검증용으로 넣었던 행은 모두 지워 표를 비워 두었습니다.
+- 스크린샷: `screenshots/quiz-rank/` (`live_intro_rank.png` · `live_result_form.png` · `live_map_mobile.png` · `live_map_desktop.png`).
+
+### 6) ✅ 배포
+- `python3 astronomy-site/build.py` 재빌드(수정판 v3.1 (31번째) · 캐시 `2026-11-29.01`) 후 커밋 `c2022c8` 을 Vercel(`https://byeolneoul.vercel.app`)·GitHub Pages(`https://lucasorange0302.github.io/byeolbam`)에 반영, 두 곳 모두 `sw.js VERSION 2026-11-29.01`·`별너울 v3.1` 확인.
 
 ## 2026-11-29 새벽 업데이트 (30) — 🌌 Gaia 축소 빈 공간·가운데 섬 · 조회 속도(포괄 캐시·미러 경쟁·예열) · 별빛 순차 표시 · 수정판 표기 「v3.0」
 
