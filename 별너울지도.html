@@ -2046,6 +2046,16 @@ body.red .ck-btn::before { background: radial-gradient(circle, rgba(255,106,61,.
   transform-origin: top right; animation: moreIn .16s ease-out;
 }
 .more-menu[hidden] { display: none; }
+/* ☰ 더보기 맨 아래 — 지금 보고 있는 수정판 번호(작고 조용하게). */
+.more-ver {
+  margin: 6px 2px 2px; padding: 8px 8px 2px; border-top: 1px solid var(--border);
+  font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+  color: var(--faint); text-align: right; user-select: text;
+}
+.bwshare-ver {
+  margin: -6px 0 12px; font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+  color: rgba(180, 200, 235, .62); text-align: center;
+}
 @keyframes moreIn { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
 .more-core { display: none; }
 .more-group { padding: 8px 2px; border-top: 1px solid var(--border); }
@@ -4350,6 +4360,7 @@ body.red .bwshare-btn.primary { background: #ff8a5c; border-color: #ff8a5c; colo
               <span class="mi-txt"><b>별너울 공유하기</b><small>링크 보내기 · 친구에게 추천</small></span>
             </button>
           </div>
+          <p class="more-ver" id="appVer" data-app-version title="지금 보고 있는 수정판">별너울 v3.0</p>
         </div>
       </div>
     </div>
@@ -11177,8 +11188,13 @@ window.Astro = (function () {
    2단계 · Gaia DR3 실시간 조회 (약 18억 개 전체 카탈로그)
      CORS 를 허용하는 VizieR asu-tsv(I/355/gaiadr3)를 먼저 쓰고, 실패하면
      ESA Gaia TAP(ADQL, JSON) → ARI Heidelberg TAP 순서로 넘어갑니다.
-     디바운스 420ms · 이전 요청 AbortController 취소 · 구역 LRU 캐시(24) ·
+     디바운스 420ms · 이전 요청 AbortController 취소 · 구역 LRU 캐시(20) ·
      실패하면 조용히 로컬 타일만 남깁니다(앱은 멈추지 않습니다).
+
+   2026-11-29 (.21) — 축소할 때 가운데 작은 원만 남던 문제와 조회 지연
+     · 넓은 배경 원뿔(r 5°·11.5~15등)을 fov ≤ 12°에서 미리 받아 둡니다(warmGaia).
+     · 지금 화면을 **완전히 덮는** 캐시가 있으면 네트워크 없이 0ms로 그 캐시를 씁니다.
+     · 1순위 VizieR 미러가 1.2초 조용하면 2순위도 병렬로 띄워 먼저 답한 쪽을 씁니다.
 
    OFF 이면 위 두 단계의 네트워크 요청을 **한 건도** 보내지 않습니다.
    ========================================================================= */
@@ -11200,7 +11216,17 @@ window.Astro = (function () {
   var LIVE_GAIA_FOV = 20;      // 라이브 뷰: 이 시야 이하에서 Gaia 실시간 조회
   var SKY_LOCAL_ZOOM = 1.5;    // 전천 지도: 이 배율 이상에서 로컬 타일
   var SKY_GAIA_ZOOM = 3.2;     // 전천 지도: 이 배율 이상에서 Gaia
-  var GAIA_MAX = 400;          // 한 번에 받을 별 수
+  var GAIA_MAX = 400;          // 한 번에 받을 별 수(좁은 원뿔)
+  var GAIA_MAX_WIDE = 900;     // 넓은 원뿔 상한 — 화면 가장자리까지 고르게 채우려면 더 필요합니다
+  var GAIA_R_MAX = 6;          // 조회 반경 상한(도) — 세로 폰에서는 화면 대각이 fov 의 약 0.55배
+  var GAIA_HEDGE_MS = 1200;    // 1순위 VizieR 미러가 이만큼 조용하면 2순위도 병렬로
+  var GAIA_WARM_FOV = 12;      // 이 시야(도) 이하로 들어오면 넓은 배경 원뿔을 미리 받아 둡니다
+  var GAIA_WARM_R = 5.0;       // 배경 원뿔 반경(도)
+  var GAIA_WARM_MAG = 15.0;    // 배경 원뿔 등급 상한(11.5~15.0등)
+  var GAIA_WARM_MAX = 900;
+  var GAIA_WARM_DEBOUNCE = 700;
+  var GAIA_COVER_MIN = 0.55;   // 지금 목록 반경이 화면 반경의 이보다 작으면 '가운데 섬'
+  var GAIA_TRIED_MS = 120000;  // 실패한 구역은 2분 쉼
   var GAIA_MAG_MIN = 6.0, GAIA_MAG_MAX = 20.8;   // Gaia DR3 실관측 한계(20.7등)까지
   var GAIA_DEBOUNCE = 420;
   /* VizieR 원뿔 조회는 서버가 붐빔 때 2~13초로 흔들립니다(2026-11-28 09~13초 실측).
@@ -11225,11 +11251,13 @@ window.Astro = (function () {
   var tiles = {};              // key -> {ra0,ra1,d0,d1,s:[]}
   var tileState = {};          // key -> 'loading' | 'error'
   var tileOrder = [];          // LRU
-  var gaiaCache = {};          // key -> {list, ra, dec, r, at, endpoint}
+  var gaiaCache = {};          // key -> {list, ra, dec, r, mag, at, endpoint}
   var gaiaOrder = [];
   var gaiaTried = {};          // key -> 마지막 시도 시각(실패 쿨다운)
+  /* 넓은 배경 원뿔 예열 상태 — 화면용 gi 와 분리해, 예열이 지금 보이는 목록을 건드리지 않게. */
+  var warm = { timer: null, ctrl: null, busy: false, ra: 0, dec: 0, at: 0, ok: 0 };
   var gi = { key: null, ctrl: null, timer: null, list: [], ra: 0, dec: 0, r: 0, at: 0, endpoint: '', busy: false, err: null, stale: false };
-  var stats = { tileReq: 0, tileOk: 0, tileErr: 0, gaiaReq: 0, gaiaOk: 0, gaiaFail: 0, stars: 0, lastEndpoint: '', lastErr: null };
+  var stats = { tileReq: 0, tileOk: 0, tileErr: 0, gaiaReq: 0, gaiaOk: 0, gaiaFail: 0, stars: 0, lastEndpoint: '', lastErr: null, gaiaHit: 0, gaiaCover: 0, warmReq: 0, warmOk: 0 };
   var subs = [];
 
   var RAD = Math.PI / 180;
@@ -11238,8 +11266,9 @@ window.Astro = (function () {
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
   /* ---------------------------------------------------------------- 구독 */
-  function emit() {
-    for (var i = 0; i < subs.length; i++) { try { subs[i](on); } catch (e) { /* 화면 하나가 실패해도 나머지는 */ } }
+  /** @param why 'gaia' 이면 앱이 디바운스 없이 바로 한 프레임 다시 그립니다. */
+  function emit(why) {
+    for (var i = 0; i < subs.length; i++) { try { subs[i](on, why); } catch (e) { /* 화면 하나가 실패해도 나머지는 */ } }
   }
 
   /* --------------------------------------------------------------- 상태 */
@@ -11526,85 +11555,209 @@ window.Astro = (function () {
     return b.toString();
   }
 
-  /** 한 구역을 실제로 조회합니다(미러·TAP 순차 시도). 실패하면 빈 배열. */
-  function queryCone(raDeg, decDeg, rDeg, max, sig, magMin, magMax) {
-    var jobs = [];
+  /** 바깥 신호(구역 이동·OFF)에 이어지는 요청별 취소기 — 경쟁에서 진 요청만 따로 끊습니다. */
+  function linkCtrl(sig) {
+    var c = new AbortController();
+    if (sig) {
+      if (sig.aborted) { try { c.abort(); } catch (e) { } }
+      else sig.addEventListener('abort', function () { try { c.abort(); } catch (e) { } });
+    }
+    return c;
+  }
+
+  /** VizieR 미러 경쟁 조회 — 1순위가 GAIA_HEDGE_MS 안에 답하지 않으면 2순위도 병렬로
+      띄우고, 먼저 성공한 응답을 씁니다(진 요청은 즉시 끊습니다).
+      서버가 붐벼 2~13초로 흔들리는 날 느린 미러를 기다리지 않게 하는 것이 목적입니다.
+      @returns {Promise<{rows,endpoint}|null>} null = 시도해 볼 미러가 없음 */
+  function vizCone(raDeg, decDeg, rDeg, max, sig, magMin, magMax) {
+    var list = [];
     VIZIER.forEach(function (base) {
       var name = base.replace(/^https?:\/\//, '');
       if (!epUsable(name)) return;
-      jobs.push({
-        name: name,
-        run: function () {
-          var w = withTimeout(vizierUrl(base, raDeg, decDeg, rDeg, max, magMin, magMax), null, sig);
-          return w.done.then(function (r) {
+      list.push({ name: name, url: vizierUrl(base, raDeg, decDeg, rDeg, max, magMin, magMax) });
+    });
+    if (!list.length) return Promise.resolve(null);
+    return new Promise(function (resolve) {
+      var i = 0, started = 0, failed = 0, done = false, timer = null;
+      var ctrls = [];
+      function settle(res) {
+        if (done) return;
+        done = true;
+        if (timer) { clearTimeout(timer); timer = null; }
+        resolve(res);
+      }
+      function launch() {
+        if (done || i >= list.length) return;
+        var job = list[i++];
+        started++;
+        var link = linkCtrl(sig);
+        ctrls.push(link);
+        var w = withTimeout(job.url, null, link.signal);
+        w.done
+          .then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.text();
-          }).then(function (txt) {
-            /* 서버가 정상 응답했는데 별이 0개면 '이 구역에 없다'는 정답입니다 —
-               다른 서버로 넘어가지 않습니다(불필요한 요청·콘솔 경고 방지). */
-            return parseVizier(txt, magMin, magMax);
+          })
+          .then(function (txt) { return parseVizier(txt, magMin, magMax); })
+          .then(function (rows) {
+            if (done) return;
+            epMark(job.name, true);
+            done = true;
+            if (timer) { clearTimeout(timer); timer = null; }
+            /* 이긴 요청 빼고는 모두 끊습니다 — 같은 구역을 두 번 받지 않게. */
+            for (var k = 0; k < ctrls.length; k++) {
+              if (ctrls[k] !== link) { try { ctrls[k].abort(); } catch (e) { } }
+            }
+            resolve({ rows: rows, endpoint: job.name });
+          }, function (err) {
+            if (done) return;
+            failed++;
+            /* 사용자가 화면을 움직여 끊었거나(sig) 시간 초과로 끊긴 요청은 서버 탓이 아닙니다. */
+            if (!(sig && sig.aborted) && !(err && (err.name === 'AbortError' || err.code === 20))) epMark(job.name, false);
+            if (failed >= started && i >= list.length) settle(null);
+            else launch();
           });
-        }
-      });
+        /* 아직 시도하지 않은 미러가 있으면 1.2초 뒤에도 조용할 때 병렬로 띄웁니다. */
+        if (i < list.length) timer = setTimeout(function () { timer = null; launch(); }, GAIA_HEDGE_MS);
+      }
+      launch();
     });
-    TAP.forEach(function (t) {
-      var name = t.url.replace(/^https?:\/\//, '');
-      if (!epUsable(name)) return;
-      jobs.push({
-        name: name,
-        run: function () {
-          var w = withTimeout(t.url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: tapBody(adql(raDeg, decDeg, rDeg, max, false, magMin, magMax)) }, sig);
-          return w.done.then(function (r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.text();
-          }).then(function (txt) {
-            var obj;
-            try { obj = JSON.parse(txt); } catch (e) { throw new Error('JSON 아님'); }
-            return parseTapJson(obj, magMin, magMax);
-          });
-        }
-      });
-    });
+  }
 
+  /** TAP(ESA → ARI Heidelberg) 순차 조회 — VizieR 미러가 모두 실패했을 때만. */
+  function tapCone(raDeg, decDeg, rDeg, max, sig, magMin, magMax) {
     var i = 0;
     function next() {
-      if (i >= jobs.length) return Promise.resolve({ rows: [], endpoint: '' });
-      var job = jobs[i++];
-      return job.run().then(function (rows) {
-        epMark(job.name, true);
-        return { rows: rows, endpoint: job.name };
+      if (i >= TAP.length) return Promise.resolve({ rows: [], endpoint: '' });
+      var t = TAP[i++];
+      var name = t.url.replace(/^https?:\/\//, '');
+      if (!epUsable(name)) return next();
+      var w = withTimeout(t.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: tapBody(adql(raDeg, decDeg, rDeg, max, false, magMin, magMax))
+      }, sig);
+      return w.done.then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      }).then(function (txt) {
+        var obj;
+        try { obj = JSON.parse(txt); } catch (e) { throw new Error('JSON 아님'); }
+        return parseTapJson(obj, magMin, magMax);
+      }).then(function (rows) {
+        epMark(name, true);
+        return { rows: rows, endpoint: name };
       }, function (err) {
-        /* 사용자가 화면을 움직이거나 확대해 이전 요청을 끊었을 때(fetch 취소)는
-           서버 탓이 아닙니다 — '이 서버 쉼'을 남기지 않고 곧바로 멈춥니다.
-           (예전에는 AbortError 도 실패로 기록해 정상 서버가 6시간 빠졌습니다.) */
         if (sig && sig.aborted) return { rows: [], endpoint: '' };
-        /* 시간 초과 취소도 서버 판정(블랙리스트)은 건드리지 않고 다음 서버로 넘깁니다. */
-        if (err && (err.name === 'AbortError' || err.code === 20)) return next();
-        epMark(job.name, false);
+        if (!(err && (err.name === 'AbortError' || err.code === 20))) epMark(name, false);
         return next();
       });
     }
     return next();
   }
 
-  /** 디바운스된 Gaia 조회 — 같은 구역은 다시 묻지 않고, 이전 요청은 취소합니다. */
+  /** 한 구역을 실제로 조회합니다(미러 경쟁 → TAP 순차). 실패하면 빈 배열. */
+  function queryCone(raDeg, decDeg, rDeg, max, sig, magMin, magMax) {
+    return vizCone(raDeg, decDeg, rDeg, max, sig, magMin, magMax).then(function (res) {
+      if (res) return res;                       // 미러가 답함(별 0개도 정답으로 존중)
+      if (sig && sig.aborted) return { rows: [], endpoint: '' };
+      return tapCone(raDeg, decDeg, rDeg, max, sig, magMin, magMax);
+    });
+  }
+
+  /** 원뿔 반경에 맞는 한 번의 최대 별 수 — 좁게 볼수록 화면에 촘촘히 깔리도록 넉넉히. */
+  function gaiaMaxFor(rDeg) {
+    if (rDeg <= 0.8) return GAIA_MAX;            // 1° 이하 — 400
+    if (rDeg <= 1.6) return 600;
+    return GAIA_MAX_WIDE;                        // 2° 이상 — 900
+  }
+
+  /** 캐시에 원뿔 하나 저장(LRU 20). */
+  function putCache(key, rows, ra, dec, r, endpoint, magMax) {
+    if (!rows || !rows.length) return;
+    gaiaCache[key] = {
+      list: rows, ra: ra, dec: dec, r: r, mag: magMax == null ? GAIA_MAG_MAX : magMax,
+      at: Date.now(), endpoint: endpoint
+    };
+    gaiaOrder.push(key);
+    while (gaiaOrder.length > GAIA_MAX_CACHE) {
+      var old = gaiaOrder.shift();
+      if (old !== key) delete gaiaCache[old];
+    }
+  }
+
+  /** 지금 화면(중심 ↔ 반경 rDeg 원)을 **완전히 덮는** 캐시 중 가장 작은 것(가장 촘촘한 것).
+      @param minR 이보다 좁은 캐시는 후보에서 뺍니다(지금보다 좁은 것으로 바꾸지 않게). */
+  function findCover(raDeg, decDeg, rDeg, magMax, minR) {
+    var hi = magMax == null ? GAIA_MAG_MAX : magMax;
+    var best = null;
+    for (var key in gaiaCache) {
+      var c = gaiaCache[key];
+      if (!c || !c.list || !c.list.length) continue;
+      if ((c.mag == null ? GAIA_MAG_MAX : c.mag) < hi - 0.05) continue;   // 등급 상한이 모자람
+      if (c.r + 1e-6 < rDeg) continue;                                    // 반경이 요청보다 좁음
+      if (minR && c.r < minR - 1e-6) continue;
+      if (angDeg(c.ra, c.dec, raDeg, decDeg) + rDeg > c.r * 0.98) continue; // 다 덮지 못함
+      if (!best || c.r < best.r) best = c;
+    }
+    return best;
+  }
+
+  /** 캐시 하나를 화면 목록으로 올립니다(0ms — 네트워크 없음). */
+  function adopt(c) {
+    if (!c || !c.list || !c.list.length) return false;
+    gi.list = c.list; gi.ra = c.ra; gi.dec = c.dec; gi.r = c.r;
+    gi.at = c.at; gi.endpoint = c.endpoint; gi.err = null; gi.stale = false;
+    return true;
+  }
+
+  /** 디바운스된 Gaia 조회 — 같은 구역은 다시 묻지 않고, 이전 요청은 취소합니다.
+      · 요청 반경은 화면 네 귀통이를 덮는 각반경입니다(세로 폰에서 fov의 약 0.55배).
+      · 화면을 덮는 캐시가 이미 있으면 네트워크 없이 0ms로 그 캐시를 씁니다.
+      · 축소 직후처럼 지금 목록이 화면보다 좁으면, 더 넓은 캐시를 먼저 깔아
+        가운데 작은 원형 섬이 남지 않게 합니다(그 사이 넓은 원뿔을 새로 조회). */
   function ensureGaia(raDeg, decDeg, rDeg, magMax) {
     if (!on) return;
-    var r = clamp(rDeg, 0.02, 4);        // 1′ 시야에서도 넓은 구역을 묻지 않게
+    var r = clamp(rDeg, 0.02, GAIA_R_MAX);   // 1′ 시야에서도 넓은 구역을 묻지 않게
     var hi = clamp(magMax == null ? GAIA_MAG_MAX : magMax, 10, GAIA_MAG_MAX);
     var key = gaiaKey(raDeg, decDeg, r) + '|' + hi.toFixed(1);
-    /* 같은 구역은 성공·실패와 상관없이 한 번만 묻습니다(실패하면 조용히 로컬 타일만). */
-    if (gi.key === key && (gi.busy || (gi.list.length && !gi.stale))) return;
-    var last = gaiaTried[key];
-    if (last && Date.now() - last < 120000) return;      // 2분 안에 실패한 구역은 다시 묻지 않음
-    var hit = gaiaCache[key];
-    if (hit) {
-      gi.key = key; gi.list = hit.list; gi.ra = hit.ra; gi.dec = hit.dec; gi.r = hit.r;
-      gi.at = hit.at; gi.endpoint = hit.endpoint; gi.err = null; gi.stale = false;
-      emit();
-      return;
+
+    /* ① 축소 직후 — 지금 그리는 원뿔이 화면을 못 덮으면, 덮는 더 넓은 캐시를 먼저 깝니다.
+       (조회가 끝날 때까지 가운데 작은 원만 떠 있는 '섬'을 없앱니다) */
+    if (gi.list.length && gi.r > 0 && gi.r < r * GAIA_COVER_MIN) {
+      var cv = findCover(raDeg, decDeg, r, hi, gi.r * 1.05);
+      if (cv && adopt(cv)) { stats.gaiaCover++; emit('gaia'); }
     }
-    gi.key = key;
+
+    if (gi.key === key) {
+      if (gi.busy) return;                                   // 이미 이 구역을 조회 중
+      if (gi.list.length && !gi.stale) return;               // 이미 이 구역을 그리는 중
+      var tried = gaiaTried[key];
+      if (tried && Date.now() - tried < GAIA_TRIED_MS) return;   // 방금 실패한 구역
+    } else {
+      /* 이미 받아 둔 구역이면 **먼저** 그 캐시로 돌아갑니다 — 축소→확대를 오가도
+         0ms 로 그려지고, 지난 시야의 원뿔이 그대로 남지 않습니다. */
+      var hit = gaiaCache[key];
+      if (hit) {
+        gi.key = key;
+        adopt(hit);
+        stats.gaiaHit++;
+        emit('gaia');
+        return;
+      }
+      /* 같은 구역은 성공·실패와 상관없이 한 번만 묻습니다(실패하면 조용히 로컬 타일만). */
+      var last = gaiaTried[key];
+      if (last && Date.now() - last < GAIA_TRIED_MS) return;
+      gi.key = key;
+    }
+
+    /* ② 지금 보여 줄 넓은 캐시가 있으면 즉시 깔고(0ms), 별 수가 충분하면 요청을 아낍니다. */
+    var cov = findCover(raDeg, decDeg, r, hi, gi.r * 1.05);
+    if (cov && adopt(cov)) stats.gaiaCover++;
+    var target = gaiaMaxFor(r);
+    var expect = cov ? cov.list.length * (r * r) / (cov.r * cov.r) : 0;
+    if (cov && expect >= target * 0.62) return;              // 이 캐시로 충분히 촘촘합니다
+
     clearTimeout(gi.timer);
     gi.timer = setTimeout(function () { runGaia(key, raDeg, decDeg, r, hi); }, GAIA_DEBOUNCE);
   }
@@ -11616,7 +11769,7 @@ window.Astro = (function () {
     gi.ctrl = ctrl;
     gi.busy = true; gi.err = null;
     stats.gaiaReq++;
-    queryCone(raDeg, decDeg, rDeg, GAIA_MAX, ctrl.signal, 11.5, magMax).then(function (res) {
+    queryCone(raDeg, decDeg, rDeg, gaiaMaxFor(rDeg), ctrl.signal, 11.5, magMax).then(function (res) {
       if (gi.key !== key) return;                 // 그 사이 다른 구역으로 이동
       gi.ctrl = null;
       gi.busy = false;
@@ -11626,9 +11779,7 @@ window.Astro = (function () {
         stats.lastEndpoint = res.endpoint;
         gi.list = res.rows; gi.ra = raDeg; gi.dec = decDeg; gi.r = rDeg; gi.at = Date.now();
         gi.endpoint = res.endpoint; gi.stale = false;
-        gaiaCache[key] = { list: res.rows, ra: raDeg, dec: decDeg, r: rDeg, at: gi.at, endpoint: res.endpoint };
-        gaiaOrder.push(key);
-        while (gaiaOrder.length > GAIA_MAX_CACHE) { var old = gaiaOrder.shift(); if (old !== key) delete gaiaCache[old]; }
+        putCache(key, res.rows, raDeg, decDeg, rDeg, res.endpoint, magMax);
       } else {
         stats.gaiaFail++;
         gi.at = Date.now(); gi.endpoint = '';
@@ -11642,7 +11793,43 @@ window.Astro = (function () {
         gi.err = 'Gaia 응답 없음';
         stats.lastErr = 'Gaia 응답 없음';
       }
-      emit();
+      /* 응답이 도착하면 바로 한 프레임 다시 그립니다(앱이 70ms 디바운스를 거치지 않게). */
+      emit('gaia');
+    });
+  }
+
+  /* ------------------------------------------------- 넓은 배경 원뿔 예열
+     fov ≤ 12°로 들어오면 r 5°·11.5~15등 원뿔을 미리 받아 둡니다. 3°~10°로 축소했을 때
+     (a) 화면을 곧바로 채울 배경이 있고 (b) 화면을 다 덮는 캐시라 조회 없이도 그립니다.
+     화면용 gi 와 분리된 요청이라 지금 보이는 목록을 건드리지 않습니다. */
+  function warmGaia(raDeg, decDeg) {
+    if (!on) return false;
+    /* 이미 지금 중심 주변을 넓게 덮는 캐시가 있으면 예열이 필요 없습니다. */
+    if (findCover(raDeg, decDeg, GAIA_WARM_R * 0.72, GAIA_WARM_MAG, GAIA_WARM_R * 0.72)) return false;
+    if (warm.timer) return false;                                    // 이미 예약됨
+    if (warm.busy && angDeg(warm.ra, warm.dec, raDeg, decDeg) < 2) return false;   // 근처를 받는 중
+    warm.timer = setTimeout(function () {
+      warm.timer = null;
+      runWarm(raDeg, decDeg);
+    }, GAIA_WARM_DEBOUNCE);
+    return true;
+  }
+
+  function runWarm(raDeg, decDeg) {
+    if (!on) return;
+    var key = gaiaKey(raDeg, decDeg, GAIA_WARM_R) + '|' + GAIA_WARM_MAG.toFixed(1);
+    if (gaiaCache[key]) return;
+    if (warm.ctrl) { try { warm.ctrl.abort(); } catch (e) { } }
+    var ctrl = new AbortController();
+    warm.ctrl = ctrl; warm.busy = true; warm.ra = raDeg; warm.dec = decDeg;
+    stats.warmReq++;
+    queryCone(raDeg, decDeg, GAIA_WARM_R, GAIA_WARM_MAX, ctrl.signal, 11.5, GAIA_WARM_MAG).then(function (res) {
+      if (warm.ctrl === ctrl) { warm.ctrl = null; warm.busy = false; }
+      if (!on || !res.rows.length) return;
+      stats.warmOk++;
+      warm.ok++; warm.at = Date.now();
+      putCache(key, res.rows, raDeg, decDeg, GAIA_WARM_R, res.endpoint, GAIA_WARM_MAG);
+      emit('gaia');                          // 앱이 다음 프레임에 넓은 배경을 깔 수 있게
     });
   }
 
@@ -11680,7 +11867,6 @@ window.Astro = (function () {
 
   function gaiaStars() { return on ? (gi.list || []) : []; }
   function gaiaMeta() { return { ra: gi.ra, dec: gi.dec, r: gi.r, at: gi.at, endpoint: gi.endpoint, busy: gi.busy, err: gi.err, stale: gi.stale, n: (gi.list || []).length }; }
-
   /* --------------------------------------------------------- 이름 색인 */
   var namesP = null, namesDoc = null;
   function loadNames() {
@@ -11719,6 +11905,17 @@ window.Astro = (function () {
     starsIn: starsIn,
     catalogName: catalogName,
     ensureGaia: ensureGaia,
+    /* 넓은 배경 원뿔 예열 — fov ≤ thresholds.warmGaiaFov 에서 앱이 부릅니다. */
+    warmGaia: warmGaia,
+    /* 검증용 — 캐시에 든 원뿔 목록(반경·별 수·등급 상한) */
+    gaiaCaches: function () {
+      var out = [];
+      for (var k in gaiaCache) {
+        var c = gaiaCache[k];
+        if (c && c.list) out.push({ r: c.r, n: c.list.length, mag: c.mag == null ? GAIA_MAG_MAX : c.mag, ra: c.ra, dec: c.dec });
+      }
+      return out;
+    },
     gaiaCone: function (raDeg, decDeg, rDeg, max) {
       if (!on) return Promise.resolve({ rows: [], endpoint: '' });
       return queryCone(raDeg, decDeg, clamp(rDeg, 0.5, 8), max || GAIA_MAX);
@@ -11733,7 +11930,8 @@ window.Astro = (function () {
     tileMag: TILE_MAG,
     thresholds: {
       liveLocalFov: LIVE_LOCAL_FOV, liveGaiaFov: LIVE_GAIA_FOV,
-      skyLocalZoom: SKY_LOCAL_ZOOM, skyGaiaZoom: SKY_GAIA_ZOOM
+      skyLocalZoom: SKY_LOCAL_ZOOM, skyGaiaZoom: SKY_GAIA_ZOOM,
+      warmGaiaFov: GAIA_WARM_FOV, warmR: GAIA_WARM_R, coverMin: GAIA_COVER_MIN
     },
     stats: function () {
       return {
@@ -11742,15 +11940,20 @@ window.Astro = (function () {
         tilesHeld: Object.keys(tiles).length, starsLoaded: stats.stars,
         manifestCount: manifest ? manifest.count : 0, manifestError: manifestErr,
         lastEndpoint: stats.lastEndpoint, lastErr: stats.lastErr,
-        gaiaBusy: gi.busy, gaiaCount: (gi.list || []).length
+        gaiaBusy: gi.busy, gaiaCount: (gi.list || []).length,
+        gaiaHit: stats.gaiaHit, gaiaCover: stats.gaiaCover, gaiaR: gi.r,
+        warmReq: stats.warmReq, warmOk: stats.warmOk, warmBusy: warm.busy
       };
     },
     /* 검증용 — 네트워크를 타지 않고 캐시를 비웁니다 */
     _reset: function () {
       abortGaia();
-      clearTimeout(gi.timer); gi.timer = null; gi.key = null; gi.list = []; gi.busy = false; gi.stale = false;
+      if (warm.ctrl) { try { warm.ctrl.abort(); } catch (e) { } warm.ctrl = null; }
+      clearTimeout(warm.timer); warm.timer = null; warm.busy = false; warm.ok = 0;
+      clearTimeout(gi.timer); gi.timer = null; gi.key = null; gi.list = []; gi.busy = false; gi.stale = false; gi.r = 0;
       tiles = {}; tileState = {}; tileOrder = []; gaiaCache = {}; gaiaOrder = []; gaiaTried = {};
       stats.tileReq = stats.tileOk = stats.tileErr = stats.gaiaReq = stats.gaiaOk = stats.gaiaFail = 0;
+      stats.gaiaHit = stats.gaiaCover = stats.warmReq = stats.warmOk = 0;
     }
   };
 })();
@@ -14949,8 +15152,7 @@ window.Astro = (function () {
     return (b > 0 ? b + 8 : 44) + 9;
   }
 
-  function kickLive() {
-    if (live.sensor) { trackStart(); return; }
+  function kickLive() {    if (live.sensor) { trackStart(); return; }
     if (live.raf) return;
     live.raf = requestAnimationFrame(liveTick);
   }
@@ -17201,8 +17403,23 @@ window.Astro = (function () {
      · 상단 「딥스카이 확장 ON/OFF」 하나로 두 단계를 함께 끕니다(네트워크 요청 0건).
      · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
      ====================================================================== */
+  /* 표시용 수정판 번호 — README 업데이트 이력의 **누적 배포 번호**입니다(30 → v3.0, 31 → v3.1 …).
+     배포할 때 sw.js 의 VERSION(빌드 번호 2026-11-28.21)과 함께 올리고, build.py 가
+     「v3.0 (30번째) · 캐시 2026-11-28.21」을 같이 찍어 두 값이 같은 배포인지 확인합니다.
+     ☰ 더보기 하단·공유 카드 하단의 [data-app-version] 에 자동으로 채워집니다. */
+  const APP_RELEASE = '30';
+  function appVersionLabel() {
+    const n = parseInt(APP_RELEASE, 10) || 0;
+    return '별너울 v' + Math.floor(n / 10) + '.' + (n % 10);      // 30 → v3.0 · 31 → v3.1
+  }
+  function applyAppVersion() {
+    const txt = appVersionLabel();
+    const list = document.querySelectorAll('[data-app-version]');
+    for (let i = 0; i < list.length; i++) list[i].textContent = txt;
+  }
+
   const DEEP = {
-    liveLocalFov: 60, liveGaiaFov: 10,
+    liveLocalFov: 60, liveGaiaFov: 10, warmGaiaFov: 12,
     hitPool: [], panel: { mode: 'region', idx: 0, q: '' }, timer: null, lastPaint: 0
   };
 
@@ -17273,12 +17490,14 @@ window.Astro = (function () {
     return DEEP_MAG_BASE + DEEP_MAG_SLOPE * Math.log2(DEEP_MAG_BASE_FOV / f);
   }
   function deepMagLimit(fovDeg) { return Math.min(deepMagCurve(fovDeg), DeepSky.tileMag); }
-  /** 한계 등급에 가까운 별일수록 흐리게 — 등급대마다 페이드 폭을 다르게.
-      밝은 별(≤9등)은 또렷하게 좁게, 중간(≤11등)은 1.5등, 가장 많은 어두운 별은 2.0등에
-      걸쳐 아주 은은하게 떠올라, 어느 배율에서도 화면이 갑자기 별바다가 되지 않습니다. */
-  function deepFade(limit, mag) {
-    const span = mag <= 9 ? 1.0 : mag <= 11 ? 1.5 : 2.0;
-    return clamp((limit - mag) / span, 0, 1);
+  /** 한계 등급에 가까운 별일수록 흐리게 — 스텔라리움처럼 **확대할수록 서서히 진해집니다**.
+      2026-11-29 (.21) 남현님 "확대할수록 별의 투명도를 점점 진하게" — 선형 클램프를
+      smoothstep 으로 바꾸고 페이드 폭을 1.45등으로 넉넉히 잡았습니다(예전 1.0~2.0등 선형은
+      한계 근처에서도 알파가 계단처럼 올라 툭 튀어나왔습니다). */
+  function smoothstep(t) { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); }
+  function deepFade(limit, mag, span) {
+    const s = span == null ? (mag <= 9 ? 1.0 : 1.45) : span;
+    return smoothstep((limit - mag) / s);
   }
   /* -------------------------------------------- 별빛 색 (실제 B−V·BP−RP)
      확장 성도는 B−V, Gaia 는 BP−RP 를 B−V 로 옮겨((BP−RP−0.15)×0.72) 분광형 묶음으로
@@ -17358,6 +17577,17 @@ window.Astro = (function () {
     return { r: 0.30 + 0.10 * t, a: 0.22 + 0.08 * t };
   }
 
+  /* 화면 네 귀통이까지 덮는 각반경(도) — 입체 투영은 화면거리 r = kS·tan(θ/2),
+     kS = (H/2)/tan(fov/4) 이므로 화면 대각 반지름 hypot(W,H)/2 에 해당하는 θ 를 되풀이합니다.
+     세로 폰(390×844) fov 3.7° → 2.04°, fov 1° → 0.55° (여유 10% 포함해 각각 2.24°·0.60°).
+     예전처럼 fov×1.15 로 잡으면 세로 폰에서 화면이 필요로 하는 것의 2배를 받아,
+     그만큼 별이 얇게 퍼져 축소했을 때 가운데만 남는 원인이 됐습니다. */
+  function liveSkyRadius(fovDeg) {
+    const W = Math.max(1, live.w || 1), H = Math.max(1, live.h || 1);
+    const t = (Math.hypot(W, H) / H) * Math.tan(clamp(fovDeg, LIVE_FOV_MIN, 130) * RAD / 4);
+    return 2 * Math.atan(t) / RAD * 1.1 + 0.01;
+  }
+
   function drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal) {
     DEEP.liveHits = [];
     live.deepLimit = fovDeg <= DEEP.liveLocalFov ? Math.min(deepMagLimit(fovDeg), DeepSky.tileMag) : 0;
@@ -17370,8 +17600,10 @@ window.Astro = (function () {
     let shownN = 0, shownLim = 0;
     if (fovDeg <= DEEP.liveLocalFov) {
       /* 세로로 긴 폰 화면은 세로 화각이 가로의 H/W(≈2배)까지 벌어집니다 —
-         시야 반경을 넉넉히 잡아 화면 위아래 끝의 별까지 담습니다. */
-      const rad = clamp(fovDeg * 1.35, 0.25, 48);
+         시야 반경을 넉넉히 잡아 화면 위아래 끝의 별까지 담습니다.
+         (네 귀통이까지 덮는 각반경 × 1.05 — 예전 fov×1.35 보다 훨씬 적게 받아
+          가까운 타일부터 빨리 채워집니다.) */
+      const rad = clamp(liveSkyRadius(fovDeg) * 1.05, 0.25, 48);
       DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
       const lim = Math.min(deepMagLimit(fovDeg), DeepSky.tileMag);
       shownLim = lim;
@@ -17433,13 +17665,22 @@ window.Astro = (function () {
     /* 2단계 — Gaia DR3 실시간(중앙 정밀 구역) — 로컬 한계(12등)보다 어두운 별을 이어서 */
     let gaiaN = 0;
     if (fovDeg <= DEEP.liveGaiaFov) {
-      /* 조회 반경 — 세로로 긴 폰 화면은 세로 반각이 fov/2, 대각 반각은 fov의 약 0.55배라
-         fov×1.15 면 화면 네 귀통이까지 덮습니다. (예전 0.35배는 가운데 작은 원만 받아,
-         확대할수록 가장자리 별이 사라졌습니다.) 1′ 시야에서는 0.03°(1.8′) 이상은 묻습니다. */
-      const gr = clamp(fovDeg * 1.15, 0.03, 2.5);
+      /* 조회 반경 = 화면 네 귀통이를 덮는 각반경(세로 폰에서 fov의 약 0.55배).
+         예전 fov×1.15 는 세로 폰에서 필요한 것의 2배를 받아 별이 얇게 퍼졌고,
+         2.5° 상한에 걸려 위아래가 비기도 했습니다. */
+      const gr = clamp(liveSkyRadius(fovDeg), 0.03, 6);
+      /* fov ≤ 12° 로 들어오면 넓은 배경 원뿔(r 5°·11.5~15등)을 미리 받아 둡니다 —
+         3°~10° 축소가 빨라지고, 화면을 다 덮는 캐시라 조회 없이도 바로 그려집니다. */
+      if (fovDeg <= DEEP.warmGaiaFov) DeepSky.warmGaia(ctr.raDeg, ctr.dec);
       DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, deepGaiaMag(fovDeg));
       const gs = DeepSky.gaiaStars();
       const gLim = deepGaiaMag(fovDeg);
+      const gMeta = DeepSky.gaiaMeta();
+      const haveR = gMeta.r || 0;
+      /* 지금 목록이 화면을 다 덮지 못하면(축소 직후·조회 중) — 가장자리를 부드럽게 지워
+         가운데 작은 원이 딱딱한 '섬'으로 보이지 않게 합니다. 넓은 배경 캐시가 있으면
+         deep.js 가 먼저 그것을 깔아 두므로 이 감쇠는 정말 캐시가 없을 때만 쓰입니다. */
+      const narrow = haveR > 0 && haveR < gr * 0.55;
       const cosD = Math.cos(ctr.dec * RAD);
       const gcols = isRed() ? DEEP_COLORS_RED : DEEP_COLORS;
       /* 색(BP−RP→B−V)·크기·알파 묶음으로 한 번에 — Gaia 는 한 구역에 수백 개입니다. */
@@ -17449,10 +17690,14 @@ window.Astro = (function () {
         const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
         const dDec = g.dec - ctr.dec;
         if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(dDec) > gr * 1.45) continue;
+        const dd = Math.hypot(dRa * cosD, dDec);
         const dm = gLim - g.mag;
         const sh = gaiaStarShape(g.mag);
-        /* 한계 등급 바로 아래 별만 살짝 더 옅게 — 밝기 차이가 자연스럽게 사라집니다. */
-        const a = clamp(sh.a * clamp(dm / 0.8, 0.7, 1), 0, 1);
+        /* 한계 등급 1.2등에 걸쳐 smoothstep — 경계 각도에서는 0개에서 시작해
+           11.5~12등 → 13~14등 → 15~17등 → 20.8등 순서로 서서히 떠오릅니다. */
+        let a = clamp(sh.a * smoothstep(dm / 1.2), 0, 1);
+        if (a < 0.03) continue;                      // 아직 보이지 않는 별은 그리지도 세지도 않음
+        if (narrow) a *= clamp((1 - dd / (haveR * 1.02)) / 0.35, 0, 1) * 0.92 + 0.02;
         const h = A.equatorialToHorizontal(g.ra / 15, g.dec, lat, lon, jd);
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
@@ -17499,17 +17744,22 @@ window.Astro = (function () {
         ctx.fillStyle = isRed() ? '#ffb08a' : '#ffd479';
         const txt = meta.busy ? 'Gaia DR3 조회 중…'
           : gaiaN ? 'Gaia DR3 ' + gaiaN + '개 · ' + deepGaiaMag(fovDeg).toFixed(1) + '등급까지'
-            : 'Gaia DR3 — 이 구역 응답 없음(로컬 확장 성도만)';
+            : meta.n ? 'Gaia DR3 — 한계 ' + deepGaiaMag(fovDeg).toFixed(1) + '등(확대하면 떠오릅니다)'
+              : 'Gaia DR3 — 이 구역 응답 없음(로컬 확장 성도만)';
         ctx.fillText(txt, 12, topY + 14);
       }
       ctx.restore();
     }
   }
 
-  /** 시야에 따른 Gaia 한계 등급 — 1′까지 이어서 20.7등(Gaia DR3 실관측 한계)까지 깊어집니다.
-      20° 8.9등 … 6° 11.4등 … 1° 15.1등 … 15′ 18.0등 … 1′ 20.8등(포화). */
+  /** 시야에 따른 Gaia 한계 등급 — **fov 10°(라이브 Gaia 경계)에서 정확히 11.5등**에서
+      시작해, 시야가 절반이 될 때마다 +1등씩 깊어집니다.
+      10° 11.5 · 5° 12.5 · 2.5° 13.5 · 1° 14.8 · 30′ 15.8 · 15′ 16.8 · 1′ 20.7
+      (예전 곡선은 10°에서 이미 11.9등이라 경계에 들어설 때 11.5~13등이 한꺼번에 떴습니다.) */
+  const GAIA_MAG_AT_FOV = 10, GAIA_MAG_BASE = 11.5;
   function deepGaiaMag(fovDeg) {
-    return clamp(deepMagCurve(fovDeg), 11.5, 20.8);
+    const f = clamp(fovDeg, LIVE_FOV_MIN, GAIA_MAG_AT_FOV);
+    return clamp(GAIA_MAG_BASE + Math.log2(GAIA_MAG_AT_FOV / f), GAIA_MAG_BASE, 20.8);
   }
 
   /* 확장 별·Gaia 별 → 정보 창 모양으로 */
@@ -17724,7 +17974,12 @@ window.Astro = (function () {
       }
     });
     if (window.DeepSky) {
-      DeepSky.subscribe(function () { deepSyncUi(); deepSchedule(); });
+      /* why === 'gaia' (Gaia 응답 도착) 는 70ms 디바운스 없이 바로 한 프레임 그립니다. */
+      DeepSky.subscribe(function (on, why) {
+        deepSyncUi();
+        if (why === 'gaia') { liveDirty = true; kickLive(); }
+        else deepSchedule();
+      });
     }
   }
 
@@ -18302,6 +18557,12 @@ window.Astro = (function () {
        로컬 확장(≤12등, ≤2.4px) > Gaia(≤0.85px). */
     deepShape: function (kind, mag) {
       return kind === 'gaia' ? gaiaStarShape(mag) : deepStarShape(12 - mag, mag);
+    },
+    /* -- 검증용 — 지금 시야의 Gaia 한계 등급(경계 10° 에서 정확히 11.5등에서 시작). */
+    gaiaLim: function () { return deepGaiaMag(live.fov); },
+    /* -- 검증용 — 한계 등급 페이드 계수(로컬 확장 1.45등 · Gaia 1.2등 smoothstep). */
+    fade: function (kind, mag, lim) {
+      return kind === 'gaia' ? smoothstep((lim - mag) / 1.2) : deepFade(lim, mag);
     },
     mwProbe: function (raH, decD, fov) {
       const c = state.last || computeNight();
@@ -19942,6 +20203,7 @@ window.Astro = (function () {
         '<p class="bwshare-sub">링크를 보내거나, 아래 QR을 그대로 보여 주세요.</p>' +
         '<div class="bwshare-qr" data-share-qr>' + qrSvgMarkup(232) + '</div>' +
         '<p class="bwshare-url">' + QR_URL + '</p>' +
+        '<p class="bwshare-ver" data-app-version>별너울 v3.0</p>' +
         '<div class="bwshare-btns">' +
           '<button type="button" class="bwshare-btn primary" data-share-copy>🔗 링크 복사</button>' +
           (navigator.share ? '<button type="button" class="bwshare-btn" data-share-sys>📤 공유 시트</button>' : '') +
@@ -21023,6 +21285,7 @@ window.Astro = (function () {
     initExtra();
     wireDeep();          // 🌌 딥스카이 확장 토글·확장 도감 탭
     deepSyncUi();
+    applyAppVersion();   // ☰ 더보기 하단·공유 카드의 「별너울 v.30」
     // '지금' 시각을 분 단위로 따라갑니다(탭으로 돌아오면 바로 한 번).
     setInterval(tickLiveClock, 5000);
     document.addEventListener('visibilitychange', function () {
@@ -21090,7 +21353,8 @@ window.Astro = (function () {
     darkPlan: darkPlan,
     state: state,
     live: live,
-    version: D.meta.version
+    version: D.meta.version,
+    release: APP_RELEASE
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

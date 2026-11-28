@@ -3189,8 +3189,7 @@
     return (b > 0 ? b + 8 : 44) + 9;
   }
 
-  function kickLive() {
-    if (live.sensor) { trackStart(); return; }
+  function kickLive() {    if (live.sensor) { trackStart(); return; }
     if (live.raf) return;
     live.raf = requestAnimationFrame(liveTick);
   }
@@ -5441,8 +5440,23 @@
      · 상단 「딥스카이 확장 ON/OFF」 하나로 두 단계를 함께 끕니다(네트워크 요청 0건).
      · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
      ====================================================================== */
+  /* 표시용 수정판 번호 — README 업데이트 이력의 **누적 배포 번호**입니다(30 → v3.0, 31 → v3.1 …).
+     배포할 때 sw.js 의 VERSION(빌드 번호 2026-11-28.21)과 함께 올리고, build.py 가
+     「v3.0 (30번째) · 캐시 2026-11-28.21」을 같이 찍어 두 값이 같은 배포인지 확인합니다.
+     ☰ 더보기 하단·공유 카드 하단의 [data-app-version] 에 자동으로 채워집니다. */
+  const APP_RELEASE = '30';
+  function appVersionLabel() {
+    const n = parseInt(APP_RELEASE, 10) || 0;
+    return '별너울 v' + Math.floor(n / 10) + '.' + (n % 10);      // 30 → v3.0 · 31 → v3.1
+  }
+  function applyAppVersion() {
+    const txt = appVersionLabel();
+    const list = document.querySelectorAll('[data-app-version]');
+    for (let i = 0; i < list.length; i++) list[i].textContent = txt;
+  }
+
   const DEEP = {
-    liveLocalFov: 60, liveGaiaFov: 10,
+    liveLocalFov: 60, liveGaiaFov: 10, warmGaiaFov: 12,
     hitPool: [], panel: { mode: 'region', idx: 0, q: '' }, timer: null, lastPaint: 0
   };
 
@@ -5513,12 +5527,14 @@
     return DEEP_MAG_BASE + DEEP_MAG_SLOPE * Math.log2(DEEP_MAG_BASE_FOV / f);
   }
   function deepMagLimit(fovDeg) { return Math.min(deepMagCurve(fovDeg), DeepSky.tileMag); }
-  /** 한계 등급에 가까운 별일수록 흐리게 — 등급대마다 페이드 폭을 다르게.
-      밝은 별(≤9등)은 또렷하게 좁게, 중간(≤11등)은 1.5등, 가장 많은 어두운 별은 2.0등에
-      걸쳐 아주 은은하게 떠올라, 어느 배율에서도 화면이 갑자기 별바다가 되지 않습니다. */
-  function deepFade(limit, mag) {
-    const span = mag <= 9 ? 1.0 : mag <= 11 ? 1.5 : 2.0;
-    return clamp((limit - mag) / span, 0, 1);
+  /** 한계 등급에 가까운 별일수록 흐리게 — 스텔라리움처럼 **확대할수록 서서히 진해집니다**.
+      2026-11-29 (.21) 남현님 "확대할수록 별의 투명도를 점점 진하게" — 선형 클램프를
+      smoothstep 으로 바꾸고 페이드 폭을 1.45등으로 넉넉히 잡았습니다(예전 1.0~2.0등 선형은
+      한계 근처에서도 알파가 계단처럼 올라 툭 튀어나왔습니다). */
+  function smoothstep(t) { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); }
+  function deepFade(limit, mag, span) {
+    const s = span == null ? (mag <= 9 ? 1.0 : 1.45) : span;
+    return smoothstep((limit - mag) / s);
   }
   /* -------------------------------------------- 별빛 색 (실제 B−V·BP−RP)
      확장 성도는 B−V, Gaia 는 BP−RP 를 B−V 로 옮겨((BP−RP−0.15)×0.72) 분광형 묶음으로
@@ -5598,6 +5614,17 @@
     return { r: 0.30 + 0.10 * t, a: 0.22 + 0.08 * t };
   }
 
+  /* 화면 네 귀통이까지 덮는 각반경(도) — 입체 투영은 화면거리 r = kS·tan(θ/2),
+     kS = (H/2)/tan(fov/4) 이므로 화면 대각 반지름 hypot(W,H)/2 에 해당하는 θ 를 되풀이합니다.
+     세로 폰(390×844) fov 3.7° → 2.04°, fov 1° → 0.55° (여유 10% 포함해 각각 2.24°·0.60°).
+     예전처럼 fov×1.15 로 잡으면 세로 폰에서 화면이 필요로 하는 것의 2배를 받아,
+     그만큼 별이 얇게 퍼져 축소했을 때 가운데만 남는 원인이 됐습니다. */
+  function liveSkyRadius(fovDeg) {
+    const W = Math.max(1, live.w || 1), H = Math.max(1, live.h || 1);
+    const t = (Math.hypot(W, H) / H) * Math.tan(clamp(fovDeg, LIVE_FOV_MIN, 130) * RAD / 4);
+    return 2 * Math.atan(t) / RAD * 1.1 + 0.01;
+  }
+
   function drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal) {
     DEEP.liveHits = [];
     live.deepLimit = fovDeg <= DEEP.liveLocalFov ? Math.min(deepMagLimit(fovDeg), DeepSky.tileMag) : 0;
@@ -5610,8 +5637,10 @@
     let shownN = 0, shownLim = 0;
     if (fovDeg <= DEEP.liveLocalFov) {
       /* 세로로 긴 폰 화면은 세로 화각이 가로의 H/W(≈2배)까지 벌어집니다 —
-         시야 반경을 넉넉히 잡아 화면 위아래 끝의 별까지 담습니다. */
-      const rad = clamp(fovDeg * 1.35, 0.25, 48);
+         시야 반경을 넉넉히 잡아 화면 위아래 끝의 별까지 담습니다.
+         (네 귀통이까지 덮는 각반경 × 1.05 — 예전 fov×1.35 보다 훨씬 적게 받아
+          가까운 타일부터 빨리 채워집니다.) */
+      const rad = clamp(liveSkyRadius(fovDeg) * 1.05, 0.25, 48);
       DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
       const lim = Math.min(deepMagLimit(fovDeg), DeepSky.tileMag);
       shownLim = lim;
@@ -5673,13 +5702,22 @@
     /* 2단계 — Gaia DR3 실시간(중앙 정밀 구역) — 로컬 한계(12등)보다 어두운 별을 이어서 */
     let gaiaN = 0;
     if (fovDeg <= DEEP.liveGaiaFov) {
-      /* 조회 반경 — 세로로 긴 폰 화면은 세로 반각이 fov/2, 대각 반각은 fov의 약 0.55배라
-         fov×1.15 면 화면 네 귀통이까지 덮습니다. (예전 0.35배는 가운데 작은 원만 받아,
-         확대할수록 가장자리 별이 사라졌습니다.) 1′ 시야에서는 0.03°(1.8′) 이상은 묻습니다. */
-      const gr = clamp(fovDeg * 1.15, 0.03, 2.5);
+      /* 조회 반경 = 화면 네 귀통이를 덮는 각반경(세로 폰에서 fov의 약 0.55배).
+         예전 fov×1.15 는 세로 폰에서 필요한 것의 2배를 받아 별이 얇게 퍼졌고,
+         2.5° 상한에 걸려 위아래가 비기도 했습니다. */
+      const gr = clamp(liveSkyRadius(fovDeg), 0.03, 6);
+      /* fov ≤ 12° 로 들어오면 넓은 배경 원뿔(r 5°·11.5~15등)을 미리 받아 둡니다 —
+         3°~10° 축소가 빨라지고, 화면을 다 덮는 캐시라 조회 없이도 바로 그려집니다. */
+      if (fovDeg <= DEEP.warmGaiaFov) DeepSky.warmGaia(ctr.raDeg, ctr.dec);
       DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, deepGaiaMag(fovDeg));
       const gs = DeepSky.gaiaStars();
       const gLim = deepGaiaMag(fovDeg);
+      const gMeta = DeepSky.gaiaMeta();
+      const haveR = gMeta.r || 0;
+      /* 지금 목록이 화면을 다 덮지 못하면(축소 직후·조회 중) — 가장자리를 부드럽게 지워
+         가운데 작은 원이 딱딱한 '섬'으로 보이지 않게 합니다. 넓은 배경 캐시가 있으면
+         deep.js 가 먼저 그것을 깔아 두므로 이 감쇠는 정말 캐시가 없을 때만 쓰입니다. */
+      const narrow = haveR > 0 && haveR < gr * 0.55;
       const cosD = Math.cos(ctr.dec * RAD);
       const gcols = isRed() ? DEEP_COLORS_RED : DEEP_COLORS;
       /* 색(BP−RP→B−V)·크기·알파 묶음으로 한 번에 — Gaia 는 한 구역에 수백 개입니다. */
@@ -5689,10 +5727,14 @@
         const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
         const dDec = g.dec - ctr.dec;
         if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(dDec) > gr * 1.45) continue;
+        const dd = Math.hypot(dRa * cosD, dDec);
         const dm = gLim - g.mag;
         const sh = gaiaStarShape(g.mag);
-        /* 한계 등급 바로 아래 별만 살짝 더 옅게 — 밝기 차이가 자연스럽게 사라집니다. */
-        const a = clamp(sh.a * clamp(dm / 0.8, 0.7, 1), 0, 1);
+        /* 한계 등급 1.2등에 걸쳐 smoothstep — 경계 각도에서는 0개에서 시작해
+           11.5~12등 → 13~14등 → 15~17등 → 20.8등 순서로 서서히 떠오릅니다. */
+        let a = clamp(sh.a * smoothstep(dm / 1.2), 0, 1);
+        if (a < 0.03) continue;                      // 아직 보이지 않는 별은 그리지도 세지도 않음
+        if (narrow) a *= clamp((1 - dd / (haveR * 1.02)) / 0.35, 0, 1) * 0.92 + 0.02;
         const h = A.equatorialToHorizontal(g.ra / 15, g.dec, lat, lon, jd);
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
@@ -5739,17 +5781,22 @@
         ctx.fillStyle = isRed() ? '#ffb08a' : '#ffd479';
         const txt = meta.busy ? 'Gaia DR3 조회 중…'
           : gaiaN ? 'Gaia DR3 ' + gaiaN + '개 · ' + deepGaiaMag(fovDeg).toFixed(1) + '등급까지'
-            : 'Gaia DR3 — 이 구역 응답 없음(로컬 확장 성도만)';
+            : meta.n ? 'Gaia DR3 — 한계 ' + deepGaiaMag(fovDeg).toFixed(1) + '등(확대하면 떠오릅니다)'
+              : 'Gaia DR3 — 이 구역 응답 없음(로컬 확장 성도만)';
         ctx.fillText(txt, 12, topY + 14);
       }
       ctx.restore();
     }
   }
 
-  /** 시야에 따른 Gaia 한계 등급 — 1′까지 이어서 20.7등(Gaia DR3 실관측 한계)까지 깊어집니다.
-      20° 8.9등 … 6° 11.4등 … 1° 15.1등 … 15′ 18.0등 … 1′ 20.8등(포화). */
+  /** 시야에 따른 Gaia 한계 등급 — **fov 10°(라이브 Gaia 경계)에서 정확히 11.5등**에서
+      시작해, 시야가 절반이 될 때마다 +1등씩 깊어집니다.
+      10° 11.5 · 5° 12.5 · 2.5° 13.5 · 1° 14.8 · 30′ 15.8 · 15′ 16.8 · 1′ 20.7
+      (예전 곡선은 10°에서 이미 11.9등이라 경계에 들어설 때 11.5~13등이 한꺼번에 떴습니다.) */
+  const GAIA_MAG_AT_FOV = 10, GAIA_MAG_BASE = 11.5;
   function deepGaiaMag(fovDeg) {
-    return clamp(deepMagCurve(fovDeg), 11.5, 20.8);
+    const f = clamp(fovDeg, LIVE_FOV_MIN, GAIA_MAG_AT_FOV);
+    return clamp(GAIA_MAG_BASE + Math.log2(GAIA_MAG_AT_FOV / f), GAIA_MAG_BASE, 20.8);
   }
 
   /* 확장 별·Gaia 별 → 정보 창 모양으로 */
@@ -5964,7 +6011,12 @@
       }
     });
     if (window.DeepSky) {
-      DeepSky.subscribe(function () { deepSyncUi(); deepSchedule(); });
+      /* why === 'gaia' (Gaia 응답 도착) 는 70ms 디바운스 없이 바로 한 프레임 그립니다. */
+      DeepSky.subscribe(function (on, why) {
+        deepSyncUi();
+        if (why === 'gaia') { liveDirty = true; kickLive(); }
+        else deepSchedule();
+      });
     }
   }
 
@@ -6542,6 +6594,12 @@
        로컬 확장(≤12등, ≤2.4px) > Gaia(≤0.85px). */
     deepShape: function (kind, mag) {
       return kind === 'gaia' ? gaiaStarShape(mag) : deepStarShape(12 - mag, mag);
+    },
+    /* -- 검증용 — 지금 시야의 Gaia 한계 등급(경계 10° 에서 정확히 11.5등에서 시작). */
+    gaiaLim: function () { return deepGaiaMag(live.fov); },
+    /* -- 검증용 — 한계 등급 페이드 계수(로컬 확장 1.45등 · Gaia 1.2등 smoothstep). */
+    fade: function (kind, mag, lim) {
+      return kind === 'gaia' ? smoothstep((lim - mag) / 1.2) : deepFade(lim, mag);
     },
     mwProbe: function (raH, decD, fov) {
       const c = state.last || computeNight();
@@ -8182,6 +8240,7 @@
         '<p class="bwshare-sub">링크를 보내거나, 아래 QR을 그대로 보여 주세요.</p>' +
         '<div class="bwshare-qr" data-share-qr>' + qrSvgMarkup(232) + '</div>' +
         '<p class="bwshare-url">' + QR_URL + '</p>' +
+        '<p class="bwshare-ver" data-app-version>별너울 v3.0</p>' +
         '<div class="bwshare-btns">' +
           '<button type="button" class="bwshare-btn primary" data-share-copy>🔗 링크 복사</button>' +
           (navigator.share ? '<button type="button" class="bwshare-btn" data-share-sys>📤 공유 시트</button>' : '') +
@@ -9263,6 +9322,7 @@
     initExtra();
     wireDeep();          // 🌌 딥스카이 확장 토글·확장 도감 탭
     deepSyncUi();
+    applyAppVersion();   // ☰ 더보기 하단·공유 카드의 「별너울 v.30」
     // '지금' 시각을 분 단위로 따라갑니다(탭으로 돌아오면 바로 한 번).
     setInterval(tickLiveClock, 5000);
     document.addEventListener('visibilitychange', function () {
@@ -9330,7 +9390,8 @@
     darkPlan: darkPlan,
     state: state,
     live: live,
-    version: D.meta.version
+    version: D.meta.version,
+    release: APP_RELEASE
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
