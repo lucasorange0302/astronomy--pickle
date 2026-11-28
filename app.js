@@ -271,9 +271,23 @@
   }
 
   /* ------------------------------------------------------------ 객체 위치 */
+  /** 행성·달·태양의 위치 — 도감 항목(dynamic)이 모두 같은 식으로 움직이도록 한곳에 모았습니다.
+      '달'·'태양'도 도감에서 검색·상세보기·조준이 되도록 dynamic 키로 다룹니다. */
+  function dynPos(key, jd) {
+    if (key === 'moon') {
+      const mp = A.moonPos(jd), ph = A.moonPhase(jd);
+      return { raH: mp.raH, decD: mp.decD, mag: -12.7, name: '달', extra: { phase: ph } };
+    }
+    if (key === 'sun') {
+      const sp = A.sunPos(jd);
+      return { raH: sp.raH, decD: sp.decD, mag: -26.7, name: '태양', extra: null };
+    }
+    return A.planetPos(key, jd);
+  }
+
   function objectPosition(obj, jd, lat, lon) {
     if (obj.dynamic) {
-      const p = A.planetPos(obj.dynamic, jd);
+      const p = dynPos(obj.dynamic, jd);
       return {
         raH: p.raH, decD: p.decD,
         hor: A.equatorialToHorizontal(p.raH, p.decD, lat, lon, jd),
@@ -289,7 +303,7 @@
 
   function objectNightInfo(obj, lat, lon) {
     if (obj.dynamic) {
-      const p = A.planetPos(obj.dynamic, A.jdFromDate(A.localToDate(state.dateStr, '22:00')));
+      const p = dynPos(obj.dynamic, A.jdFromDate(A.localToDate(state.dateStr, '22:00')));
       return A.objectNight(p.raH, p.decD, lat, lon, state.dateStr);
     }
     return A.objectNight(obj.raH, obj.decD, lat, lon, state.dateStr);
@@ -612,7 +626,7 @@
     if (c._ni[o.id]) return c._ni[o.id];
     let ni;
     if (o.dynamic) {
-      const p = c.planets.find(function (x) { return x.key === o.dynamic; }) || A.planetPos(o.dynamic, c.jd);
+      const p = c.planets.find(function (x) { return x.key === o.dynamic; }) || dynPos(o.dynamic, c.jd);
       ni = A.objectNight(p.raH, p.decD, state.site.lat, state.site.lon, state.dateStr);
     } else {
       ni = A.objectNight(o.raH, o.decD, state.site.lat, state.site.lon, state.dateStr);
@@ -1467,6 +1481,7 @@
   function coarseType(o) {
     if (o.group === 'meteor') return '유성우';
     if (o.group === 'planet') return '행성';
+    if (o.group === 'moon') return '위성';
     if (o.group === 'exo') return '외계행성';
     if (o.group === 'star') return '항성';
     if (o.type.indexOf('성단') >= 0) return '성단';
@@ -1528,17 +1543,55 @@
   }
 
   function filteredCatalog() {
-    const q = state.filter.q.trim().toLowerCase();
+    const q = searchNorm(state.filter.q);
     return D.catalog.filter(function (o) {
       if (state.filter.type !== 'all' && coarseType(o) !== state.filter.type) return false;
       if (state.filter.equip !== 'all' && (o.dynamic ? 1 : o.equip) > Number(state.filter.equip)) return false;
       if (state.filter.season !== 'all' && seasonOf(o).indexOf(state.filter.season) < 0) return false;
-      if (q) {
-        const hay = [o.name, o.sub, o.con, o.type, o.brief, o.detail].join(' ').toLowerCase();
-        if (hay.indexOf(q) < 0) return false;
-      }
+      if (q && catalogHay(o).indexOf(q) < 0) return false;
       return true;
     });
+  }
+
+  /* --------------------------------------------------------- 검색 순위
+     '달'을 찾았는데 금성의 설명문("달 다음으로 밝은")이 먼저 나오면 안 됩니다.
+     이름 쪽 일치를 설명문 일치보다 항상 앞세웁니다(대표 도감·전체 도감이 같은 함수를 씁니다).
+       0 이름 완전 일치   1 이름 앞부분   2 이름 포함(별칭·카탈로그 번호 포함)
+       3 종류·별자리 이름   4 설명문 일치 */
+  function searchNorm(s) {
+    return String(s == null ? '' : s).toLowerCase().replace(/[\s\u00a0]+/g, '');
+  }
+
+  function catalogHay(o) {
+    return searchNorm([o.name, o.sub, o.id, o.en, o.con, o.type,
+      o.brief, o.detail, o.science, o.tips, o.myth, o.find].join(' '));
+  }
+
+  /** 이름 표기 변형 — 'M42 / NGC 1976' → ['m42', 'ngc1976'], '오리온 대성운(M42)' → 앞/안 이름 */
+  function objectNameKeys(o) {
+    const out = [];
+    const push = function (v) {
+      String(v == null ? '' : v).split(/[\/|·,]/).forEach(function (piece) {
+        const n = searchNorm(piece);
+        if (n && out.indexOf(n) < 0) out.push(n);
+      });
+    };
+    push(o.name); push(o.sub); push(o.id); push(o.en);
+    const m = String(o.name || '').match(/^(.*?)\s*[(（]([^)）]+)[)）]\s*$/);
+    if (m) { push(m[1]); push(m[2]); }
+    return out;
+  }
+
+  function searchRank(o, q) {
+    const nq = searchNorm(q);
+    if (!nq) return 0;
+    const keys = objectNameKeys(o);
+    if (keys.indexOf(nq) >= 0) return 0;                                  // 이름 완전 일치
+    for (let i = 0; i < keys.length; i++) if (keys[i].indexOf(nq) === 0) return 1;   // 이름 앞부분
+    for (let i = 0; i < keys.length; i++) if (keys[i].indexOf(nq) >= 0) return 2;    // 이름 포함
+    if (searchNorm(o.type).indexOf(nq) >= 0 || searchNorm(o.con).indexOf(nq) >= 0) return 3;
+    if (searchNorm([o.brief, o.detail, o.science, o.tips, o.myth, o.find].join(' ')).indexOf(nq) >= 0) return 4;
+    return 5;
   }
 
   function renderCatalog(c) {
@@ -1546,19 +1599,24 @@
     buildChips();
     const list = filteredCatalog();
     const grid = $('#catalogGrid');
-    $('#catalogCount').textContent = list.length + '개 천체 · 등급이 밝은 순';
+    $('#catalogCount').textContent = list.length + '개 천체 · ' + (state.filter.q.trim() ? '이름이 맞는 순' : '등급이 밝은 순');
     if (!list.length) {
       grid.innerHTML = '<p class="muted">조건에 맞는 천체가 없습니다. 검색어나 필터를 바꿔 보세요.</p>';
       return;
     }
     const sortMode = ($('#sortSelect') && $('#sortSelect').value) || 'mag';
     const onlyVis = !!($('#onlyVisible') && $('#onlyVisible').checked);
+    const searchQ = state.filter.q.trim();
     let working = list.slice();
     if (onlyVis) {
       working = working.filter(function (o) { return nightInfoCache(c, o).maxAlt > 5; });
       $('#catalogCount').textContent = working.length + '개 천체 · 오늘 밤 지평선 위에 뜨는 것만';
     }
     const sorted = working.sort(function (a, b) {
+      if (searchQ) {
+        const ra = searchRank(a, searchQ), rb = searchRank(b, searchQ);
+        if (ra !== rb) return ra - rb;          // 이름 일치가 항상 먼저
+      }
       if (sortMode === 'name') return a.name.localeCompare(b.name, 'ko');
       if (sortMode === 'diff') return (a.diff - b.diff) || (a.mag - b.mag);
       if (sortMode === 'alt') {
@@ -1566,8 +1624,8 @@
         const bb = objectPosition(b, c.jd, state.site.lat, state.site.lon).hor.alt;
         return bb - aa;
       }
-      const am = a.dynamic ? (A.planetPos(a.dynamic, c.jd).mag) : a.mag;
-      const bm = b.dynamic ? (A.planetPos(b.dynamic, c.jd).mag) : b.mag;
+      const am = a.dynamic ? (dynPos(a.dynamic, c.jd).mag) : a.mag;
+      const bm = b.dynamic ? (dynPos(b.dynamic, c.jd).mag) : b.mag;
       return am - bm;
     });
     grid.innerHTML = sorted.map(function (o) {
@@ -2243,7 +2301,7 @@
     let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null, cells = null;
     let conAbbr = '', members = null, fovDeg = null;
     if (kind === 'planet') {
-      const p = A.planetPos(key, jd);
+      const p = dynPos(key, jd);
       raH = p.raH; decD = p.decD; mag = p.mag; name = p.name;
       sub = '행성 · 시지름 ' + nf(p.diamArcsec, 1) + '″ · 위상 ' + nf(p.phaseD, 0) + '° · 거리 ' + nf(p.distAU, 2) + ' AU';
       const o = D.catalog.find(function (x) { return x.dynamic === key; });
@@ -2262,6 +2320,8 @@
     } else if (kind === 'dso') {
       const o = D.catalog.find(function (x) { return x.id === key; });
       if (!o) return null;
+      if (o.dynamic === 'moon') return skyInfo('moon', 'moon', jd);
+      if (o.dynamic === 'sun') return skyInfo('sun', 'sun', jd);
       if (o.dynamic) return skyInfo('planet', o.dynamic, jd);
       raH = o.raH; decD = o.decD; mag = o.mag; name = o.name;
       sub = o.type + ' · ' + o.sub + (o.con && o.con !== '—' ? ' · ' + o.con : '') + (o.dist && o.dist !== '—' ? ' · ' + o.dist : '');
@@ -2337,7 +2397,9 @@
   function aimObject(id) {
     const o = D.catalog.find(function (x) { return x.id === id; });
     if (!o) return;
-    if (o.dynamic) aimAt('planet', o.dynamic);
+    if (o.dynamic === 'moon') aimAt('moon', 'moon');
+    else if (o.dynamic === 'sun') aimAt('sun', 'sun');
+    else if (o.dynamic) aimAt('planet', o.dynamic);
     else aimAt('dso', id);
   }
 

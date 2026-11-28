@@ -3445,7 +3445,7 @@ body.red .lu-figure svg, body.red .lu-fig-grid > svg { background: rgba(14,2,0,.
 .sim-ctrl input[type="range"] { margin: 0; }
 
 /* =========================================================================
-   도감 퀴즈 · 하늘 탐험 (quiz.js)
+   도감 퀴즈 (quiz.js)
    ========================================================================= */
 .quiz-shell { display: block; }
 .quiz-intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -4609,13 +4609,13 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
     <div class="section-head">
       <p class="eyebrow">천체 · 별자리 도감</p>
       <h2>오늘 밤 볼 수 있는 것들, <span class="grad">전부</span> 여기 있습니다</h2>
-      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2만 3천여 종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>·<b>별자리</b>·<b>하늘 탐험 퀴즈</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
+      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2만 3천여 종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>·<b>별자리</b>·<b>퀴즈</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
     </div>
 
     <div class="cat-tabs" role="tablist" aria-label="도감 보기 전환">
       <button class="cat-tab is-active" type="button" id="tabObjects" role="tab" aria-selected="true" aria-controls="panelObjects" data-cat-tab="objects">🌌 천체 도감 <span class="cat-tab-num">2,571종</span></button>
       <button class="cat-tab" type="button" id="tabConst" role="tab" aria-selected="false" aria-controls="panelConstellations" data-cat-tab="const" tabindex="-1">✨ 별자리 88 <span class="cat-tab-num">IAU 전체</span></button>
-      <button class="cat-tab" type="button" id="tabQuiz" role="tab" aria-selected="false" aria-controls="panelQuiz" data-cat-tab="quiz" tabindex="-1">🎯 하늘 탐험 <span class="cat-tab-num">퀴즈 8문제</span></button>
+      <button class="cat-tab" type="button" id="tabQuiz" role="tab" aria-selected="false" aria-controls="panelQuiz" data-cat-tab="quiz" tabindex="-1">🎯 퀴즈 <span class="cat-tab-num">8문제</span></button>
     </div>
 
     <div class="cat-panel" id="panelObjects" role="tabpanel" aria-labelledby="tabObjects">
@@ -6027,6 +6027,48 @@ window.SKY_DATA = (function () {
       detail: '7.8등급. 2026년 12월 10일에는 토성과 6°25′ 거리로 가까워져 찾기 좋습니다.',
       science: '지름 49,528km. 1846년 천왕성 궤도의 이상을 계산해 발견한 최초의 "계산된 행성". 태양계에서 가장 강한 바람(시속 2,000km)이 붑니다.',
       tips: '80mm 이상 망원경과 성도 앱 필수. 2026년 12월 10일 토성을 길잡이로 삼으세요.'
+    },
+    /* ---------- 태양 · 달 (위치는 실시간 계산) ---------- */
+    {
+      id: 'sun', name: '태양', sub: 'Sun / G2V', type: '항성', group: 'star', dynamic: 'sun',
+      mag: -26.7, dist: '1 AU (1억 4,960만 km)', con: '—', size: '약 32′', months: [1,2,3,4,5,6,7,8,9,10,11,12], equip: 4, diff: 5,
+      brief: '지구에서 가장 가까운 별. 반드시 태양 전용 필터를 거친 빛으로만 봅니다.',
+      detail: '태양 전용 필터(ISO 12312-2 안경, 또는 망원경 앞쪽에 끼우는 태양 필터)를 쓴 상태에서만 관측합니다. 필터 없이 맨눈·쌍안경·망원경·카메라 뷰파인더로 겨누면 즉시 망막이 타서 실명할 수 있습니다. 흑점은 약 11년 주기로 늘었다 줄었다 합니다.',
+      science: '지름 139만 km(지구의 109배), 표면 온도 약 5,500℃, 중심 약 1,500만℃. 수소 핵융합으로 초당 약 6억 톤의 수소를 헬륨으로 바꾸며 빛과 열을 냅니다. 그 빛이 지구까지 오는 데 약 8분 20초 걸립니다.',
+      myth: '고대에는 태양을 신으로 섬겼습니다. 이집트의 라, 그리스의 헬리오스, 한국의 해·일(日) 신앙이 그 예입니다.',
+      tips: '절대 태양을 직접 보거나 카메라 뷰파인더로 겨누지 마세요. 태양 관측은 태양 전용 필터를 갖춘 장비로만 하고, 접안부 쪽에 끼우는 작은 필터는 열로 깨질 수 있어 쓰지 않습니다.'
+    },
+    {
+      id: 'moon', name: '달', sub: 'Moon / 지구의 위성', type: '위성', group: 'moon', dynamic: 'moon',
+      mag: -12.7, dist: '평균 38만 4,400 km', con: '—', size: '약 0.5° (30′)', months: [1,2,3,4,5,6,7,8,9,10,11,12], equip: 1, diff: 1,
+      brief: '밤하늘에서 가장 밝은 대상. 위상이 매일 바뀌고 크레이터·바다를 맨눈으로도 구분할 수 있습니다.',
+      detail: '망원경 없이도 크레이터와 바다(어두운 평원)가 보입니다. 상현·하현 무렵에는 명암 경계선(터미네이터)에서 크레이터 그림자가 길게 드리워 입체감이 살아납니다. 22배쯤이면 달 전체가 시야에 꽉 차고, 100배 이상에서는 크레이터 안쪽까지 들여다볼 수 있습니다.',
+      science: '지름 3,474km로 지구의 약 1/4. 자전과 공전 주기가 같아(27.3일) 늘 같은 면만 보입니다. 대기가 거의 없어 낮 120℃, 밤 -170℃까지 오갑니다. 지구에서 평균 38만 4,400km 떨어져 있고 해마다 약 3.8cm씩 멀어집니다.',
+      myth: '동아시아에서는 달 속에 토끼가 방아를 찧는다고 했고, 서양에서는 사람 얼굴이나 늑대 모양을 보았습니다. 음력은 달의 위상 주기(약 29.5일)를 기준으로 만든 달력입니다.',
+      tips: '보름달은 너무 밝아 크레이터 대비가 사라집니다 — 상현·하현이 관측과 촬영의 적기입니다. 달이 밝은 밤에는 은하수·성운 대신 달·행성·이중성에 집중하세요.'
+    },
+    /* ---------- 북쪽 길잡이 별 ---------- */
+    {
+      id: 'polaris', name: '북극성', sub: 'Polaris / α Ursae Minoris', type: '항성', group: 'star',
+      raH: 2.5303, decD: 89.2641, mag: 1.98, dist: '약 433광년', size: '—', con: '작은곰자리',
+      months: [1,2,3,4,5,6,7,8,9,10,11,12], equip: 1, diff: 2,
+      find: '북두칠성 국자 끝의 두 별(두베·메라크)을 이어 다섯 배쯤 늘리면 만납니다.',
+      brief: '하늘의 북쪽 축. 거의 움직이지 않아 북쪽 찾기와 극축 정렬의 기준이 됩니다.',
+      detail: '북극성의 고도는 관측지의 위도와 거의 같습니다(서울 37.5°, 오산 37.2°). 사진 촬영에서 극축을 맞추면 별이 점으로 찍힙니다. 작은 망원경으로 보면 노란 주성 옆에 작은 동반성이 붙어 있습니다.',
+      science: '지구 자전축이 가리키는 방향에 우연히 놓인 밝은 별입니다. 약 2.6만 년에 한 번씩 세차 운동으로 북극성이 바뀌며, 기원전 3000년 무렵에는 튜반이, 1만 2천 년 뒤에는 베가가 북극성이 됩니다.',
+      myth: '항해자와 목동에게는 방향의 기준이었습니다. 한국 민요에도 북두칠성과 북극성이 길잡이로 나옵니다.',
+      tips: '북쪽 하늘이 트인 곳에서 찾으세요. 북극성 주변 10° 안쪽 별은 궤적이 짧아, 장노출 사진에서 동심원의 중심이 됩니다.'
+    },
+    {
+      id: 'bigdipper', name: '북두칠성', sub: 'Big Dipper / 큰곰자리', type: '성좌', group: 'star',
+      raH: 12.0, decD: 55.0, mag: 2.0, dist: '약 80광년', size: '약 25°', con: '큰곰자리',
+      months: [1,2,3,4,5,6,7,8,9,10,11,12], equip: 1, diff: 1,
+      find: '북쪽 하늘에서 국자 모양 일곱 별을 찾으세요. 봄에는 머리 위 높이, 가을에는 북쪽 낮은 곳에 있습니다.',
+      brief: '큰곰자리의 국자 모양 일곱 별. 북극성과 계절 별자리를 찾는 가장 좋은 길잡이입니다.',
+      detail: '국자 끝 두 별을 이어 북극성을, 국자 손잡이 곡선을 따라가면 아르크투루스를 찾을 수 있습니다. 큰곰자리의 일부일 뿐 별자리 자체는 아닙니다.',
+      science: '일곱 별은 각각 다른 거리에 있지만(약 60~120광년) 지구에서 우연히 국자 모양으로 늘어서 보입니다. 다섯 별은 같은 성단에서 태어난 무리로 보는 견해가 있습니다.',
+      myth: '한국에서는 일곱 별을 북두칠성이라 하고, 일곱째 별을 보면 소원이 이루어진다는 이야기가 있습니다. 미국 남부에서는 지하철도 탈출의 길잡이(Drinking Gourd)로 노래되었습니다.',
+      tips: '별자리 찾기의 시작점으로 쓰세요. 쌍안경으로 손잡이 가운데(미자르·알코르)를 보면 이중성이 보입니다.'
     }
   ];
 
@@ -11158,9 +11200,23 @@ window.Astro = (function () {
   }
 
   /* ------------------------------------------------------------ 객체 위치 */
+  /** 행성·달·태양의 위치 — 도감 항목(dynamic)이 모두 같은 식으로 움직이도록 한곳에 모았습니다.
+      '달'·'태양'도 도감에서 검색·상세보기·조준이 되도록 dynamic 키로 다룹니다. */
+  function dynPos(key, jd) {
+    if (key === 'moon') {
+      const mp = A.moonPos(jd), ph = A.moonPhase(jd);
+      return { raH: mp.raH, decD: mp.decD, mag: -12.7, name: '달', extra: { phase: ph } };
+    }
+    if (key === 'sun') {
+      const sp = A.sunPos(jd);
+      return { raH: sp.raH, decD: sp.decD, mag: -26.7, name: '태양', extra: null };
+    }
+    return A.planetPos(key, jd);
+  }
+
   function objectPosition(obj, jd, lat, lon) {
     if (obj.dynamic) {
-      const p = A.planetPos(obj.dynamic, jd);
+      const p = dynPos(obj.dynamic, jd);
       return {
         raH: p.raH, decD: p.decD,
         hor: A.equatorialToHorizontal(p.raH, p.decD, lat, lon, jd),
@@ -11176,7 +11232,7 @@ window.Astro = (function () {
 
   function objectNightInfo(obj, lat, lon) {
     if (obj.dynamic) {
-      const p = A.planetPos(obj.dynamic, A.jdFromDate(A.localToDate(state.dateStr, '22:00')));
+      const p = dynPos(obj.dynamic, A.jdFromDate(A.localToDate(state.dateStr, '22:00')));
       return A.objectNight(p.raH, p.decD, lat, lon, state.dateStr);
     }
     return A.objectNight(obj.raH, obj.decD, lat, lon, state.dateStr);
@@ -11499,7 +11555,7 @@ window.Astro = (function () {
     if (c._ni[o.id]) return c._ni[o.id];
     let ni;
     if (o.dynamic) {
-      const p = c.planets.find(function (x) { return x.key === o.dynamic; }) || A.planetPos(o.dynamic, c.jd);
+      const p = c.planets.find(function (x) { return x.key === o.dynamic; }) || dynPos(o.dynamic, c.jd);
       ni = A.objectNight(p.raH, p.decD, state.site.lat, state.site.lon, state.dateStr);
     } else {
       ni = A.objectNight(o.raH, o.decD, state.site.lat, state.site.lon, state.dateStr);
@@ -12354,6 +12410,7 @@ window.Astro = (function () {
   function coarseType(o) {
     if (o.group === 'meteor') return '유성우';
     if (o.group === 'planet') return '행성';
+    if (o.group === 'moon') return '위성';
     if (o.group === 'exo') return '외계행성';
     if (o.group === 'star') return '항성';
     if (o.type.indexOf('성단') >= 0) return '성단';
@@ -12415,17 +12472,55 @@ window.Astro = (function () {
   }
 
   function filteredCatalog() {
-    const q = state.filter.q.trim().toLowerCase();
+    const q = searchNorm(state.filter.q);
     return D.catalog.filter(function (o) {
       if (state.filter.type !== 'all' && coarseType(o) !== state.filter.type) return false;
       if (state.filter.equip !== 'all' && (o.dynamic ? 1 : o.equip) > Number(state.filter.equip)) return false;
       if (state.filter.season !== 'all' && seasonOf(o).indexOf(state.filter.season) < 0) return false;
-      if (q) {
-        const hay = [o.name, o.sub, o.con, o.type, o.brief, o.detail].join(' ').toLowerCase();
-        if (hay.indexOf(q) < 0) return false;
-      }
+      if (q && catalogHay(o).indexOf(q) < 0) return false;
       return true;
     });
+  }
+
+  /* --------------------------------------------------------- 검색 순위
+     '달'을 찾았는데 금성의 설명문("달 다음으로 밝은")이 먼저 나오면 안 됩니다.
+     이름 쪽 일치를 설명문 일치보다 항상 앞세웁니다(대표 도감·전체 도감이 같은 함수를 씁니다).
+       0 이름 완전 일치   1 이름 앞부분   2 이름 포함(별칭·카탈로그 번호 포함)
+       3 종류·별자리 이름   4 설명문 일치 */
+  function searchNorm(s) {
+    return String(s == null ? '' : s).toLowerCase().replace(/[\s\u00a0]+/g, '');
+  }
+
+  function catalogHay(o) {
+    return searchNorm([o.name, o.sub, o.id, o.en, o.con, o.type,
+      o.brief, o.detail, o.science, o.tips, o.myth, o.find].join(' '));
+  }
+
+  /** 이름 표기 변형 — 'M42 / NGC 1976' → ['m42', 'ngc1976'], '오리온 대성운(M42)' → 앞/안 이름 */
+  function objectNameKeys(o) {
+    const out = [];
+    const push = function (v) {
+      String(v == null ? '' : v).split(/[\/|·,]/).forEach(function (piece) {
+        const n = searchNorm(piece);
+        if (n && out.indexOf(n) < 0) out.push(n);
+      });
+    };
+    push(o.name); push(o.sub); push(o.id); push(o.en);
+    const m = String(o.name || '').match(/^(.*?)\s*[(（]([^)）]+)[)）]\s*$/);
+    if (m) { push(m[1]); push(m[2]); }
+    return out;
+  }
+
+  function searchRank(o, q) {
+    const nq = searchNorm(q);
+    if (!nq) return 0;
+    const keys = objectNameKeys(o);
+    if (keys.indexOf(nq) >= 0) return 0;                                  // 이름 완전 일치
+    for (let i = 0; i < keys.length; i++) if (keys[i].indexOf(nq) === 0) return 1;   // 이름 앞부분
+    for (let i = 0; i < keys.length; i++) if (keys[i].indexOf(nq) >= 0) return 2;    // 이름 포함
+    if (searchNorm(o.type).indexOf(nq) >= 0 || searchNorm(o.con).indexOf(nq) >= 0) return 3;
+    if (searchNorm([o.brief, o.detail, o.science, o.tips, o.myth, o.find].join(' ')).indexOf(nq) >= 0) return 4;
+    return 5;
   }
 
   function renderCatalog(c) {
@@ -12433,19 +12528,24 @@ window.Astro = (function () {
     buildChips();
     const list = filteredCatalog();
     const grid = $('#catalogGrid');
-    $('#catalogCount').textContent = list.length + '개 천체 · 등급이 밝은 순';
+    $('#catalogCount').textContent = list.length + '개 천체 · ' + (state.filter.q.trim() ? '이름이 맞는 순' : '등급이 밝은 순');
     if (!list.length) {
       grid.innerHTML = '<p class="muted">조건에 맞는 천체가 없습니다. 검색어나 필터를 바꿔 보세요.</p>';
       return;
     }
     const sortMode = ($('#sortSelect') && $('#sortSelect').value) || 'mag';
     const onlyVis = !!($('#onlyVisible') && $('#onlyVisible').checked);
+    const searchQ = state.filter.q.trim();
     let working = list.slice();
     if (onlyVis) {
       working = working.filter(function (o) { return nightInfoCache(c, o).maxAlt > 5; });
       $('#catalogCount').textContent = working.length + '개 천체 · 오늘 밤 지평선 위에 뜨는 것만';
     }
     const sorted = working.sort(function (a, b) {
+      if (searchQ) {
+        const ra = searchRank(a, searchQ), rb = searchRank(b, searchQ);
+        if (ra !== rb) return ra - rb;          // 이름 일치가 항상 먼저
+      }
       if (sortMode === 'name') return a.name.localeCompare(b.name, 'ko');
       if (sortMode === 'diff') return (a.diff - b.diff) || (a.mag - b.mag);
       if (sortMode === 'alt') {
@@ -12453,8 +12553,8 @@ window.Astro = (function () {
         const bb = objectPosition(b, c.jd, state.site.lat, state.site.lon).hor.alt;
         return bb - aa;
       }
-      const am = a.dynamic ? (A.planetPos(a.dynamic, c.jd).mag) : a.mag;
-      const bm = b.dynamic ? (A.planetPos(b.dynamic, c.jd).mag) : b.mag;
+      const am = a.dynamic ? (dynPos(a.dynamic, c.jd).mag) : a.mag;
+      const bm = b.dynamic ? (dynPos(b.dynamic, c.jd).mag) : b.mag;
       return am - bm;
     });
     grid.innerHTML = sorted.map(function (o) {
@@ -13130,7 +13230,7 @@ window.Astro = (function () {
     let raH = null, decD = null, mag = null, name = '', sub = '', note = '', objId = null, cells = null;
     let conAbbr = '', members = null, fovDeg = null;
     if (kind === 'planet') {
-      const p = A.planetPos(key, jd);
+      const p = dynPos(key, jd);
       raH = p.raH; decD = p.decD; mag = p.mag; name = p.name;
       sub = '행성 · 시지름 ' + nf(p.diamArcsec, 1) + '″ · 위상 ' + nf(p.phaseD, 0) + '° · 거리 ' + nf(p.distAU, 2) + ' AU';
       const o = D.catalog.find(function (x) { return x.dynamic === key; });
@@ -13149,6 +13249,8 @@ window.Astro = (function () {
     } else if (kind === 'dso') {
       const o = D.catalog.find(function (x) { return x.id === key; });
       if (!o) return null;
+      if (o.dynamic === 'moon') return skyInfo('moon', 'moon', jd);
+      if (o.dynamic === 'sun') return skyInfo('sun', 'sun', jd);
       if (o.dynamic) return skyInfo('planet', o.dynamic, jd);
       raH = o.raH; decD = o.decD; mag = o.mag; name = o.name;
       sub = o.type + ' · ' + o.sub + (o.con && o.con !== '—' ? ' · ' + o.con : '') + (o.dist && o.dist !== '—' ? ' · ' + o.dist : '');
@@ -13224,7 +13326,9 @@ window.Astro = (function () {
   function aimObject(id) {
     const o = D.catalog.find(function (x) { return x.id === id; });
     if (!o) return;
-    if (o.dynamic) aimAt('planet', o.dynamic);
+    if (o.dynamic === 'moon') aimAt('moon', 'moon');
+    else if (o.dynamic === 'sun') aimAt('sun', 'sun');
+    else if (o.dynamic) aimAt('planet', o.dynamic);
     else aimAt('dso', id);
   }
 
@@ -23590,7 +23694,7 @@ window.Astro = (function () {
 <script>
 /* ===== quiz.js ===== */
 /* =========================================================================
-   별너울 — 도감 퀴즈 · 하늘 탐험 (quiz.js)
+   별너울 — 도감 퀴즈 (quiz.js)
    · 문제는 도감(SKY_DATA.catalog · SPACE_CATALOG 2,571종)과 별자리 88종의
      실제 값에서 자동으로 만들어집니다. 따로 외운 정답표가 없습니다.
    · **문제 범위(대표 도감 / 도감+88별자리 / 전체 도감)** 와
@@ -24566,7 +24670,7 @@ window.Astro = (function () {
     shell.innerHTML =
       '<div class="quiz-intro">' +
         '<div class="quiz-hero">' +
-          '<p class="quiz-eyebrow">🎯 오늘 밤 하늘 탐험</p>' +
+          '<p class="quiz-eyebrow">🎯 오늘 밤 하늘 퀴즈</p>' +
           '<h3>도감에서 배운 것을 <span class="grad">8문제</span>로 확인해 보세요</h3>' +
           '<p class="quiz-lead">문제 범위와 난이도를 따로 고릅니다. 문제는 지금 도감에 들어 있는 실제 ' +
             '천체에서 만들어지고, 틀려도 결과 화면에서 그 천체를 바로 찾아가 볼 수 있습니다.</p>' +

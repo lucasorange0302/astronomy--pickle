@@ -3374,7 +3374,7 @@ body.red .lu-figure svg, body.red .lu-fig-grid > svg { background: rgba(14,2,0,.
 .sim-ctrl input[type="range"] { margin: 0; }
 
 /* =========================================================================
-   도감 퀴즈 · 하늘 탐험 (quiz.js)
+   도감 퀴즈 (quiz.js)
    ========================================================================= */
 .quiz-shell { display: block; }
 .quiz-intro { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
