@@ -2703,6 +2703,27 @@ body.red input[type="range"] { filter: sepia(1) hue-rotate(-30deg) saturate(3) b
 .live-quick .lq-btn.is-on {
   color: var(--accent); border-color: rgba(255, 212, 121, .55); background: rgba(255, 212, 121, .14);
 }
+/* ⚙ 조작 밖 빠른 트래킹 버튼 — 켜지면 은은하게 숨을 쉬고, 권한이 막하면 경고색 */
+.live-quick .lq-track.is-on { animation: lqTrackPulse 2.4s ease-in-out infinite; }
+.live-quick .lq-track.is-error { color: var(--danger); border-color: rgba(255, 122, 110, .55); }
+.live-quick .lq-narrow { display: none; }
+@keyframes lqTrackPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 212, 121, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(255, 212, 121, .18); }
+}
+body.red .live-quick .lq-track.is-on {
+  border-color: rgba(255, 138, 92, .6); background: rgba(255, 106, 61, .16); color: #ffb59a;
+}
+@media (max-width: 400px) {
+  /* 320px 한 줄에 「⚙ 조작 · 🕒 시각 · 🎯 조준 · 🧭 추적」이 모두 앉도록 살짝 조입니다. */
+  .live-quick { gap: 5px; max-width: calc(100% - 48px); }
+  .live-quick .lq-btn { padding: 5px 8px; font-size: .64rem; min-height: 32px; gap: 3px; }
+}
+@media (max-width: 360px) {
+  /* 아주 즐은 화면에서는 긴 이름을 「조준」으로 */
+  .live-quick .lq-wide { display: none; }
+  .live-quick .lq-narrow { display: inline; }
+}
 .live-time-card {
   position: absolute; left: 10px; right: 10px; bottom: 56px; z-index: 4;
   max-width: 460px; max-height: calc(100% - 78px); overflow-y: auto;
@@ -4385,7 +4406,9 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
         <div class="live-quick" id="liveQuick">
           <button class="lq-btn" id="liveToolsBtn" type="button" aria-expanded="false" aria-controls="liveControls">⚙ 조작</button>
           <button class="lq-btn lq-time" id="liveTimeBtn" type="button" aria-expanded="false" aria-controls="liveTimeCard" title="하늘 시각 바꾸기">🕒 —</button>
-          <button class="lq-btn" id="liveCalBtnQ" type="button">🎯 방향 맞추기</button>
+          <button class="lq-btn" id="liveCalBtnQ" type="button" aria-label="지금 보는 방향으로 나침반 맞추기">🎯 <span class="lq-wide">방향 맞추기</span><span class="lq-narrow">조준</span></button>
+          <!-- 실시간 트래킹 바로 켜기/끄기 — ⚙ 조작 안의 센서 버튼과 같은 상태를 씁니다 -->
+          <button class="lq-btn lq-track" id="liveTrackBtnQ" type="button" aria-pressed="false" aria-label="실시간 트래킹 켜기" title="실시간 트래킹(센서)을 켜고 끕니다">🧭 추적</button>
           <!-- 낮에 열었을 때 밤하늘로 넘길 길을 화면 안에 둡니다 (모바일은 아래 안내 줄이 숨겨져 있음) -->
           <button class="lq-btn lq-night" id="liveNightBtnQ" type="button" hidden>🌙 밤 22시</button>
         </div>
@@ -14850,6 +14873,16 @@ window.Astro = (function () {
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       btn.textContent = on ? '🧭 센서 사용 중 (탭하면 끔)' : '🧭 센서로 하늘 비추기';
     }
+    /* ⚙ 조작 밖의 빠른 트래킹 버튼 — 위 버튼과 같은 상태(aria-pressed·활성·오류)를 그대로 따릅니다.
+       둘 다 리얼타임 센서 흐름(enableSensor·disableSensor)을 거치므로 iOS 권한 요청도 같습니다. */
+    const q = $('#liveTrackBtnQ');
+    if (q) {
+      q.setAttribute('aria-pressed', on ? 'true' : 'false');
+      q.classList.toggle('is-on', !!on);
+      q.classList.toggle('is-error', cls === 'error');
+      q.setAttribute('aria-label', on ? '실시간 트래킹 끄기' : '실시간 트래킹 켜기');
+      q.title = on ? '실시간 트래킹을 끕니다' : '실시간 트래킹(센서)을 켭니다';
+    }
   }
 
   function sensorFail(msg) {
@@ -15627,6 +15660,12 @@ window.Astro = (function () {
       else goNightSky();
     });
     $('#liveSensorBtn').addEventListener('click', function () {
+      if (live.sensor) disableSensor(false);
+      else enableSensor();
+    });
+    // ⚙ 조작 밖 빠른 트래킹 버튼 — 같은 토글(켜짐/꺼짐)을 그대로 부릅니다.
+    const trackQ = $('#liveTrackBtnQ');
+    if (trackQ) trackQ.addEventListener('click', function () {
       if (live.sensor) disableSensor(false);
       else enableSensor();
     });

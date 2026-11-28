@@ -4084,6 +4084,16 @@
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       btn.textContent = on ? '🧭 센서 사용 중 (탭하면 끔)' : '🧭 센서로 하늘 비추기';
     }
+    /* ⚙ 조작 밖의 빠른 트래킹 버튼 — 위 버튼과 같은 상태(aria-pressed·활성·오류)를 그대로 따릅니다.
+       둘 다 리얼타임 센서 흐름(enableSensor·disableSensor)을 거치므로 iOS 권한 요청도 같습니다. */
+    const q = $('#liveTrackBtnQ');
+    if (q) {
+      q.setAttribute('aria-pressed', on ? 'true' : 'false');
+      q.classList.toggle('is-on', !!on);
+      q.classList.toggle('is-error', cls === 'error');
+      q.setAttribute('aria-label', on ? '실시간 트래킹 끄기' : '실시간 트래킹 켜기');
+      q.title = on ? '실시간 트래킹을 끕니다' : '실시간 트래킹(센서)을 켭니다';
+    }
   }
 
   function sensorFail(msg) {
@@ -4861,6 +4871,12 @@
       else goNightSky();
     });
     $('#liveSensorBtn').addEventListener('click', function () {
+      if (live.sensor) disableSensor(false);
+      else enableSensor();
+    });
+    // ⚙ 조작 밖 빠른 트래킹 버튼 — 같은 토글(켜짐/꺼짐)을 그대로 부릅니다.
+    const trackQ = $('#liveTrackBtnQ');
+    if (trackQ) trackQ.addEventListener('click', function () {
       if (live.sensor) disableSensor(false);
       else enableSensor();
     });
