@@ -25,7 +25,7 @@
 - 남현님이 요청한 **지평선 아래 −85° 클램프와 복귀 로직은 그대로**입니다(회귀 D·E 통과).
 
 ### 3) ✅ 검증 · 배포
-- `tools/test_live_motion.py` **9개 시나리오 전부 통과** (가상 시계 + `LiveSky.feed()` 실제 처리 경로).
+- `tools/test_live_motion.py` **시나리오 9개(A~I) + 대조군(A0) 전부 통과** (가상 시계 + `LiveSky.feed()` 실제 처리 경로).
   - **F** 숨김 → **90° 회전** → 복귀: `+100.0°` → 복귀 첫 표본 `+190.0°`(카메라 +190.0°) — 예전엔 `+100.0°` 그대로.
   - **G** 숨김 → **180° 회전 + 25° 상향** → 복귀: `+100.0°` → `+280.0°`·고도 `+35.0°`.
   - **H** 복귀 직후 백그라운드 큐의 **낡은 표본 4개** 뒤 새 자세: 첫 표본 `+190.0°`, 0.5초 뒤 `+190.0°`·`+35.0°`.
@@ -34,7 +34,7 @@
 - 라이브 회귀: `tools/test_live_ground_grid.py` **37건**, `tools/test_live_sun.py` **17건** 전부 통과, 콘솔 오류 0건.
 - 새 검증 훅: `LiveSky.basis()`(화면을 그릴 때 쓰는 fwd·right·up 기준틀), `LiveSky.realign()`.
 - 서비스 워커 캐시 `2026-11-28.9`, `build.py` 로 모바일판·데스크톱판·단일 파일판(`별너울지도.html`) 재빌드.
-- 실서버(헤드리스) 검증: `https://byeolneoul.vercel.app`·`https://lucasorange0302.github.io/byeolbam/` 두 곳 모두 위 9개 시나리오 통과, `test_live_ground_grid.py` 37건·`test_live_sun.py` 17건 통과, 단일 파일판(`별너울지도.html`)도 F·G·I 통과, 콘솔 오류 0건. 커밋 `24adacc`.
+- 실서버(헤드리스) 검증: `https://byeolneoul.vercel.app`·`https://lucasorange0302.github.io/byeolbam/` 두 곳 모두 위 시나리오 전부(A~I + 대조군) 통과, `test_live_ground_grid.py` 37건·`test_live_sun.py` 17건 통과, 단일 파일판(`별너울지도.html`)도 F·G·I 통과, 콘솔 오류 0건. 커밋 `24adacc`.
 
 ### 4) 남은 것
 - iOS 실기기에서 창을 내렸다 올리기·천정 보기는 제가 직접 확인할 수 없습니다 — 남현님 아이폰에서 한 번 봐 주시면 좋습니다(특히 홈 화면 앱으로 열었을 때).
