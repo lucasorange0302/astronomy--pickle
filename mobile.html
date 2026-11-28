@@ -482,11 +482,33 @@
     <div class="panel live-panel">
       <div class="live-stage" id="liveStage">
         <canvas id="liveCanvas" role="img" aria-label="현재 방향의 하늘 (방위·고도 투영)"></canvas>
+        <!-- 조준 유도 링 — 목표가 시야 안에 들어오면 그 자리에 조준 링을 그립니다 -->
+        <canvas class="live-guide-canvas" id="liveGuideCanvas" aria-hidden="true"></canvas>
         <div class="live-hud" aria-hidden="true"><span class="live-cross-h"></span><span class="live-cross-v"></span></div>
         <div class="live-hud-top">
           <span class="live-chip" id="liveAzChip">방위 —</span>
           <span class="live-chip" id="liveAltChip">고도 —</span>
           <span class="live-chip live-chip-sensor" id="liveSensorChip">센서 꺼짐</span>
+        </div>
+        <!-- 🎯 조준 유도 — 보낸 목표를 ✕ 로 끌 때까지 따라갑니다 -->
+        <div class="live-guide" id="liveGuide" hidden>
+          <div class="lguide-bar" id="liveGuideBar">
+            <span class="lguide-bar-ico" aria-hidden="true">🎯</span>
+            <span class="lguide-bar-name" id="liveGuideName">목표</span>
+            <span class="lguide-bar-state" id="liveGuideState">—</span>
+            <button class="lguide-x" id="liveGuideX" type="button" aria-label="조준 유도 끄기" title="조준 유도 끄기">✕</button>
+          </div>
+          <div class="lguide-beacon" id="liveGuideBeacon" aria-hidden="true">
+            <span class="lguide-halo"></span>
+            <span class="lguide-arrow" id="liveGuideArrow">
+              <svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true"><path d="M12 2.8 19.6 19.4 12 15.3 4.4 19.4z" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <div class="lguide-pill" id="liveGuidePill" aria-hidden="true">
+            <b class="lguide-pill-name" id="liveGuideBeaconName">목표</b>
+            <span class="lguide-pill-angle" id="liveGuideBeaconAngle">—</span>
+            <span class="lguide-pill-below" id="liveGuideBelow" hidden>지평선 아래</span>
+          </div>
         </div>
         <div class="live-center-card" id="liveCenterCard">시야 중앙 —</div>
         <div class="live-zoom">

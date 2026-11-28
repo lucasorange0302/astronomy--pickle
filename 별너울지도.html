@@ -1225,6 +1225,98 @@ body.red .tm-dock .tm-slider { background: linear-gradient(90deg, #ff8a5c 0%, #f
 .live-zbtn:hover { background: rgba(255, 255, 255, .14); }
 .live-fov-val { font-size: .66rem; color: var(--faint); font-variant-numeric: tabular-nums; }
 
+/* ------------------------------------------------------- 🎯 조준 유도 */
+/* 도감·기록관·퀴즈·행성표에서 🎯 조준을 누르면 라이브 하늘 위에 얹히는 안내판.
+   · 시야 밖 — 가장자리 유도등(화살표·은은한 펄스) + 이름·남은 각도
+   · 시야 안 — 천체 자리에 조준 링(캔버스), 중앙 4° 진입 시 도착 강조
+   · ✕ 로 직접 끌 때까지 센서 트래킹·드래그에도 목표가 유지됩니다. */
+.live-guide-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 2;
+}
+.live-guide { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.live-guide[hidden] { display: none; }
+
+.lguide-bar {
+  position: absolute; left: 50%; top: calc(40px + var(--sat-top, 0px)); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 7px; max-width: calc(100% - 20px);
+  padding: 4px 5px 4px 10px; border-radius: 99px;
+  background: rgba(4, 8, 16, .74); border: 1px solid rgba(255, 212, 121, .45);
+  box-shadow: 0 8px 22px -14px #000;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto; cursor: default;
+  font-size: .72rem; font-weight: 700; color: var(--text);
+}
+.lguide-bar-ico { font-size: .8rem; line-height: 1; }
+.lguide-bar-name {
+  min-width: 0; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--accent);
+}
+.lguide-bar-state {
+  min-width: 0; color: var(--muted); font-weight: 600;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.lguide-bar.is-inview { border-color: rgba(138, 182, 255, .5); }
+.lguide-bar.is-arrived { border-color: rgba(126, 224, 192, .62); }
+.lguide-bar.is-arrived .lguide-bar-state { color: var(--accent-2); }
+.lguide-x {
+  flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border-hi); background: rgba(255, 255, 255, .07); color: var(--muted);
+  font: 700 .7rem/1 var(--font); display: grid; place-items: center;
+}
+.lguide-x:hover, .lguide-x:focus-visible { color: var(--text); border-color: var(--accent); }
+
+.lguide-beacon {
+  position: absolute; left: 0; top: 0; width: 44px; height: 44px;
+  border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255, 212, 121, .15); border: 1px solid rgba(255, 212, 121, .72);
+  color: var(--accent); box-shadow: 0 0 18px rgba(255, 212, 121, .32);
+  will-change: transform;
+}
+.lguide-beacon[hidden] { display: none; }
+.lguide-arrow { display: block; line-height: 0; transform-origin: 50% 50%; will-change: transform; }
+.lguide-halo {
+  position: absolute; inset: -8px; border-radius: 50%;
+  border: 1px solid rgba(255, 212, 121, .55);
+  animation: lguidePulse 1.9s ease-out infinite; pointer-events: none;
+}
+@keyframes lguidePulse {
+  0% { transform: scale(.7); opacity: .7; }
+  70% { transform: scale(1.55); opacity: 0; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+.lguide-pill {
+  position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px;
+  max-width: 60%; padding: 4px 9px; border-radius: 9px;
+  background: rgba(4, 8, 16, .84); border: 1px solid rgba(255, 212, 121, .4);
+  color: var(--text); font-size: .7rem; font-weight: 700; white-space: nowrap;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  will-change: transform;
+}
+.lguide-pill[hidden] { display: none; }
+.lguide-pill-name { min-width: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; color: var(--accent); }
+.lguide-pill-angle { color: var(--text); font-variant-numeric: tabular-nums; }
+.lguide-pill-below { color: var(--danger); font-weight: 600; }
+
+body.red .lguide-bar { background: rgba(12, 2, 1, .82); border-color: rgba(255, 138, 92, .5); }
+body.red .lguide-beacon {
+  background: rgba(255, 106, 61, .16); border-color: rgba(255, 138, 92, .82);
+  color: #ff9a72; box-shadow: 0 0 18px rgba(255, 90, 60, .32);
+}
+body.red .lguide-halo { border-color: rgba(255, 138, 92, .6); }
+body.red .lguide-pill { background: rgba(12, 2, 1, .86); border-color: rgba(255, 138, 92, .42); }
+@media (max-width: 380px) {
+  .lguide-bar { font-size: .66rem; gap: 5px; padding: 3px 4px 3px 8px; }
+  .lguide-bar-name { max-width: 26vw; }
+  .lguide-pill { font-size: .66rem; gap: 5px; padding: 3px 7px; }
+  .lguide-pill-name { max-width: 84px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lguide-halo { animation: none; opacity: .5; }
+}
+
 .live-controls {
   display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
   margin-top: 12px; padding: 12px; border-radius: 14px;
@@ -4256,11 +4348,33 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
     <div class="panel live-panel">
       <div class="live-stage" id="liveStage">
         <canvas id="liveCanvas" role="img" aria-label="현재 방향의 하늘 (방위·고도 투영)"></canvas>
+        <!-- 조준 유도 링 — 목표가 시야 안에 들어오면 그 자리에 조준 링을 그립니다 -->
+        <canvas class="live-guide-canvas" id="liveGuideCanvas" aria-hidden="true"></canvas>
         <div class="live-hud" aria-hidden="true"><span class="live-cross-h"></span><span class="live-cross-v"></span></div>
         <div class="live-hud-top">
           <span class="live-chip" id="liveAzChip">방위 —</span>
           <span class="live-chip" id="liveAltChip">고도 —</span>
           <span class="live-chip live-chip-sensor" id="liveSensorChip">센서 꺼짐</span>
+        </div>
+        <!-- 🎯 조준 유도 — 보낸 목표를 ✕ 로 끌 때까지 따라갑니다 -->
+        <div class="live-guide" id="liveGuide" hidden>
+          <div class="lguide-bar" id="liveGuideBar">
+            <span class="lguide-bar-ico" aria-hidden="true">🎯</span>
+            <span class="lguide-bar-name" id="liveGuideName">목표</span>
+            <span class="lguide-bar-state" id="liveGuideState">—</span>
+            <button class="lguide-x" id="liveGuideX" type="button" aria-label="조준 유도 끄기" title="조준 유도 끄기">✕</button>
+          </div>
+          <div class="lguide-beacon" id="liveGuideBeacon" aria-hidden="true">
+            <span class="lguide-halo"></span>
+            <span class="lguide-arrow" id="liveGuideArrow">
+              <svg viewBox="0 0 24 24" width="18" height="18" focusable="false" aria-hidden="true"><path d="M12 2.8 19.6 19.4 12 15.3 4.4 19.4z" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <div class="lguide-pill" id="liveGuidePill" aria-hidden="true">
+            <b class="lguide-pill-name" id="liveGuideBeaconName">목표</b>
+            <span class="lguide-pill-angle" id="liveGuideBeaconAngle">—</span>
+            <span class="lguide-pill-below" id="liveGuideBelow" hidden>지평선 아래</span>
+          </div>
         </div>
         <div class="live-center-card" id="liveCenterCard">시야 중앙 —</div>
         <div class="live-zoom">
@@ -12983,6 +13097,7 @@ window.Astro = (function () {
     live.targetAlt = clamp(info.alt, ALT_MIN, ALT_MAX);
     liveDirty = true;
     kickLive();
+    aimSet({ kind: kind, key: key, name: info.name });   // ✕ 로 끝낼 때까지 유지되는 목표
     showInspector(kind, key);
     // 조준한 시선은 라이브 하늘 화면에서만 보입니다 — 다른 화면에서 눌렀으면 그 화면으로 넘어갑니다.
     if (window.__VIEWS_MODE__ && window.__views && window.__views.current() !== 'live') {
@@ -13428,6 +13543,7 @@ window.Astro = (function () {
     live.ctx = cv.getContext('2d');
     live.dpr = dpr;
     liveDirty = true;
+    aimFit();          // 조준 유도 캔버스·안전 영역도 같은 크기로
     kickLive();
   }
 
@@ -13504,6 +13620,367 @@ window.Astro = (function () {
     };
   }
 
+  /* 구면(입체, stereographic) 투영 — 모든 시야에서 기본으로 씁니다.
+     · 화면 거리 = tan(θ/2) 이라 시야 가장자리에서도 늘어짐이 완만하고,
+       지평선(대원)이 직선이 아니라 곡선으로 휘어 하늘 돔·지구의 둥근 느낌이 살아납니다.
+     · 시야 절반(fov/2)이 화면 가장자리에 정확히 오도록 kS 를 잡습니다(예전 90° 이상 전용 식 그대로).
+     · 시선 뒤(θ≳152°)는 값이 무한대로 발산하므로 그리지 않습니다(끊김 없이 사라짐).
+     liveDraw(하늘)와 조준 유도(유도등·조준 링)가 같은 화면 좌표를 쓰도록 한 곳에 모았습니다. */
+  function liveProjector() {
+    const W = live.w, H = live.h, cx = W / 2, cy = H / 2;
+    const fovDeg = clamp(live.fov, LIVE_FOV_MIN, 130);
+    const fov = fovDeg * RAD;
+    const basis = camBasis(live.az, live.alt);
+    const fwd = basis.fwd, right = basis.right, up = basis.up;
+    const kS = (H / 2) / Math.tan(fov / 4);
+    function project(alt, az) {
+      const al = alt * RAD, z = az * RAD;
+      const d = [Math.cos(al) * Math.sin(z), Math.cos(al) * Math.cos(z), Math.sin(al)];
+      const dy = d[0] * fwd[0] + d[1] * fwd[1] + d[2] * fwd[2];
+      const dx = d[0] * right[0] + d[1] * right[1] + d[2] * right[2];
+      const dz = d[0] * up[0] + d[1] * up[1] + d[2] * up[2];
+      const den = 1 + dy;
+      if (den < 0.12) return null;
+      const k = kS / den;
+      return { x: cx + dx * k, y: cy - dz * k };
+    }
+    return { W: W, H: H, cx: cx, cy: cy, fwd: fwd, right: right, up: up, kS: kS, fov: fov, fovDeg: fovDeg, project: project };
+  }
+
+  /* ======================================================================
+     🎯 조준 유도 — 도감(대표 48종·전체 2,571종·88별자리)·기록관·퀴즈·행성표의
+     「조준」이 라이브 하늘 뷰에 남기는 목표. 실시간 트래킹·드래그·시각 변경에도
+     지워지지 않고, ✕ 를 직접 누를 때만 해제됩니다.
+       · 시야 밖 — 화면 가장자리(HUD·버튼을 피한 안전 영역)에 방향 화살표(유도등,
+         은은한 펄스) + 목표 이름 + 남은 각도(+ 지평선 아래 표시)
+       · 시야 안 — 천체 자리에 조준 유도 링
+       · 중앙(AIM_ARRIVE_DEG) 진입 — 도착 강조 링 + 🎯 찾았어요!
+     ====================================================================== */
+  const AIM_ARRIVE_DEG = 4;
+  const aim = {
+    on: false, kind: null, key: null, raH: null, decD: null, name: '',
+    az: 0, alt: 0, angDist: 180, inView: false, arrived: false, below: false,
+    theta: 0, sx: null, sy: null,
+    raf: null, t: 0, fitAt: 0, insets: null, pw: 84, ph: 24, nameKey: null, belowKey: null, stateKey: null
+  };
+
+  /* 목표의 지금 방위·고도 — 행성·달·별자리는 이름/키로, 임의 좌표(적경·적위)는
+     매 프레임 현재 시각으로 다시 계산합니다(시각을 바꿔도 목표가 하늘에 붙어 있습니다). */
+  function aimPoint(jd) {
+    if (!aim.on) return null;
+    if (aim.kind) {
+      const info = skyInfo(aim.kind, aim.key, jd);
+      if (!info) return null;
+      return { az: info.az, alt: info.alt, name: info.name || aim.name };
+    }
+    if (aim.raH == null || aim.decD == null) return null;
+    const h = A.equatorialToHorizontal(aim.raH, aim.decD, state.site.lat, state.site.lon, jd);
+    return { az: h.az, alt: h.alt, name: aim.name };
+  }
+
+  function aimSet(target) {
+    if (!target) return;
+    aim.on = true;
+    aim.kind = target.kind || null;
+    aim.key = (target.key == null ? null : target.key);
+    aim.raH = (target.raH == null ? null : target.raH);
+    aim.decD = (target.decD == null ? null : target.decD);
+    aim.name = target.name || '';
+    aim.nameKey = null; aim.belowKey = null; aim.stateKey = null;
+    const c = state.last || computeNight();
+    const pt = aimPoint(c.jd);
+    if (pt) {
+      if (!aim.name) aim.name = pt.name || '';
+      aim.az = A.mod(pt.az, 360);
+      aim.alt = pt.alt;
+      /* 시선을 목표로 돌리는 일은 부르는 쪽(aimAt·aimRaDec)이 이미 했습니다 —
+         여기서는 목표만 붙들어 두고, ✕ 로 해제할 때까지 유지합니다.
+         (실시간 트래킹 중에는 폰이 시선의 주인입니다) */
+    }
+    aim.fitAt = 0;
+    aimStart();
+  }
+
+  function aimClear(silent) {
+    if (!aim.on) return;
+    aim.on = false;
+    aim.kind = null; aim.key = null; aim.raH = null; aim.decD = null; aim.name = '';
+    aim.inView = false; aim.arrived = false; aim.below = false; aim.angDist = 180;
+    aim.nameKey = null; aim.belowKey = null; aim.stateKey = null;
+    aimStop();
+    const wrap = $('#liveGuide');
+    if (wrap) wrap.hidden = true;
+    aimPaint(null);
+    if (!silent) toast('조준 유도를 껐습니다. 다시 찾으려면 도감·기록관에서 🎯 조준을 누르세요.');
+  }
+
+  /* 화면 기준 계산 — 목표까지의 각거리, 화면에서의 방향(위=0°, 오른쪽=+90°), 시야 안 여부. */
+  function aimGeom() {
+    const c = state.last || computeNight();
+    const pt = aimPoint(c.jd);
+    if (!pt) return null;
+    aim.az = A.mod(pt.az, 360);
+    aim.alt = pt.alt;
+    if (pt.name) aim.name = pt.name;
+    const P = liveProjector();
+    if (!P.W || !P.H) return null;
+    const al = clamp(pt.alt, -90, 90) * RAD, z = aim.az * RAD;
+    const d = [Math.cos(al) * Math.sin(z), Math.cos(al) * Math.cos(z), Math.sin(al)];
+    const dot3 = function (a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
+    const dy = clamp(dot3(d, P.fwd), -1, 1), dx = dot3(d, P.right), dz = dot3(d, P.up);
+    const angDist = Math.acos(dy) / RAD;
+    const p = P.project(pt.alt, aim.az);
+    const inView = !!p && p.x > 10 && p.x < P.W - 10 && p.y > 10 && p.y < P.H - 10;
+    let theta = Math.atan2(dx, dz) / RAD;
+    /* 정확히 등 뒤 — 투영이 무한대로 발산하는 자리라 좌우 방향 성분이 0 이 됩니다.
+       방위 차의 부호로 좌우를 정해 화살표가 사라지지 않게 합니다. */
+    if (Math.hypot(dx, dz) < 0.02) theta = shortestDelta(live.az, aim.az) >= 0 ? 90 : -90;
+    return { P: P, p: p, inView: inView, angDist: angDist, theta: theta, below: pt.alt < 0 };
+  }
+
+  /* 안전 영역 — HUD 칩 줄·안내 바·하단 ⚙ 조작·확대 열을 피한 사각형. */
+  function aimInsets(sr) {
+    const stage = $('#liveStage');
+    if (!stage || !sr || !sr.width || !sr.height) return null;
+    let top = 44, bottom = 92;
+    const rel = function (el) {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      if (r.height < 2 || r.width < 2) return null;
+      return { x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height };
+    };
+    const hud = rel(stage.querySelector('.live-hud-top'));
+    if (hud) top = Math.max(34, Math.round(hud.y + hud.h + 6));
+    const bar = rel(stage.querySelector('#liveGuideBar'));
+    top = Math.max(top, bar ? Math.round(bar.y + bar.h + 6) : 72);
+    ['.live-quick', '.live-center-card', '.live-zoom'].forEach(function (sel) {
+      const r = rel(stage.querySelector(sel));
+      if (!r) return;
+      if (r.y + r.h > sr.height * 0.45) bottom = Math.max(bottom, Math.round(sr.height - r.y + 14));
+    });
+    const avoid = ['#liveGuideBar', '.live-hud-top', '.live-quick', '.live-zoom', '.live-center-card']
+      .map(function (sel) { return rel(stage.querySelector(sel)); })
+      .filter(Boolean);
+    return {
+      w: sr.width, h: sr.height, left: 18, right: 18, avoid: avoid,
+      top: Math.min(top, Math.round(sr.height * 0.4)),
+      bottom: Math.min(bottom, Math.round(sr.height * 0.45))
+    };
+  }
+
+  function rectOverlap(a, b) {
+    const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    return (w > 0 && h > 0) ? w * h : 0;
+  }
+
+  /* 이름·각도 알약 자리 — 유도등 옆(바깥쪽) 우선, 자리가 없으면 안/밖으로 옮깁니다.
+     HUD·버튼·안내 바와 겹치는 넓이에 발점을 매기므로 좁은 폰에서도 침범이 없습니다. */
+  function aimPlacePill(x, y, ins) {
+    const pw = aim.pw, ph = aim.ph, gap = 26;
+    const cands = [
+      { x: x + gap, y: y - ph / 2, bend: x < ins.w / 2 ? 24 : 0 },
+      { x: x - gap - pw, y: y - ph / 2, bend: x >= ins.w / 2 ? 24 : 0 },
+      { x: x - pw / 2, y: y - gap - ph * 0.35, bend: 40 },
+      { x: x - pw / 2, y: y + gap - ph * 0.65, bend: 40 }
+    ];
+    let best = { x: x + gap, y: y - ph / 2 }, bestScore = Infinity;
+    for (let i = 0; i < cands.length; i++) {
+      const c = cands[i];
+      const px = clamp(c.x, 6, Math.max(6, ins.w - pw - 6));
+      const py = clamp(c.y, 6, Math.max(6, ins.h - ph - 6));
+      const r = { x: px, y: py, w: pw, h: ph };
+      let score = c.bend + (Math.abs(px - c.x) + Math.abs(py - c.y)) * 0.6;
+      const av = ins.avoid || [];
+      for (let k = 0; k < av.length; k++) score += rectOverlap(r, av[k]) * 6;
+      if (score < bestScore) { bestScore = score; best = { x: px, y: py }; }
+    }
+    return best;
+  }
+
+  function aimFit() {
+    const stage = $('#liveStage'), cv = $('#liveGuideCanvas');
+    if (!stage || !cv) return;
+    const r = stage.getBoundingClientRect();
+    const dpr = live.dpr || Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(r.width), h = Math.round(r.height);
+    if (w > 0 && h > 0) {
+      const bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+      if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+    }
+    aim.insets = aimInsets(r);
+    aim.fitAt = Date.now();
+  }
+
+  /* 조준 링·도착 강조 — 하늘 캔버스 위에 겹친 전용 캔버스에 링만 다시 그립니다
+     (별·은하수를 매 프레임 다시 그리지 않아 펄스가 부드럽고 배터리도 덜 씁니다). */
+  function aimPaint(g) {
+    const cv = $('#liveGuideCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    if (!g || !g.inView || !g.p) return;
+    const dpr = live.dpr || 1;
+    const x = g.p.x * dpr, y = g.p.y * dpr;
+    const col = isRed() ? '255,150,110' : '255,212,121';
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 430);
+    const R = (aim.arrived ? 34 : 26) * dpr;
+    ctx.save();
+    if (aim.arrived) {
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, R + 16 * dpr);
+      glow.addColorStop(0, 'rgba(' + col + ',.24)');
+      glow.addColorStop(1, 'rgba(' + col + ',0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(x, y, R + 16 * dpr, 0, Math.PI * 2); ctx.fill();
+    }
+    // 바깥으로 퍼지는 펄스
+    ctx.strokeStyle = 'rgba(' + col + ',' + (0.42 * (1 - pulse)).toFixed(3) + ')';
+    ctx.lineWidth = 3 * dpr;
+    ctx.beginPath(); ctx.arc(x, y, R + (6 + pulse * 12) * dpr, 0, Math.PI * 2); ctx.stroke();
+    // 조준 링
+    ctx.strokeStyle = 'rgba(' + col + ',' + (aim.arrived ? '0.96' : '0.82') + ')';
+    ctx.lineWidth = (aim.arrived ? 2.6 : 2) * dpr;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.stroke();
+    if (aim.arrived) {
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 1.2 * dpr;
+      ctx.beginPath(); ctx.arc(x, y, R - 9 * dpr, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // 네 방향 눈금
+    const tk = 6 * dpr;
+    ctx.lineWidth = 1.6 * dpr;
+    ctx.beginPath();
+    ctx.moveTo(x, y - R - tk); ctx.lineTo(x, y - R + tk * 0.4);
+    ctx.moveTo(x, y + R + tk); ctx.lineTo(x, y + R - tk * 0.4);
+    ctx.moveTo(x - R - tk, y); ctx.lineTo(x - R + tk * 0.4, y);
+    ctx.moveTo(x + R + tk, y); ctx.lineTo(x + R - tk * 0.4, y);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    if (aim.arrived) {
+      ctx.font = '800 ' + Math.round(12 * dpr) + 'px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(' + col + ',.98)';
+      ctx.fillText('🎯 찾았어요!', x, y - R - 12 * dpr);
+    }
+    if (aim.name) {
+      ctx.font = '700 ' + Math.round(11 * dpr) + 'px system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,.86)';
+      ctx.fillText(aim.name, x, y + R + 16 * dpr);
+    }
+    ctx.restore();
+  }
+
+  /* 목표 이름이 바뀌었을 때만 알약 크기를 잽니다(매 프레임 측정하지 않게). */
+  function aimMeasure() {
+    const pill = $('#liveGuidePill');
+    if (!pill) return;
+    const wasHidden = pill.hidden;
+    pill.hidden = false;
+    pill.style.visibility = 'hidden';
+    const r = pill.getBoundingClientRect();
+    if (r.width) aim.pw = Math.round(r.width);
+    if (r.height) aim.ph = Math.round(r.height);
+    pill.style.visibility = '';
+    pill.hidden = wasHidden;
+  }
+
+  function aimUpdate() {
+    const wrap = $('#liveGuide');
+    if (!wrap) return null;
+    if (!aim.on) {
+      wrap.hidden = true;
+      aimPaint(null);
+      return null;
+    }
+    if (!aim.insets || Date.now() - aim.fitAt > 800) aimFit();
+    const g = aimGeom();
+    if (!g || !aim.insets) { wrap.hidden = true; aimPaint(null); return null; }
+    wrap.hidden = false;
+    aim.inView = g.inView;
+    aim.angDist = g.angDist;
+    aim.theta = g.theta;
+    aim.below = g.below;
+    aim.arrived = g.inView && g.angDist <= AIM_ARRIVE_DEG;
+    aim.sx = g.p ? g.p.x : null;
+    aim.sy = g.p ? g.p.y : null;
+
+    const bar = $('#liveGuideBar'), beacon = $('#liveGuideBeacon'), pill = $('#liveGuidePill');
+    if (bar) {
+      bar.classList.toggle('is-inview', g.inView && !aim.arrived);
+      bar.classList.toggle('is-arrived', aim.arrived);
+    }
+    const stateTxt = aim.arrived
+      ? '찾았어요!'
+      : (g.inView ? '시야 안 · 남은 ' : '시야 밖 · 남은 ') + nf(g.angDist, 0) + '°';
+    if (aim.stateKey !== stateTxt) {
+      aim.stateKey = stateTxt;
+      const s = $('#liveGuideState');
+      if (s) s.textContent = stateTxt + (g.below ? ' · 지평선 아래' : '');
+    }
+    if (aim.nameKey !== aim.name || aim.belowKey !== (g.below ? 1 : 0)) {
+      aim.nameKey = aim.name;
+      aim.belowKey = g.below ? 1 : 0;
+      const n1 = $('#liveGuideName'), n2 = $('#liveGuideBeaconName');
+      if (n1) n1.textContent = aim.name || '목표';
+      if (n2) n2.textContent = aim.name || '목표';
+      const belowEl = $('#liveGuideBelow');
+      if (belowEl) belowEl.hidden = !g.below;
+      aimMeasure();
+    }
+
+    if (g.inView) {
+      if (beacon) beacon.hidden = true;
+      if (pill) pill.hidden = true;
+    } else {
+      if (beacon) beacon.hidden = false;
+      if (pill) pill.hidden = false;
+      const ins = aim.insets;
+      const R = 22;   // 유도등 반지름 — 상자 전체가 안전 영역 안에 들어오도록 반지름만큼 줄입니다
+      const rx = Math.max(10, (ins.w - ins.left - ins.right) / 2 - R - 4);
+      const ry = Math.max(10, (ins.h - ins.top - ins.bottom) / 2 - R - 4);
+      const cxs = ins.left + R + 4 + rx, cys = ins.top + R + 4 + ry;
+      const th = g.theta * RAD;
+      const x = cxs + Math.sin(th) * rx;
+      const y = cys - Math.cos(th) * ry;
+      if (beacon) {
+        beacon.style.transform = 'translate(' + Math.round(x - 22) + 'px,' + Math.round(y - 22) + 'px)';
+        const ar = $('#liveGuideArrow');
+        if (ar) ar.style.transform = 'rotate(' + g.theta.toFixed(1) + 'deg)';
+      }
+      if (pill) {
+        const at = aimPlacePill(x, y, ins);
+        pill.style.transform = 'translate(' + Math.round(at.x) + 'px,' + Math.round(at.y) + 'px)';
+      }
+      const angEl = $('#liveGuideBeaconAngle');
+      if (angEl) angEl.textContent = nf(g.angDist, 0) + '°';
+    }
+    aimPaint(g);
+    return {
+      on: aim.on, name: aim.name, az: aim.az, alt: aim.alt, angDist: aim.angDist,
+      inView: aim.inView, arrived: aim.arrived, below: aim.below, theta: aim.theta,
+      sx: aim.sx, sy: aim.sy, insets: aim.insets
+    };
+  }
+
+  function aimLoop(ts) {
+    aim.raf = null;
+    if (!aim.on) return;
+    const now = ts || performance.now();
+    if (!document.hidden && now - aim.t > 40) { aim.t = now; aimUpdate(); }
+    aim.raf = requestAnimationFrame(aimLoop);
+  }
+  function aimStart() {
+    if (aim.raf) return;
+    aim.fitAt = 0;
+    aim.raf = requestAnimationFrame(aimLoop);
+    aimUpdate();
+  }
+  function aimStop() {
+    if (aim.raf) { cancelAnimationFrame(aim.raf); aim.raf = null; }
+  }
+
   function liveDraw() {
     const ctx = live.ctx;
     if (!ctx || !live.w || !live.h) return;
@@ -13538,30 +14015,16 @@ window.Astro = (function () {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    const basis = camBasis(live.az, live.alt);
-    const fwd = basis.fwd;
+    /* 투영기·기준틀은 조준 유도(유도등·링)와 같은 식을 써야 해서 liveProjector() 하나로 모았습니다. */
+    const P = liveProjector();
+    const fwd = P.fwd;
     const cross = function (a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; };
     const dot = function (a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
     const norm = function (a) { const l = Math.sqrt(dot(a, a)) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
-    const right = basis.right;
-    const up = basis.up;
-    const kS = (H / 2) / Math.tan(fov / 4);
-
-    /* 구면(입체, stereographic) 투영 — 모든 시야에서 기본으로 씁니다.
-       · 화면 거리 = tan(θ/2) 이라 시야 가장자리에서도 늘어짐이 완만하고,
-         지평선(대원)이 직선이 아니라 곡선으로 휘어 하늘 돔·지구의 둥근 느낌이 살아납니다.
-       · 시야 절반(fov/2)이 화면 가장자리에 정확히 오도록 kS 를 잡습니다(예전 90° 이상 전용 식 그대로).
-       · 시선 뒤(θ≳152°)는 값이 무한대로 발산하므로 그리지 않습니다(끊김 없이 사라짐). */
-    function project(alt, az) {
-      const al = alt * RAD, z = az * RAD;
-      const d = [Math.cos(al) * Math.sin(z), Math.cos(al) * Math.cos(z), Math.sin(al)];
-      const dy = dot(d, fwd);
-      const dx = dot(d, right), dz = dot(d, up);
-      const den = 1 + dy;
-      if (den < 0.12) return null;
-      const k = kS / den;
-      return { x: cx + dx * k, y: cy - dz * k };
-    }
+    const right = P.right;
+    const up = P.up;
+    const kS = P.kS;
+    const project = P.project;
     function inBox(p, m) { return p && p.x > -(m || 40) && p.x < W + (m || 40) && p.y > -(m || 40) && p.y < H + (m || 40); }
 
     function strokePts(pts, style, width, dash) {
@@ -14667,6 +15130,28 @@ window.Astro = (function () {
     hits: function () { return live.hits.map(function (h) { return { x: h.x, y: h.y, kind: h.kind, key: h.key, name: h.name, mag: h.mag }; }); },
     info: function (kind, key) { openLiveInfo({ kind: kind, key: key }); },
     aim: function (kind, key) { aimAt(kind, key); },
+    /* -- 검증용 — 조준 유도의 지금 상태(목표·남은 각도·화면 위치·안전 영역).
+       aimTick() 은 rAF 없이도 한 번 계산·배치하고 그 값을 돌려줍니다. */
+    aimState: function () {
+      return {
+        on: aim.on, name: aim.name, kind: aim.kind, key: aim.key,
+        az: aim.az, alt: aim.alt, angDist: aim.angDist, inView: aim.inView,
+        arrived: aim.arrived, below: aim.below, theta: aim.theta,
+        sx: aim.sx, sy: aim.sy, insets: aim.insets
+      };
+    },
+    aimTick: function () { aim.fitAt = 0; return aimUpdate(); },
+    aimClear: function (silent) { aimClear(silent === undefined ? true : silent); },
+    /* 검증용 — 센서 없이 시선을 옮깁니다(드래그와 같은 경로: targetAz/Alt 도 함께). */
+    setView: function (az, alt, fov) {
+      if (az != null) { live.az = live.targetAz = A.mod(az, 360); }
+      if (alt != null) { live.alt = live.targetAlt = clamp(alt, ALT_MIN, ALT_MAX); }
+      if (fov != null) live.fov = clamp(fov, LIVE_FOV_MIN, LIVE_FOV_MAX);
+      liveDirty = true;
+      if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; }
+      liveDraw(); syncLiveInputs();
+      return aimUpdate();
+    },
     sensorOn: function () { return live.sensor; },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
@@ -14970,6 +15455,12 @@ window.Astro = (function () {
     }
     setSensorUi(false, 'off', '센서 꺼짐');
     syncLiveInputs();
+    // 🎯 조준 유도 해제 — 이 버튼 하나로만 목표가 풀립니다(트래킹·드래그·시각 변경에는 유지).
+    const guideX = $('#liveGuideX');
+    if (guideX) guideX.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      aimClear();
+    });
     liveDirty = true;
     kickLive();
 
@@ -14988,7 +15479,7 @@ window.Astro = (function () {
     stage.addEventListener('pointerdown', function (ev) {
       if (ev.button != null && ev.button !== 0) return;
       // 확대/축소·HUD 등 스테이지 위 버튼은 드래그 캡처에서 제외 (클릭이 죽지 않게)
-      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card, .live-time-card')) return;
+      if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card, .live-time-card, .live-guide')) return;
       ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
       try { stage.setPointerCapture(ev.pointerId); } catch (e) { }
       if (ptrs.size === 2) {
@@ -16953,6 +17444,7 @@ window.Astro = (function () {
     state.follow = null;
     live.targetAz = A.mod(h.az, 360);
     live.targetAlt = clamp(h.alt, -8, 88);
+    aimSet({ raH: A.mod(raDeg, 360) / 15, decD: decDeg, name: name || '천체' });
     liveDirty = true;
     kickLive();
     // aimAt과 같은 이유로, 다른 화면에서 부르면 라이브 하늘 화면으로 전환합니다.
