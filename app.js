@@ -3189,7 +3189,8 @@
     return (b > 0 ? b + 8 : 44) + 9;
   }
 
-  function kickLive() {    if (live.sensor) { trackStart(); return; }
+  function kickLive() {
+    if (live.sensor) { trackStart(); return; }
     if (live.raf) return;
     live.raf = requestAnimationFrame(liveTick);
   }
