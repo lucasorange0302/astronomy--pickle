@@ -1,7 +1,7 @@
 /* =========================================================================
    splash.js — 별너울 도입화면 (2026-11-27)
    · 첫 화면: 밤하늘 별빛 + '너울' 별자리 선이 그려지고 로고가 떠오릅니다.
-   · 약 1.5초 뒤 스스로 사라지고, 화면을 누르면 바로 건너뜁니다.
+   · 약 2.8초 뒤 스스로 사라지고(페이드아웃), 화면을 누르면 바로 건너뜁니다.
    · 처음 온 사람에게는 한 장짜리 환영 안내를 한 번만 보여 줍니다.
    외부 라이브러리 없이 canvas 2D 로만 그립니다.
    ========================================================================= */
@@ -198,7 +198,9 @@
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') leave();
   }
 
-  timer = setTimeout(leave, reduced ? 800 : 1500);
+  /* 배너를 조금 더 여유 있게 보여 줍니다 — 로고가 다 떠오른 뒤 한 박자(약 2.8초).
+     누르면 언제든 바로 닫힙니다(아래 pointerdown·touchstart·wheel). */
+  timer = setTimeout(leave, reduced ? 1500 : 2800);
   el.addEventListener('pointerdown', leave);
   el.addEventListener('touchstart', leave, { passive: true });
   el.addEventListener('wheel', leave, { passive: true });

@@ -88,11 +88,22 @@
     return null;
   }
 
-  /** 요청 마지막 날 — Open-Meteo 예보 제공 범위(오늘~오늘+15일)를 넘기면 400이 나므로 잘라 줍니다. */
-  function clampEnd(endDate, today) {
-    var p = String(today).split('-').map(Number);
-    var maxEnd = new Date(Date.UTC(p[0], p[1] - 1, p[2] + 15)).toISOString().slice(0, 10);
-    return endDate > maxEnd ? maxEnd : endDate;
+  /** 예보 상한 — Open-Meteo 의 end_date 는 **UTC 날짜 기준** 오늘 +15일까지만 받습니다.
+      KST(+9시간) 날짜에 +15일을 더하면 매일 00:00~08:59 KST 에 하루 앞선 날짜가 되어
+      end_date 범위 초과 HTTP 400 이 났습니다.
+      (2026-11-29 00:23 KST 확인 — 허용 범위가 UTC 기준 오늘+15일인 2026-12-13 까지였고,
+       KST 기준 2026-12-14 를 물으면 {"reason":"Parameter 'end_date' is out of allowed range …"}.) */
+  function maxEndDate() {
+    var now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 15))
+      .toISOString().slice(0, 10);
+  }
+
+  /** 요청 마지막 날 — 상한을 넘으면 잘라 주고, 시작일보다 앞서지 않게도 맞춥니다. */
+  function clampEnd(startDate, endDate) {
+    var maxEnd = maxEndDate();
+    if (endDate > maxEnd) endDate = maxEnd;
+    return endDate < startDate ? startDate : endDate;
   }
 
   /** 캐시에 있는 값만 (네트워크 호출 없음). 없으면 null */
@@ -105,8 +116,8 @@
     if (hit && hit.status !== 'empty') { cb(hit); return; }
     // 예보 범위(오늘 ~ 16일 뒤) 밖은 요청하지 않고 바로 "예보 미제공" — 불필요한 400 응답을 만들지 않는다.
     var now = Date.now() + 9 * 3600000;
-    var today = new Date(now).toISOString().slice(0, 10);
-    var limit = new Date(now + 15 * 86400000).toISOString().slice(0, 10);
+    var today = new Date(now).toISOString().slice(0, 10);       // KST 오늘
+    var limit = maxEndDate();                                   // UTC 오늘 + 15일 (요청 가능한 마지막 날)
     if (date < today || date > limit) {
       var snap0 = unavailable(date, lat, lon, 'range');
       mem[k] = { ts: Date.now(), snap: snap0 };
@@ -119,7 +130,7 @@
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
       '&hourly=cloud_cover,precipitation,precipitation_probability' +
-      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + clampEnd(addDay(date), today);
+      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + clampEnd(date, addDay(date));
 
     function finish(snap) {
       mem[k] = { ts: Date.now(), snap: snap };
@@ -240,12 +251,13 @@
     }
     var miss = dates.filter(function (x) { return !out[x]; });
     var today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
-    if (!miss.length || typeof window.fetch !== 'function' || miss[0] < today) { cb(out, []); return; }
+    if (!miss.length || typeof window.fetch !== 'function' ||
+        miss[0] < today || miss[0] > maxEndDate()) { cb(out, []); return; }
 
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
       '&hourly=cloud_cover,precipitation,precipitation_probability' +
-      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + clampEnd(addDay(endDate), today);
+      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + clampEnd(miss[0], addDay(endDate));
 
     var done = false;
     function finish(json) {

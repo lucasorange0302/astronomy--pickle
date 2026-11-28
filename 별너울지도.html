@@ -3857,6 +3857,52 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
 .catalog-wide-hits .deep-list { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 @media (max-width: 430px) { .catalog-wide-hits .deep-list { grid-template-columns: 1fr 1fr; } }
 
+/* ---------------------------------------- 🔗 별너울 공유 카드 (링크 복사 + QR)
+   QR 은 다크 모드·레드라이트에서도 카메라가 읽도록 항상 흰 바탕 + 검정 모듈입니다. */
+.bwshare {
+  position: fixed; inset: 0; z-index: 9998;
+  display: grid; place-items: center; padding: 18px;
+  background: rgba(3, 6, 13, .74);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.bwshare-card {
+  position: relative; width: min(94vw, 340px); max-height: 88vh; overflow: auto;
+  padding: 20px 18px 16px; text-align: center;
+  background: #0d1524; color: #eef2fb;
+  border: 1px solid rgba(126, 156, 220, .24); border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
+}
+.bwshare-t { margin: 0 0 4px; font-size: 1.02rem; font-weight: 800; letter-spacing: -.01em; }
+.bwshare-sub { margin: 0 0 14px; font-size: .76rem; color: #9aa6c0; line-height: 1.5; }
+.bwshare-qr {
+  display: inline-block; padding: 12px; border-radius: 14px;
+  background: #ffffff; line-height: 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+}
+.bwshare-qr .bwqr-svg { display: block; width: 232px; max-width: 62vw; height: auto; }
+.bwshare-url {
+  margin: 12px 0 14px; font-size: .8rem; color: #cfe0ff; font-weight: 700;
+  word-break: break-all; letter-spacing: .01em;
+}
+.bwshare-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.bwshare-btn {
+  appearance: none; border: 1px solid rgba(126, 156, 220, .3); border-radius: 12px;
+  background: rgba(255, 255, 255, .06); color: #eef2fb;
+  padding: 10px 16px; font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer;
+}
+.bwshare-btn.primary { background: #ffd479; border-color: #ffd479; color: #1a1206; }
+.bwshare-btn:active { transform: translateY(1px); }
+.bwshare-close {
+  position: absolute; top: 8px; right: 8px; width: 32px; height: 32px;
+  border: 0; border-radius: 10px; background: rgba(255, 255, 255, .07);
+  color: #cfd8ea; font-size: 14px; line-height: 1; cursor: pointer;
+}
+body.red .bwshare-card { background: #180604; border-color: rgba(255, 138, 92, .3); color: #ffe6da; }
+body.red .bwshare-sub, body.red .bwshare-url { color: #ffb99a; }
+body.red .bwshare-btn { border-color: rgba(255, 138, 92, .34); }
+body.red .bwshare-btn.primary { background: #ff8a5c; border-color: #ff8a5c; color: #1a0703; }
+/* QR 카드는 레드라이트에서도 흰 바탕을 유지합니다(카메라 인식). */
+
 </style>
 <!-- 홈 화면 설치(PWA) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3884,7 +3930,7 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
 /* =========================================================================
    splash.js — 별너울 도입화면 (2026-11-27)
    · 첫 화면: 밤하늘 별빛 + '너울' 별자리 선이 그려지고 로고가 떠오릅니다.
-   · 약 1.5초 뒤 스스로 사라지고, 화면을 누르면 바로 건너뜁니다.
+   · 약 2.8초 뒤 스스로 사라지고(페이드아웃), 화면을 누르면 바로 건너뜁니다.
    · 처음 온 사람에게는 한 장짜리 환영 안내를 한 번만 보여 줍니다.
    외부 라이브러리 없이 canvas 2D 로만 그립니다.
    ========================================================================= */
@@ -4081,7 +4127,9 @@ body.red .deep-card { background: rgba(20, 4, 2, .8); }
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') leave();
   }
 
-  timer = setTimeout(leave, reduced ? 800 : 1500);
+  /* 배너를 조금 더 여유 있게 보여 줍니다 — 로고가 다 떠오른 뒤 한 박자(약 2.8초).
+     누르면 언제든 바로 닫힙니다(아래 pointerdown·touchstart·wheel). */
+  timer = setTimeout(leave, reduced ? 1500 : 2800);
   el.addEventListener('pointerdown', leave);
   el.addEventListener('touchstart', leave, { passive: true });
   el.addEventListener('wheel', leave, { passive: true });
@@ -10116,11 +10164,22 @@ window.PHOTO_SETS = {
     return null;
   }
 
-  /** 요청 마지막 날 — Open-Meteo 예보 제공 범위(오늘~오늘+15일)를 넘기면 400이 나므로 잘라 줍니다. */
-  function clampEnd(endDate, today) {
-    var p = String(today).split('-').map(Number);
-    var maxEnd = new Date(Date.UTC(p[0], p[1] - 1, p[2] + 15)).toISOString().slice(0, 10);
-    return endDate > maxEnd ? maxEnd : endDate;
+  /** 예보 상한 — Open-Meteo 의 end_date 는 **UTC 날짜 기준** 오늘 +15일까지만 받습니다.
+      KST(+9시간) 날짜에 +15일을 더하면 매일 00:00~08:59 KST 에 하루 앞선 날짜가 되어
+      end_date 범위 초과 HTTP 400 이 났습니다.
+      (2026-11-29 00:23 KST 확인 — 허용 범위가 UTC 기준 오늘+15일인 2026-12-13 까지였고,
+       KST 기준 2026-12-14 를 물으면 {"reason":"Parameter 'end_date' is out of allowed range …"}.) */
+  function maxEndDate() {
+    var now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 15))
+      .toISOString().slice(0, 10);
+  }
+
+  /** 요청 마지막 날 — 상한을 넘으면 잘라 주고, 시작일보다 앞서지 않게도 맞춥니다. */
+  function clampEnd(startDate, endDate) {
+    var maxEnd = maxEndDate();
+    if (endDate > maxEnd) endDate = maxEnd;
+    return endDate < startDate ? startDate : endDate;
   }
 
   /** 캐시에 있는 값만 (네트워크 호출 없음). 없으면 null */
@@ -10133,8 +10192,8 @@ window.PHOTO_SETS = {
     if (hit && hit.status !== 'empty') { cb(hit); return; }
     // 예보 범위(오늘 ~ 16일 뒤) 밖은 요청하지 않고 바로 "예보 미제공" — 불필요한 400 응답을 만들지 않는다.
     var now = Date.now() + 9 * 3600000;
-    var today = new Date(now).toISOString().slice(0, 10);
-    var limit = new Date(now + 15 * 86400000).toISOString().slice(0, 10);
+    var today = new Date(now).toISOString().slice(0, 10);       // KST 오늘
+    var limit = maxEndDate();                                   // UTC 오늘 + 15일 (요청 가능한 마지막 날)
     if (date < today || date > limit) {
       var snap0 = unavailable(date, lat, lon, 'range');
       mem[k] = { ts: Date.now(), snap: snap0 };
@@ -10147,7 +10206,7 @@ window.PHOTO_SETS = {
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
       '&hourly=cloud_cover,precipitation,precipitation_probability' +
-      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + clampEnd(addDay(date), today);
+      '&timezone=Asia%2FSeoul&start_date=' + date + '&end_date=' + clampEnd(date, addDay(date));
 
     function finish(snap) {
       mem[k] = { ts: Date.now(), snap: snap };
@@ -10268,12 +10327,13 @@ window.PHOTO_SETS = {
     }
     var miss = dates.filter(function (x) { return !out[x]; });
     var today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
-    if (!miss.length || typeof window.fetch !== 'function' || miss[0] < today) { cb(out, []); return; }
+    if (!miss.length || typeof window.fetch !== 'function' ||
+        miss[0] < today || miss[0] > maxEndDate()) { cb(out, []); return; }
 
     var url = 'https://api.open-meteo.com/v1/forecast' +
       '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
       '&hourly=cloud_cover,precipitation,precipitation_probability' +
-      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + clampEnd(addDay(endDate), today);
+      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + clampEnd(miss[0], addDay(endDate));
 
     var done = false;
     function finish(json) {
@@ -11141,9 +11201,9 @@ window.Astro = (function () {
   var GAIA_DEBOUNCE = 420;
   /* VizieR 원뿔 조회는 서버가 붐빔 때 2~13초로 흔들립니다(2026-11-28 09~13초 실측).
      9초로 끊으면 느린 날에 “응답 없음”이 다시 뜨므로 15초까지 기다립니다 —
-     기다리는 동안에는 지난 목록을 그대로 보여 주고(gi.stale), 실패한 서버는 6시간 쉼니다. */
+     기다리는 동안에는 지난 목록을 그대로 보여 주고(gi.stale), 실패한 서버는 60초 쉼니다. */
   var GAIA_TIMEOUT = 15000;
-  var EP_KEY = 'bw.gaia.ep';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(6시간)
+  var EP_KEY = 'bw.gaia.ep.v2';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(60초)
   var TILE_MAX = 36;           // 메모리에 들고 있을 타일 수(LRU)
   var GAIA_MAX_CACHE = 20;
 
@@ -11340,7 +11400,9 @@ window.Astro = (function () {
   function epUsable(name) {
     var e = loadEp()[name];
     if (!e || e.ok) return true;
-    return (Date.now() - e.t) > 6 * 3600 * 1000;   // 6시간 뒤 다시 시도(오프라인이었을 수 있음)
+    /* 실패는 60초만 기억합니다. 예전 6시간은 너무 길어, 사용자가 화면을 움직여
+       요청이 취소(AbortError)된 것만으로도 정상 서버가 반나절 동안 빠졌습니다. */
+    return (Date.now() - e.t) > 60 * 1000;
   }
   function epMark(name, ok) {
     if (!ok && typeof navigator !== 'undefined' && navigator.onLine === false) return;   // 오프라인은 기억하지 않음
@@ -11507,7 +11569,16 @@ window.Astro = (function () {
       return job.run().then(function (rows) {
         epMark(job.name, true);
         return { rows: rows, endpoint: job.name };
-      }, function () { epMark(job.name, false); return next(); });
+      }, function (err) {
+        /* 사용자가 화면을 움직이거나 확대해 이전 요청을 끊었을 때(fetch 취소)는
+           서버 탓이 아닙니다 — '이 서버 쉼'을 남기지 않고 곧바로 멈춥니다.
+           (예전에는 AbortError 도 실패로 기록해 정상 서버가 6시간 빠졌습니다.) */
+        if (sig && sig.aborted) return { rows: [], endpoint: '' };
+        /* 시간 초과 취소도 서버 판정(블랙리스트)은 건드리지 않고 다음 서버로 넘깁니다. */
+        if (err && (err.name === 'AbortError' || err.code === 20)) return next();
+        epMark(job.name, false);
+        return next();
+      });
     }
     return next();
   }
@@ -15409,23 +15480,27 @@ window.Astro = (function () {
 
   /* ===== MW-MODEL-START ===== */
   /* ======================================================================
-     🌌 우리은하 — 은하좌표(l, b)로 만든 구조 모델 (라이브 뷰 · 전천 지도 공용)
-     ---------------------------------------------------------------- 근거
-     · 은하 중심(l=0°, b=0° = 궁수자리 A*, RA 17h45m40s · Dec −28°56′)과
-       은하 북극(RA 12h51m26s · Dec +27°08′)으로 직교 기저를 만들고, (l, b)를
-       넣어 적도 단위벡터를 **한 번만** 만들어 둡니다.
-     · 매 프레임은 그 벡터를 카메라 행렬(3×4)로만 돌립니다 — 삼각함수 0회.
-       (예전에는 은하수 한 점마다 equatorialToHorizontal + project 를 다시 셌습니다)
-     · 띠는 위도 고리(반두께 24°→0.9°)를 겹쳐 채우고, 안쪽 두 고리는 은하경도
-       2~4°마다 알파를 흔들어 별구름의 덩이를 만듭니다(사진의 얼룩).
-     · 그 위에 부드러운 빛덩이를 'lighter'로 더해 팽대부·성운 구름·입자를 얹고,
-       먼지 띠는 'destination-out'으로 띠의 빛을 깎아 은하수를 두 갈래로 가릅니다.
-     · 넓고 부드러운 띠는 1/3 해상도 층에 그린 뒤 한 번에 확대해 얹어,
-       모바일에서도 프레임 비용이 낮습니다(띠의 흐릿함은 실제 모습과 같습니다).
-     · 잔별(미세 별 구름)은 시드 고정 난수로 만든 4,600개 — 새로고침해도 같은 하늘.
+     🌌 우리은하 — 은하좌표(l, b) 파노라마 텍스처 (라이브 뷰 · 전천 지도 공용)
+     ------------------------------------------------------------- 왜 텍스처인가
+     · 2026-11-28 아이폰 실기기에서 위도 띠 43겹이 **날카로운 일자 줄무늬**로 드러났습니다.
+       겹치지 않는 띠끼리 만나는 경계에서 알파가 계단처럼 바뀌는데, 그 경계를 지우려고
+       쓰던 ctx.filter = 'blur()' 를 iOS Safari 가 무시해 계단이 그대로 남았습니다.
+     · 그래서 은하좌표 (l, b) 를 그대로 편 **파노라마 텍스처를 한 번만 구워** 두고,
+       매 프레임 시선 방향으로 다시 샘플링해 얹습니다. 텍스처에는 직선 경계가 없습니다.
+     ------------------------------------------------------------------ 굽는 법
+     ① 밑바탕: PROFILE(b)·lonBright(l) 에 fBm(값 잡음)을 곱한 저해상도 필드를 부드럽게 확대
+     ② 구름 결: 은하경도로 길게 늘인 fBm 을 'overlay' 로 얹어 얼룩을 만듭니다
+     ③ 별구름: 실제 은하경도·위도에 놓인 빛덩이를 'lighter' 로 더합니다
+     ④ 암흑대: 큰 틈(Great Rift) 등 먼지 띠를 'multiply' 로 깎아 은하수를 두 갈래로 가릅니다
+     ⑤ 레드라이트: 같은 텍스처를 붉은 톤으로 옮겨 둡니다(암순응 보존)
+     ------------------------------------------------------------------ 그리는 법
+     · 1/4 해상도 오프스크린에서 픽셀마다 화면 광선을 적도 단위벡터로 되돌리고
+       은하좌표 (l, b) 로 바꿔 텍스처를 이중선형 보간으로 읽습니다. 그 뒤 한 번에 확대.
+     · 밝기는 스텔라리움처럼 밤하늘에 은은히 묻히는 수준(예전 .17 의 약 30%)입니다.
      ====================================================================== */
   const MW = (function () {
     const RAD = Math.PI / 180;
+    const DEG = 180 / Math.PI;
 
     /* ---------------------------------------------------- 은하좌표 기저 */
     function eqVec(raDeg, decDeg) {
@@ -15447,6 +15522,15 @@ window.Astro = (function () {
         GX[1] * cl * cb + GY[1] * sl * cb + GZ[1] * sb,
         GX[2] * cl * cb + GY[2] * sl * cb + GZ[2] * sb
       ];
+    }
+    /** 적도 단위벡터 → 은하좌표 (l, b) — 텍스처 자리를 찾을 때 씁니다. */
+    function vecToLB(v) {
+      const gz = clamp(v[0] * GZ[0] + v[1] * GZ[1] + v[2] * GZ[2], -1, 1);
+      const gx = v[0] * GX[0] + v[1] * GX[1] + v[2] * GX[2];
+      const gy = v[0] * GY[0] + v[1] * GY[1] + v[2] * GY[2];
+      let l = Math.atan2(gy, gx) * DEG;
+      if (l < 0) l += 360;
+      return { l: l, b: Math.asin(gz) * DEG };
     }
     /* 시드 고정 난수 — 같은 하늘을 늘 다시 만듭니다. */
     function prng(seed) {
@@ -15470,96 +15554,20 @@ window.Astro = (function () {
     function lonHalf(L) {              // 띠의 세로 반두께(도) — 중심부가 더 두껍습니다
       return 3.3 + 2.6 * Math.exp(-Math.pow(dAng(L, 0) / 26, 2));
     }
-
-    /* ------------------------------------------------------- 색조·스프라이트 */
-    const COOL = 0, MID = 1, WARM = 2, WHITE = 3;
-    /* 색조 — [일반, 레드라이트]. 레드라이트에서는 은하수도 붉은 톤만 씁니다
-       (푸른·흰 빛이 섞이면 암순응이 깨집니다). */
-    const TONE_RGB = [
-      ['182,208,255', '224,230,248', '255,238,206', '255,252,246'],
-      ['168,74,56', '206,104,76', '240,138,104', '250,156,120']
-    ];
-    const sprites = {};
-    function sprite(key, red) {
-      const kk = (key === 'd' ? 'd' : key === 'k' ? (red ? 'kr' : 'k') : (red ? 'r' : 'n') + key);
-      if (sprites[kk]) return sprites[kk];
-      const S = 128;
-      const cv = document.createElement('canvas');
-      cv.width = cv.height = S;
-      const g = cv.getContext('2d');
-      const gr = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
-      if (key === 'k') {                       // 별구름 알갱이 — 작고 또렷한 밝은 덩이
-        const kc = (kk === 'kr') ? ['250,168,136', '238,150,118', '228,140,108'] : ['255,250,238', '255,246,228', '255,242,220'];
-        gr.addColorStop(0, 'rgba(' + kc[0] + ',0.95)');
-        gr.addColorStop(0.30, 'rgba(' + kc[1] + ',0.55)');
-        gr.addColorStop(0.58, 'rgba(' + kc[2] + ',0.18)');
-        gr.addColorStop(0.80, 'rgba(' + kc[2] + ',0.04)');
-        gr.addColorStop(1, 'rgba(' + kc[2] + ',0)');
-      } else if (key === 'd') {                // 암흑성운 — 가장자리가 조금 더 또렷하게
-        gr.addColorStop(0, 'rgba(2,3,7,1)');
-        gr.addColorStop(0.42, 'rgba(2,3,7,0.96)');
-        gr.addColorStop(0.66, 'rgba(2,3,7,0.72)');
-        gr.addColorStop(0.85, 'rgba(2,3,7,0.26)');
-        gr.addColorStop(1, 'rgba(2,3,7,0)');
-      } else {
-        const rgb = TONE_RGB[kk.charAt(0) === 'r' ? 1 : 0][Math.max(0, Math.min(3, Number(key) || 0))];
-        gr.addColorStop(0, 'rgba(' + rgb + ',1)');
-        gr.addColorStop(0.17, 'rgba(' + rgb + ',0.62)');
-        gr.addColorStop(0.36, 'rgba(' + rgb + ',0.26)');
-        gr.addColorStop(0.60, 'rgba(' + rgb + ',0.075)');
-        gr.addColorStop(0.84, 'rgba(' + rgb + ',0.015)');
-        gr.addColorStop(1, 'rgba(' + rgb + ',0)');
-      }
-      g.fillStyle = gr;
-      g.fillRect(0, 0, S, S);
-      sprites[kk] = cv;
-      return cv;
-    }
-
-    /* ---------------------------------------------- 띠 중심선·위도 고리 벡터 */
-    const BAND_STEP = 2;                       // 은하경도 표본 간격(도)
-    const BAND_N = Math.round(360 / BAND_STEP) + 1;   // 0 … 360 (닫힌 고리)
-    function ringVec(halfDeg) {
-      const a = new Float32Array(BAND_N * 3);
-      for (let i = 0; i < BAND_N; i++) {
-        const v = galVec(i * BAND_STEP, halfDeg);
-        a[i * 3] = v[0]; a[i * 3 + 1] = v[1]; a[i * 3 + 2] = v[2];
-      }
-      return a;
-    }
-    /* 띠의 세로 밝기 곡선 — 실제 사진의 프로필을 따릅니다.
-       중심 0.68 → 4.6°에서 1/e → 12° 0.09 → 24° 0.005 */
+    /* 띠의 세로 밝기 곡선 — 실제 사진처럼 '좁고 밝은 핵 + 넓게 번지는 날개' 두 항.
+       핵: 중심 0.62 → 6.2°에서 1/e · 날개: 중심 0.13 → 15°에서 1/e → 20° 0.03 */
     function PROFILE(bd) {
-      return 0.68 * Math.exp(-Math.pow(Math.abs(bd) / 4.6, 1.35)) + 0.0032;
+      const a = Math.abs(bd);
+      return 0.62 * Math.exp(-Math.pow(a / 6.2, 1.45)) +
+             0.13 * Math.exp(-Math.pow(a / 15, 1.6)) + 0.0035;
     }
-    /* 위도 경계 — 알파가 0.018 넘게 변하지 않도록 촘촘히(곡선이 가파른 곳일수록 촘촘).
-       겹치지 않는 '띠(strip)'로 채우므로 경계가 겹쳐 밝아지거나 계단이 생기지 않습니다. */
-    const EDGES = (function () {
-      const out = [0];
-      let b = 0;
-      let guard = 0;
-      while (b < 26 && guard++ < 200) {
-        const d = Math.abs((PROFILE(b + 0.06) - PROFILE(b)) / 0.06) || 0.002;
-        let step = 0.0075 / d;
-        step = Math.max(0.30, Math.min(2.4, step));
-        b += step;
-        out.push(Math.min(26, b));
-      }
-      return out;
-    })();
-    const EDGE_V = EDGES.map(function (bd) { return ringVec(bd); });
-    const EDGE_V2 = EDGES.map(function (bd) { return ringVec(-bd); });
-    const STRIPS = (function () {
-      const out = [];
-      for (let i = 0; i < EDGES.length - 1; i++) {
-        const mid = (EDGES[i] + EDGES[i + 1]) / 2;
-        const tone = mid <= 2.2 ? WARM : mid <= 6 ? WHITE : mid <= 12 ? MID : COOL;
-        out.push({ a: PROFILE(mid), t: tone });
-      }
-      return out;
-    })();
-    /* --------------------------------------------------- 빛덩이·암흑대 자료 */
-    const glow = [];        // { v, r:도, a:투명도, t:색조 }
+    function nowMs() {
+      return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    }
+
+    /* ------------------------------------------------------- 색조·빛덩이 자료 */
+    const COOL = 0, MID = 1, WARM = 2, WHITE = 3;
+    const glow = [];        // { v, r:도, a:투명도, t:색조 }  — 띠의 빛덩이
     const dark = [];        // 암흑성운 덩어리
     const knots = [];       // 별구름 알갱이 — { v, r:도, a }
     const lanes = [];       // 먼지 띠(폴리라인) — { v:[...], w:폭(도), a:진하기 }
@@ -15747,13 +15755,250 @@ window.Astro = (function () {
         const mag = 5.0 + rnd() * 2.4;                    // 14~18등 느낌의 아주 어두운 잔별
         const o = n * 7;
         FINE[o] = v[0]; FINE[o + 1] = v[1]; FINE[o + 2] = v[2];
-        FINE[o + 3] = big ? 1.25 : (0.9 + rnd() * 0.25);
-        FINE[o + 4] = clamp(0.62 - (mag - 5.0) * 0.14 + rnd() * 0.10, 0.22, 0.7);
+        /* 크기 0.45~0.9px — 은하수 위에 하얀 점박이처럼 뜨지 않게 스텔라리움 수준으로 작게 */
+        FINE[o + 3] = big ? 0.9 : (0.45 + rnd() * 0.3);
+        FINE[o + 4] = clamp(0.34 - (mag - 5.0) * 0.07 + rnd() * 0.06, 0.10, 0.40);
         const cr = rnd();
         FINE[o + 5] = cr < 0.20 ? 0 : cr < 0.52 ? 1 : cr < 0.82 ? 2 : cr < 0.94 ? 3 : 4;
         n++;
       }
     })();
+
+    /* ==================================================================
+       파노라마 텍스처 — 앱을 열 때 한 번만 굽습니다.
+       가로 1536px(은하경도 0.234°/px) · 세로 384px(은하위도 0.469°/px).
+       ================================================================== */
+    const TEX_W = 1536, TEX_H = 384;
+    const PX_L = TEX_W / 360, PX_B = TEX_H / 180;
+    const BASE_K = 0.30;      // 밑바탕 밝기 — 더해지는 값(255 기준)
+    const BLOB_K = 0.20;      // 빛덩이 세기(예전 화면용 값의 20%)
+    let texN = null, texR = null, texMs = 0;
+
+    /** 값 잡음(value noise) 격자 — 부드러운 보간이라 텍스처에 각진 경계가 없습니다. */
+    function lattice(seed, N) {
+      const rnd = prng(seed);
+      const a = new Float32Array(N * N);
+      for (let i = 0; i < N * N; i++) a[i] = rnd();
+      return function (x, y) {
+        const xi = Math.floor(x), yi = Math.floor(y);
+        let fx = x - xi, fy = y - yi;
+        fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+        const x0 = ((xi % N) + N) % N, y0 = ((yi % N) + N) % N;
+        const x1 = (x0 + 1) % N, y1 = (y0 + 1) % N;
+        const v00 = a[y0 * N + x0], v10 = a[y0 * N + x1];
+        const v01 = a[y1 * N + x0], v11 = a[y1 * N + x1];
+        const u0 = v00 + (v10 - v00) * fx, u1 = v01 + (v11 - v01) * fx;
+        return u0 + (u1 - u0) * fy;
+      };
+    }
+    function fbm(nz, x, y, oct) {
+      let s = 0, w = 0, amp = 1, f = 1;
+      for (let o = 0; o < oct; o++) { s += amp * nz(x * f, y * f); w += amp; amp *= 0.5; f *= 2; }
+      return s / w;
+    }
+
+    const TINT = ['150,180,232', '205,214,238', '246,232,208', '255,246,226'];   // COOL·MID·WARM·WHITE
+    const spriteCache = {};
+    function tintSprite(tint) {
+      if (spriteCache[tint]) return spriteCache[tint];
+      const S = 64;
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = S;
+      const q = cv.getContext('2d');
+      const rg = q.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+      rg.addColorStop(0, 'rgba(' + tint + ',1)');
+      rg.addColorStop(0.20, 'rgba(' + tint + ',0.62)');
+      rg.addColorStop(0.42, 'rgba(' + tint + ',0.26)');
+      rg.addColorStop(0.68, 'rgba(' + tint + ',0.07)');
+      rg.addColorStop(1, 'rgba(' + tint + ',0)');
+      q.fillStyle = rg;
+      q.fillRect(0, 0, S, S);
+      spriteCache[tint] = cv;
+      return cv;
+    }
+    const darkSprite = (function () {
+      let cv = null;
+      return function () {
+        if (cv) return cv;
+        const S = 64;
+        cv = document.createElement('canvas');
+        cv.width = cv.height = S;
+        const q = cv.getContext('2d');
+        const rg = q.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+        rg.addColorStop(0, 'rgba(6,6,8,0.94)');
+        rg.addColorStop(0.45, 'rgba(6,6,8,0.66)');
+        rg.addColorStop(0.75, 'rgba(6,6,8,0.24)');
+        rg.addColorStop(1, 'rgba(6,6,8,0)');
+        q.fillStyle = rg;
+        q.fillRect(0, 0, S, S);
+        return cv;
+      };
+    })();
+
+    function bakeTexture() {
+      if (texN) return true;
+      const t0 = nowMs();
+      const cv = document.createElement('canvas');
+      cv.width = TEX_W; cv.height = TEX_H;
+      const g = cv.getContext('2d');
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, TEX_W, TEX_H);
+
+      /* ① 밑바탕 — 저해상도 필드(384×160)를 계산해 부드럽게 확대합니다. */
+      const BW = 384, BH = 160;
+      const lo = document.createElement('canvas');
+      lo.width = BW; lo.height = BH;
+      const lg = lo.getContext('2d');
+      const img = lg.createImageData(BW, BH);
+      const px = img.data;
+      const nA = lattice(9173, 8), nB = lattice(4471, 16);
+      const LON = new Float32Array(BW), BUL = new Float32Array(BW);
+      for (let i = 0; i < BW; i++) {
+        const l = (i + 0.5) * 360 / BW;
+        LON[i] = clamp((lonBright(l) - 0.26) / 1.85, 0, 1);
+        BUL[i] = Math.exp(-Math.pow(dAng(l, 0) / 20, 2));
+      }
+      for (let j = 0; j < BH; j++) {
+        const b = 90 - (j + 0.5) * 180 / BH;
+        const prof = PROFILE(b);
+        const eb = Math.exp(-Math.pow(b / 9, 2));
+        const v = (b + 90) / 180;
+        for (let i = 0; i < BW; i++) {
+          const l = (i + 0.5) * 360 / BW;
+          const u = l / 360;
+          /* 구름 결 — 은하경도로 길게 늘인 fBm(경도 45°·위도 7.5° 크기부터) */
+          const ca = fbm(nA, u * 8, v * 24, 3);
+          const cb = fbm(nB, u * 16, v * 48, 2);
+          /* 결은 '띠를 끊지 않을 만큼'만 — 얼룩은 ±35% 안쪽으로 둡니다. */
+          const cloud = clamp(0.90 + 0.46 * (ca - 0.5) + 0.26 * (cb - 0.5), 0.45, 1.32);
+          const bulge = BUL[i] * eb;
+          /* 넓은 날개 — 띠 양옆 13°까지 은은하게 번지는 원반의 빛 */
+          const I = prof * (0.66 + 0.94 * LON[i]) * cloud + 0.30 * bulge * (0.55 + 0.9 * cb);
+          const warm = clamp(bulge * 1.05 + 0.22 * LON[i], 0, 1);
+          const k = I * BASE_K;
+          const o = (j * BW + i) * 4;
+          px[o] = Math.min(255, (145 + 60 * warm) * k);
+          px[o + 1] = Math.min(255, (175 + 12 * warm) * k);
+          px[o + 2] = Math.min(255, (225 - 65 * warm) * k);
+          px[o + 3] = 255;
+        }
+      }
+      lg.putImageData(img, 0, 0);
+      g.imageSmoothingEnabled = true;
+      if ('imageSmoothingQuality' in g) g.imageSmoothingQuality = 'high';
+      g.drawImage(lo, 0, 0, TEX_W, TEX_H);
+
+      /* ② 빛덩이·별구름 — 모델의 덩이를 'lighter' 로 더합니다(겹치는 곳이 더 밝음). */
+      function blobAt(l, b, rDeg, alpha, tint, stretch) {
+        const x = l * PX_L;
+        const y = (90 - b) * PX_B;
+        const rx = Math.max(0.8, rDeg * PX_L * (stretch || 1.7));
+        const ry = Math.max(0.8, rDeg * PX_B);
+        g.globalAlpha = clamp(alpha, 0, 1);
+        const sp = tintSprite(tint);
+        g.drawImage(sp, x - rx, y - ry, rx * 2, ry * 2);
+        if (x - rx < 0) g.drawImage(sp, x + TEX_W - rx, y - ry, rx * 2, ry * 2);
+        if (x + rx > TEX_W) g.drawImage(sp, x - rx - TEX_W, y - ry, rx * 2, ry * 2);
+      }
+      g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < glow.length; i++) {
+        const bl = glow[i];
+        const p = vecToLB(bl.v);
+        blobAt(p.l, p.b, bl.r, bl.a * BLOB_K * 3.2, TINT[bl.t], 1.5);
+      }
+      for (let i = 0; i < knots.length; i++) {
+        const bl = knots[i];
+        const p = vecToLB(bl.v);
+        blobAt(p.l, p.b, bl.r, bl.a * BLOB_K * 2.2, TINT[WHITE], 1.5);
+      }
+      g.globalAlpha = 1;
+
+      /* ③ 암흑대 — 큰 틈·먼지 띠를 'multiply' 로 깎습니다(가장자리는 폭 3겹). */
+      g.globalCompositeOperation = 'multiply';
+      for (let i = 0; i < lanes.length; i++) {
+        const ln = lanes[i], vs = ln.v;
+        let started = false, prevX = 0;
+        g.beginPath();
+        for (let k = 0; k < vs.length; k++) {
+          const p = vecToLB(vs[k]);
+          const x = p.l * PX_L, y = (90 - p.b) * PX_B;
+          if (started && Math.abs(x - prevX) > TEX_W * 0.5) started = false;   // 경도 0/360 경계에서 끊기
+          if (started) g.lineTo(x, y); else { g.moveTo(x, y); started = true; }
+          prevX = x;
+        }
+        g.lineCap = 'round';
+        g.lineJoin = 'round';
+        for (let w2 = 0; w2 < 3; w2++) {
+          g.lineWidth = Math.max(1, ln.w * [1, 2.1, 3.8][w2] * PX_B * 2);
+          g.strokeStyle = 'rgba(20,20,24,' + clamp(ln.a * [1, 0.62, 0.3][w2] * 0.6, 0, 1).toFixed(3) + ')';
+          g.stroke();
+        }
+      }
+      for (let i = 0; i < dark.length; i++) {
+        const bl = dark[i];
+        const p = vecToLB(bl.v);
+        const x = p.l * PX_L, y = (90 - p.b) * PX_B;
+        const rx = bl.r * PX_L * 1.6, ry = bl.r * PX_B;
+        g.globalAlpha = clamp(bl.a * 0.8, 0, 1);
+        g.drawImage(darkSprite(), x - rx, y - ry, rx * 2, ry * 2);
+      }
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
+
+      /* ④ 구름 결 — 밝기의 곱셈 무늬('overlay'). 텍스처가 어두워 2×값으로 곱해집니다.
+         암흑대 뒤에 얹어, 먼지 띠의 매끈한 가장자리도 입자로 풀어 줍니다. */
+      const GW = 640, GH = 160;
+      const gr = document.createElement('canvas');
+      gr.width = GW; gr.height = GH;
+      const gg = gr.getContext('2d');
+      const gimg = gg.createImageData(GW, GH);
+      const gx = gimg.data;
+      const nD = lattice(7717, 24), nE = lattice(3391, 48), nF = lattice(1307, 96);
+      for (let j = 0; j < GH; j++) {
+        const v = (j + 0.5) / GH;
+        for (let i = 0; i < GW; i++) {
+          const u = (i + 0.5) / GW;
+          const n = 0.48 * fbm(nD, u * 8, v * 24, 2) +
+                    0.33 * fbm(nE, u * 16, v * 48, 2) +
+                    0.19 * fbm(nF, u * 32, v * 96, 2);
+          const val = clamp(128 + (n - 0.5) * 72, 84, 172);
+          const o = (j * GW + i) * 4;
+          gx[o] = gx[o + 1] = gx[o + 2] = val;
+          gx[o + 3] = 255;
+        }
+      }
+      gg.putImageData(gimg, 0, 0);
+      g.globalCompositeOperation = 'overlay';
+      g.globalAlpha = 0.62;
+      g.drawImage(gr, 0, 0, TEX_W, TEX_H);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
+
+      /* ⑤ 텍스처 픽셀 → 더할 값 배열(일반·레드라이트) */
+      const d = g.getImageData(0, 0, TEX_W, TEX_H).data;
+      const n = TEX_W * TEX_H;
+      texN = new Uint8Array(n * 3);
+      texR = new Uint8Array(n * 3);
+      for (let i = 0, p4 = 0; i < n; i++, p4 += 4) {
+        const r = d[p4], gg2 = d[p4 + 1], b2 = d[p4 + 2];
+        texN[i * 3] = r; texN[i * 3 + 1] = gg2; texN[i * 3 + 2] = b2;
+        /* 레드라이트 — 밝기만 남겨 붉은 톤으로(푸른 빛이 섞이면 암순응이 깨집니다) */
+        const L = r * 0.30 + gg2 * 0.59 + b2 * 0.11;
+        texR[i * 3] = Math.min(255, L * 1.12 + 3);
+        texR[i * 3 + 1] = Math.min(255, L * 0.34);
+        texR[i * 3 + 2] = Math.min(255, L * 0.24);
+      }
+      cv.width = cv.height = 0;      // 굽고 나면 캔버스는 놓아 줍니다
+      lo.width = lo.height = 0;
+      gr.width = gr.height = 0;
+      texMs = nowMs() - t0;
+      return true;
+    }
+    /* 첫 화면이 멈추지 않게, 한가할 때 미리 구워 둡니다(첫 그리기에서도 한 번 더 확인). */
+    try {
+      if (typeof requestIdleCallback === 'function') requestIdleCallback(function () { bakeTexture(); }, { timeout: 4000 });
+      else setTimeout(function () { bakeTexture(); }, 1500);
+    } catch (e) { /* 구울 수 없으면 첫 그리기에서 굽습니다 */ }
 
     /* ---------------------------------------------- 적도 벡터 → 카메라 행렬 */
     /*  rows: [화면 오른쪽, 화면 안쪽, 화면 위, 천정]  (천정 행 = sin(고도)) */
@@ -15780,238 +16025,129 @@ window.Astro = (function () {
         ]);
       }
       out.push(H[2].slice());
+      /* 거꾸로(화면 광선 → 적도 단위벡터) 쓰는 기저 — P 의 벡터들은 '지평 기준틀'
+         성분이므로, H 의 각 행(동·북·천정 벡터)으로 적도 좌표로 올립니다.
+         out.inv = [오른쪽, 앞, 위] (적도 좌표). */
+      out.inv = rows.map(function (b) {
+        return [
+          H[0][0] * b[0] + H[1][0] * b[1] + H[2][0] * b[2],
+          H[0][1] * b[0] + H[1][1] * b[1] + H[2][1] * b[2],
+          H[0][2] * b[0] + H[1][2] * b[1] + H[2][2] * b[2]
+        ];
+      });
       return out;
     }
 
     /* ------------------------------------------------------------ 라이브 뷰 */
-    let layer = null;
-    const NE = EDGES.length;
-    /* 경계마다 화면 좌표 — 앞 절반(+b)과 뒤 절반(−b)을 모두 담습니다. */
-    const SX = new Float32Array(2 * NE * BAND_N * 2);
-    const SY = new Float32Array(2 * NE * BAND_N * 2);
     const RING0 = ringVec(0);
-    const last = { glow: 0, knot: 0, dark: 0, soft: 0, fine: 0, ms: 0, band: 0, lane: 0, t: {} };
+    function ringVec(halfDeg) {
+      const N = 181;                                 // 은하경도 2° 간격(닫힌 고리)
+      const a = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        const v = galVec(i * 2, halfDeg);
+        a[i * 3] = v[0]; a[i * 3 + 1] = v[1]; a[i * 3 + 2] = v[2];
+      }
+      return a;
+    }
+    let offCv = null, offImg = null, offW = 0, offH = 0;
+    const last = { tex: 0, band: 0, fine: 0, ms: 0, fade: 0, t: {} };
+    function clearLast() {
+      last.tex = 0; last.band = 0; last.fine = 0; last.ms = 0; last.fade = 0; last.t = {};
+    }
+
     function paintLive(ctx, o) {
       const fade = o.fade;
-      if (!(fade > 0.02)) {                 // 낮·박명 — 아무것도 그리지 않고 기록도 지웁니다
-        last.glow = 0; last.knot = 0; last.dark = 0; last.lane = 0;
-        last.fine = 0; last.band = 0; last.ms = 0; last.fade = +fade.toFixed(3);
-        return null;
-      }
-      const nowMs = function () { return (window.performance && performance.now) ? performance.now() : 0; };
+      if (!(fade > 0.02)) { clearLast(); return null; }      // 낮·박명
+      if (!texN) { if (!bakeTexture()) { clearLast(); return null; } }
       const t0 = nowMs();
-      const m = o.mtx, W = o.W, H = o.H, cx = o.cx, cy = o.cy, kS = o.kS;
-      const dpr = o.dpr || 1, q = o.quality || 3;
-      const red = !!o.red;
+      const W = o.W, H = o.H, cx = o.cx, cy = o.cy, kS = o.kS;
+      const red = !!o.red, m = o.mtx;
+      /* 화면 광선을 적도 단위벡터로 되돌리는 기저 (cameraMtx 가 함께 돌려줍니다) */
+      const R = m.inv[0], F = m.inv[1], U = m.inv[2];
+      const Z0 = m[3][0], Z1 = m[3][1], Z2 = m[3][2];        // 천정 방향(고도)
+
+      /* 1/4 해상도 — 이웃 픽셀 사이를 이중선형으로 늘려도 매끈할 만큼만 촘촘하면 됩니다. */
+      const sw = Math.max(24, Math.round(W / 4)), sh = Math.max(24, Math.round(H / 4));
+      if (!offCv) offCv = document.createElement('canvas');
+      if (offCv.width !== sw || offCv.height !== sh) { offCv.width = sw; offCv.height = sh; offImg = null; }
+      const og = offCv.getContext('2d');
+      if (!offImg || offW !== sw || offH !== sh) { offImg = og.createImageData(sw, sh); offW = sw; offH = sh; }
+      const data = offImg.data;
+      data.fill(0);
+      const tex = red ? texR : texN;
+      const TW = TEX_W, TH = TEX_H;
+
+      /* 확대할수록 은은하게(25° 아래) — 스텔라리움처럼 좁은 시야에서 더 부드럽습니다. */
+      const fovScale = (o.fov && o.fov < 25) ? (0.74 + 0.26 * (o.fov / 25)) : 1;
+      const k0 = fade * fovScale;
+
+      let bandPx = 0;
+      let o4 = 0;
+      for (let j = 0; j < sh; j++) {
+        const Y = (j + 0.5) * (H / sh);
+        const w0 = (cy - Y) / kS, w2 = w0 * w0;
+        for (let i = 0; i < sw; i++, o4 += 4) {
+          const X = (i + 0.5) * (W / sw);
+          const u = (X - cx) / kS;
+          const t = u * u + w2;
+          const f1 = 1 + t;
+          const dx = 2 * u / f1, dy = (1 - t) / f1, dz = 2 * w0 / f1;
+          const vx = R[0] * dx + F[0] * dy + U[0] * dz;
+          const vy = R[1] * dx + F[1] * dy + U[1] * dz;
+          const vz = R[2] * dx + F[2] * dy + U[2] * dz;
+          const gz = vx * GZ[0] + vy * GZ[1] + vz * GZ[2];
+          if (gz > 0.60 || gz < -0.60) continue;            // 띠 밖(날개 24°보다 넓게) — 빈 하늘
+          const alt = Z0 * vx + Z1 * vy + Z2 * vz;
+          if (alt < -0.30) continue;                        // 깊이 지평선 아래
+          const gx = vx * GX[0] + vy * GX[1] + vz * GX[2];
+          const gy = vx * GY[0] + vy * GY[1] + vz * GY[2];
+          let l = Math.atan2(gy, gx) * DEG;
+          if (l < 0) l += 360;
+          const b = Math.asin(gz) * DEG;
+          /* 텍스처 이중선형 샘플 (경도는 0/360 에서 이어집니다) */
+          const tx = l * PX_L - 0.5;
+          let ty = (90 - b) * PX_B - 0.5;
+          if (ty < 0) ty = 0; else if (ty > TH - 1.001) ty = TH - 1.001;
+          const y0 = ty | 0, fy = ty - y0;
+          const xi = Math.floor(tx), fx = tx - xi;
+          let x0 = xi % TW; if (x0 < 0) x0 += TW;
+          const x1 = (x0 + 1) % TW;
+          const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy);
+          const w01 = (1 - fx) * fy, w11 = fx * fy;
+          const r0 = y0 * TW * 3, r1 = (y0 + 1) * TW * 3;
+          const a0 = x0 * 3, a1 = x1 * 3;
+          const i00 = r0 + a0, i10 = r0 + a1, i01 = r1 + a0, i11 = r1 + a1;
+          const cr = tex[i00] * w00 + tex[i10] * w10 + tex[i01] * w01 + tex[i11] * w11;
+          const cg = tex[i00 + 1] * w00 + tex[i10 + 1] * w10 + tex[i01 + 1] * w01 + tex[i11 + 1] * w11;
+          const cb = tex[i00 + 2] * w00 + tex[i10 + 2] * w10 + tex[i01 + 2] * w01 + tex[i11 + 2] * w11;
+          if (cr + cg + cb < 0.7) continue;                 // 사실상 빈 하늘
+          let k = k0;
+          if (alt < 0) {                                     // 지평선 아래 — 은은하게만(땅 너머)
+            const hf = 1 + alt / 0.10;
+            k *= hf < 0.22 ? 0.22 : hf;
+          }
+          data[o4] = cr * k; data[o4 + 1] = cg * k; data[o4 + 2] = cb * k; data[o4 + 3] = 255;
+          bandPx++;
+        }
+      }
+      og.putImageData(offImg, 0, 0);
+      /* 2) 한 번에 확대해 얹기 — 이중선형 보간이라 겹친 경계의 계단이 생기지 않습니다. */
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.imageSmoothingEnabled = true;
+      if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(offCv, 0, 0, W, H);
+      ctx.restore();
+      const tSample = nowMs() - t0;
+
+      /* 3) 잔별 — 색·크기·밝기 묶음마다 path 하나로 찍습니다(하얀 점박이 금지). */
+      const buckets = {};
+      let nFine = 0;
+      const fFade = clamp(fade * (o.fineBoost || 1), 0, 1);
       const m00 = m[0][0], m01 = m[0][1], m02 = m[0][2];
       const m10 = m[1][0], m11 = m[1][1], m12 = m[1][2];
       const m20 = m[2][0], m21 = m[2][1], m22 = m[2][2];
       const m30 = m[3][0], m31 = m[3][1], m32 = m[3][2];
-      const DEN_BAND = 0.55;      // 띠 폴리곤 — 화면 밖 먼 곳(투영 특이점)은 자릅니다
-      const DEN_SPR = 0.30;       // 빛덩이
-      const MAXR = Math.max(W, H) * 2.2;
-
-      /* 1) 띠 — 1/3 해상도 층에 그려 한 번에 확대합니다(넓고 부드럽게). */
-      const lw = Math.max(96, Math.ceil(W * dpr / q)), lh = Math.max(96, Math.ceil(H * dpr / q));
-      if (!layer) layer = document.createElement('canvas');
-      if (layer.width !== lw || layer.height !== lh) { layer.width = lw; layer.height = lh; }
-      const g = layer.getContext('2d');
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.clearRect(0, 0, lw, lh);
-      const sc = dpr / q;
-      g.setTransform(sc, 0, 0, sc, 0, 0);
-      g.lineJoin = 'round';
-      g.lineCap = 'round';
-
-      let pxRadSum = 0, pxRadN = 0, visRuns = 0;
-      /* 경계(위도)마다 화면 좌표를 한 번만 계산합니다. +b 는 앞 절반, −b 는 뒤 절반. */
-      for (let e = 0; e < NE; e++) {
-        const rvP = EDGE_V[e], rvM = EDGE_V2[e];
-        const oP = e * BAND_N * 2, oM = (NE + e) * BAND_N * 2;
-        for (let i = 0; i < BAND_N; i++) {
-          let v0 = rvP[i * 3], v1 = rvP[i * 3 + 1], v2 = rvP[i * 3 + 2];
-          let y = m10 * v0 + m11 * v1 + m12 * v2;
-          let den = 1 + y;
-          if (den < DEN_BAND) { SX[oP + i * 2] = NaN; SY[oP + i * 2] = NaN; }
-          else {
-            const x = m00 * v0 + m01 * v1 + m02 * v2;
-            const z = m20 * v0 + m21 * v1 + m22 * v2;
-            const k = kS / den;
-            SX[oP + i * 2] = cx + x * k; SY[oP + i * 2] = cy - z * k;
-            if (e === 0) { pxRadSum += k; pxRadN++; }
-          }
-          v0 = rvM[i * 3]; v1 = rvM[i * 3 + 1]; v2 = rvM[i * 3 + 2];
-          y = m10 * v0 + m11 * v1 + m12 * v2;
-          den = 1 + y;
-          if (den < DEN_BAND) { SX[oM + i * 2] = NaN; SY[oM + i * 2] = NaN; }
-          else {
-            const x = m00 * v0 + m01 * v1 + m02 * v2;
-            const z = m20 * v0 + m21 * v1 + m22 * v2;
-            const k = kS / den;
-            SX[oM + i * 2] = cx + x * k; SY[oM + i * 2] = cy - z * k;
-          }
-        }
-      }
-      /* 겹치지 않는 위도 띠를 하나씩 — 경계가 겹쳐 밝아지지 않고 계단도 생기지 않습니다. */
-      function stripPath(oIn, oOut) {
-        /* 이어지는 구간마다 따로 닫습니다 — 화면을 가로지르는 긴 현(chord)이 생기지 않게 */
-        function emit(run) {
-          g.moveTo(SX[oIn + run[0] * 2], SY[oIn + run[0] * 2]);
-          for (let k2 = 1; k2 < run.length; k2++) {
-            g.lineTo(SX[oIn + run[k2] * 2], SY[oIn + run[k2] * 2]);
-          }
-          for (let k2 = run.length - 1; k2 >= 0; k2--) {
-            g.lineTo(SX[oOut + run[k2] * 2], SY[oOut + run[k2] * 2]);
-          }
-          g.closePath();
-        }
-        const okAt = function (i) {
-          return SX[oIn + i * 2] === SX[oIn + i * 2] && SX[oOut + i * 2] === SX[oOut + i * 2];
-        };
-        let s0 = -1;
-        for (let i = 0; i < BAND_N; i++) if (!okAt(i)) { s0 = i; break; }
-        if (s0 < 0) s0 = 0;
-        let drawn = 0, run = [];
-        for (let step = 0; step <= BAND_N; step++) {
-          const idx = (s0 + step) % BAND_N;
-          if (okAt(idx)) run.push(idx);
-          else {
-            if (run.length >= 3) { emit(run); drawn += run.length; }
-            run = [];
-          }
-        }
-        if (run.length >= 3) { emit(run); drawn += run.length; }
-        return drawn;
-      }
-      for (let k = 0; k < STRIPS.length; k++) {
-        const st = STRIPS[k];
-        const a = st.a * fade;
-        if (a < 0.0025) continue;
-        const tone = red ? (st.t === WARM ? WARM : st.t === WHITE ? MID : MID) : st.t;
-        g.fillStyle = 'rgba(' + TONE_RGB[red ? 1 : 0][tone] + ',' + a.toFixed(4) + ')';
-        g.beginPath();
-        const oP1 = k * BAND_N * 2, oP2 = (k + 1) * BAND_N * 2;
-        const oM1 = (NE + k) * BAND_N * 2, oM2 = (NE + k + 1) * BAND_N * 2;
-        let n1 = stripPath(oP1, oP2);
-        const n2 = stripPath(oM2, oM1);
-        if (n1 + n2 < 6) continue;
-        g.fill();
-        visRuns++;
-      }
-      const pxRad = pxRadN ? pxRadSum / pxRadN : kS;
-      const tBand = nowMs() - t0;
-
-      /* 2) 띠의 빛덩이 — 스프라이트를 'lighter'로 더해 겹치는 곳이 더 밝아집니다. */
-      g.globalCompositeOperation = 'lighter';
-      let nGlow = 0;
-      for (let i = 0; i < glow.length; i++) {
-        const bl = glow[i], v = bl.v;
-        const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
-        const den = 1 + y;
-        if (den < DEN_SPR) continue;
-        const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
-        if (alt < -0.12) continue;
-        const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
-        const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
-        const k = kS / den;
-        const sx = cx + x * k, sy = cy - z * k;
-        const rad = Math.min(MAXR, bl.r * RAD * k);
-        if (sx + rad < -6 || sx - rad > W + 6 || sy + rad < -6 || sy - rad > H + 6) continue;
-        const tone = red ? (bl.t === WARM || bl.t === WHITE ? WARM : MID) : bl.t;
-        const fadeLow = alt < 0 ? clamp(1 + alt / 0.12, 0, 1) : 1;
-        g.globalAlpha = clamp(bl.a * fade * fadeLow, 0, 1);
-        g.drawImage(sprite(String(tone), red), sx - rad, sy - rad, rad * 2, rad * 2);
-        nGlow++;
-      }
-      let nKnot = 0;
-      for (let i = 0; i < knots.length; i++) {
-        const bl = knots[i], v = bl.v;
-        const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
-        const den = 1 + y;
-        if (den < DEN_SPR) continue;
-        const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
-        if (alt < -0.1) continue;
-        const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
-        const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
-        const k = kS / den;
-        const sx = cx + x * k, sy = cy - z * k;
-        const rad = Math.min(MAXR, bl.r * RAD * k);
-        if (sx + rad < -4 || sx - rad > W + 4 || sy + rad < -4 || sy - rad > H + 4) continue;
-        g.globalAlpha = clamp(bl.a * fade, 0, 1);
-        g.drawImage(sprite('k', red), sx - rad, sy - rad, rad * 2, rad * 2);
-        nKnot++;
-      }
-      const tGlow = nowMs() - t0;
-
-      /* 3) 암흑대 — 띠의 빛을 'destination-out'으로 깎아 은하수를 가릅니다.
-         먼지 띠는 선으로 긋고(폭 3겹으로 부드러운 가장자리),
-         개별 암흑성운은 덩이로 얹습니다. */
-      g.globalCompositeOperation = 'destination-out';
-      let nLane = 0, nSoft = 0;
-      for (let i = 0; i < lanes.length; i++) {
-        const ln = lanes[i], vs = ln.v;
-        let started = false, any = false;
-        g.beginPath();
-        for (let k = 0; k < vs.length; k++) {
-          const v = vs[k];
-          const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
-          const den = 1 + y;
-          if (den < 0.3) { started = false; continue; }
-          const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
-          if (alt < -0.12) { started = false; continue; }
-          const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
-          const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
-          const kk = kS / den;
-          const X = cx + x * kk, Y = cy - z * kk;
-          if (started) g.lineTo(X, Y); else { g.moveTo(X, Y); started = true; }
-          any = true;
-        }
-        if (!any) continue;
-        for (let w2 = 0; w2 < 3; w2++) {
-          const wid = ln.w * [1, 1.9, 3.1][w2] * RAD * pxRad;
-          if (!(wid > 0.5)) continue;
-          g.lineWidth = Math.min(MAXR, wid);
-          g.strokeStyle = 'rgba(0,0,0,' + (ln.a * [1, 0.6, 0.32][w2] * fade).toFixed(3) + ')';
-          g.stroke();
-        }
-        nLane++;
-      }
-      for (let i = 0; i < dark.length; i++) {
-        const bl = dark[i], v = bl.v;
-        const y = m10 * v[0] + m11 * v[1] + m12 * v[2];
-        const den = 1 + y;
-        if (den < DEN_SPR) continue;
-        const alt = m30 * v[0] + m31 * v[1] + m32 * v[2];
-        if (alt < -0.12) continue;
-        const x = m00 * v[0] + m01 * v[1] + m02 * v[2];
-        const z = m20 * v[0] + m21 * v[1] + m22 * v[2];
-        const k = kS / den;
-        const sx = cx + x * k, sy = cy - z * k;
-        const rad = Math.min(MAXR, bl.r * RAD * k);
-        if (sx + rad < -6 || sx - rad > W + 6 || sy + rad < -6 || sy - rad > H + 6) continue;
-        g.globalAlpha = clamp(bl.a * fade, 0, 1);
-        g.drawImage(sprite('d'), sx - rad, sy - rad, rad * 2, rad * 2);
-        nSoft++;
-      }
-      g.globalAlpha = 1;
-      g.globalCompositeOperation = 'source-over';
-      const tDark = nowMs() - t0;
-
-      /* 4) 메인 캔버스에 얹기 — 빛을 더하는 합성으로 겹칩니다.
-         층을 확대하며 살짝 흐리게(blur) 얹어 고리 경계의 계단을 지웁니다. */
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      if (o.blur > 0 && typeof ctx.filter === 'string') {
-        ctx.filter = 'blur(' + o.blur + 'px)';
-      }
-      ctx.drawImage(layer, 0, 0, W, H);
-      ctx.restore();
-      const tComp = nowMs() - t0;
-
-      /* 5) 잔별 — 색·크기·밝기 묶음마다 path 하나로 찍습니다. */
-      const buckets = {};
-      let nFine = 0;
-      const fFade = clamp(fade * (o.fineBoost || 1), 0, 1);
       for (let i = 0; i < FINE_N; i++) {
         const o7 = i * 7;
         const v0 = FINE[o7], v1 = FINE[o7 + 1], v2 = FINE[o7 + 2];
@@ -16022,11 +16158,11 @@ window.Astro = (function () {
         if (alt < -0.035) continue;
         const x = m00 * v0 + m01 * v1 + m02 * v2;
         const z = m20 * v0 + m21 * v1 + m22 * v2;
-        const k = kS / den;
-        const sx = cx + x * k, sy = cy - z * k;
+        const kk = kS / den;
+        const sx = cx + x * kk, sy = cy - z * kk;
         if (sx < -4 || sx > W + 4 || sy < -4 || sy > H + 4) continue;
         const size = FINE[o7 + 3], al = FINE[o7 + 4], ci = FINE[o7 + 5] | 0;
-        const key = ci * 4 + (size > 1.1 ? 2 : 0) + (al > 0.42 ? 1 : 0);
+        const key = ci * 4 + (size > 0.8 ? 2 : 0) + (al > 0.24 ? 1 : 0);
         const arr = buckets[key] || (buckets[key] = []);
         arr.push(sx, sy);
         nFine++;
@@ -16034,11 +16170,11 @@ window.Astro = (function () {
       ctx.save();
       for (const key in buckets) {
         const bi = Number(key), arr = buckets[key];
-        ctx.fillStyle = red ? ((bi >> 2) >= 3 ? '#ffc2a6' : '#ff9f84') : FINE_COLORS[bi >> 2];
+        ctx.fillStyle = red ? ((bi >> 2) >= 3 ? '#c98c76' : '#c07a66') : FINE_COLORS[bi >> 2];
         const big = (bi & 2) ? 1 : 0;
-        ctx.globalAlpha = clamp(((bi & 1) ? 0.56 : 0.30) * fFade * (big ? 1.1 : 1), 0, 1);
+        ctx.globalAlpha = clamp(((bi & 1) ? 0.30 : 0.17) * fFade * (big ? 1.15 : 1), 0, 1);
         ctx.beginPath();
-        const r = big ? 1.35 : 0.92;
+        const r = big ? 0.9 : 0.55;
         for (let i = 0; i < arr.length; i += 2) ctx.rect(arr[i] - r / 2, arr[i + 1] - r / 2, r, r);
         ctx.fill();
       }
@@ -16047,28 +16183,25 @@ window.Astro = (function () {
 
       // 이름표를 붙일 자리 — 화면 가운데에 가장 가까운 띠 위의 점
       let anchor = null, bestD = Infinity;
-      for (let i = 0; i < BAND_N; i += 2) {
+      for (let i = 0; i < 181; i += 2) {
         const v0 = RING0[i * 3], v1 = RING0[i * 3 + 1], v2 = RING0[i * 3 + 2];
         const y = m10 * v0 + m11 * v1 + m12 * v2;
         const den = 1 + y;
-        if (den < DEN_BAND) continue;
+        if (den < 0.55) continue;
         const x = m00 * v0 + m01 * v1 + m02 * v2;
         const z = m20 * v0 + m21 * v1 + m22 * v2;
-        const k = kS / den;
-        const X = cx + x * k, Y = cy - z * k;
+        const kk = kS / den;
+        const X = cx + x * kk, Y = cy - z * kk;
         if (X < 24 || X > W - 24 || Y < 22 || Y > H - 22) continue;
         const d = Math.hypot(X - cx, Y - cy);
         if (d < bestD) { bestD = d; anchor = { x: X, y: Y }; }
       }
       last.fade = +fade.toFixed(3);
-      last.glow = nGlow; last.knot = nKnot; last.dark = nSoft; last.lane = nLane; last.fine = nFine;
-      last.band = visRuns;
+      last.tex = sw * sh;
+      last.band = bandPx;
+      last.fine = nFine;
       last.ms = nowMs() - t0;
-      last.t = {
-        band: +(tBand).toFixed(1), glow: +(tGlow - tBand).toFixed(1),
-        dark: +(tDark - tGlow).toFixed(1), comp: +(tComp - tDark).toFixed(1),
-        fine: +(last.ms - tComp).toFixed(1)
-      };
+      last.t = { tex: +tSample.toFixed(1), fine: +(last.ms - tSample).toFixed(1) };
       return anchor;
     }
 
@@ -16093,14 +16226,17 @@ window.Astro = (function () {
       const red = !!o.red;
       const out = [];
 
-      /* 띠 — 위도 고리를 겹쳐 그려 부드러운 가장자리를 만듭니다. */
-      [[20, 0.055, '186,206,252'], [16, 0.06, '192,210,252'], [12.5, 0.065, '200,216,250'],
-       [9.5, 0.07, '212,222,246'], [7, 0.075, '226,230,242'], [5, 0.085, '242,236,228'],
-       [3.2, 0.095, '255,238,206'], [1.8, 0.09, '255,236,198']].forEach(function (lay) {
+      /* 띠 — 위도 고리를 겹쳐 그려 부드러운 가장자리를 만듭니다.
+         라이브 뷰와 같은 밝기 감각으로, 예전보다 30% 낮춰 은은하게. */
+      [[22, 0.020, '184,204,250'], [18.5, 0.022, '190,208,250'], [15.5, 0.024, '196,212,250'],
+       [12.8, 0.026, '204,216,248'], [10.4, 0.028, '214,222,246'],
+       [8.2, 0.030, '226,230,242'], [6.2, 0.030, '238,234,232'],
+       [4.4, 0.032, '248,236,218'], [2.8, 0.032, '255,238,206'], [1.5, 0.030, '255,236,200']
+      ].forEach(function (lay) {
         const half = lay[0];
         const front = [], back = [];
-        for (let i = 0; i <= BAND_N; i++) {
-          const L = (i * BAND_STEP) % 360;
+        for (let i = 0; i <= 180; i++) {
+          const L = (i * 2) % 360;
           front.push(proj(galVec(L, half)));
           back.push(proj(galVec(L, -half)));
         }
@@ -16123,9 +16259,9 @@ window.Astro = (function () {
       /* 팽대부 — 은하 중심의 따뜻한 빛 */
       const gc = proj(gcVec);
       if (gc.alt > -8) {
-        const rr = Math.max(6, o.R * 14 / 90);
+        const rr = Math.max(5, o.R * 13 / 90);
         out.push('<circle cx="' + gc.x.toFixed(1) + '" cy="' + gc.y.toFixed(1) + '" r="' + rr.toFixed(1) +
-          '" fill="url(#mwWarm)" opacity="' + (gc.alt > 0 ? 0.9 : 0.35) + '"/>');
+          '" fill="url(#mwWarm)" opacity="' + (gc.alt > 0 ? 0.55 : 0.22) + '"/>');
       }
       /* 밝은 별구름 — 띠의 접선 방향으로 늘인 타원 */
       [[6.0, -4.2, 5.6], [15.5, -3.6, 4.4], [26.5, -2.0, 4.8], [78.0, 0.3, 7.5],
@@ -16134,12 +16270,12 @@ window.Astro = (function () {
         if (p.alt <= 1) return;
         const t1 = proj(galVec(c[0] + 3, c[1])), t2 = proj(galVec(c[0] - 3, c[1]));
         const ang = Math.atan2(t1.y - t2.y, t1.x - t2.x) * 180 / Math.PI;
-        const rx = Math.max(2.6, o.R * c[2] / 90), ry = rx * 0.62;
+        const rx = Math.max(2.4, o.R * c[2] / 90), ry = rx * 0.62;
         out.push('<ellipse cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" rx="' + rx.toFixed(1) +
-          '" ry="' + ry.toFixed(1) + '" fill="url(#mwCloud)" opacity="0.8" transform="rotate(' +
+          '" ry="' + ry.toFixed(1) + '" fill="url(#mwCloud)" opacity="0.5" transform="rotate(' +
           ang.toFixed(0) + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')"/>');
       });
-      /* 암흑대 — 먼지 띠는 선으로, 개별 성운은 덩이로 */
+      /* 암흑대 — 먼지 띠는 선으로(가늘고 옅게), 개별 성운은 덩이로 */
       let dn = '';
       for (let i = 0; i < lanes.length; i++) {
         const vs = lanes[i].v;
@@ -16152,8 +16288,8 @@ window.Astro = (function () {
         }
         if (any) dn += d;
       }
-      if (dn) out.push('<path d="' + dn + '" fill="none" stroke="rgba(3,5,12,0.72)" stroke-width="' +
-        Math.max(1.4, o.R * 1.7 / 90).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>');
+      if (dn) out.push('<path d="' + dn + '" fill="none" stroke="rgba(3,5,12,0.5)" stroke-width="' +
+        Math.max(1.1, o.R * 1.3 / 90).toFixed(1) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>');
       let dk = '';
       for (let i = 0; i < dark.length; i++) {
         const bl = dark[i];
@@ -16163,7 +16299,7 @@ window.Astro = (function () {
         const rr = Math.max(1.2, o.R * bl.r * 1.1 / 90);
         dk += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + rr.toFixed(1) + '"/>';
       }
-      if (dk) out.push('<g fill="url(#mwDark)" opacity="0.95">' + dk + '</g>');
+      if (dk) out.push('<g fill="url(#mwDark)" opacity="0.9">' + dk + '</g>');
 
       /* 미세 잔별 — 지평선 위의 것만 한 줄 path 로 */
       let d = '', cnt = 0;
@@ -16175,17 +16311,14 @@ window.Astro = (function () {
         cnt++;
       }
       if (d) out.push('<path d="' + d + '" fill="none" stroke="' + (red ? '#ff9d80' : '#d7e3ff') +
-        '" stroke-width="0.8" stroke-linecap="round" opacity="' + (red ? 0.5 : 0.42) + '"/>');
+        '" stroke-width="0.8" stroke-linecap="round" opacity="' + (red ? 0.45 : 0.38) + '"/>');
       return { svg: '<g clip-path="url(#mwClip)">' + out.join('') + '</g>', stars: cnt };
     }
 
     return {
       cameraMtx: cameraMtx, paintLive: paintLive, paintMap: paintMap,
       /* 낮·박명처럼 은하수를 그리지 않는 프레임 — 기록을 지워 '그린 수'가 남지 않게 */
-      clear: function () {
-        last.glow = 0; last.knot = 0; last.dark = 0; last.lane = 0;
-        last.fine = 0; last.band = 0; last.ms = 0; last.fade = 0;
-      },
+      clear: clearLast,
       /* 검증용 — 적도 단위벡터 하나를 카메라 행렬로 돌려 (x, y, z, 고도, den) 을 돌려줍니다.
          은하 중심이 화면 한가운데로 오는지(은하좌표 변환·투영이 맞는지) 확인합니다. */
       probe: function (P, lat, lon, jd, v) {
@@ -16200,15 +16333,23 @@ window.Astro = (function () {
         };
       },
       galVec: galVec, gcVec: gcVec, lonBright: lonBright, lonHalf: lonHalf, dAng: dAng,
-      bandN: BAND_N, bandStep: BAND_STEP,
+      /* 검증용 — 텍스처를 픽셀 단위로 읽습니다(줄무늬·밝기 검사). */
+      texSample: function (lDeg, bDeg) {
+        if (!texN) bakeTexture();
+        let x = Math.round(lDeg * PX_L), y = Math.round((90 - bDeg) * PX_B);
+        if (x < 0) x += TEX_W; if (x >= TEX_W) x -= TEX_W;
+        if (y < 0) y = 0; if (y >= TEX_H) y = TEX_H - 1;
+        const i = (y * TEX_W + x) * 3;
+        return [texN[i], texN[i + 1], texN[i + 2]];
+      },
       stats: function () {
         return {
-          glow: glow.length, knots: knots.length, dark: dark.length, lanes: lanes.length,
-          fine: FINE_N, strips: STRIPS.length, edges: EDGES.length,
-          band: BAND_N,
+          tex: { w: TEX_W, h: TEX_H, ms: +texMs.toFixed(1), baked: !!texN },
+          clouds: glow.length, knots: knots.length, dust: lanes.length, dark: dark.length,
+          fine: FINE_N,
           last: {
-            fade: last.fade, glow: last.glow, knots: last.knot, dark: last.dark, lanes: last.lane,
-            fine: last.fine, band: last.band, ms: +last.ms.toFixed(2), t: last.t
+            fade: last.fade, tex: last.tex, band: last.band, fine: last.fine,
+            ms: +last.ms.toFixed(2), t: last.t
           }
         };
       }
@@ -16459,20 +16600,18 @@ window.Astro = (function () {
       ctx.fillText(d[0] + ' ' + d[1] + '°', p.x + 4, p.y - 8);
     });
 
-    /* 🌌 은하수 — 은하좌표(l, b) 구조 모델(MW)로 실사처럼.
-       밝은 띠·팽대부·성운 구름은 빛을 더하고(lighter), 암흑대는 띠의 빛을
-       깎아(destination-out) 은하수를 두 갈래로 가릅니다. 그 위에 미세 잔별
-       2,600개를 얹습니다 — 매 프레임 삼각함수 없이 카메라 행렬만 곱합니다. */
+    /* 🌌 은하수 — 은하좌표(l, b) 파노라마 텍스처(MW)를 시선 방향으로 다시 샘플링.
+       한 번 구운 텍스처를 1/4 해상도에서 읽어 한 번에 확대하므로 직선 경계(줄무늬)가
+       없고, 경계를 지우려고 쓰던 ctx.filter(blur) 없이도 매끈합니다. */
     (function drawMilkyWay() {
       /* 밤 1 → 박명 0.5 → 해가 뜨면 0 (낮에는 은하수를 아예 그리지 않습니다) */
       const mwFade = clamp(1.06 - dayF * 1.12, 0, 1);
       if (mwFade <= 0.02) { MW.clear(); return; }
       const mtx = MW.cameraMtx(P, lat, lon, jd);
       const anchor = MW.paintLive(ctx, {
-        mtx: mtx, W: W, H: H, cx: cx, cy: cy, kS: kS, dpr: live.dpr,
+        mtx: mtx, W: W, H: H, cx: cx, cy: cy, kS: kS,
+        right: right, fwd: fwd, up: up, fov: fovDeg,
         fade: mwFade, red: isRed(),
-        blur: fovDeg > 70 ? 3 : 2.2,
-        quality: fovDeg > 70 ? 3 : fovDeg > 30 ? 2.6 : 2,
         fineBoost: fovDeg < 25 ? 1.12 : 1
       });
       if (live.labels && anchor) {
@@ -16491,6 +16630,17 @@ window.Astro = (function () {
     const starBuckets = {};
     const starFade = 1 - dayF * 0.72;
     const underFade = clamp(starFade + 0.35, 0.55, 1);
+    /* ---- 천체 겉보기 크기의 기준자 — 달(시지름 0.52°).
+       행성(수십 각초)·별(점광원)은 **언제나 달 원반보다 작게** 그립니다.
+       확대하면 달·해는 실제 각지름 비례로 커지고, 행성은 실제 시지름까지 자라되
+       달의 55%(코어)를 넘지 않습니다. 별은 점광원이라 크기가 늘지 않고
+       광휘(halo)만 달 원반 안쪽으로 제한합니다. */
+    const pxDegLive = H / fovDeg;
+    const moonRpx = clamp(pxDegLive * 0.259, 6, Math.min(W, H) * 0.24);   // 0.518°/2
+    const sunRpx = clamp(pxDegLive * 0.267, 6, Math.min(W, H) * 0.30);    // 0.533°/2
+    const starCoreCap = Math.max(1.1, moonRpx * 0.50);
+    const starHaloCap = Math.max(2.0, moonRpx * 0.72);
+    live.bodies = { moon: moonRpx, sun: sunRpx, star: 0, planets: {}, pxDeg: pxDegLive };
     D.stars.forEach(function (st, i) {
       const h = A.equatorialToHorizontal(st[1], st[2], lat, lon, jd);
       if (h.alt < UNDER) return;
@@ -16502,7 +16652,9 @@ window.Astro = (function () {
       const mag = st[3];
       const r0 = mag <= 2.0 ? 3.0 : mag <= 3.2 ? 2.1 : mag <= 4.2 ? 1.5 : 1.05;
       // 지평선 아래 별은 한 단계 크게 — 반투명 땅 너머에서도 점이 뭉개지지 않게
-      const r = h.alt < 0 ? Math.round(r0 * 1.35 * 100) / 100 : r0;
+      let r = h.alt < 0 ? Math.round(r0 * 1.35 * 100) / 100 : r0;
+      if (r > starCoreCap) r = Math.round(starCoreCap * 100) / 100;   // 달 원반보다 커지지 않게
+      if (r > live.bodies.star) live.bodies.star = r;
       const key = bvColor(st[4]) + '|' + r + (h.alt < 0 ? '|u' : '');
       (starBuckets[key] = starBuckets[key] || []).push(p);
       /* 화면에 그려지는 별은 모두 터치 대상입니다(예전에는 2.3등급 이하만).
@@ -16519,7 +16671,7 @@ window.Astro = (function () {
       ctx.globalAlpha = 0.18 * (p.under ? underFade : starFade) + 0.05;
       ctx.fillStyle = isRed() ? pal.star : st[4] == null ? '#ffffff' : bvColor(st[4]);
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.2 + glow * 1.6, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, Math.min(2.2 + glow * 1.6, starHaloCap), 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
     });
@@ -16789,16 +16941,22 @@ window.Astro = (function () {
       if (pl.hor.alt < UNDER) return;
       const p = project(pl.hor.alt, pl.hor.az);
       if (!inBox(p, 14)) return;
-      const r = clamp(6.2 - pl.mag * 0.9, 3.2, 8);
+      /* 행성 — 밝기로 정한 '점' 크기와 실제 시지름 중 큰 쪽.
+         달(0.52°)보다 커지면 안 되므로 코어 55%·광채 62% 상한을 둡니다. */
+      const symbolR = clamp(6.2 - pl.mag * 0.9, 3.2, 8);
+      const trueR = pxDegLive * (pl.diamArcsec || 0) / 7200;      // 시지름(″)/2 → 도 → px
+      const r = Math.min(Math.max(symbolR, trueR), moonRpx * 0.55);
+      const glowR = Math.min(r * 3.2, moonRpx * 0.62);
+      live.bodies.planets[pl.key] = r;
       const col = planetColor[pl.key] || pal.planet;
-      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3.2);
+      const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
       grd.addColorStop(0, col);
       grd.addColorStop(0.35, col);
       grd.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.globalAlpha = 0.5;
       ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, r * 3.2, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
       ctx.fillStyle = col;
@@ -16817,8 +16975,7 @@ window.Astro = (function () {
     const moonH = A.equatorialToHorizontal(moonP.raH, moonP.decD, lat, lon, jd);
     const moonPt = moonH.alt >= UNDER ? project(moonH.alt, moonH.az) : null;
     if (inBox(moonPt, 30)) {
-      const pxDeg = H / fovDeg;
-      const r = clamp(pxDeg * 0.26, 5, Math.min(W, H) * 0.22);
+      const r = moonRpx;
       const ill = clamp(moonPh.illum, 0, 1);
       ctx.save();
       ctx.beginPath();
@@ -16835,8 +16992,11 @@ window.Astro = (function () {
       const rx = Math.max(0.4, r * Math.abs(1 - 2 * ill));
       ctx.beginPath();
       if (moonPh.waxing) {
+        /* 차오르는 달 — 밝은 쪽(오른쪽) 반원 + 경계선 타원. 보름에 가까울수록(ill>0.5)
+           타원이 왼쪽으로 불룩해지고, 초승에 가까울수록 오른쪽을 깎아 냅니다.
+           (캔버스 각도는 반시계 방향에서 줄어드므로 초승일 때 anticlockwise=true) */
         ctx.arc(moonPt.x, moonPt.y, r, -Math.PI / 2, Math.PI / 2, false);
-        ctx.ellipse(moonPt.x, moonPt.y, rx, r, 0, Math.PI / 2, -Math.PI / 2, ill >= 0.5);
+        ctx.ellipse(moonPt.x, moonPt.y, rx, r, 0, Math.PI / 2, -Math.PI / 2, ill < 0.5);
       } else {
         ctx.arc(moonPt.x, moonPt.y, r, Math.PI / 2, -Math.PI / 2, false);
         ctx.ellipse(moonPt.x, moonPt.y, rx, r, 0, -Math.PI / 2, Math.PI / 2, ill < 0.5);
@@ -16859,19 +17019,19 @@ window.Astro = (function () {
     if (sunH.alt >= UNDER) {
       const p = project(sunH.alt, sunH.az);
       if (inBox(p, 60)) {
-        const pxDeg2 = H / live.fov;
-        const sr = Math.max(4.5, pxDeg2 * 0.27);
+        const sr = sunRpx;
+        const sunGlowR = Math.min(sr * 7, Math.min(W, H) * 0.9);
         const depth = sunH.alt >= 0 ? 1 : clamp(1 + sunH.alt / 70, 0.28, 1);
         ctx.save();
         ctx.globalAlpha = depth;
-        const g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sr * 7);
+        const g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sunGlowR);
         g2.addColorStop(0, 'rgba(255,244,200,.98)');
         g2.addColorStop(0.18, 'rgba(255,220,140,.55)');
         g2.addColorStop(0.5, 'rgba(255,180,90,.16)');
         g2.addColorStop(1, 'rgba(255,160,70,0)');
         ctx.fillStyle = g2;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, sr * 7, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, sunGlowR, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
         ctx.fillStyle = 'rgba(255,246,214,.98)';
@@ -17160,12 +17320,61 @@ window.Astro = (function () {
     const span = mag <= 9 ? 1.0 : mag <= 11 ? 1.5 : 2.0;
     return clamp((limit - mag) / span, 0, 1);
   }
-  /** 등급대별 최대 밝기·크기 — 어두운 별은 작고 흐리게(같은 알파라도 덜 튀게) */
-  function deepGradeTone(mag) {
-    if (mag <= 6.5) return { r: 1.5, a: 0.78 };
-    if (mag <= 9) return { r: 1.25, a: 0.66 };
-    if (mag <= 11) return { r: 1.0, a: 0.5 };
-    return { r: 0.8, a: 0.36 };
+  /* -------------------------------------------- 별빛 색 (실제 B−V·BP−RP)
+     확장 성도는 B−V, Gaia 는 BP−RP 를 B−V 로 옮겨((BP−RP−0.15)×0.72) 분광형 묶음으로
+     나눕니다 — 푸른 O/B 부터 흰 A, 노란 G, 주황 K, 붉은 M 까지 7묶음 + 색 미상. */
+  const DEEP_COLORS = ['#a8ccff', '#d8e6ff', '#edf4ff', '#fff6e3', '#ffe3ad', '#ffbe78', '#ff9460', '#dce8ff'];
+  const DEEP_COLORS_RED = ['#ffcbb8', '#ffc2ac', '#ffbaa0', '#ffb294', '#ffa788', '#ff9c7c', '#ff9070', '#ffc6b2'];
+  function bvBucket(bv) {
+    if (bv == null || !isFinite(bv)) return 7;     // 색 미상 — 은은한 청백
+    if (bv < -0.05) return 0;                      // O · B — 푸른
+    if (bv < 0.25) return 1;                       // A — 청백
+    if (bv < 0.55) return 2;                       // F — 흰
+    if (bv < 0.85) return 3;                       // G — 황백
+    if (bv < 1.35) return 4;                       // K — 노랑
+    if (bv < 1.8) return 5;                        // M — 주황
+    return 6;                                      // M — 붉은
+  }
+  function gaiaBv(g) { return g.bp_rp == null ? null : (g.bp_rp - 0.15) * 0.72; }
+
+  /* ------------------------------------------- 원근감 — 앞·중간·뒤 별의 크기·밝기
+     dm = (시야 한계 등급 − 별 등급). dm 이 클수록 '가까이/밝게' 보입니다.
+       · 밝은 별(dm ≥ 3.5 또는 7.5등보다 밝음): 코어 1.55~2.6px + 은은한 후광
+       · 중간(dm 1.5~3.5): 0.85~1.3px
+       · 한계 근처(dm < 1.5): 0.45~0.75px 의 작은 점 + 낮은 알파(뒤쪽 깊이) */
+  /* 밝은 별의 후광 — 가운데가 밝고 가장자리로 사라지는 부드러운 원(색마다 하나). */
+  const DEEP_GLOW = {};
+  function deepGlow(ci) {
+    if (DEEP_GLOW[ci]) return DEEP_GLOW[ci];
+    const S = 64;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = S;
+    const g = cv.getContext('2d');
+    const col = (isRed() ? DEEP_COLORS_RED : DEEP_COLORS)[ci] || '#dfe8ff';
+    const rg = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    rg.addColorStop(0, col);
+    rg.addColorStop(0.22, col);
+    rg.addColorStop(0.48, 'rgba(0,0,0,0)');
+    rg.addColorStop(1, 'rgba(0,0,0,0)');
+    /* 색을 그대로 쓰되 가운데만 진하게 — 알파는 그릴 때 조절합니다. */
+    g.globalAlpha = 1;
+    g.fillStyle = rg;
+    g.beginPath(); g.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2); g.fill();
+    DEEP_GLOW[ci] = cv;
+    return cv;
+  }
+
+  function deepStarShape(dm, mag) {
+    if (dm >= 3.5 || mag <= 7.5) {
+      const t = clamp((dm - 3.5) / 3.5, 0, 1);
+      return { r: 1.55 + 1.05 * t, a: 0.92 + 0.08 * t, halo: 3.2 + 2.6 * t };
+    }
+    if (dm >= 1.5) {
+      const t = clamp((dm - 1.5) / 2, 0, 1);
+      return { r: 0.85 + 0.45 * t, a: 0.58 + 0.34 * t, halo: 0 };
+    }
+    const t = clamp(dm / 1.5, 0, 1);
+    return { r: 0.45 + 0.3 * t, a: 0.26 + 0.34 * t, halo: 0 };
   }
 
   function drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal) {
@@ -17186,22 +17395,33 @@ window.Astro = (function () {
       const lim = Math.min(deepMagLimit(fovDeg), DeepSky.tileMag);
       shownLim = lim;
       const list = DeepSky.starsIn(ctr.raDeg, ctr.dec, rad, lim);
-      const col = isRed() ? 'rgba(255,170,140,' : 'rgba(214,230,255,';
-      /* 알파·크기별로 묶어 한 번에 그립니다 — 1만 개가 넘어도 프레임이 버팁니다. */
+      const cols = isRed() ? DEEP_COLORS_RED : DEEP_COLORS;
+      /* 색·크기·알파 묶음마다 path 하나 — 1만 개가 넘어도 프레임이 버팁니다. */
       const buckets = {};
-      let hitN = 0;
+      const fovK = clamp(1 + Math.log2(60 / Math.max(fovDeg, 1)) * 0.05, 1, 1.3);
+      let hitN = 0, colorN = 0, haloN = 0;
       for (let i = 0; i < list.length && shownN < 14000; i++) {
         const s = list[i];
-        const a = deepFade(lim, s.mag);
-        if (a <= 0.06) continue;
+        const dm = lim - s.mag;
+        const sh = deepStarShape(dm, s.mag);
+        const a = clamp(sh.a * deepFade(lim, s.mag), 0, 1);
+        if (a <= 0.05) continue;
         const h = A.equatorialToHorizontal(s.ra / 15, s.dec, lat, lon, jd);
         if (h.alt < -90) continue;
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
-        const tone = deepGradeTone(s.mag);
-        const k = Math.max(1, Math.round(a * 5));
-        const key = k + '|' + tone.a + '|' + tone.r;
+        const ci = bvBucket(s.ci);
+        if (ci !== 7) colorN++;
+        const r = Math.round(sh.r * fovK * 10) / 10;
+        const qa = Math.round(a * 10) / 10;
+        const key = ci + '|' + r + '|' + qa;
         (buckets[key] = buckets[key] || []).push(p);
+        if (sh.halo > 0) {
+          const hr = sh.halo * fovK;
+          ctx.globalAlpha = 0.20;
+          ctx.drawImage(deepGlow(ci), p.x - hr, p.y - hr, hr * 2, hr * 2);
+          haloN++;
+        }
         shownN++;
         if (hitN < 900 && a >= 0.4) {
           const hit = DEEP.hitPool[hitN] || (DEEP.hitPool[hitN] = { kind: 'deepstar' });
@@ -17213,9 +17433,9 @@ window.Astro = (function () {
       }
       Object.keys(buckets).forEach(function (key) {
         const parts = key.split('|');
-        const k = Number(parts[0]), aMax = Number(parts[1]), r = Number(parts[2]);
-        ctx.globalAlpha = (k / 5) * aMax;
-        ctx.fillStyle = col + '1)';
+        const ci = Number(parts[0]), r = Number(parts[1]), a = Number(parts[2]);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = cols[ci];
         ctx.beginPath();
         const arr = buckets[key];
         for (let i = 0; i < arr.length; i++) {
@@ -17226,6 +17446,7 @@ window.Astro = (function () {
       });
       ctx.globalAlpha = 1;
       live.deepShown = shownN;
+      live.deepColorN = colorN;
     }
 
     /* 2단계 — Gaia DR3 실시간(중앙 정밀 구역) — 로컬 한계(12등)보다 어두운 별을 이어서 */
@@ -17239,26 +17460,48 @@ window.Astro = (function () {
       const gs = DeepSky.gaiaStars();
       const gLim = deepGaiaMag(fovDeg);
       const cosD = Math.cos(ctr.dec * RAD);
+      const gcols = isRed() ? DEEP_COLORS_RED : DEEP_COLORS;
+      /* 색(BP−RP→B−V)·크기·알파 묶음으로 한 번에 — Gaia 는 한 구역에 수백 개입니다. */
+      const gBuckets = {};
       for (let i = 0; i < gs.length; i++) {
         const g = gs[i];
         const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
         const dDec = g.dec - ctr.dec;
         if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(dDec) > gr * 1.45) continue;
-        const a = clamp((gLim - g.mag) / 2.0, 0.06, 1);
+        const dm = gLim - g.mag;
+        const sh = deepStarShape(dm, g.mag);
+        const a = clamp(sh.a * clamp(dm / 2.0, 0.08, 1), 0, 1);
         const h = A.equatorialToHorizontal(g.ra / 15, g.dec, lat, lon, jd);
         const p = project(h.alt, h.az);
         if (!inBox(p, 6)) continue;
-        ctx.globalAlpha = a;
-        ctx.fillStyle = isRed() ? 'rgba(255,196,150,.92)' : 'rgba(255,214,140,.92)';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, g.mag <= 14 ? 1.2 : g.mag <= 17 ? 1.0 : 0.8, 0, Math.PI * 2);
-        ctx.fill();
+        const ci = bvBucket(gaiaBv(g));
+        const r = Math.round(sh.r * 10) / 10;
+        const key = ci + '|' + r + '|' + (Math.round(a * 10) / 10);
+        (gBuckets[key] = gBuckets[key] || []).push(p);
+        if (sh.halo > 0) {
+          const hr = sh.halo;
+          ctx.globalAlpha = 0.18;
+          ctx.drawImage(deepGlow(ci), p.x - hr, p.y - hr, hr * 2, hr * 2);
+        }
         const hit = DEEP.hitPool[1200 + i] || (DEEP.hitPool[1200 + i] = { kind: 'gaia' });
         hit.x = p.x; hit.y = p.y; hit.mag = g.mag; hit.ra = g.ra; hit.dec = g.dec;
         hit.ci = g.bp_rp; hit.name = ''; hit.id = g.id; hit.plx = g.plx;
         DEEP.liveHits.push(hit);
         gaiaN++;
       }
+      Object.keys(gBuckets).forEach(function (key) {
+        const parts = key.split('|');
+        const r = Number(parts[1]), a = Number(parts[2]);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = gcols[Number(parts[0])];
+        ctx.beginPath();
+        const arr = gBuckets[key];
+        for (let i = 0; i < arr.length; i++) {
+          ctx.moveTo(arr[i].x + r, arr[i].y);
+          ctx.arc(arr[i].x, arr[i].y, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      });
       ctx.globalAlpha = 1;
     }
 
@@ -18057,8 +18300,14 @@ window.Astro = (function () {
     aimMarker: function () { return { on: aim.on, kind: aim.kind, key: aim.key, name: aim.name, marker: aim.on && aim.raH != null && !aimTargetOnCanvas() }; },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
-    /* -- 검증용 — 은하수 모델(띠·구름·암흑대·잔별)과 이번 프레임에 실제로 그린 수. */
+    /* -- 검증용 — 은하수 모델(텍스처·구름·암흑대·잔별)과 이번 프레임에 실제로 그린 수. */
     mw: function () { return MW.stats(); },
+    /* -- 검증용 — 은하좌표 (l, b) 의 텍스처 값 [r, g, b] (더해지는 값, 0~255). */
+    mwTex: function (l, b) { return MW.texSample(l, b); },
+    /* -- 검증용 — 이번 프레임에 그린 달·해·행성·별의 반지름(px). 비율 검사용. */
+    bodies: function () { return live.bodies || null; },
+    /* -- 검증용 — 확장 성도: 이번 프레임에 그린 수·색을 아는 별 수. */
+    deepStats: function () { return { shown: live.deepShown || 0, colored: live.deepColorN || 0, limit: live.deepLimit || 0 }; },
     mwProbe: function (raH, decD, fov) {
       const c = state.last || computeNight();
       const P = liveProjector();
@@ -19616,6 +19865,115 @@ window.Astro = (function () {
 
   /* ------------------------------------------------- 앱 공유 (더보기 메뉴) */
   const SHARE_URL = 'https://byeolneoul.vercel.app/';
+  /* =====================================================  🔗 별너울 공유 카드
+     「더보기 → 별너울 공유하기」 — 링크 복사 버튼 아래에 QR 을 함께 둡니다
+     (사람에게 들고 다니며 바로 보여 주고 공유하기 위해).
+     · 외부 CDN·QR 라이브러리 없이 동작하도록, 미리 구워 둔 **모듈 격자**를 내장했습니다.
+       https://byeolneoul.vercel.app · 29×29(버전 3) · 오류정정 M — 온라인 디코더로 확인.
+     · 다크 모드·레드라이트 모드에서도 폰 기본 카메라가 읽도록 항상 **흰 바탕 + 검정 모듈**,
+       표준 조용한 여백 4모듈 + 카드 안쪽 여백 12px 을 둡니다. */
+  const QR_URL = 'https://byeolneoul.vercel.app';
+  const QR_N = 29, QR_QUIET = 4;
+  const QR_ROWS = [
+    '0x1fc8377f',
+    '0x104f0c41',
+    '0x1751525d',
+    '0x175f195d',
+    '0x1755e75d',
+    '0x105cf141',
+    '0x1fd5557f',
+    '0x001ea100',
+    '0x17cb687c',
+    '0x10bc3ff1',
+    '0x18420060',
+    '0x021c57aa',
+    '0x1f5e1d0c',
+    '0x052ceff1',
+    '0x0262f87c',
+    '0x1604a7f2',
+    '0x17c46a0c',
+    '0x1d3336f5',
+    '0x177e0434',
+    '0x16b05102',
+    '0x13da1bf7',
+    '0x0014e11f',
+    '0x1fccf75c',
+    '0x1051a710',
+    '0x175c69f5',
+    '0x1757322c',
+    '0x175506fe',
+    '0x104ad74a',
+    '0x1fd0c654'
+  ];
+  /** 모듈 격자 → 선명한 SVG(가로로 이어진 검정 칸은 한 subpath 로 묶습니다). */
+  function qrSvgMarkup(size) {
+    let d = '';
+    for (let y = 0; y < QR_N; y++) {
+      const bits = parseInt(QR_ROWS[y], 16);
+      let x = 0;
+      while (x < QR_N) {
+        if (!((bits >> (QR_N - 1 - x)) & 1)) { x++; continue; }
+        let w = 1;
+        while (x + w < QR_N && ((bits >> (QR_N - 1 - x - w)) & 1)) w++;
+        d += 'M' + (x + QR_QUIET) + ' ' + (y + QR_QUIET) + 'h' + w + 'v1h-' + w + 'z';
+        x += w;
+      }
+    }
+    const span = QR_N + QR_QUIET * 2;
+    return '<svg class="bwqr-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + span + ' ' + span +
+      '" width="' + size + '" height="' + size + '" role="img" aria-label="별너울 주소 QR 코드">' +
+      '<rect width="' + span + '" height="' + span + '" fill="#ffffff"/>' +
+      '<path d="' + d + '" fill="#000000" shape-rendering="crispEdges"/></svg>';
+  }
+
+  let shareCardEl = null;
+  function closeShareCard() {
+    if (shareCardEl && shareCardEl.parentNode) shareCardEl.parentNode.removeChild(shareCardEl);
+    shareCardEl = null;
+    document.removeEventListener('keydown', shareCardKey);
+  }
+  function shareCardKey(e) { if (e.key === 'Escape') closeShareCard(); }
+  function openShareCard() {
+    closeShareCard();
+    const el = document.createElement('div');
+    el.className = 'bwshare';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-label', '별너울 공유하기');
+    el.innerHTML =
+      '<div class="bwshare-card" role="document">' +
+        '<button type="button" class="bwshare-close" data-share-close aria-label="닫기">✕</button>' +
+        '<h3 class="bwshare-t">별너울 공유하기</h3>' +
+        '<p class="bwshare-sub">링크를 보내거나, 아래 QR을 그대로 보여 주세요.</p>' +
+        '<div class="bwshare-qr" data-share-qr>' + qrSvgMarkup(232) + '</div>' +
+        '<p class="bwshare-url">' + QR_URL + '</p>' +
+        '<div class="bwshare-btns">' +
+          '<button type="button" class="bwshare-btn primary" data-share-copy>🔗 링크 복사</button>' +
+          (navigator.share ? '<button type="button" class="bwshare-btn" data-share-sys>📤 공유 시트</button>' : '') +
+        '</div>' +
+      '</div>';
+    el.addEventListener('click', function (e) {
+      const t = e.target;
+      if (t === el || (t.closest && t.closest('[data-share-close]'))) { closeShareCard(); return; }
+      if (t.closest && t.closest('[data-share-copy]')) {
+        copyText(QR_URL).then(function (ok) { if (ok !== false) toast('공유 링크를 복사했어요!'); });
+        return;
+      }
+      if (t.closest && t.closest('[data-share-sys]')) {
+        try {
+          navigator.share({
+            title: '별너울 — 대한민국 밤하늘 관측 지도',
+            text: '오늘 밤 관측 지수·별자리·천체 도감·천문 학습관을 한곳에서 볼 수 있어요.',
+            url: QR_URL
+          }).catch(function () { /* 사용자가 닫음 */ });
+        } catch (err) { copyText(QR_URL); }
+      }
+    });
+    document.body.appendChild(el);
+    shareCardEl = el;
+    document.addEventListener('keydown', shareCardKey);
+  }
+
   function shareApp() {
     const copyLink = function () {
       return copyText(SHARE_URL).then(function (ok) {
@@ -20577,7 +20935,7 @@ window.Astro = (function () {
           e.preventDefault();
           closeMenu();
           if (act === 'feedback' && window.Feedback) { window.Feedback.open(); return; }
-          if (act === 'share') { shareApp(); return; }
+          if (act === 'share') { openShareCard(); return; }
           if (window.SpaceUI) {
             if (act === 'cookie') SpaceUI.openCookie();
             else if (act === 'ai') SpaceUI.openAI();
@@ -27624,30 +27982,43 @@ window.Astro = (function () {
       '</svg>';
   }
 
-  /* 4) 거리 — 로그 눈금 자 */
+  /* 4) 거리 — 로그 눈금 자
+     눈금의 오른쪽 끝을 **가장 먼 JADES-GS-z14-0(134억 광년)** 에 맞춥니다.
+     (예전에는 10^10 으로 나누고 Math.min(1, …) 로 잘라, 134억이 100억 눈금과
+      같은 x 에 찍혔습니다. 이제 log10(1.34e10)=10.127 눈금이라 100억 눈금보다
+      오른쪽에 제 위치로 섭니다.) */
+  var DIST_MAX = 1.34e10;                  // 광년 — JADES-GS-z14-0 (빛이 134억 년 온 곳)
+  var DIST_DEC = Math.log10(DIST_MAX);     // 10.127 눈금
   function figDist() {
     var x0 = 22, span = 278, axis = 152;
+    var pos = function (l) { return x0 + Math.log10(l) / DIST_DEC * span; };
     var marks = [
       { l: 4.24, name: '프록시마 4.24광년', y: 38 },
       { l: 8.6, name: '시리우스 8.6광년', y: 68 },
       { l: 163000, name: 'R136a1 16만 광년', y: 38 },
       { l: 2540000, name: '안드로메다 254만', y: 68 },
-      { l: 1.34e10, name: 'JADES 134억 광년', y: 98, end: true }
+      { l: DIST_MAX, name: 'JADES 134억 광년', y: 98, end: true }
     ].map(function (m) {
-      var x = x0 + Math.min(1, Math.log10(m.l) / 10) * span;
+      var x = pos(m.l);
       var tx = m.end ? x - 5 : x + 5;
       return '<line x1="' + x.toFixed(1) + '" y1="' + (m.y + 5) + '" x2="' + x.toFixed(1) + '" y2="' + (axis - 4) + '" stroke="var(--border-hi)" stroke-dasharray="2 3"/>' +
         '<circle cx="' + x.toFixed(1) + '" cy="' + axis + '" r="3" fill="var(--accent)"/>' +
         '<text x="' + tx.toFixed(1) + '" y="' + m.y + '" font-size="9" fill="var(--muted)"' + (m.end ? ' text-anchor="end"' : '') + '>' + esc(m.name) + '</text>';
     }).join('');
     var ticks = [[1, '1'], [100, '100'], [1e4, '1만'], [1e6, '100만'], [1e8, '1억'], [1e10, '100억']].map(function (t) {
-      var x = x0 + Math.log10(t[0]) / 10 * span;
+      var x = pos(t[0]);
+      /* 마지막 '100억' 눈금 글자는 끝(134억) 쪽으로 넘치지 않게 왼쪽에 붙입니다. */
+      var last = t[0] === 1e10;
       return '<line x1="' + x.toFixed(1) + '" y1="' + axis + '" x2="' + x.toFixed(1) + '" y2="' + (axis + 6) + '" stroke="var(--border-hi)"/>' +
-        '<text x="' + x.toFixed(1) + '" y="' + (axis + 20) + '" text-anchor="middle" font-size="8.5" fill="var(--faint)">' + t[1] + '</text>';
+        '<text x="' + (last ? x - 2 : x).toFixed(1) + '" y="' + (axis + 19) + '" text-anchor="' + (last ? 'end' : 'middle') + '" font-size="8.5" fill="var(--faint)">' + t[1] + '</text>';
     }).join('');
-    return '<svg viewBox="0 0 320 186" role="img" aria-label="지구에서 프록시마(4.24광년), 시리우스(8.6광년), R136a1(16만 광년), 안드로메다(254만 광년), JADES-GS-z14-0(134억 광년)까지의 거리를 로그 눈금 자 위에 표시한 그림.">' +
+    /* 눈금 끝 = 134억 — 100억 눈금과 붙어 보이지 않게 한 줄 아래에 적습니다. */
+    var endX = x0 + span;
+    var endTick = '<line x1="' + endX.toFixed(1) + '" y1="' + axis + '" x2="' + endX.toFixed(1) + '" y2="' + (axis + 12) + '" stroke="var(--accent)" stroke-width="1.2"/>' +
+      '<text x="' + endX.toFixed(1) + '" y="' + (axis + 33) + '" text-anchor="end" font-size="8.5" fill="var(--accent)">134억</text>';
+    return '<svg viewBox="0 0 320 190" role="img" aria-label="지구에서 프록시마(4.24광년), 시리우스(8.6광년), R136a1(16만 광년), 안드로메다(254만 광년), JADES-GS-z14-0(134억 광년)까지의 거리를 로그 눈금 자 위에 표시한 그림. 눈금의 오른쪽 끝이 134억 광년입니다.">' +
       '<line x1="' + x0 + '" y1="' + axis + '" x2="' + (x0 + span) + '" y2="' + axis + '" stroke="var(--border-hi)" stroke-width="1.4"/>' +
-      marks + ticks +
+      marks + ticks + endTick +
       '<text x="' + x0 + '" y="14" font-size="9" fill="var(--faint)">가로 = 거리(광년, 로그 눈금)</text>' +
       '</svg>';
   }
@@ -27944,13 +28315,13 @@ window.Astro = (function () {
       id: 'jades', cat: 'cosmos', ico: '🕰️', tag: '가장 멀고 오래된 은하', name: 'JADES-GS-z14-0',
       value: 'z = 14.18', unit: '적색편이',
       lead: '지금까지 확인된 은하 가운데 가장 멀리 있는 은하. 제임스 웹 우주망원경이 2024년에 찾았어요.',
-      analogy: '빛이 134억 년 동안 날아왔어요. 우주 나이(138억 년)의 2%도 안 됐을 때의 모습입니다. 그사이 우주가 팽창해서 지금은 338억 광년 떨어져 있어요.',
+      analogy: '빛이 134억 년 동안 날아왔어요. 우주 나이(138억 년)의 2%도 안 됐을 때(빅뱅 후 약 2.9억 년)의 모습입니다. 그사이 우주가 팽창해서 지금은 338억 광년 떨어져 있어요.',
       fig: 'dist',
       figCap: '오른쪽 끝이 JADES-GS-z14-0. 로그 눈금이라 오른쪽으로 갈수록 거리가 급격히 멀어져요.',
       facts: [
         ['적색편이', '14.18 (2025년 ALMA 정밀 측정)'],
         ['빛이 온 시간', '약 134억 년'],
-        ['우주 나이', '약 3억 년밖에 안 됐을 때'],
+        ['우주 나이', '약 2.9억 년 (빅뱅 직후)'],
         ['지금 거리', '약 338억 광년 (공변 거리)'],
         ['크기', '약 1,600 광년 폭']
       ],

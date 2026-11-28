@@ -41,9 +41,9 @@
   var GAIA_DEBOUNCE = 420;
   /* VizieR 원뿔 조회는 서버가 붐빔 때 2~13초로 흔들립니다(2026-11-28 09~13초 실측).
      9초로 끊으면 느린 날에 “응답 없음”이 다시 뜨므로 15초까지 기다립니다 —
-     기다리는 동안에는 지난 목록을 그대로 보여 주고(gi.stale), 실패한 서버는 6시간 쉼니다. */
+     기다리는 동안에는 지난 목록을 그대로 보여 주고(gi.stale), 실패한 서버는 60초 쉼니다. */
   var GAIA_TIMEOUT = 15000;
-  var EP_KEY = 'bw.gaia.ep';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(6시간)
+  var EP_KEY = 'bw.gaia.ep.v2';   // 어떤 Gaia 서버가 이 기기에서 실제로 응답했는지 기억(60초)
   var TILE_MAX = 36;           // 메모리에 들고 있을 타일 수(LRU)
   var GAIA_MAX_CACHE = 20;
 
@@ -240,7 +240,9 @@
   function epUsable(name) {
     var e = loadEp()[name];
     if (!e || e.ok) return true;
-    return (Date.now() - e.t) > 6 * 3600 * 1000;   // 6시간 뒤 다시 시도(오프라인이었을 수 있음)
+    /* 실패는 60초만 기억합니다. 예전 6시간은 너무 길어, 사용자가 화면을 움직여
+       요청이 취소(AbortError)된 것만으로도 정상 서버가 반나절 동안 빠졌습니다. */
+    return (Date.now() - e.t) > 60 * 1000;
   }
   function epMark(name, ok) {
     if (!ok && typeof navigator !== 'undefined' && navigator.onLine === false) return;   // 오프라인은 기억하지 않음
@@ -407,7 +409,16 @@
       return job.run().then(function (rows) {
         epMark(job.name, true);
         return { rows: rows, endpoint: job.name };
-      }, function () { epMark(job.name, false); return next(); });
+      }, function (err) {
+        /* 사용자가 화면을 움직이거나 확대해 이전 요청을 끊었을 때(fetch 취소)는
+           서버 탓이 아닙니다 — '이 서버 쉼'을 남기지 않고 곧바로 멈춥니다.
+           (예전에는 AbortError 도 실패로 기록해 정상 서버가 6시간 빠졌습니다.) */
+        if (sig && sig.aborted) return { rows: [], endpoint: '' };
+        /* 시간 초과 취소도 서버 판정(블랙리스트)은 건드리지 않고 다음 서버로 넘깁니다. */
+        if (err && (err.name === 'AbortError' || err.code === 20)) return next();
+        epMark(job.name, false);
+        return next();
+      });
     }
     return next();
   }

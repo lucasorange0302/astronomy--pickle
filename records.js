@@ -91,30 +91,43 @@
       '</svg>';
   }
 
-  /* 4) 거리 — 로그 눈금 자 */
+  /* 4) 거리 — 로그 눈금 자
+     눈금의 오른쪽 끝을 **가장 먼 JADES-GS-z14-0(134억 광년)** 에 맞춥니다.
+     (예전에는 10^10 으로 나누고 Math.min(1, …) 로 잘라, 134억이 100억 눈금과
+      같은 x 에 찍혔습니다. 이제 log10(1.34e10)=10.127 눈금이라 100억 눈금보다
+      오른쪽에 제 위치로 섭니다.) */
+  var DIST_MAX = 1.34e10;                  // 광년 — JADES-GS-z14-0 (빛이 134억 년 온 곳)
+  var DIST_DEC = Math.log10(DIST_MAX);     // 10.127 눈금
   function figDist() {
     var x0 = 22, span = 278, axis = 152;
+    var pos = function (l) { return x0 + Math.log10(l) / DIST_DEC * span; };
     var marks = [
       { l: 4.24, name: '프록시마 4.24광년', y: 38 },
       { l: 8.6, name: '시리우스 8.6광년', y: 68 },
       { l: 163000, name: 'R136a1 16만 광년', y: 38 },
       { l: 2540000, name: '안드로메다 254만', y: 68 },
-      { l: 1.34e10, name: 'JADES 134억 광년', y: 98, end: true }
+      { l: DIST_MAX, name: 'JADES 134억 광년', y: 98, end: true }
     ].map(function (m) {
-      var x = x0 + Math.min(1, Math.log10(m.l) / 10) * span;
+      var x = pos(m.l);
       var tx = m.end ? x - 5 : x + 5;
       return '<line x1="' + x.toFixed(1) + '" y1="' + (m.y + 5) + '" x2="' + x.toFixed(1) + '" y2="' + (axis - 4) + '" stroke="var(--border-hi)" stroke-dasharray="2 3"/>' +
         '<circle cx="' + x.toFixed(1) + '" cy="' + axis + '" r="3" fill="var(--accent)"/>' +
         '<text x="' + tx.toFixed(1) + '" y="' + m.y + '" font-size="9" fill="var(--muted)"' + (m.end ? ' text-anchor="end"' : '') + '>' + esc(m.name) + '</text>';
     }).join('');
     var ticks = [[1, '1'], [100, '100'], [1e4, '1만'], [1e6, '100만'], [1e8, '1억'], [1e10, '100억']].map(function (t) {
-      var x = x0 + Math.log10(t[0]) / 10 * span;
+      var x = pos(t[0]);
+      /* 마지막 '100억' 눈금 글자는 끝(134억) 쪽으로 넘치지 않게 왼쪽에 붙입니다. */
+      var last = t[0] === 1e10;
       return '<line x1="' + x.toFixed(1) + '" y1="' + axis + '" x2="' + x.toFixed(1) + '" y2="' + (axis + 6) + '" stroke="var(--border-hi)"/>' +
-        '<text x="' + x.toFixed(1) + '" y="' + (axis + 20) + '" text-anchor="middle" font-size="8.5" fill="var(--faint)">' + t[1] + '</text>';
+        '<text x="' + (last ? x - 2 : x).toFixed(1) + '" y="' + (axis + 19) + '" text-anchor="' + (last ? 'end' : 'middle') + '" font-size="8.5" fill="var(--faint)">' + t[1] + '</text>';
     }).join('');
-    return '<svg viewBox="0 0 320 186" role="img" aria-label="지구에서 프록시마(4.24광년), 시리우스(8.6광년), R136a1(16만 광년), 안드로메다(254만 광년), JADES-GS-z14-0(134억 광년)까지의 거리를 로그 눈금 자 위에 표시한 그림.">' +
+    /* 눈금 끝 = 134억 — 100억 눈금과 붙어 보이지 않게 한 줄 아래에 적습니다. */
+    var endX = x0 + span;
+    var endTick = '<line x1="' + endX.toFixed(1) + '" y1="' + axis + '" x2="' + endX.toFixed(1) + '" y2="' + (axis + 12) + '" stroke="var(--accent)" stroke-width="1.2"/>' +
+      '<text x="' + endX.toFixed(1) + '" y="' + (axis + 33) + '" text-anchor="end" font-size="8.5" fill="var(--accent)">134억</text>';
+    return '<svg viewBox="0 0 320 190" role="img" aria-label="지구에서 프록시마(4.24광년), 시리우스(8.6광년), R136a1(16만 광년), 안드로메다(254만 광년), JADES-GS-z14-0(134억 광년)까지의 거리를 로그 눈금 자 위에 표시한 그림. 눈금의 오른쪽 끝이 134억 광년입니다.">' +
       '<line x1="' + x0 + '" y1="' + axis + '" x2="' + (x0 + span) + '" y2="' + axis + '" stroke="var(--border-hi)" stroke-width="1.4"/>' +
-      marks + ticks +
+      marks + ticks + endTick +
       '<text x="' + x0 + '" y="14" font-size="9" fill="var(--faint)">가로 = 거리(광년, 로그 눈금)</text>' +
       '</svg>';
   }
@@ -411,13 +424,13 @@
       id: 'jades', cat: 'cosmos', ico: '🕰️', tag: '가장 멀고 오래된 은하', name: 'JADES-GS-z14-0',
       value: 'z = 14.18', unit: '적색편이',
       lead: '지금까지 확인된 은하 가운데 가장 멀리 있는 은하. 제임스 웹 우주망원경이 2024년에 찾았어요.',
-      analogy: '빛이 134억 년 동안 날아왔어요. 우주 나이(138억 년)의 2%도 안 됐을 때의 모습입니다. 그사이 우주가 팽창해서 지금은 338억 광년 떨어져 있어요.',
+      analogy: '빛이 134억 년 동안 날아왔어요. 우주 나이(138억 년)의 2%도 안 됐을 때(빅뱅 후 약 2.9억 년)의 모습입니다. 그사이 우주가 팽창해서 지금은 338억 광년 떨어져 있어요.',
       fig: 'dist',
       figCap: '오른쪽 끝이 JADES-GS-z14-0. 로그 눈금이라 오른쪽으로 갈수록 거리가 급격히 멀어져요.',
       facts: [
         ['적색편이', '14.18 (2025년 ALMA 정밀 측정)'],
         ['빛이 온 시간', '약 134억 년'],
-        ['우주 나이', '약 3억 년밖에 안 됐을 때'],
+        ['우주 나이', '약 2.9억 년 (빅뱅 직후)'],
         ['지금 거리', '약 338억 광년 (공변 거리)'],
         ['크기', '약 1,600 광년 폭']
       ],
