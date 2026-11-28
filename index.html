@@ -292,9 +292,15 @@
       <div class="quick-actions" id="quickActions" role="group" aria-label="빠른 날짜 선택">
         <button class="qa-btn is-active" data-preset="tonight" type="button"><span aria-hidden="true">🌙</span>오늘 밤</button>
         <button class="qa-btn" data-preset="weekend" type="button"><span aria-hidden="true">📅</span>이번 주말</button>
-        <button class="qa-btn" data-preset="dark" type="button"><span aria-hidden="true">🌑</span>가장 어두운 밤</button>
+        <button class="qa-btn" data-preset="dark" type="button"><span aria-hidden="true">🌟</span>별 보기 좋은 날</button>
         <button class="qa-btn" data-preset="gem" type="button"><span aria-hidden="true">✨</span>12/14 쌍둥이자리</button>
         <button class="qa-btn" data-preset="qua" type="button"><span aria-hidden="true">☄️</span>1/4 사분의자리</button>
+      </div>
+
+      <!-- 이번 주말 — 금·토·일 밤 중 더 좋은 밤으로 바로 전환 (「이번 주말」 프리셋일 때만 보입니다) -->
+      <div class="weekend-switch" id="weekendSwitch" hidden>
+        <div class="ws-chips" id="weekendChips" role="group" aria-label="이번 주말 밤 전환"></div>
+        <p class="ws-why" id="weekendWhy" aria-live="polite"></p>
       </div>
     </div>
 
@@ -468,11 +474,11 @@
       <p class="panel-foot">각 시간은 정시 기준이며, 고도 20° 이상이고 달빛 영향을 덜 받는 대상을 우선 골랐습니다.</p>
     </div>
 
-    <!-- 앞으로 30일 최고의 밤 -->
+    <!-- 앞으로 30일 별 보기 좋은 날 -->
     <div class="panel" data-dash="best">
       <div class="panel-head">
-        <h2>앞으로 30일, 가장 어두운 밤</h2>
-        <span class="panel-note">오늘부터 30일 · 같은 관측지 기준 · 달 밝기와 어두운 시간으로 계산</span>
+        <h2>앞으로 30일, 별 보기 좋은 날</h2>
+        <span class="panel-note">오늘부터 30일 · 같은 관측지 기준 · 달 밝기·어두운 시간·(예보 구간 구름·강수)으로 계산</span>
       </div>
       <div class="best-nights" id="bestNights"></div>
     </div>

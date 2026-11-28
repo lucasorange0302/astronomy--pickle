@@ -13,6 +13,7 @@
   var LS_TTL = 3 * 60 * 60 * 1000;
   var mem = {};
   var pending = {};
+  var stampN = 0;          // 예보가 새로 들어올 때마다 +1 — 30일 계획 캐시를 무효화하는 신호
 
   function key(lat, lon, date) {
     return Number(lat).toFixed(2) + '|' + Number(lon).toFixed(2) + '|' + date;
@@ -115,7 +116,7 @@
 
     function finish(snap) {
       mem[k] = { ts: Date.now(), snap: snap };
-      if (snap.status === 'ok') writeLS(k, snap);
+      if (snap.status === 'ok') { writeLS(k, snap); stampN++; }
       var list = pending[k] || [];
       delete pending[k];
       list.forEach(function (fn) { try { fn(snap); } catch (e) {} });
@@ -218,6 +219,54 @@
   }
   function mean(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
 
+  /* ---------------------------------------------------------------- 범위 예보
+     「가장 어두운 밤」처럼 여러 날을 한꺼번에 견줘야 할 때, 날짜마다 따로 10~16번
+     부르지 않고 한 번의 요청(start_date~end_date)으로 받아 날짜별 스냅으로 나눕니다.
+     캐시에 이미 있는 날짜는 그대로 쓰고, 없는 날짜만 요청합니다. */
+  function fetchRangeForecast(lat, lon, startDate, endDate, cb) {
+    var dates = [];
+    var out = {};
+    for (var d = startDate; d <= endDate; d = addDay(d)) {
+      dates.push(d);
+      var hit = rawCached(lat, lon, d);
+      if (hit && hit.status === 'ok') out[d] = hit;
+    }
+    var miss = dates.filter(function (x) { return !out[x]; });
+    var today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    if (!miss.length || typeof window.fetch !== 'function' || miss[0] < today) { cb(out, []); return; }
+
+    var url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
+      '&hourly=cloud_cover,precipitation,precipitation_probability' +
+      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + addDay(endDate);
+
+    var done = false;
+    function finish(json) {
+      if (done) return;
+      done = true;
+      clearTimeout(guard);
+      dates.forEach(function (date) {
+        if (out[date]) return;
+        if (!json) { mem[key(lat, lon, date)] = { ts: Date.now(), snap: unavailable(date, lat, lon, 'network') }; return; }
+        var snap = buildSnap(json, date, lat, lon);
+        if (snap.status !== 'ok') { mem[key(lat, lon, date)] = { ts: Date.now(), snap: unavailable(date, lat, lon, 'empty') }; return; }
+        mem[key(lat, lon, date)] = { ts: Date.now(), snap: snap };
+        writeLS(key(lat, lon, date), snap);
+        out[date] = snap;
+        stampN++;
+      });
+      cb(out, miss);
+    }
+    var guard = setTimeout(function () { finish(null); }, 15000);
+    window.fetch(url, { credentials: 'omit' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (json) {
+      if (!json || json.error) { finish(null); return; }
+      finish(json);
+    }).catch(function () { finish(null); });
+  }
+
   function labelOf(cloud) {
     if (cloud == null) return '정보 없음';
     if (cloud <= 25) return '맑음';
@@ -229,6 +278,8 @@
   window.SkyWeather = {
     cached: cached,
     fetch: fetchForecast,
+    fetchRange: fetchRangeForecast,
+    stamp: function () { return stampN; },
     cloudFor: cloudFor,
     precipFor: precipFor,
     bestWindow: bestWindow,

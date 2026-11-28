@@ -85,6 +85,11 @@ html[data-layout="mobile"] .qa-btn {
   flex: 0 0 auto; scroll-snap-align: start; min-height: 40px; font-size: .82rem; padding: 8px 13px;
 }
 html[data-layout="mobile"] .qa-btn span { font-size: .9rem; }
+html[data-layout="mobile"] .weekend-switch { margin: 9px 0 0; gap: 6px 8px; }
+html[data-layout="mobile"] .ws-chips { gap: 5px; }
+html[data-layout="mobile"] .ws-chip { min-height: 28px; padding: 4px 9px; font-size: .72rem; }
+html[data-layout="mobile"] .ws-badge { font-size: .58rem; padding: 1px 4px; }
+html[data-layout="mobile"] .ws-why { flex-basis: 100%; font-size: .69rem; }
 
 /* --------------------------------------------------------- 관측지 선택 */
 html[data-layout="mobile"] .control-panel {

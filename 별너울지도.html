@@ -1040,6 +1040,39 @@ h2 { letter-spacing: -0.025em; }
 .qa-btn.is-active { background: var(--accent); color: #17130a; border-color: var(--accent); }
 body.red .qa-btn.is-active { color: #180502; }
 
+/* --------------------------------------------- 이번 주말 — 금·토·일 전환 칩
+   「📅 이번 주말」 프리셋이 켜졌을 때만 #quickActions 아래에 뜹니다.
+   후보 밤(금·토·일 또는 토·일)을 작은 칩으로 늘어놓고, 추천된 밤에 배지를 답니다. */
+.weekend-switch {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin-top: 10px; min-width: 0;
+}
+.weekend-switch[hidden] { display: none; }
+.ws-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.ws-chip {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  padding: 5px 10px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, .04);
+  color: var(--muted); font: inherit; font-size: .74rem; font-weight: 700;
+  min-height: 30px; white-space: nowrap; transition: all .14s;
+}
+.ws-chip:hover { border-color: var(--accent); color: var(--accent); }
+.ws-chip .ws-dow { font-weight: 800; color: var(--faint); }
+.ws-chip .ws-date { font-variant-numeric: tabular-nums; }
+.ws-badge {
+  font-size: .6rem; font-weight: 800; letter-spacing: .01em; padding: 1px 5px; border-radius: 99px;
+  background: var(--accent-2-soft); color: var(--accent-2); border: 1px solid rgba(126, 224, 192, .3);
+}
+.ws-chip.is-active { background: var(--accent-soft); border-color: rgba(255, 212, 121, .55); color: var(--accent); }
+.ws-chip.is-active .ws-dow { color: var(--accent); }
+.ws-chip.is-active .ws-badge { background: var(--accent); color: #17130a; border-color: var(--accent); }
+.ws-why { margin: 0; flex: 1 1 180px; min-width: 0; font-size: .71rem; line-height: 1.45; color: var(--muted); }
+body.red .ws-chip { background: rgba(255, 106, 61, .06); }
+body.red .ws-badge { background: rgba(255, 106, 61, .14); color: #ff8a5c; border-color: rgba(255, 106, 61, .35); }
+body.red .ws-chip.is-active { background: rgba(255, 106, 61, .16); border-color: rgba(255, 106, 61, .55); color: #ff8a5c; }
+body.red .ws-chip.is-active .ws-dow { color: #ff8a5c; }
+body.red .ws-chip.is-active .ws-badge { background: #ff6a3d; color: #180502; border-color: #ff6a3d; }
+
 /* ------------------------------------------------------- 별자리 88종 도감 */
 .con-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
 .con-search {
@@ -1501,6 +1534,11 @@ body.red .live-grid-range input[type="range"] { accent-color: #ff8a5c; }
   .quick-actions { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; scrollbar-width: none; }
   .quick-actions::-webkit-scrollbar { display: none; }
   .qa-btn { flex: 0 0 auto; }
+  .weekend-switch { gap: 6px 8px; margin-top: 8px; }
+  .ws-chips { gap: 5px; }
+  .ws-chip { min-height: 28px; padding: 4px 8px; gap: 4px; font-size: .71rem; }
+  .ws-badge { font-size: .57rem; padding: 1px 4px; }
+  .ws-why { font-size: .68rem; flex-basis: 100%; }
   .tm-title { width: 100%; justify-content: space-between; }
   .catalog-grid, .site-grid, .glossary-list { grid-template-columns: 1fr; }
   .gloss-tools .chip-row { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
@@ -1526,7 +1564,7 @@ body.red .tm-slider::-webkit-slider-thumb { background: #ff6a3d; box-shadow: 0 0
 
 /* 인쇄: 상호작용 패널 숨김 */
 @media print {
-  .timemachine, .live-panel, #live, .quick-actions, .sky-inspector, .gloss-tools, .seg-row { display: none !important; }
+  .timemachine, .live-panel, #live, .quick-actions, .weekend-switch, .sky-inspector, .gloss-tools, .seg-row { display: none !important; }
 }
 
 /* ------------------------------------------------- FOV 대상 선택·비교 바 */
@@ -4158,9 +4196,15 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
       <div class="quick-actions" id="quickActions" role="group" aria-label="빠른 날짜 선택">
         <button class="qa-btn is-active" data-preset="tonight" type="button"><span aria-hidden="true">🌙</span>오늘 밤</button>
         <button class="qa-btn" data-preset="weekend" type="button"><span aria-hidden="true">📅</span>이번 주말</button>
-        <button class="qa-btn" data-preset="dark" type="button"><span aria-hidden="true">🌑</span>가장 어두운 밤</button>
+        <button class="qa-btn" data-preset="dark" type="button"><span aria-hidden="true">🌟</span>별 보기 좋은 날</button>
         <button class="qa-btn" data-preset="gem" type="button"><span aria-hidden="true">✨</span>12/14 쌍둥이자리</button>
         <button class="qa-btn" data-preset="qua" type="button"><span aria-hidden="true">☄️</span>1/4 사분의자리</button>
+      </div>
+
+      <!-- 이번 주말 — 금·토·일 밤 중 더 좋은 밤으로 바로 전환 (「이번 주말」 프리셋일 때만 보입니다) -->
+      <div class="weekend-switch" id="weekendSwitch" hidden>
+        <div class="ws-chips" id="weekendChips" role="group" aria-label="이번 주말 밤 전환"></div>
+        <p class="ws-why" id="weekendWhy" aria-live="polite"></p>
       </div>
     </div>
 
@@ -4334,11 +4378,11 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
       <p class="panel-foot">각 시간은 정시 기준이며, 고도 20° 이상이고 달빛 영향을 덜 받는 대상을 우선 골랐습니다.</p>
     </div>
 
-    <!-- 앞으로 30일 최고의 밤 -->
+    <!-- 앞으로 30일 별 보기 좋은 날 -->
     <div class="panel" data-dash="best">
       <div class="panel-head">
-        <h2>앞으로 30일, 가장 어두운 밤</h2>
-        <span class="panel-note">오늘부터 30일 · 같은 관측지 기준 · 달 밝기와 어두운 시간으로 계산</span>
+        <h2>앞으로 30일, 별 보기 좋은 날</h2>
+        <span class="panel-note">오늘부터 30일 · 같은 관측지 기준 · 달 밝기·어두운 시간·(예보 구간 구름·강수)으로 계산</span>
       </div>
       <div class="best-nights" id="bestNights"></div>
     </div>
@@ -9784,6 +9828,7 @@ window.PHOTO_SETS = {
   var LS_TTL = 3 * 60 * 60 * 1000;
   var mem = {};
   var pending = {};
+  var stampN = 0;          // 예보가 새로 들어올 때마다 +1 — 30일 계획 캐시를 무효화하는 신호
 
   function key(lat, lon, date) {
     return Number(lat).toFixed(2) + '|' + Number(lon).toFixed(2) + '|' + date;
@@ -9886,7 +9931,7 @@ window.PHOTO_SETS = {
 
     function finish(snap) {
       mem[k] = { ts: Date.now(), snap: snap };
-      if (snap.status === 'ok') writeLS(k, snap);
+      if (snap.status === 'ok') { writeLS(k, snap); stampN++; }
       var list = pending[k] || [];
       delete pending[k];
       list.forEach(function (fn) { try { fn(snap); } catch (e) {} });
@@ -9989,6 +10034,54 @@ window.PHOTO_SETS = {
   }
   function mean(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
 
+  /* ---------------------------------------------------------------- 범위 예보
+     「가장 어두운 밤」처럼 여러 날을 한꺼번에 견줘야 할 때, 날짜마다 따로 10~16번
+     부르지 않고 한 번의 요청(start_date~end_date)으로 받아 날짜별 스냅으로 나눕니다.
+     캐시에 이미 있는 날짜는 그대로 쓰고, 없는 날짜만 요청합니다. */
+  function fetchRangeForecast(lat, lon, startDate, endDate, cb) {
+    var dates = [];
+    var out = {};
+    for (var d = startDate; d <= endDate; d = addDay(d)) {
+      dates.push(d);
+      var hit = rawCached(lat, lon, d);
+      if (hit && hit.status === 'ok') out[d] = hit;
+    }
+    var miss = dates.filter(function (x) { return !out[x]; });
+    var today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    if (!miss.length || typeof window.fetch !== 'function' || miss[0] < today) { cb(out, []); return; }
+
+    var url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=' + Number(lat).toFixed(4) + '&longitude=' + Number(lon).toFixed(4) +
+      '&hourly=cloud_cover,precipitation,precipitation_probability' +
+      '&timezone=Asia%2FSeoul&start_date=' + miss[0] + '&end_date=' + addDay(endDate);
+
+    var done = false;
+    function finish(json) {
+      if (done) return;
+      done = true;
+      clearTimeout(guard);
+      dates.forEach(function (date) {
+        if (out[date]) return;
+        if (!json) { mem[key(lat, lon, date)] = { ts: Date.now(), snap: unavailable(date, lat, lon, 'network') }; return; }
+        var snap = buildSnap(json, date, lat, lon);
+        if (snap.status !== 'ok') { mem[key(lat, lon, date)] = { ts: Date.now(), snap: unavailable(date, lat, lon, 'empty') }; return; }
+        mem[key(lat, lon, date)] = { ts: Date.now(), snap: snap };
+        writeLS(key(lat, lon, date), snap);
+        out[date] = snap;
+        stampN++;
+      });
+      cb(out, miss);
+    }
+    var guard = setTimeout(function () { finish(null); }, 15000);
+    window.fetch(url, { credentials: 'omit' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (json) {
+      if (!json || json.error) { finish(null); return; }
+      finish(json);
+    }).catch(function () { finish(null); });
+  }
+
   function labelOf(cloud) {
     if (cloud == null) return '정보 없음';
     if (cloud <= 25) return '맑음';
@@ -10000,6 +10093,8 @@ window.PHOTO_SETS = {
   window.SkyWeather = {
     cached: cached,
     fetch: fetchForecast,
+    fetchRange: fetchRangeForecast,
+    stamp: function () { return stampN; },
     cloudFor: cloudFor,
     precipFor: precipFor,
     bestWindow: bestWindow,
@@ -10882,6 +10977,8 @@ window.Astro = (function () {
     tmFrac: 0,
     tmSpeed: 5,
     follow: null,
+    weekend: null,
+    preset: null,
     last: null
   };
 
@@ -12186,39 +12283,63 @@ window.Astro = (function () {
   /* ------------------------------------------------ 이번 달 어두운 밤 */
   function renderBestNights(c) {
     const box = $('#bestNights');
-    const out = [];
-    for (let i = 0; i < 30; i++) {
-      const dstr = addDays(state.dateStr, i);
-      const night = A.scanDay(state.site.lat, state.site.lon, dstr, true);
-      const darkStart = night.astro.dusk || night.nautical.dusk;
-      const darkEnd = night.astro.dawn || night.nautical.dawn;
-      const darkH = (darkStart && darkEnd) ? (darkEnd - darkStart) * 24 : 0;
-      const jdMid = A.jdFromDate(A.localToDate(dstr, '23:00'));
-      const ph = A.moonPhase(jdMid);
-      const score = A.observingScore(ph.illum, state.site.bortle, darkH);
-      out.push({ date: dstr, score: score, illum: ph.illum, darkH: darkH, phase: ph.name });
-    }
-    const best = out.slice().sort(function (a, b) { return b.score - a.score; }).slice(0, 3);
-    best.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    if (!box) return;
+    /* 🌟 「별 보기 좋은 날」·빠른 버튼(`applyPreset('dark')`)과 똑같은 관측 지수로 고릅니다.
+       예보가 있는 날(앞으로 16일)은 구름·강수까지 반영해 비·흐린 밤(예: 12/7 삭에 비)은
+       빼고, 실제로 맑고 달빛이 적은 TOP 3 밤을 보여 줍니다. */
+    const plan = darkPlanCached();
+    const rows = plan.rows || [];
+    const good = rows.filter(function (r) { return !r.bad; });
+    const pool = good.length ? good : rows;
+    const best = pool.slice()
+      .sort(function (a, b) { return (b.score - a.score) || (a.i - b.i); })
+      .slice(0, 3)
+      .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
     box.innerHTML = best.map(function (b) {
       const isToday = b.date === todayKST();
+      const n = b.n;
+      const wxTxt = n.cloud == null ? '구름 예보 전' : '구름 ' + nf(n.cloud, 0) + '%';
+      const wet = n.rain && ((Number(n.rain.mm) || 0) > 0.1 || (Number(n.rain.prob) || 0) >= 60);
+      const rainTxt = wet ? ' · ☔ 비 가능' : '';
       return '<div class="best-night">' +
         '<div class="bn-date">' + Number(b.date.slice(5, 7)) + '/' + Number(b.date.slice(8, 10)) +
         ' <small>(' + weekdayKR(b.date) + ')</small>' + (isToday ? ' <span class="bn-now">오늘</span>' : '') + '</div>' +
         '<div class="bn-score">' + b.score + '점</div>' +
-        '<div class="bn-meta">달 ' + nf(b.illum * 100) + '% · ' + b.phase + ' · 어두운 시간 ' + nf(b.darkH, 1) + '시간</div>' +
+        '<div class="bn-meta">달 ' + nf(n.illum * 100) + '% · ' + n.phaseName + ' · ' + wxTxt + rainTxt + '</div>' +
+        '<div class="bn-meta">어두운 시간 ' + nf(n.darkHours, 1) + '시간</div>' +
         '<button class="mini-btn bn-btn" data-date="' + esc(b.date) + '">이 밤으로 보기</button>' +
         '</div>';
     }).join('');
     $$('#bestNights .bn-btn').forEach(function (b) {
       b.addEventListener('click', function () {
+        state.preset = null;
+        clearWeekend();
         state.dateStr = b.getAttribute('data-date');
-        state.timeStr = '';
+        state.timeStr = '23:00';
         $('#dateInput').value = state.dateStr;
+        $('#timeInput').value = '23:00';
+        syncQuickPresets(null);
         syncTimeField(true);
         renderAll();
-        toast(b.getAttribute('data-date') + ' 밤으로 날짜를 바꿨습니다.');
+        toast(b.getAttribute('data-date').slice(5, 7) + '월 ' + b.getAttribute('data-date').slice(8, 10) + '일 밤으로 날짜를 바꿨습니다.');
       });
+    });
+  }
+
+  /* 30일 카드도 예보가 도착하면 다시 그려집니다 — 관측지·날짜당 10분에 한 번만 요청. */
+  let bestWxKey = '', bestWxAt = 0;
+  function refreshBestNightsWeather() {
+    if (!window.SkyWeather || typeof SkyWeather.fetchRange !== 'function') return;
+    const today = todayKST();
+    const k = state.site.lat.toFixed(3) + '|' + state.site.lon.toFixed(3) + '|' + today;
+    if (k === bestWxKey && Date.now() - bestWxAt < 10 * 60 * 1000) return;
+    bestWxKey = k; bestWxAt = Date.now();
+    const lat = state.site.lat, lon = state.site.lon;
+    SkyWeather.fetchRange(lat, lon, today, addDays(today, DARK.wxDays - 1), function (out, fresh) {
+      if (Math.abs(state.site.lat - lat) > 1e-6 || Math.abs(state.site.lon - lon) > 1e-6) return;
+      if (!fresh || !fresh.length) return;          // 모두 캐시에 있었음 — 다시 그릴 필요 없음
+      if (!$('#bestNights')) return;
+      renderBestNights(state.last || computeNight());
     });
   }
 
@@ -13263,7 +13384,7 @@ window.Astro = (function () {
     return was;
   }
 
-  function inertStart(vAz, vAlt) {
+  function inertStart(vAz, vAlt, t0) {
     inertCancel();
     if (live.sensor) return false;              // 실시간 트래킹 중 — 폰이 시선의 주인
     let a = Number(vAz) || 0, b = Number(vAlt) || 0;
@@ -13274,7 +13395,13 @@ window.Astro = (function () {
     const sp = Math.hypot(a, b);
     if (sp > INERT.vMax) { const k = INERT.vMax / sp; a *= k; b *= k; }
     inertia.on = true; inertia.vAz = a; inertia.vAlt = b;
-    inertia.t = 0; inertia.moved = 0; inertia.last = performance.now();
+    /* 첫 스텝의 dt 는 '마지막으로 손가락이 실제로 움직인 시각'부터 셈니다.
+       performance.now() 로 잡으면 첫 rAF 의 ts 와 겹쳐 dt 가 0~2ms 로 죽어,
+       손을 떼는 순간 한 프레임 멈칫한 뒤에야 관성이 시작되는 것처럼 보였습니다. */
+    const now = performance.now();
+    let t = Number(t0);
+    if (!isFinite(t) || t <= 0 || now - t > INERT.hold || t > now) t = now;
+    inertia.t = 0; inertia.moved = 0; inertia.last = t;
     const step = function (ts) {
       inertia.raf = null;
       if (!inertia.on) return;
@@ -13282,7 +13409,7 @@ window.Astro = (function () {
       let dt = ts - inertia.last;
       inertia.last = ts;
       if (!(dt > 0)) dt = 16;
-      if (dt > 64) dt = 64;                                // 탭 전환 등 큰 틈은 건너뜀
+      dt = Math.max(1, Math.min(32, dt));                  // 0·음수·큰 틈 모두 한 프레임 폭으로
       inertia.t += dt;
       const prevAz = live.az, prevAlt = live.alt;
       const gz = inertAzGain(live.alt);
@@ -13296,8 +13423,12 @@ window.Astro = (function () {
       inertia.moved += Math.hypot(shortestDelta(prevAz, az), alt - prevAlt);
       const k = Math.exp(-dt / INERT.tau);
       inertia.vAz *= k; inertia.vAlt *= k;
+      /* 다음 rAF 로 미루지 않고 이 프레임에 바로 그립니다 — kickLive() 를 부르면
+         liveTick 이 한 프레임 뒤에 그려서 손을 뗄 때 16~33ms 걸리는 것처럼 보였습니다. */
       liveDirty = true;
-      kickLive();                                          // 하늘·유도등이 같은 프레임에 그려집니다
+      liveDraw();
+      syncLiveInputs();
+      liveDirty = false;
       if (Math.hypot(inertia.vAz, inertia.vAlt) < INERT.stop || inertia.t > INERT.maxT) { inertCancel(); return; }
       inertia.raf = requestAnimationFrame(step);
     };
@@ -13327,7 +13458,7 @@ window.Astro = (function () {
     const first = s[i];
     const dt = tEnd - first.t;
     if (dt < 4) return { az: 0, alt: 0, stale: false };
-    return { az: shortestDelta(first.az, s[end].az) / dt, alt: (s[end].alt - first.alt) / dt, stale: false };
+    return { az: shortestDelta(first.az, s[end].az) / dt, alt: (s[end].alt - first.alt) / dt, stale: false, t: tEnd };
   }
 
   /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다 — 방위는 그대로 두고 고도만 바꿉니다.
@@ -14115,6 +14246,7 @@ window.Astro = (function () {
   function liveDraw() {
     const ctx = live.ctx;
     if (!ctx || !live.w || !live.h) return;
+    live.draws = (live.draws || 0) + 1;      // 검증용 — 관성 중 프레임당 한 번 그리는지 세는 카운터
     const W = live.w, H = live.h, cx = W / 2, cy = H / 2;
     live.hits = [];                       // 프레임마다 새로 계산 (누적 방지)
     const c = state.last || computeNight();
@@ -15292,6 +15424,8 @@ window.Astro = (function () {
       return { on: inertia.on, vAz: inertia.vAz, vAlt: inertia.vAlt, t: inertia.t, moved: inertia.moved };
     },
     cancelInertia: function () { return inertCancel(); },
+    /* -- 검증용 — 지금까지 하늘을 그린 횟수(관성 중 한 프레임에 한 번인지 확인). */
+    draws: function () { return live.draws || 0; },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
     /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.
@@ -15689,18 +15823,19 @@ window.Astro = (function () {
       const moved = drag.moved;
       /* 손을 뗀 순간의 속도 — 방금 표본(0.7)과 이동 평균(0.3)을 섞어 손떨림을 덜어냅니다.
          멈춘 채 뗐거나 단순 탭이면 dragVel 이 0 을 주어 관성이 생기지 않습니다. */
-      let vAz = 0, vAlt = 0;
+      let vAz = 0, vAlt = 0, vT = 0;
       if (moved) {
         const v = dragVel(drag);
         if (!v.stale) {
           vAz = v.az * 0.7 + drag.vAz * 0.3;
           vAlt = v.alt * 0.7 + drag.vAlt * 0.3;
+          vT = v.t || 0;          // 손가락이 마지막으로 실제 움직인 시각 — 관성 첫 스텝의 기준
         }
       }
       drag = null;
       stage.classList.remove('is-dragging');
       if (!moved) { liveHandleClick(ev); return; }
-      inertStart(vAz, vAlt);
+      inertStart(vAz, vAlt, vT);
     };
     stage.addEventListener('pointerup', end);
     stage.addEventListener('pointercancel', function (ev) {
@@ -16332,40 +16467,316 @@ window.Astro = (function () {
     updateTmBar();
   }
 
-  function applyPreset(name) {
-    let dateStr = todayKST(), timeStr = '';
-    if (name === 'weekend') {
-      const t = todayKST().split('-').map(Number);
-      const dow = new Date(Date.UTC(t[0], t[1] - 1, t[2])).getUTCDay();
-      let add = (6 - dow + 7) % 7;
-      const kstHour = new Date(Date.now() + 9 * 3600000).getUTCHours();
-      if (add === 0 && kstHour >= 20) add = 7;
-      dateStr = addDays(todayKST(), add);
-      timeStr = '22:00';
-    } else if (name === 'dark') {
-      let best = null;
-      for (let i = 0; i < 30; i++) {
-        const d = addDays(todayKST(), i);
-        const ph = A.moonPhase(A.jdFromDate(A.localToDate(d, '23:00')));
-        if (!best || ph.illum < best.illum) best = { date: d, illum: ph.illum };
+  function syncQuickPresets(name) {
+    $$('#quickActions .qa-btn').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-preset') === name);
+    });
+  }
+
+  /* ======================================================================
+     📅 이번 주말 — 금·토·일 밤을 비교해 더 좋은 밤으로 (전환 칩)
+     · 주중이면 이번 주 금·토·일 세 밤을, 토요일이면 남은 토·일 두 밤을,
+       일요일이면 아직 남은 오늘(일) 밤을 기본으로 잡습니다.
+     · 비교는 두 밤 모두 시간별 예보가 있을 때만 구름·강수까지 넣고, 한쪽이라도
+       예보가 없거나 예보 범위 밖이면 달빛·어두운 시간만으로 공정하게 견줍니다.
+     ====================================================================== */
+  const WK_DOW = { fri: '금', sat: '토', sun: '일' };
+
+  /** 주말 후보 밤 — [{key, date}] (지난 밤은 넣지 않습니다) */
+  function weekendCandidates() {
+    const today = todayKST();
+    const p = today.split('-').map(Number);
+    const dow = new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay();   // 0=일 … 6=토
+    if (dow === 0) {
+      return { mode: 'sun', list: [{ key: 'sun', date: today }, { key: 'sat', date: addDays(today, 6) }] };
+    }
+    if (dow === 6) {
+      return { mode: 'sat', list: [{ key: 'sat', date: today }, { key: 'sun', date: addDays(today, 1) }] };
+    }
+    const fri = addDays(today, 5 - dow);
+    return { mode: 'wk', list: [
+      { key: 'fri', date: fri }, { key: 'sat', date: addDays(fri, 1) }, { key: 'sun', date: addDays(fri, 2) }
+    ] };
+  }
+
+  /** 그 날짜 22:00(KST, 또는 지정 시각)의 관측 조건 — 달빛·어두운 시간 + (캐시된) 구름·강수 */
+  function weekendNight(dateStr, clockStr, coarse) {
+    const lat = state.site.lat, lon = state.site.lon;
+    const night = A.scanDay(lat, lon, dateStr, !!coarse);
+    const jd = A.jdFromDate(A.localToDate(dateStr, clockStr || '22:00'));
+    const phase = A.moonPhase(jd);
+    const mp = A.moonPos(jd);
+    const mh = A.equatorialToHorizontal(mp.raH, mp.decD, lat, lon, jd);
+    const ds = night.astro.dusk || night.nautical.dusk || night.civil.dusk;
+    const de = night.astro.dawn || night.nautical.dawn || night.civil.dawn;
+    const darkHours = (ds && de) ? (de - ds) * 24 : 0;
+    const win = darkWindowHours(ds, de);
+    const wx = window.SkyWeather ? SkyWeather.cached(lat, lon, dateStr) : null;
+    let cloud = null, rain = null;
+    if (wx && wx.status === 'ok') {
+      cloud = SkyWeather.cloudFor(wx, { startH: win.start, endH: win.end });
+      rain = SkyWeather.precipFor(wx, { startH: win.start, endH: win.end });
+    }
+    return {
+      date: dateStr, illum: phase.illum, phaseName: phase.name, moonAlt: mh.alt, darkHours: darkHours,
+      cloud: cloud, rain: rain, wxStatus: wx ? wx.status : 'none'
+    };
+  }
+
+  function weekendPlan() {
+    const c = weekendCandidates();
+    const rows = c.list.map(function (it) {
+      return { key: it.key, date: it.date, n: weekendNight(it.date), score: 0 };
+    });
+    const allWx = rows.every(function (r) { return r.n.cloud != null; });
+    rows.forEach(function (r) {
+      r.score = A.observingScore(r.n.illum, state.site.bortle, r.n.darkHours,
+        allWx ? r.n.cloud : null, allWx ? r.n.rain : null);
+    });
+    let best = rows[0];
+    rows.forEach(function (r) { if (r.score > best.score) best = r; });   // 동점이면 이른 밤
+    // 일요일은 아직 남아 있는 오늘 밤을 기본으로 — 다음 주 토요일은 전환용 참고 칩입니다.
+    const chosen = c.mode === 'sun' ? rows[0] : best;
+    return { mode: c.mode, list: rows, best: chosen, chosen: chosen, allWx: allWx };
+  }
+
+  function mmdd(dateStr) {
+    return Number(dateStr.slice(5, 7)) + '/' + Number(dateStr.slice(8, 10));
+  }
+
+  function weekendReason(plan, chosen) {
+    if (plan.mode === 'sun') return '오늘 일요일 밤이 남아 있어 오늘을 골랐어요 · 다음 주 토요일과 비교했습니다';
+    const bits = plan.list.map(function (r) {
+      return WK_DOW[r.key] + ' ' + nf(plan.allWx ? r.n.cloud : r.n.illum * 100, 0) + '%';
+    }).join(' · ');
+    const head = plan.allWx ? '구름 ' : '구름 예보 전 · 달빛 ';
+    return head + bits + ' — ' + WK_DOW[plan.best.key] + '요일 밤이 가장 좋아요';
+  }
+
+  function renderWeekendSwitch() {
+    const bar = $('#weekendSwitch');
+    if (!bar) return;
+    const wk = state.weekend;
+    if (!wk) { bar.hidden = true; return; }
+    const chips = $('#weekendChips');
+    if (chips) {
+      chips.innerHTML = wk.plan.list.map(function (r) {
+        const on = r.key === wk.chosenKey;
+        const rec = r.key === wk.plan.best.key;
+        return '<button class="ws-chip' + (on ? ' is-active' : '') + '" type="button"' +
+          ' aria-pressed="' + (on ? 'true' : 'false') + '"' +
+          ' aria-label="' + WK_DOW[r.key] + '요일 ' + mmdd(r.date) + ' 밤 22시' + (rec ? ' (추천)' : '') + '"' +
+          ' data-weekend-day="' + r.key + '" data-weekend-date="' + r.date + '">' +
+          '<span class="ws-dow">' + WK_DOW[r.key] + '</span>' +
+          '<span class="ws-date">' + mmdd(r.date) + '</span>' +
+          (rec ? '<span class="ws-badge">추천</span>' : '') +
+          '</button>';
+      }).join('');
+    }
+    const why = $('#weekendWhy');
+    if (why) why.textContent = wk.reason;
+    bar.hidden = false;
+  }
+
+  function clearWeekend() {
+    state.weekend = null;
+    const bar = $('#weekendSwitch');
+    if (bar) bar.hidden = true;
+  }
+
+  function startWeekend() {
+    const wk = { userPicked: false, plan: null, chosenKey: null, reason: '' };
+    wk.plan = weekendPlan();
+    wk.chosenKey = wk.plan.chosen.key;
+    wk.reason = weekendReason(wk.plan, wk.plan.chosen);
+    state.weekend = wk;
+    state.preset = 'weekend';
+    setViewDate(wk.plan.chosen.date, '22:00');
+    syncQuickPresets('weekend');
+    renderWeekendSwitch();
+    const row = wk.plan.list.filter(function (r) { return r.key === wk.chosenKey; })[0] || wk.plan.chosen;
+    toast(WK_DOW[row.key] + ' ' + mmdd(row.date) + ' 밤 22:00' +
+      (wk.plan.mode === 'sun' ? '으로 바꿨습니다.' : ' — 이번 주말 중 가장 좋은 밤입니다.'));
+    watchWeekendWeather(wk);
+  }
+
+  function pickWeekendDay(key) {
+    const wk = state.weekend;
+    if (!wk) return;
+    const row = wk.plan.list.filter(function (r) { return r.key === key; })[0];
+    if (!row) return;
+    wk.chosenKey = key;
+    wk.userPicked = true;
+    if (state.dateStr !== row.date || state.timeStr !== '22:00') setViewDate(row.date, '22:00');
+    wk.reason = weekendReason(wk.plan, row);
+    renderWeekendSwitch();
+    toast(WK_DOW[key] + ' ' + mmdd(row.date) + ' 밤 22:00 기준으로 바꿨습니다.');
+  }
+
+  /** 캐시에 있던 예보만으로 계획을 다시 계산합니다. 직접 칩을 고르지 않았다면 추천 밤으로 따라갑니다. */
+  function recomputeWeekend(opts) {
+    const wk = state.weekend;
+    if (!wk) return;
+    opts = opts || {};
+    const plan = weekendPlan();
+    wk.plan = plan;
+    const has = plan.list.some(function (r) { return r.key === wk.chosenKey; });
+    if (!has) wk.chosenKey = plan.chosen.key;
+    else if (!wk.userPicked && !opts.keepDate && plan.chosen.key !== wk.chosenKey) {
+      wk.chosenKey = plan.chosen.key;
+      if (state.dateStr !== plan.chosen.date) setViewDate(plan.chosen.date, '22:00');
+    }
+    const chosen = plan.list.filter(function (r) { return r.key === wk.chosenKey; })[0] || plan.chosen;
+    wk.reason = weekendReason(plan, chosen);
+    renderWeekendSwitch();
+  }
+
+  /** 후보 밤 전부의 예보를 받아 오고, 다 모이면 추천을 다시 계산합니다. */
+  function watchWeekendWeather(wk) {
+    if (!window.SkyWeather || typeof SkyWeather.fetch !== 'function') return;
+    const lat = state.site.lat, lon = state.site.lon;
+    const dates = wk.plan.list.map(function (r) { return r.date; });
+    let left = dates.length;
+    dates.forEach(function (d) {
+      SkyWeather.fetch(lat, lon, d, function () {
+        if (state.weekend !== wk) return;
+        if (Math.abs(state.site.lat - lat) > 1e-6 || Math.abs(state.site.lon - lon) > 1e-6) return;
+        if (left <= 0) return;
+        left--;
+        if (left === 0) recomputeWeekend();
+      });
+    });
+  }
+
+  /** 관측지를 바꿨을 때 — 날짜는 그대로 두고 추천·이유만 새로 계산합니다. */
+  function refreshPresetAfterSiteChange() {
+    if (state.weekend) {
+      recomputeWeekend({ keepDate: true });
+      watchWeekendWeather(state.weekend);
+    } else if (state.preset === 'dark') {
+      startDark(true);
+    }
+  }
+
+  /* ======================================================================
+     🌑 가장 어두운 밤 — 달빛만 보던 것을 '실제 관측 지수'로
+     · 0~15일(예보 범위)은 범위 예보 한 번으로 구름·강수까지 받아 견줍니다.
+       비(강수 0.1mm 초과 또는 확률 60% 이상)·짙은 구름(60% 이상) 밤은 크게 감점.
+     · 예보 범위 안에 맑은 밤이 있으면 그중 관측 지수가 가장 좋은 밤,
+       범위 안이 전부 흐리거나 비가 오면 16~29일 중 달이 가장 어두운 밤.
+     · 예보가 아직 없으면 달이 가장 어두운 밤을 먼저 보여 주고, 예보가 도착하면
+       더 좋은 밤으로 다시 고릅니다.
+     ====================================================================== */
+  const DARK = { days: 30, wxDays: 16, wetMm: 0.1, wetProb: 60, badCloud: 60 };
+  let darkSeq = 0;
+  let darkCache = { key: '', plan: null };
+
+  /* 30일 계획은 30번의 하늘 스캔이 필요해 무겁습니다 — 관측지·날짜·예보(스탬프)가
+     그대로면 다시 계산하지 않습니다. 화면을 다시 그릴 때마다 30일을 겹어도 끊김 없음. */
+  function darkPlanCached() {
+    const stamp = (window.SkyWeather && SkyWeather.stamp) ? SkyWeather.stamp() : 0;
+    const key = state.site.lat.toFixed(4) + '|' + state.site.lon.toFixed(4) + '|' +
+      (state.site.bortle || '') + '|' + todayKST() + '|' + stamp;
+    if (darkCache.key === key && darkCache.plan) return darkCache.plan;
+    const plan = darkPlan();
+    darkCache = { key: key, plan: plan };
+    return plan;
+  }
+
+  function darkPlan() {
+    const today = todayKST();
+    const bortle = state.site.bortle;
+    const rows = [];
+    for (let i = 0; i < DARK.days; i++) {
+      const d = addDays(today, i);
+      const n = weekendNight(d, '23:00', true);      // 30일 스캔은 8분 간격(coarse)으로 충분
+      const moonOnly = A.observingScore(n.illum, bortle, n.darkHours, null, null);
+      const row = { date: d, i: i, n: n, moonOnly: moonOnly, hasWx: n.cloud != null, bad: false, wet: false, score: moonOnly };
+      if (row.hasWx) {
+        const mm = n.rain ? (Number(n.rain.mm) || 0) : 0;
+        const prob = n.rain ? (Number(n.rain.prob) || 0) : 0;
+        row.wet = mm > DARK.wetMm || prob >= DARK.wetProb;
+        row.bad = row.wet || n.cloud >= DARK.badCloud;
+        row.score = A.observingScore(n.illum, bortle, n.darkHours, n.cloud, n.rain);
+        if (row.bad) row.score = Math.min(row.score, 12);      // 사실상 관측 불가
+      } else {
+        row.score = Math.round(moonOnly * 0.9);                // 예보 없는 밤은 살짝 낮게
       }
-      dateStr = best.date;
-      timeStr = '23:00';
-      toast('앞으로 30일 중 달이 가장 어두운 밤은 ' + Number(best.date.slice(5, 7)) + '월 ' + Number(best.date.slice(8, 10)) + '일 (달 ' + nf(best.illum * 100, 0) + '%)입니다.');
-    } else if (name === 'gem') {
+      rows.push(row);
+    }
+    const inRange = rows.filter(function (r) { return r.i < DARK.wxDays; });
+    const goodWx = inRange.filter(function (r) { return r.hasWx && !r.bad; })
+      .sort(function (a, b) { return (b.score - a.score) || (a.i - b.i); });
+    if (goodWx.length) return { kind: 'wx', row: goodWx[0], rows: rows };
+    const allKnown = inRange.every(function (r) { return r.hasWx; });
+    const allBad = inRange.every(function (r) { return r.hasWx && r.bad; });
+    if (allKnown && allBad) {
+      /* 범위 안 16일이 전부 흐리거나 비 — 기다릴 이유가 없으니 범위 밖에서
+         달이 가장 어두운 밤을 고릅니다(예전 동작). */
+      const later = rows.filter(function (r) { return r.i >= DARK.wxDays; })
+        .sort(function (a, b) { return (a.n.illum - b.n.illum) || (a.i - b.i); });
+      if (later.length) return { kind: 'far', row: later[0], rows: rows };
+    }
+    // 아직 예보가 없는 밤이 있으면 그중, 없으면 30일 전체에서 달이 가장 어두운 밤
+    const unknown = inRange.filter(function (r) { return !r.hasWx; });
+    const pool = (unknown.length ? unknown : rows).slice()
+      .sort(function (a, b) { return (a.n.illum - b.n.illum) || (a.i - b.i); });
+    return { kind: 'moon', row: pool[0], rows: rows };
+  }
+
+  function darkToast(plan) {
+    const n = plan.row.n;
+    const md = Number(plan.row.date.slice(5, 7)) + '월 ' + Number(plan.row.date.slice(8, 10)) + '일';
+    const moonTxt = '달 ' + nf(n.illum * 100, 0) + '%';
+    if (plan.kind === 'wx') {
+      return md + ' 밤 23:00 — 구름 ' + nf(n.cloud, 0) + '% · ' + moonTxt + ' 로 앞으로 ' + DARK.days + '일 중 관측 지수가 가장 좋아요.';
+    }
+    if (plan.kind === 'far') {
+      return md + ' 밤 23:00 — 예보 범위(16일) 안은 모두 흐리거나 비가 와서, ' + moonTxt + ' 로 달이 가장 어두운 이 밤을 골랐어요.';
+    }
+    return md + ' 밤 23:00 — 구름 예보 전이라 ' + moonTxt + ' 로 달이 가장 어두운 밤을 먼저 골랐어요. 예보가 오면 다시 고릅니다.';
+  }
+
+  function startDark(silent) {
+    state.preset = 'dark';
+    const seq = ++darkSeq;
+    const plan = darkPlanCached();
+    setViewDate(plan.row.date, '23:00');
+    syncQuickPresets('dark');
+    if (!silent) toast(darkToast(plan));
+    if (!window.SkyWeather || typeof SkyWeather.fetchRange !== 'function') return;
+    const today = todayKST();
+    const lat = state.site.lat, lon = state.site.lon;
+    SkyWeather.fetchRange(lat, lon, today, addDays(today, DARK.wxDays - 1), function () {
+      if (seq !== darkSeq || state.preset !== 'dark') return;
+      if (Math.abs(state.site.lat - lat) > 1e-6 || Math.abs(state.site.lon - lon) > 1e-6) return;
+      const better = darkPlanCached();
+      if (better.row.date !== state.dateStr) {
+        setViewDate(better.row.date, '23:00');
+        toast(darkToast(better));
+      } else if (better.kind !== plan.kind) {
+        toast(darkToast(better));
+      }
+    });
+  }
+
+  function applyPreset(name) {
+    if (name === 'weekend') { startWeekend(); return; }
+    if (name === 'dark') { clearWeekend(); startDark(); return; }
+    clearWeekend();
+    state.preset = name;
+    let dateStr = todayKST(), timeStr = '';
+    if (name === 'gem') {
       dateStr = '2026-12-14'; timeStr = '22:00';
     } else if (name === 'qua') {
       dateStr = '2027-01-04'; timeStr = '03:00';
     }
     setViewDate(dateStr, timeStr);
-    $$('#quickActions .qa-btn').forEach(function (b) {
-      b.classList.toggle('is-active', b.getAttribute('data-preset') === name);
-    });
+    syncQuickPresets(name);
     if (name !== 'dark') {
       toast(Number(dateStr.slice(5, 7)) + '월 ' + Number(dateStr.slice(8, 10)) + '일 ' + (timeStr || '지금') + ' 기준으로 바꿨습니다.');
     }
   }
-
   function initExtra() {
     initLive();
     initTm();
@@ -16374,6 +16785,16 @@ window.Astro = (function () {
     $$('#quickActions .qa-btn').forEach(function (b) {
       b.addEventListener('click', function () { applyPreset(b.getAttribute('data-preset')); });
     });
+    // 이번 주말 전환 칩 — 누른 밤으로 바로 바꿉니다(이벤트를 한 번만 답니다).
+    const wbar = $('#weekendSwitch');
+    if (wbar && !wbar.__wkBound) {
+      wbar.__wkBound = true;
+      wbar.addEventListener('click', function (ev) {
+        const btn = ev.target && ev.target.closest ? ev.target.closest('[data-weekend-day]') : null;
+        if (!btn || !state.weekend) return;
+        pickWeekendDay(btn.getAttribute('data-weekend-day'));
+      });
+    }
     ['dateInput', 'timeInput'].forEach(function (id) {
       const el = $('#' + id);
       if (el) el.addEventListener('change', function () {
@@ -16608,6 +17029,7 @@ window.Astro = (function () {
     renderTargets(c);
     renderHourlyPlan(c);
     renderBestNights(c);
+    refreshBestNightsWeather();
     renderCatalog(c);
     if (state.siteSortNear) renderSites();
     calcDeclination();
@@ -16776,6 +17198,7 @@ window.Astro = (function () {
     clearSim(true);
     renderAll();
     syncRegionSelects();
+    refreshWeekendAfterSiteChange();
     if (note) toast(note);
   }
 
@@ -16827,6 +17250,8 @@ window.Astro = (function () {
     syncTimeField(true);
     $('#dateInput').addEventListener('change', function () {
       state.dateStr = $('#dateInput').value || todayKST();
+      clearWeekend();          // 날짜를 직접 바꾸면 이번 주말 전환 바는 숨긴다
+      state.preset = null;
       dropSim();
       renderAll();
     });
@@ -16841,6 +17266,8 @@ window.Astro = (function () {
       state.tmFrac = 0;
       state.follow = null;
       stopPlay();
+      clearWeekend();
+      state.preset = null;
       $('#dateInput').value = state.dateStr;
       syncTimeField(true);
       renderAll();
@@ -16854,6 +17281,8 @@ window.Astro = (function () {
       state.timeStr = '22:00';
       state.simJd = null;
       dropSim();
+      clearWeekend();
+      state.preset = null;
       $('#dateInput').value = state.dateStr;
       $('#timeInput').value = '22:00';
       renderAll();
@@ -16875,6 +17304,7 @@ window.Astro = (function () {
       store.set('site', state.site);
       renderAll();
       syncRegionSelects();
+      refreshWeekendAfterSiteChange();
       toast('관측지 좌표를 적용했습니다.');
     });
 
@@ -16895,6 +17325,7 @@ window.Astro = (function () {
         store.set('site', state.site);
         renderAll();
         syncRegionSelects();
+        refreshWeekendAfterSiteChange();
         toast(near
           ? '가장 가까운 시·군·구는 ' + near.prov.short + ' ' + near.dist.name + '입니다. GPS 좌표로 계산했습니다.'
           : '현재 위치로 계산했습니다.');
@@ -17631,6 +18062,8 @@ window.Astro = (function () {
     showInspector: showInspector,
     setViewDate: setViewDate,
     applyPreset: applyPreset,
+    weekendPlan: weekendPlan,
+    darkPlan: darkPlan,
     state: state,
     live: live,
     version: D.meta.version
