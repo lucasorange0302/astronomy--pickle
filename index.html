@@ -150,6 +150,10 @@
         <button class="icon-btn icon-btn-sm" id="fsDown" aria-label="글자 작게" title="글자 작게">A−</button>
         <button class="icon-btn icon-btn-sm" id="fsUp" aria-label="글자 크게" title="글자 크게">A+</button>
       </div>
+      <button class="icon-btn deep-toggle" id="deepExtBtn" aria-pressed="true" title="딥스카이 확장 — 확대할 때 어두운 별 6만여 개와 Gaia DR3 실시간 조회를 켜고 끕니다 (데이터·배터리 절약)">
+        <span class="dt-dot" aria-hidden="true"></span>
+        <span class="tool-label">딥스카이 <b class="dt-state" id="deepExtState">ON</b></span>
+      </button>
       <button class="icon-btn" id="btnRed" aria-pressed="false" title="야간 관측용 레드라이트 모드 (암순응 보호)">
         <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg>
         <span class="tool-label">레드</span>
@@ -239,6 +243,13 @@
             <button type="button" class="more-item" data-open="ai" role="menuitem">
               <span class="mi-ico" aria-hidden="true">🤖</span>
               <span class="mi-txt"><b>AI 천문 도우미</b><small>이 사이트의 하늘 정보로 답합니다</small></span>
+            </button>
+          </div>
+          <div class="more-group" role="group" aria-label="딥스카이 확장">
+            <p class="more-title"><span aria-hidden="true">🌌</span> 딥스카이</p>
+            <button type="button" class="more-item" id="deepMenuBtn" role="menuitem" aria-pressed="true">
+              <span class="mi-ico" aria-hidden="true">🌌</span>
+              <span class="mi-txt"><b>딥스카이 확장 <em id="deepMenuState">ON</em></b><small id="deepMenuNote">확장 성도 6만 + Gaia 실시간</small></span>
             </button>
           </div>
           <div class="more-group" role="group" aria-label="의견 보내기">
@@ -515,6 +526,8 @@
           <span class="live-chip" id="liveAltChip">고도 —</span>
           <span class="live-chip live-chip-sensor" id="liveSensorChip">센서 꺼짐</span>
         </div>
+        <!-- 🌌 딥스카이 확장 ON/OFF — 라이브 뷰·전천 지도·확장 도감에 함께 적용됩니다 -->
+        <button class="live-deep-chip" id="liveDeepChip" type="button" aria-pressed="true" title="딥스카이 확장을 켜고 끕니다 (끄면 확장 타일·Gaia를 불러오지 않습니다)"><span class="dt-dot" aria-hidden="true"></span>확장 <b id="liveDeepState">ON</b></button>
         <!-- 🎯 조준 유도 — 보낸 목표를 ✕ 로 끌 때까지 따라갑니다 -->
         <div class="live-guide" id="liveGuide" hidden>
           <div class="lguide-bar" id="liveGuideBar">
@@ -660,6 +673,7 @@
         <div class="panel-head">
           <h2>지금 하늘 (전천 지도)</h2>
           <span class="panel-note" id="skyMapNote">—</span>
+          <button class="mini-btn sky-deep-btn" id="skyDeepChip" type="button" aria-pressed="true" title="딥스카이 확장 — 확대하면 확장 성도·Gaia를 그립니다"><span class="dt-dot" aria-hidden="true"></span>확장 <b id="skyDeepState">ON</b></button>
         </div>
         <div class="skymap-wrap">
           <svg id="skyMap" viewBox="0 0 420 420" role="img" aria-label="현재 시각 전천 지도 — 별을 누르면 그 별의 정보가 열립니다"></svg>
@@ -711,6 +725,7 @@
     <div class="cat-tabs" role="tablist" aria-label="도감 보기 전환">
       <button class="cat-tab is-active" type="button" id="tabObjects" role="tab" aria-selected="true" aria-controls="panelObjects" data-cat-tab="objects">🌌 천체 도감 <span class="cat-tab-num">2,571종</span></button>
       <button class="cat-tab" type="button" id="tabConst" role="tab" aria-selected="false" aria-controls="panelConstellations" data-cat-tab="const" tabindex="-1">✨ 별자리 88 <span class="cat-tab-num">IAU 전체</span></button>
+      <button class="cat-tab" type="button" id="tabDeep" role="tab" aria-selected="false" aria-controls="panelDeep" data-cat-tab="deep" tabindex="-1">🌌 확장 성도 · Gaia <span class="cat-tab-num">11만 + 18억</span></button>
       <button class="cat-tab" type="button" id="tabQuiz" role="tab" aria-selected="false" aria-controls="panelQuiz" data-cat-tab="quiz" tabindex="-1">🎯 퀴즈 <span class="cat-tab-num">8문제</span></button>
     </div>
 
@@ -739,6 +754,8 @@
       </div>
       <p class="result-count" id="catalogCount">—</p>
       <div class="catalog-grid" id="catalogGrid"></div>
+      <!-- 검색어가 있을 때만 — 하늘 전체 도감(2,571종)에서 더 찾은 결과 -->
+      <div class="catalog-wide-hits" id="wideHits" hidden></div>
     </div>
 
     <div class="cat-panel" id="panelConstellations" role="tabpanel" aria-labelledby="tabConst" hidden>
@@ -753,6 +770,33 @@
           <div class="con-grid" id="conGrid"></div>
           <p class="panel-foot">연결선은 Stellarium 현대 IAU 별자리 그림, 좌표·등급은 J2000 카탈로그를 썼습니다. ‘가장 밝은 별’은 그 별자리에 속한 별 중 겉보기 등급이 가장 낮은 별입니다.</p>
         </div>
+      </div>
+    </div>
+
+    <div class="cat-panel" id="panelDeep" role="tabpanel" aria-labelledby="tabDeep" hidden>
+      <div class="deep-shell">
+        <div class="deep-head">
+          <button class="deep-switch" id="deepPanelToggle" type="button" aria-pressed="true" title="딥스카이 확장을 켜고 끕니다">
+            <span class="dt-dot" aria-hidden="true"></span>
+            <span class="deep-switch-txt">딥스카이 확장 <em id="deepPanelState">ON</em></span>
+          </button>
+          <p class="deep-note" id="deepStatus">확장 성도 상태를 확인하고 있어요…</p>
+        </div>
+        <p class="cat-panel-lead">
+          <b>1단계</b> 하늘 전체를 72칸으로 나눠 <b>화면에 걸치는 칸만</b> 받아 옵니다 — HYG 원본에서 5~12등급 별 <b>11만 6,006개</b>. 확대할수록 8.5 → 9.5 → 10.5 → 12등급으로 <b>단계적으로</b> 더 어두운 별이 떠오릅니다.
+          <b>2단계</b> 라이브 시야 20° 아래로 더 좁히거나(14~18등) 아래에서 Gaia DR3 ID·좌표를 넣으면 <b>ESA Gaia DR3(약 18억 개)</b>를 실시간으로 조회합니다.
+          이 탭의 별은 <b>퀴즈·기본 도감(2,571종)·별자리 88</b>과 완전히 분리되어 있어 퀴즈에는 나오지 않습니다.
+        </p>
+        <div class="deep-search">
+          <input type="search" id="deepQuery" placeholder="Gaia DR3 ID  또는  좌표 ‘RA Dec’ (예: 3209521209381041024 / 83.8 -5.4)" aria-label="Gaia DR3 ID 또는 좌표 검색">
+          <button class="btn btn-primary btn-sm" id="deepGo" type="button">Gaia 조회</button>
+        </div>
+        <div class="chip-row deep-regions" id="deepRegions" role="group" aria-label="하늘 구역 바로 보기"></div>
+        <div class="deep-result" id="deepResult"><p class="muted">구역을 고르거나 Gaia DR3 ID·좌표를 넣어 보세요.</p></div>
+        <p class="panel-foot deep-foot">
+          출처 — 확장 성도: HYG Database v4.1 (CC BY-SA 2.5) · Gaia: ESA/Gaia/DPAC, VizieR I/355/gaiadr3 (CC BY-NC).
+          Gaia 조회는 네트워크가 필요하고, 오프라인이거나 응답이 없으면 <b>로컬 확장 성도만</b> 조용히 보여 줍니다.
+        </p>
       </div>
     </div>
 
@@ -1371,6 +1415,7 @@
 <script src="sky-weather.js"></script>
 <script src="astro.js"></script>
 <script src="dial.js"></script>
+<script src="deep.js"></script>
 <script src="app.js"></script>
 <script src="space-ui.js"></script>
 <script src="learn-figs.js"></script>

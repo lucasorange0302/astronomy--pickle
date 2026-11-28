@@ -954,6 +954,11 @@
         if (it) showInspector('wide', key);
         return;
       }
+      if (kind === 'deep') {
+        const f = key.split('|');
+        openDeepStar({ ra: Number(f[0]), dec: Number(f[1]), mag: Number(f[2]), name: decodeURIComponent(f[3] || '') });
+        return;
+      }
       if (star && starD <= 5 * scale) { showInspector('star', star.name); return; }
       showInspector(kind, key);
       return;
@@ -1004,6 +1009,8 @@
       smz.layer = lv;
       if (smz.ready && state.last) setTimeout(function () { renderSkyMap(state.last); }, 0);
     }
+    /* 확장 성도는 배율에 따라 한계 등급이 이어지므로, 손을 멈춘 뒤 한 번 더 그려 깊이를 맞춥니다. */
+    scheduleSkyDeep();
     const wrap = el.parentNode;
     if (wrap && wrap.classList) wrap.classList.toggle('is-zoomed', smz.s > 1.001);
     el.style.touchAction = smz.s > 1.001 ? 'none' : 'pan-y';
@@ -1013,6 +1020,21 @@
       btn.textContent = smz.s.toFixed(1) + '× · 원래대로';
     }
   }
+  /* 확대가 멈춘 뒤 200ms 에 한 번만 다시 그립니다 — 핀치 중 60fps 를 지키면서
+     배율이 깊어질수록 더 어두운 별이 이어서 나타나게 합니다. */
+  let skyDeepTimer = null;
+  function scheduleSkyDeep() {
+    if (smz.s < DEEP.skyLocalZoom) {
+      if (smz.ready && state.last && smz.layer !== -1) { /* 넓게 보면 확장 점만 사라집니다 */ }
+      return;
+    }
+    clearTimeout(skyDeepTimer);
+    skyDeepTimer = setTimeout(function () {
+      skyDeepTimer = null;
+      if (smz.ready && state.last && deepOn()) renderSkyMap(state.last);
+    }, 220);
+  }
+
   function skyMapReset(animate) {
     const el = skyMapEl();
     if (!el) return;
@@ -1288,6 +1310,10 @@
         if (smLayer >= 2) dsoPts.push({ o: { name: it.name, mag: it.m }, p: p, alt: h.alt });
       });
     }
+
+    /* 🌌 딥스카이 확장 — 확대(2× 이상)했을 때만 확장 성도·Gaia 를 더 그립니다.
+       OFF 면 skyDeepSvg 가 곟바로 빈 문자열을 돌려주고, 타일 요청도 가지 않습니다. */
+    s += skyDeepSvg(c, smLayer, proj);
 
     // ── 이름표 배치: 밝은 별 → 딥스카이 → 별자리. 겹치면 뒤 순위는 포기한다.
     ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스', '안타레스',
@@ -1649,6 +1675,7 @@
     $('#catalogCount').textContent = list.length + '개 천체 · ' + (state.filter.q.trim() ? '이름이 맞는 순' : '등급이 밝은 순');
     if (!list.length) {
       grid.innerHTML = '<p class="muted">조건에 맞는 천체가 없습니다. 검색어나 필터를 바꿔 보세요.</p>';
+      renderWideHits([], state.filter.q);      // 대표 도감에 없어도 전체 도감에서는 찾아 줍니다
       return;
     }
     const sortMode = ($('#sortSelect') && $('#sortSelect').value) || 'mag';
@@ -1718,6 +1745,60 @@
       });
       el.addEventListener('keydown', function (ev) {
         if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openObject(el.getAttribute('data-obj')); }
+      });
+    });
+    renderWideHits(sorted, searchQ);
+  }
+
+  /* ------------------------------------------------------------ 전체 도감 검색 확장
+     기본 도감 검색어를 하늘 전체 도감(2,571종)까지 이어 줍니다 — 퀴즈 범위는 그대로 2,571종입니다.
+     이름·카탈로그 번호가 맞는 항목만, 대표 도감과 겹치는 것은 빼고 보여 줍니다. */
+  /** 카탈로그 번호 표기 통일 — 'NGC 891' · 'NGC891' · 'NGC0891' 을 같은 것으로 봅니다. */
+  function catNumNorm(v) {
+    return searchNorm(v).replace(/^(ngc|ic)0+(\d)/, '$1$2').replace(/^m0+(\d)/, 'm$1');
+  }
+
+  function renderWideHits(repList, q) {
+    const box = $('#wideHits');
+    if (!box) return;
+    const nq = catNumNorm(q);
+    if (!nq) { box.hidden = true; box.innerHTML = ''; return; }
+    const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
+    const seen = {};
+    repList.forEach(function (o) { objectNameKeys(o).forEach(function (k) { seen[k] = 1; }); });
+    const hits = [];
+    items.forEach(function (it) {
+      const ko = String(it.ko || '');
+      const nm = /[가-힣]/.test(ko) ? ko : (it.M || it.i);
+      if (!nm) return;
+      const keys = [nm, it.i, it.M, it.en].filter(Boolean).map(catNumNorm);
+      for (let i = 0; i < keys.length; i++) if (seen[keys[i]]) return;   // 대표 도감과 같은 항목
+      let rank = 9;
+      if (keys.indexOf(nq) >= 0) rank = 0;
+      else {
+        for (let i = 0; i < keys.length && rank > 1; i++) if (keys[i].indexOf(nq) === 0) rank = 1;
+        if (rank > 2) for (let i = 0; i < keys.length; i++) if (keys[i].indexOf(nq) >= 0) { rank = 2; break; }
+      }
+      if (rank > 2) return;
+      hits.push({ id: String(it.i), name: nm, en: it.en || '', M: it.M || '', mag: it.m, rank: rank, t: it.t, c: it.c });
+    });
+    if (!hits.length) { box.hidden = true; box.innerHTML = ''; return; }
+    hits.sort(function (a, b) { return a.rank - b.rank || (a.mag == null ? 99 : a.mag) - (b.mag == null ? 99 : b.mag); });
+    const TAGS = { G: '은하', OCl: '산개성단', GCl: '구상성단', PN: '행성상성운', HII: '전리수소영역', star: '항성', Neb: '성운' };
+    box.hidden = false;
+    box.innerHTML = '<p class="wide-hits-head">🌌 하늘 전체 도감(2,571종)에서 더 찾았습니다 · ' + hits.length + '건</p>' +
+      '<div class="deep-list">' + hits.slice(0, 48).map(function (h) {
+        return '<button class="deep-card" type="button" data-wide-go="' + esc(h.id) + '">' +
+          '<b>' + esc(h.name) + '</b>' +
+          '<small>' + esc([h.id, h.M, h.en].filter(function (v) { return v && v !== h.id; }).join(' / ') || h.id) + '</small>' +
+          '<small><span class="deep-tag">' + esc(TAGS[h.t] || '전체 도감') + '</span>' +
+          (h.mag != null ? ' ' + nf(h.mag, 1) + '등' : '') + '</small></button>';
+      }).join('') + '</div>' +
+      (hits.length > 48 ? '<p class="small muted">앞 48건만 보여 줍니다 — 전체 도감 검색창에서 더 찾아보세요.</p>' : '');
+    $$('#wideHits .deep-card').forEach(function (b) {
+      b.addEventListener('click', function () {
+        const id = b.getAttribute('data-wide-go');
+        if (window.SpaceUI && SpaceUI.openCatalogObject) SpaceUI.openCatalogObject(id);
       });
     });
   }
@@ -1814,6 +1895,7 @@
       stat('적경', fmtRA(info.raH), '하늘의 가로 좌표(24시간 = 360°).') +
       stat('적위', fmtDec(info.decD), '하늘의 세로 좌표. +90°가 북극성 방향입니다.') +
       (typeof info.mag === 'number' ? stat('겉보기 등급', (info.mag > 0 ? '+' : '') + nf(info.mag, 2) + '등') : '') +
+      (info.facts || []).map(function (f) { return stat(f[0], f[1]); }).join('') +
       '</div>' +
       '<div class="md-section"><h3>이 자리의 실제 하늘 사진</h3>' +
       '<img src="' + esc(img) + '" alt="' + esc(info.name) + ' 주변 하늘" loading="lazy" decoding="async"' +
@@ -4151,6 +4233,14 @@
       });
     }
 
+    /* 🌌 딥스카이 확장 — 로컬 확장 성도(6만여 개)·Gaia DR3 실시간.
+       OFF면 그리지도, 요청하지도 않습니다. */
+    drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal);
+    live.deepCount = DEEP.liveHits.length;
+    if (DEEP.liveHits.length) {
+      for (let i = 0; i < DEEP.liveHits.length; i++) live.hits.push(DEEP.liveHits[i]);
+    }
+
     /* 🎯 조준 목표 마커 — 기본 캔버스에 없는 어두운 천체(전체 도감 2,571종·성도에 없는 별)일 때
        그 자리에 다이아몬드 마커와 이름·등급을 직접 그립니다. 눌러서 정보 창도 열립니다. */
     if (aim.on && aim.raH != null && !aimTargetOnCanvas()) {
@@ -4360,6 +4450,8 @@
 
   /* 터치 판정 반경 — 화면에 그려진 별의 크기(등급)에 맞춰 줄입니다(밝은 별은 기존 32px 그대로). */
   function liveHitRadius(h) {
+    if (h.kind === 'gaia') return 18;        // Gaia는 촘촘해서 터치 판정을 좁게
+    if (h.kind === 'deepstar') return 16;
     if (h.kind !== 'star') return 32;
     const m = typeof h.mag === 'number' ? h.mag : 4;
     if (m <= 2.5) return 32;
@@ -4459,6 +4551,525 @@
     return out;
   }
 
+  /* ======================================================================
+     🌌 딥스카이 확장 (하이브리드 카탈로그)                    2026-11-28
+     · 1단계 — 로컬 확장 성도 6만여 개(5.0~8.5등급, 72칸 타일)를 화면 구역만 지연 로딩
+     · 2단계 — 더 깊게 확대하면 Gaia DR3(약 18억 개)를 실시간 조회
+     · 상단 「딥스카이 확장 ON/OFF」 하나로 두 단계를 함께 끕니다(네트워크 요청 0건).
+     · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
+     ====================================================================== */
+  const DEEP = {
+    liveLocalFov: 60, liveGaiaFov: 20, skyLocalZoom: 1.5, skyGaiaZoom: 3.2,
+    hitPool: [], panel: { mode: 'region', idx: 0, q: '' }, timer: null, lastPaint: 0
+  };
+
+  function deepOn() { return !!(window.DeepSky && DeepSky.on()); }
+
+  /** 고도·방위 → 적경(시)·적위(도) — 하늘의 한 점을 카탈로그 좌표로 되돌립니다. */
+  function altAzToRaDec(altDeg, azDeg, jd) {
+    const lat = state.site.lat * RAD;
+    const a = altDeg * RAD, z = azDeg * RAD;
+    const sinDec = Math.sin(a) * Math.sin(lat) + Math.cos(a) * Math.cos(lat) * Math.cos(z);
+    const dec = Math.asin(clamp(sinDec, -1, 1)) / RAD;
+    const H = Math.atan2(-Math.cos(a) * Math.sin(z), Math.sin(a) * Math.cos(lat) - Math.cos(a) * Math.sin(lat) * Math.cos(z)) / RAD;
+    const raH = A.mod(A.lstHours(jd, state.site.lon) - H / 15, 24);
+    return { raH: raH, dec: dec, raDeg: raH * 15 };
+  }
+
+  /** 확장 타일·Gaia 가 도착하면 화면을 한 번만 다시 그립니다(연속 도착은 묶어서). */
+  function deepSchedule() {
+    if (DEEP.timer) return;
+    DEEP.timer = setTimeout(function () {
+      DEEP.timer = null;
+      if (!deepOn()) return;
+      liveDirty = true; kickLive();
+      if (smz.ready && state.last && smz.s >= DEEP.skyLocalZoom) renderSkyMap(state.last);
+      const pd = $('#panelDeep');
+      if (pd && !pd.hidden) deepPaintPanel();
+    }, 70);
+  }
+
+  function deepSyncUi() {
+    const on = deepOn();
+    [['#deepExtBtn', '#deepExtState'], ['#liveDeepChip', '#liveDeepState'], ['#skyDeepChip', '#skyDeepState'],
+      ['#deepPanelToggle', '#deepPanelState'], ['#deepMenuBtn', '#deepMenuState']].forEach(function (pair) {
+        const b = $(pair[0]);
+        if (b) b.setAttribute('aria-pressed', String(on));
+        const s = $(pair[1]);
+        if (s) s.textContent = on ? 'ON' : 'OFF';
+      });
+    document.body.classList.toggle('deep-off', !on);
+    const note = $('#deepMenuNote');
+    if (note) note.textContent = on ? '확장 성도 6만 + Gaia 실시간' : '꺼짐 · 기본 별만 (데이터 절약)';
+    const st = $('#deepStatus');
+    if (st) st.textContent = deepStatusText();
+    liveDirty = true; kickLive();
+    if (smz.ready && state.last) renderSkyMap(state.last);
+  }
+
+  function deepToggleClick() {
+    if (!window.DeepSky) return;
+    const next = DeepSky.toggle();
+    deepSyncUi();
+    toast(next
+      ? '🌌 딥스카이 확장 ON — 확대하면 6만여 별과 Gaia DR3가 나옵니다.'
+      : '🌌 딥스카이 확장 OFF — 기본 별만 표시하고 확장 데이터를 받지 않습니다.');
+  }
+
+  /* -------------------------------------------------- 라이브 뷰 확장 그리기 */
+  /* 시야각(도) → 보이는 확장 성도의 한계 등급.
+     넓게 볼 때는 밝은 별만, 좁힐수록 단계적으로 더 어두운 별까지 — 사이 값은 부드럽게 잇습니다.
+     fov 55° 8.5등 → 40° 9.5등 → 28° 10.5등 → 20° 12.0등 (그 아래는 Gaia가 이어받습니다) */
+  const DEEP_FOV_STOPS = [[60, 6.8], [55, 8.5], [40, 9.5], [28, 10.5], [20, 12.0], [15, 13.0]];
+  function deepMagLimit(fovDeg) {
+    const st = DEEP_FOV_STOPS;
+    if (fovDeg >= st[0][0]) return st[0][1];
+    for (let i = 1; i < st.length; i++) {
+      if (fovDeg >= st[i][0]) {
+        const a = st[i - 1], b = st[i];
+        const t = (a[0] - fovDeg) / Math.max(0.001, a[0] - b[0]);
+        return a[1] + (b[1] - a[1]) * t;
+      }
+    }
+    return st[st.length - 1][1];
+  }
+  /* 전천 지도 배율 → 한계 등급 (같은 원리) */
+  const DEEP_ZOOM_STOPS = [[1.5, 7.6], [2.0, 8.5], [2.4, 9.5], [3.0, 10.5], [3.5, 12.0]];
+  function deepMagLimitSky(zoom) {
+    const st = DEEP_ZOOM_STOPS;
+    if (zoom <= st[0][0]) return st[0][1];
+    for (let i = 1; i < st.length; i++) {
+      if (zoom <= st[i][0]) {
+        const a = st[i - 1], b = st[i];
+        const t = (zoom - a[0]) / Math.max(0.001, b[0] - a[0]);
+        return a[1] + (b[1] - a[1]) * t;
+      }
+    }
+    return st[st.length - 1][1];
+  }
+  /** 한계 등급에 가까운 별일수록 흐리게 — 시야를 좁히면 어두운 별이 서서히 떠오릅니다. */
+  function deepFade(limit, mag, span) {
+    return clamp((limit - mag) / (span || 1.15), 0, 1);
+  }
+
+  function drawDeepLive(ctx, c, fovDeg, W, H, project, inBox, pal) {
+    DEEP.liveHits = [];
+    live.deepLimit = fovDeg <= DEEP.liveLocalFov ? Math.min(deepMagLimit(fovDeg), DeepSky.tileMag) : 0;
+    live.deepShown = 0;
+    if (!deepOn()) { live.deepLimit = 0; return; }
+    const lat = state.site.lat, lon = state.site.lon, jd = c.jd;
+    const ctr = altAzToRaDec(live.alt, live.az, jd);
+
+    /* 1단계 — 로컬 타일 (한계 등급은 시야에 따라 단계적으로 깊어짐) */
+    let shownN = 0, shownLim = 0;
+    if (fovDeg <= DEEP.liveLocalFov) {
+      const rad = clamp(fovDeg * 0.8, 2, 45);
+      DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
+      const lim = Math.min(deepMagLimit(fovDeg), DeepSky.tileMag);
+      shownLim = lim;
+      const list = DeepSky.starsIn(ctr.raDeg, ctr.dec, rad, lim);
+      const col = isRed() ? 'rgba(255,170,140,' : 'rgba(214,230,255,';
+      /* 알파·크기별로 묶어 한 번에 그립니다 — 1만 개가 넘어도 프레임이 버팁니다. */
+      const buckets = {};
+      let hitN = 0;
+      for (let i = 0; i < list.length && shownN < 14000; i++) {
+        const s = list[i];
+        const a = deepFade(lim, s.mag);
+        if (a <= 0.06) continue;
+        const h = A.equatorialToHorizontal(s.ra / 15, s.dec, lat, lon, jd);
+        if (h.alt < -90) continue;
+        const p = project(h.alt, h.az);
+        if (!inBox(p, 6)) continue;
+        const r = s.mag <= 6.5 ? 1.45 : s.mag <= 8.5 ? 1.2 : 1.0;
+        const k = Math.max(1, Math.round(a * 5));
+        const key = k + '|' + r;
+        (buckets[key] = buckets[key] || []).push(p);
+        shownN++;
+        if (hitN < 900 && a >= 0.4) {
+          const hit = DEEP.hitPool[hitN] || (DEEP.hitPool[hitN] = { kind: 'deepstar' });
+          hit.x = p.x; hit.y = p.y; hit.mag = s.mag; hit.ra = s.ra; hit.dec = s.dec;
+          hit.ci = s.ci; hit.name = s.name; hit.tile = s.tile;
+          DEEP.liveHits.push(hit);
+          hitN++;
+        }
+      }
+      Object.keys(buckets).forEach(function (key) {
+        const parts = key.split('|');
+        const k = Number(parts[0]), r = Number(parts[1]);
+        ctx.globalAlpha = (k / 5) * 0.62;
+        ctx.fillStyle = col + '1)';
+        ctx.beginPath();
+        const arr = buckets[key];
+        for (let i = 0; i < arr.length; i++) {
+          ctx.moveTo(arr[i].x + r, arr[i].y);
+          ctx.arc(arr[i].x, arr[i].y, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      live.deepShown = shownN;
+    }
+
+    /* 2단계 — Gaia DR3 실시간(중앙 정밀 구역) — 로컬 한계(12등)보다 어두운 별을 이어서 */
+    let gaiaN = 0;
+    if (fovDeg <= DEEP.liveGaiaFov) {
+      const gr = clamp(fovDeg * 0.25, 1.0, 2.5);
+      DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, deepGaiaMag(fovDeg));
+      const gs = DeepSky.gaiaStars();
+      const gLim = deepGaiaMag(fovDeg);
+      const cosD = Math.cos(ctr.dec * RAD);
+      for (let i = 0; i < gs.length; i++) {
+        const g = gs[i];
+        const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
+        const dDec = g.dec - ctr.dec;
+        if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(dDec) > gr * 1.45) continue;
+        const a = clamp((gLim - g.mag) / 1.6, 0.08, 1);
+        const h = A.equatorialToHorizontal(g.ra / 15, g.dec, lat, lon, jd);
+        const p = project(h.alt, h.az);
+        if (!inBox(p, 6)) continue;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = isRed() ? 'rgba(255,196,150,.92)' : 'rgba(255,214,140,.92)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, g.mag <= 14 ? 1.3 : 1.0, 0, Math.PI * 2);
+        ctx.fill();
+        const hit = DEEP.hitPool[1200 + i] || (DEEP.hitPool[1200 + i] = { kind: 'gaia' });
+        hit.x = p.x; hit.y = p.y; hit.mag = g.mag; hit.ra = g.ra; hit.dec = g.dec;
+        hit.ci = g.bp_rp; hit.name = ''; hit.id = g.id; hit.plx = g.plx;
+        DEEP.liveHits.push(hit);
+        gaiaN++;
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    /* 지금 어느 깊이까지 보고 있는지 — 확대 단계가 바뀔 때만 한 줄로 알려 줍니다. */
+    if (live.labels && (shownN || gaiaN)) {
+      const meta = DeepSky.gaiaMeta();
+      ctx.save();
+      ctx.globalAlpha = 0.62;
+      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = isRed() ? 'rgba(255,190,160,.9)' : 'rgba(206,224,255,.85)';
+      if (shownN) ctx.fillText('확장 성도 ' + shownN.toLocaleString('en-US') + '개 · ' + shownLim.toFixed(1) + '등급까지', 12, 52);
+      if (fovDeg <= DEEP.liveGaiaFov) {
+        ctx.fillStyle = isRed() ? '#ffb08a' : '#ffd479';
+        const txt = meta.busy ? 'Gaia DR3 조회 중…'
+          : gaiaN ? 'Gaia DR3 ' + gaiaN + '개 · ' + deepGaiaMag(fovDeg).toFixed(1) + '등급까지'
+            : 'Gaia DR3 — 이 구역 응답 없음(로컬 확장 성도만)';
+        ctx.fillText(txt, 12, 66);
+      }
+      ctx.restore();
+    }
+  }
+
+  /** 시야에 따른 Gaia 한계 등급 — 좁힐수록 14 → 18등까지 */
+  function deepGaiaMag(fovDeg) {
+    if (fovDeg <= 15) return 18;
+    if (fovDeg >= 20) return 15;
+    return 15 + (20 - fovDeg) / 5 * 3;   // 20° 15등 → 15° 18등
+  }
+
+  /* 확장 별·Gaia 별 → 정보 창 모양으로 */
+  function deepStarInfo(hit) {
+    const c = state.last || computeNight();
+    const raH = A.mod(hit.ra, 360) / 15, decD = hit.dec;
+    const hor = A.equatorialToHorizontal(raH, decD, state.site.lat, state.site.lon, c.jd);
+    const ni = A.objectNight(raH, decD, state.site.lat, state.site.lon, state.dateStr);
+    const isGaia = hit.kind === 'gaia';
+    const bv = hit.ci;
+    const facts = [];
+    if (isGaia) {
+      facts.push(['Gaia DR3 ID', String(hit.id)]);
+      if (hit.plx > 0) facts.push(['거리(시차)', nf(1000 / hit.plx, 0) + ' pc · 약 ' + nf(3261.6 / hit.plx, 0) + '광년']);
+    }
+    if (typeof bv === 'number') {
+      facts.push([isGaia ? '색지수 BP−RP' : '색지수 B−V', nf(bv, 2) + (bv > 1.2 ? ' · 붉은 별' : bv < 0.4 ? ' · 푸른 별' : ' · 흰빛 별')]);
+    }
+    facts.push(['카탈로그', isGaia ? 'Gaia DR3 (약 18억 개) · 실시간 조회' : 'HYG v4.1 확장 성도 · 로컬 타일']);
+    return {
+      kind: 'star',
+      key: isGaia ? 'gaia:' + hit.id : 'deep:' + raH.toFixed(3) + '/' + decD.toFixed(3),
+      name: hit.name || (isGaia ? 'Gaia DR3 ' + hit.id : '확장 성도 별'),
+      sub: (isGaia ? 'Gaia DR3 항성' : '확장 성도 항성') + ' · 적경 ' + fmtRA(raH) + ' · 적위 ' + fmtDec(decD) +
+        ' · ' + nf(hit.mag, 2) + '등',
+      note: hit.name
+        ? 'HYG 원본 카탈로그의 이름 있는 별입니다. 확장 성도·Gaia는 퀴즈와 기본 도감(2,571종)에 섞이지 않습니다.'
+        : (isGaia
+          ? 'Gaia DR3에서 방금 받아 온 별입니다. 지금 본 시야의 중심 구역을 실시간으로 조회한 결과이고, 네트워크가 없으면 로컬 확장 성도만 남습니다.'
+          : 'HYG 원본 카탈로그의 5~8.5등급 별입니다. 화면에 걸치는 타일만 받아 그립니다.'),
+      mag: hit.mag, raH: raH, decD: decD, alt: hor.alt, az: hor.az, ni: ni,
+      deep: true,
+      facts: facts
+    };
+  }
+
+  /** 전천 지도에서 확장 별을 눌렀을 때 — 같은 정보 카드(모달)를 엽니다. */
+  function openDeepStar(o) {
+    if (!o || !isFinite(o.ra) || !isFinite(o.dec)) return;
+    openSkyCard(deepStarInfo({ kind: 'deepstar', ra: o.ra, dec: o.dec, mag: o.mag, ci: null, name: o.name || '', id: null }));
+  }
+
+  /* -------------------------------------------------- 확장 도감 탭 (panelDeep) */
+  const DEEP_REGIONS = [
+    { n: '은하수 중심', raH: 17.76, dec: -28.9, r: 14 },
+    { n: '오리온', raH: 5.6, dec: 0, r: 12 },
+    { n: '북두칠성', raH: 12.0, dec: 55, r: 12 },
+    { n: '플레이아데스', raH: 3.8, dec: 24, r: 8 },
+    { n: '안드로메다', raH: 0.7, dec: 41, r: 10 },
+    { n: '백조·여름수도', raH: 20.5, dec: 40, r: 12 },
+    { n: '남쪽 하늘', raH: 6.5, dec: -40, r: 14 }
+  ];
+
+  function deepStatusText() {
+    if (!window.DeepSky) return '확장 성도를 불러오지 못했습니다.';
+    const s = DeepSky.stats();
+    if (!deepOn()) return '지금은 꺼져 있습니다 — 확장 타일도 Gaia도 불러오지 않아 데이터를 쓰지 않습니다.';
+    if (!s.manifestCount) return s.manifestError ? '확장 성도 목록을 열지 못했습니다(' + s.manifestError + ').' : '켜짐 · 확장 성도 목록을 준비하고 있어요…';
+    const bits = ['켜짐 · 확장 성도 ' + s.manifestCount.toLocaleString('en-US') + '개'];
+    bits.push('받은 타일 ' + s.tilesHeld + '칸(' + s.starsLoaded.toLocaleString('en-US') + '개)');
+    bits.push(s.gaiaBusy ? 'Gaia 조회 중…' : s.gaiaCount ? 'Gaia ' + s.gaiaCount + '개' : 'Gaia 대기');
+    if (s.lastEndpoint) bits.push('· ' + s.lastEndpoint);
+    return bits.join(' · ');
+  }
+
+  function deepPaintStatus() {
+    const st = $('#deepStatus');
+    if (st) st.textContent = deepStatusText();
+  }
+
+  function deepStarCard(o, isGaia) {
+    const raH = A.mod(o.ra, 360) / 15;
+    const nm = o.name || (isGaia ? 'Gaia DR3 ' + o.id : '확장 별');
+    const key = isGaia
+      ? ' data-deep-gaia="' + esc(String(o.id)) + '" data-ra="' + o.ra + '" data-dec="' + o.dec + '" data-mag="' + o.mag + '" data-bprp="' + (o.bp_rp == null ? '' : o.bp_rp) + '" data-plx="' + (o.plx == null ? '' : o.plx) + '"'
+      : ' data-deep-star="1" data-ra="' + o.ra + '" data-dec="' + o.dec + '" data-mag="' + o.mag + '" data-name="' + esc(o.name || '') + '"';
+    return '<button class="deep-card" type="button"' + key + '>' +
+      '<b>' + esc(nm) + '</b>' +
+      '<small>' + fmtRA(raH) + ' · ' + fmtDec(o.dec) + ' · ' + nf(o.mag, 2) + '등</small>' +
+      '<small><span class="deep-tag' + (isGaia ? ' gaia' : '') + '">' + (isGaia ? 'Gaia DR3' : 'HYG 확장') + '</span></small>' +
+      '</button>';
+  }
+
+  function deepRenderList(items, isGaia, note) {
+    const box = $('#deepResult');
+    if (!box) return;
+    if (!items.length) {
+      box.innerHTML = '<p class="deep-status">' + esc(note || '결과가 없습니다.') + '</p>';
+      return;
+    }
+    box.innerHTML = '<p class="deep-status">' + esc(note || '') + '</p><div class="deep-list">' +
+      items.map(function (o) { return deepStarCard(o, isGaia); }).join('') + '</div>';
+  }
+
+  function deepShowRegion(i) {
+    DEEP.panel = { mode: 'region', idx: i, q: '' };
+    const r = DEEP_REGIONS[i] || DEEP_REGIONS[0];
+    $$('#deepRegions .chip').forEach(function (b, k) { b.classList.toggle('is-active', k === i); b.setAttribute('aria-pressed', String(k === i)); });
+    if (!deepOn()) { deepRenderList([], false, '딥스카이 확장이 꺼져 있습니다 — 위 스위치를 켜면 이 구역의 별을 불러옵니다.'); return; }
+    DeepSky.ensure(r.raH * 15, r.dec, r.r);
+    const list = DeepSky.starsIn(r.raH * 15, r.dec, r.r, DeepSky.tileMag).slice(0, 80);
+    const tiles = DeepSky.stats().tilesHeld;
+    if (!list.length) {
+      deepRenderList([], false, tiles ? '이 구역에 걸치는 타일을 받는 중입니다…' : '확장 성도 타일을 받는 중입니다…');
+      return;
+    }
+    deepRenderList(list, false, '"' + r.n + '" 반경 ' + r.r + '° · 받아 둔 타일에서 밝은 순 ' + list.length + '개');
+  }
+
+  function deepShowSearch(q) {
+    const box = $('#deepResult');
+    const raw = String(q || '').trim();
+    if (!raw) { deepShowRegion(DEEP.panel.idx || 0); return; }
+    DEEP.panel = { mode: 'search', idx: DEEP.panel.idx || 0, q: raw };
+    $$('#deepRegions .chip').forEach(function (b) { b.classList.remove('is-active'); b.setAttribute('aria-pressed', 'false'); });
+    if (!deepOn()) { deepRenderList([], false, '딥스카이 확장이 꺼져 있습니다 — 스위치를 켜면 Gaia를 조회합니다.'); return; }
+    const idm = raw.replace(/\s/g, '');
+    if (/^\d{6,}$/.test(idm)) {
+      if (box) box.innerHTML = '<p class="deep-status">Gaia DR3 ' + esc(idm) + ' 조회 중…</p>';
+      DeepSky.gaiaById(idm).then(function (res) {
+        if (!res.rows.length) {
+          deepRenderList([], true, 'Gaia DR3 ' + idm + ' 를 찾지 못했습니다. 네트워크·응답 상태를 확인해 주세요.');
+          return;
+        }
+        deepRenderList(res.rows, true, 'Gaia DR3 ID 조회 결과');
+      }, function () { deepRenderList([], true, 'Gaia 조회에 실패했습니다(네트워크).'); });
+      return;
+    }
+    const cm = raw.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (cm) {
+      const ra = A.mod(Number(cm[1]), 360), dec = clamp(Number(cm[2]), -89.9, 89.9);
+      if (box) box.innerHTML = '<p class="deep-status">적경 ' + ra.toFixed(2) + '° · 적위 ' + dec.toFixed(2) + '° 주변 Gaia 조회 중…</p>';
+      DeepSky.gaiaCone(ra, dec, 1.5, 200).then(function (res) {
+        if (!res.rows.length) {
+          deepRenderList([], true, '이 좌표에서 Gaia 응답이 없습니다 — 로컬 확장 성도(' + DeepSky.stats().tilesHeld + '칸)만 있습니다.');
+          return;
+        }
+        deepRenderList(res.rows, true, 'Gaia DR3 반경 1.5° · ' + res.rows.length + '개' + (res.endpoint ? ' · ' + res.endpoint : ''));
+      });
+      return;
+    }
+    if (box) box.innerHTML = '<p class="deep-status">이름으로 찾는 중…</p>';
+    DeepSky.searchNames(raw, 24).then(function (items) {
+      if (!items.length) { deepRenderList([], false, '이름이 맞는 확장 별이 없습니다. Gaia DR3 ID나 좌표를 넣어 보세요.'); return; }
+      deepRenderList(items.map(function (it) { return { ra: it.ra, dec: it.dec, mag: it.m, name: it.n }; }), false,
+        '"' + raw + '" 이름 검색 · 확장 성도 ' + items.length + '개 (퀴즈에는 나오지 않습니다)');
+    });
+  }
+
+  function deepPaintPanel() {
+    const box = $('#deepRegions');
+    if (box && !box.children.length) {
+      box.innerHTML = DEEP_REGIONS.map(function (r, i) {
+        return '<button class="chip' + (i === 0 ? ' is-active' : '') + '" type="button" data-deep-region="' + i + '" aria-pressed="' + (i === 0 ? 'true' : 'false') + '">' + esc(r.n) + '</button>';
+      }).join('');
+    }
+    deepPaintStatus();
+    if (DEEP.panel.mode === 'search') return;          // 입력 중에는 결과를 갈아엎지 않습니다
+    if (!DEEP.panel.init) { DEEP.panel.init = true; deepShowRegion(0); }
+    else if (DEEP.panel.mode === 'region') {
+      const r = DEEP_REGIONS[DEEP.panel.idx] || DEEP_REGIONS[0];
+      const items = deepOn() ? DeepSky.starsIn(r.raH * 15, r.dec, r.r, DeepSky.tileMag).slice(0, 80) : [];
+      if (items.length) deepRenderList(items, false, '"' + r.n + '" 반경 ' + r.r + '° · 밝은 순 ' + items.length + '개');
+    }
+  }
+
+  function wireDeep() {
+    ['#deepExtBtn', '#liveDeepChip', '#skyDeepChip', '#deepPanelToggle', '#deepMenuBtn'].forEach(function (sel) {
+      const b = $(sel);
+      if (b) b.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); deepToggleClick(); });
+    });
+    const regions = $('#deepRegions');
+    if (regions) regions.addEventListener('click', function (ev) {
+      const b = ev.target.closest('[data-deep-region]');
+      if (!b) return;
+      const i = Number(b.getAttribute('data-deep-region'));
+      const q = $('#deepQuery');
+      if (q) q.value = '';
+      deepShowRegion(i);
+    });
+    const go = $('#deepGo');
+    const q = $('#deepQuery');
+    if (go && q) {
+      go.addEventListener('click', function () { deepShowSearch(q.value); });
+      q.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); deepShowSearch(q.value); } });
+    }
+    const res = $('#deepResult');
+    if (res) res.addEventListener('click', function (ev) {
+      const b = ev.target.closest('.deep-card');
+      if (!b) return;
+      const ra = Number(b.getAttribute('data-ra')), dec = Number(b.getAttribute('data-dec')), mag = Number(b.getAttribute('data-mag'));
+      if (b.hasAttribute('data-deep-gaia')) {
+        const bp = b.getAttribute('data-bprp'), plx = b.getAttribute('data-plx');
+        openSkyCard(deepStarInfo({
+          kind: 'gaia', id: b.getAttribute('data-deep-gaia'), ra: ra, dec: dec, mag: mag,
+          ci: bp === '' ? null : Number(bp), plx: plx === '' ? null : Number(plx), name: ''
+        }));
+      } else {
+        openDeepStar({ ra: ra, dec: dec, mag: mag, name: b.getAttribute('data-name') || '' });
+      }
+    });
+    if (window.DeepSky) {
+      DeepSky.subscribe(function () { deepSyncUi(); deepSchedule(); });
+    }
+  }
+
+  /* -------------------------------------------------- 전천 지도 확장 그리기 */
+  /** 확대한 전천 지도의 화면 가운데가 가리키는 하늘(고도·방위)과 보이는 반경(도) */
+  function skyMapViewCenter() {
+    const el = skyMapEl();
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (!r.width) return null;
+    const s = smz.applied || 1;
+    /* 변환: p' = (p − L)·s + L + t,  바뀐 사각형 중심 = L + t
+       ⇒ 기준 좌표 p = (V − 바뀐 사각형 중심)/s + L */
+    const bcx = r.left + r.width / 2 - smz.tx, bcy = r.top + r.height / 2 - smz.ty;
+    const vw = window.innerWidth || r.width, vh = window.innerHeight || r.height;
+    const vx = Math.max(r.left, Math.min(r.right, vw / 2));
+    const vy = Math.max(r.top, Math.min(r.bottom, vh / 2));
+    const bx = 210 + (vx - bcx) / s, by = 206 + (vy - bcy) / s;
+    const dx = bx - 210, dy = by - 206;
+    const rr = Math.hypot(dx, dy);
+    const alt = 90 * (1 - Math.min(1, rr / 184));
+    const az = A.mod(Math.atan2(-dx, -dy) * 180 / Math.PI, 360);
+    /* 화면에 실제로 보이는 반경(SVG 단위) → 각도(도) — 화면 반높이 ÷ 배율 */
+    const half = Math.min(window.innerWidth || 400, window.innerHeight || 400) / 2;
+    const units = half * 420 / Math.max(1, r.width);
+    const radius = Math.min(95, units * (90 / 184));
+    return { alt: alt, az: az, radius: radius };
+  }
+
+  function skyDeepSvg(c, smLayer, proj) {
+    if (!deepOn() || smz.s < DEEP.skyLocalZoom) return '';   // 넓게 볼 때는 확장 타일을 부르지 않습니다
+    const vc = skyMapViewCenter();
+    if (!vc) return '';
+    const ctr = altAzToRaDec(vc.alt, vc.az, c.jd);
+    const rad = Math.min(95, Math.max(8, vc.radius * 1.3));
+    DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
+    /* 배율이 커질수록 단계적으로 더 어두운 별까지 — 한계에 가까운 별은 흐리게 떠오릅니다. */
+    const lim = Math.min(deepMagLimitSky(smz.s), DeepSky.tileMag);
+    const list = DeepSky.starsIn(ctr.raDeg, ctr.dec, rad, lim);
+    window.__skyDeep = { limit: lim, zoom: smz.s, candidates: list.length };
+    const red = isRed();
+    const base = red ? [255, 170, 140] : [206, 224, 255];
+    let out = '';
+    let n = 0;
+    const buckets = {};      // 알파 단계별 path 문자열
+    const taps = [];
+    for (let i = 0; i < list.length && n < 5000; i++) {
+      const s = list[i];
+      const a = deepFade(lim, s.mag);
+      if (a <= 0.06) continue;
+      const h = A.equatorialToHorizontal(s.ra / 15, s.dec, state.site.lat, state.site.lon, c.jd);
+      if (h.alt <= 0) continue;
+      const p = proj(h.alt, h.az);
+      const rr = s.mag <= 7 ? 1.25 : s.mag <= 9.5 ? 1.0 : 0.8;
+      const k = Math.max(1, Math.round(a * 4));
+      const d = 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1);
+      (buckets[k + '|' + rr] = buckets[k + '|' + rr] || []).push(d);
+      if (a >= 0.4 && taps.length < 220) taps.push({ s: s, p: p });
+      n++;
+    }
+    if (window.__skyDeep) window.__skyDeep.shown = n;
+    Object.keys(buckets).forEach(function (key) {
+      const parts = key.split('|');
+      const k = Number(parts[0]), rr = Number(parts[1]);
+      const op = ((k / 4) * 0.75).toFixed(2);
+      out += '<path d="' + buckets[key].join('') + '" fill="none" stroke="rgba(' +
+        base[0] + ',' + base[1] + ',' + base[2] + ',' + op + ')" stroke-width="' + (rr * 2).toFixed(1) +
+        '" stroke-linecap="round"/>';
+    });
+    for (let i = 0; i < taps.length; i++) {
+      const t = taps[i];
+      const key = t.s.ra.toFixed(3) + '|' + t.s.dec.toFixed(3) + '|' + t.s.mag.toFixed(2) + '|' + encodeURIComponent(t.s.name || '');
+      out += '<circle cx="' + t.p.x.toFixed(1) + '" cy="' + t.p.y.toFixed(1) + '" r="6" fill="transparent" data-sky="deep:' + key + '" style="cursor:pointer"/>';
+    }
+    /* 2단계 — Gaia DR3 (3.2× 이상) — 로컬 12등보다 어두운 별을 이어서 */
+    if (smz.s >= DEEP.skyGaiaZoom) {
+      const gLim = clamp(15 + (smz.s - 3.2) / 0.3 * 3, 15, 18);
+      const gr = clamp(vc.radius * 0.45, 1.2, 4);
+      DeepSky.ensureGaia(ctr.raDeg, ctr.dec, gr, gLim);
+      const gs = DeepSky.gaiaStars();
+      const cosD = Math.cos(ctr.dec * RAD);
+      const gcol = red ? '255,196,150,' : '255,214,140,';
+      const gb = {};
+      for (let i = 0; i < gs.length; i++) {
+        const g = gs[i];
+        const dRa = A.mod(g.ra - ctr.raDeg + 180, 360) - 180;
+        if (Math.abs(dRa) * cosD > gr * 1.45 || Math.abs(g.dec - ctr.dec) > gr * 1.45) continue;
+        const h = A.equatorialToHorizontal(g.ra / 15, g.dec, state.site.lat, state.site.lon, c.jd);
+        if (h.alt <= 0) continue;
+        const p = proj(h.alt, h.az);
+        const k = Math.max(1, Math.round(clamp((gLim - g.mag) / 1.6, 0.08, 1) * 4));
+        (gb[k] = gb[k] || []).push('M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1));
+      }
+      Object.keys(gb).forEach(function (k) {
+        const op = ((Number(k) / 4) * 0.9).toFixed(2);
+        out += '<path d="' + gb[k].join('') + '" fill="none" stroke="rgba(' + gcol + op + ')" stroke-width="1.8" stroke-linecap="round"/>';
+      });
+    }
+    return out;
+  }
+
   /** 전체 도감 항목 하나를 라이브 정보 창·상세 카드용으로 변환합니다. */
   function wideInfo(key) {
     const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
@@ -4489,7 +5100,8 @@
     const jd = (state.last || computeNight()).jd;
     const info = hit.kind === 'aim' ? aimCardInfo()
       : hit.kind === 'wide' ? wideInfo(hit.key)
-        : skyInfo(hit.kind, hit.key, jd);
+        : (hit.kind === 'deepstar' || hit.kind === 'gaia') ? deepStarInfo(hit)
+          : skyInfo(hit.kind, hit.key, jd);
     if (!info) return;
     live.selected = { kind: hit.kind, key: hit.key };
     liveDirty = true; kickLive();
@@ -4526,6 +5138,8 @@
     if (info.starConName) facts.push(factRow('별자리', info.starConName));
     if (obj && obj.dist && obj.dist !== '—') facts.push(factRow('거리', obj.dist));
     if (info.kind === 'con' && info.cells) info.cells.slice(0, 3).forEach(function (c) { facts.push(factRow(c[0], c[1])); });
+    /* 확장 성도·Gaia 처럼 카탈로그에 없는 천체는 자기 사실 줄을 따로 갖고 있습니다. */
+    (info.facts || []).forEach(function (f) { facts.push(factRow(f[0], f[1])); });
 
     li.items = photoSetFor(info);
     li.idx = 0;
@@ -4634,7 +5248,12 @@
       const conBtn = t.closest('[data-li-con]');
       if (conBtn) { const ab = conBtn.getAttribute('data-li-con'); closeLiveInfo(); openConstellation(ab); return; }
       const aim = t.closest('[data-li-aim]');
-      if (aim && li.info) { const i = li.info; closeLiveInfo(); aimAt(i.kind, i.key); }
+      if (aim && li.info) {
+        const i = li.info;
+        closeLiveInfo();
+        if (i.deep && i.raH != null) aimRaDec(i.raH * 15, i.decD, i.name);
+        else aimAt(i.kind, i.key);
+      }
     });
     // 손가락 스와이프
     const shot = function () { return $('#liShot'); };
@@ -7323,10 +7942,12 @@
       t.setAttribute('aria-selected', String(on));
       t.tabIndex = on ? 0 : -1;
     });
-    const po = $('#panelObjects'), pc = $('#panelConstellations'), pq = $('#panelQuiz');
+    const po = $('#panelObjects'), pc = $('#panelConstellations'), pq = $('#panelQuiz'), pd = $('#panelDeep');
     if (po) po.hidden = key !== 'objects';
     if (pc) pc.hidden = key !== 'const';
     if (pq) pq.hidden = key !== 'quiz';
+    if (pd) pd.hidden = key !== 'deep';
+    if (key === 'deep') deepPaintPanel();
     const cc = $('#catalogCount');
     if (cc) cc.hidden = key === 'quiz';
     if (scroll && !window.__VIEWS_MODE__) {
@@ -7578,6 +8199,8 @@
     drawHeroStars();
     initTermTips();
     initExtra();
+    wireDeep();          // 🌌 딥스카이 확장 토글·확장 도감 탭
+    deepSyncUi();
     // '지금' 시각을 분 단위로 따라갑니다(탭으로 돌아오면 바로 한 번).
     setInterval(tickLiveClock, 5000);
     document.addEventListener('visibilitychange', function () {

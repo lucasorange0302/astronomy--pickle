@@ -3675,3 +3675,100 @@ body.red .rec-fig { background: rgba(20, 3, 2, .5); }
   .rec-facts { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
   .rec-list { gap: 12px; }
 }
+
+/* ============================================================
+   🌌 딥스카이 확장 (하이브리드 카탈로그) — 토글 · 확장 도감 탭
+   2026-11-28
+   ============================================================ */
+.dt-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-2, #7ee0c0);
+  box-shadow: 0 0 0 2px rgba(126, 224, 192, .18);
+  display: inline-block; flex: 0 0 auto;
+  transition: background .18s ease, box-shadow .18s ease;
+}
+.deep-toggle { gap: 6px; }
+.deep-toggle .dt-state, .deep-switch-txt em, .more-item b em, .live-deep-chip b, .sky-deep-btn b {
+  font-style: normal; font-weight: 800;
+}
+.deep-toggle[aria-pressed="false"] .dt-dot,
+.deep-switch[aria-pressed="false"] .dt-dot,
+.live-deep-chip[aria-pressed="false"] .dt-dot,
+.sky-deep-btn[aria-pressed="false"] .dt-dot,
+#deepMenuBtn[aria-pressed="false"] .dt-dot { background: #7c88a3; box-shadow: 0 0 0 2px rgba(124, 136, 163, .16); }
+.deep-toggle[aria-pressed="false"] .dt-state,
+.deep-switch[aria-pressed="false"] em,
+.live-deep-chip[aria-pressed="false"] b,
+.sky-deep-btn[aria-pressed="false"] b,
+#deepMenuBtn[aria-pressed="false"] #deepMenuState { color: #9aa6c0; }
+
+/* 라이브 뷰 상단 — 딥스카이 확장 칩 */
+.live-deep-chip {
+  position: absolute; top: 46px; right: 12px; z-index: 6;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px;
+  font: 700 .68rem/1.2 system-ui, sans-serif;
+  color: #cfe6dc; background: rgba(9, 16, 24, .62);
+  border: 1px solid rgba(126, 224, 192, .38); backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+.live-deep-chip[aria-pressed="false"] { color: #b9c2d4; border-color: rgba(150, 165, 190, .3); }
+.live-deep-chip:active { transform: scale(.97); }
+
+.sky-deep-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
+
+/* 확장 도감 탭 */
+.deep-shell { display: flex; flex-direction: column; gap: 12px; }
+.deep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.deep-switch {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  background: rgba(126, 224, 192, .1); border: 1px solid rgba(126, 224, 192, .34);
+  color: var(--text, #eef2fb); font: 700 .82rem/1.2 system-ui, sans-serif;
+}
+.deep-switch[aria-pressed="false"] { background: rgba(140, 152, 176, .08); border-color: rgba(150, 165, 190, .28); }
+.deep-switch-txt em { font-style: normal; font-weight: 800; color: var(--accent-2, #7ee0c0); }
+.deep-switch[aria-pressed="false"] .deep-switch-txt em { color: #9aa6c0; }
+.deep-note { margin: 0; font-size: .76rem; color: var(--faint, #8b96ad); }
+.deep-search { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.deep-search input {
+  flex: 1 1 240px; min-width: 0;
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(8, 13, 24, .72); color: var(--text, #eef2fb);
+  border: 1px solid var(--border, rgba(255, 255, 255, .12));
+  font-size: .86rem;
+}
+.deep-regions { gap: 6px; }
+.deep-result { display: flex; flex-direction: column; gap: 8px; }
+.deep-status { font-size: .8rem; color: var(--faint, #8b96ad); margin: 0; }
+.deep-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.deep-card {
+  display: flex; flex-direction: column; gap: 3px; text-align: left;
+  padding: 9px 11px; border-radius: 10px; cursor: pointer;
+  background: rgba(12, 19, 32, .72); border: 1px solid var(--border, rgba(255, 255, 255, .1));
+  color: var(--text, #eef2fb);
+}
+.deep-card:hover { border-color: rgba(126, 224, 192, .45); }
+.deep-card b { font-size: .85rem; }
+.deep-card small { font-size: .7rem; color: var(--faint, #8b96ad); }
+.deep-tag { display: inline-block; font-size: .64rem; font-weight: 700; padding: 1px 6px; border-radius: 99px;
+  background: rgba(126, 224, 192, .16); color: #a8f0d8; }
+.deep-tag.gaia { background: rgba(255, 212, 121, .16); color: #ffd479; }
+.deep-foot { line-height: 1.55; }
+body.red .deep-card { background: rgba(20, 4, 2, .8); }
+@media (max-width: 430px) {
+  .deep-search input { flex: 1 1 100%; }
+  .deep-search .btn { width: 100%; }
+  .deep-list { grid-template-columns: 1fr 1fr; }
+  .live-deep-chip { top: 44px; right: 10px; font-size: .64rem; padding: 4px 8px; }
+}
+@media (max-width: 340px) {
+  .deep-list { grid-template-columns: 1fr; }
+}
+
+/* 기본 도감 검색 → 하늘 전체 도감(2,571종) 결과 */
+.catalog-wide-hits { margin-top: 14px; }
+.catalog-wide-hits[hidden] { display: none; }
+.wide-hits-head { margin: 0 0 8px; font-size: .82rem; font-weight: 700; color: var(--accent-2, #7ee0c0); }
+.catalog-wide-hits .deep-list { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+@media (max-width: 430px) { .catalog-wide-hits .deep-list { grid-template-columns: 1fr 1fr; } }
