@@ -34,6 +34,7 @@
 - 라이브 회귀: `tools/test_live_ground_grid.py` **37건**, `tools/test_live_sun.py` **17건** 전부 통과, 콘솔 오류 0건.
 - 새 검증 훅: `LiveSky.basis()`(화면을 그릴 때 쓰는 fwd·right·up 기준틀), `LiveSky.realign()`.
 - 서비스 워커 캐시 `2026-11-28.9`, `build.py` 로 모바일판·데스크톱판·단일 파일판(`별너울지도.html`) 재빌드.
+- 실서버(헤드리스) 검증: `https://byeolneoul.vercel.app`·`https://lucasorange0302.github.io/byeolbam/` 두 곳 모두 위 9개 시나리오 통과, `test_live_ground_grid.py` 37건·`test_live_sun.py` 17건 통과, 단일 파일판(`별너울지도.html`)도 F·G·I 통과, 콘솔 오류 0건. 커밋 `24adacc`.
 
 ### 4) 남은 것
 - iOS 실기기에서 창을 내렸다 올리기·천정 보기는 제가 직접 확인할 수 없습니다 — 남현님 아이폰에서 한 번 봐 주시면 좋습니다(특히 홈 화면 앱으로 열었을 때).
