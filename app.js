@@ -2442,17 +2442,23 @@
        방위는 드래그가 이미 쓰는 degPerPx(live.fov ÷ 화면 높이)로 계산된 값이라
        시작 감도가 손가락과 정확히 같습니다.
      · 손을 뗀 뒤 110ms 넘게 멈춰 있었으면(단순 탭·대고 있다가 뗌) 관성이 생기지 않습니다.
-     · 감쇠는 지수 — 시간상수 110ms 면 빠른 스와이프가 0.5~0.8초에 자연히 멈춥니다.
+     · 감쇠는 지수 — 시간상수 380ms 면 빠른 스와이프가 1.5~2.5초 동안 시원하게
+       미끄러지다 서서히 잦아듭니다(스텔라리움에서 하늘을 던진 느낌).
+     · 손가락 끝의 마지막 정체 프레임(iOS 터치의 합쳐진 이동)은 속도 계산에서 건너뛰고,
+       뗄 때 1.3배 살짝 가속해 '밀었다'는 손맛을 살립니다(상한 1000°/s).
      · 고도는 ALT_MIN~ALT_MAX 를 지키고, 경계에 닿으면 고도 속도만 0으로 둡니다.
      · 트래킹 켜짐 · 핀치 · 방위 버튼·슬라이더 · 조준 · 화면 이동 · 새 터치에서 즉시 취소합니다. */
   const INERT = {
-    tau: 120,      // 감쇠 시간상수(ms) — 클수록 오래 미끄러집니다
-    stop: 0.004,   // 이 속도(도/ms = 4°/s) 아래로 줄면 멈춤
-    vMax: 0.9,     // 시작 속도 상한(도/ms = 900°/s) — 손이 튀어도 화면이 감당할 만큼
+    tau: 380,      // 감쇠 시간상수(ms) — 클수록 오래 미끄러집니다
+    stop: 0.001,   // 이 속도(도/ms = 1°/s) 아래로 줄면 멈춤 — 끝이 뚝 끊기지 않게 낮게
+    vMax: 1.0,     // 시작 속도 상한(도/ms = 1000°/s) — 손이 튀어도 화면이 감당할 만큼
+    boost: 1.3,    // 뗄 때 속도 배율 — 손가락이 민 만큼보다 조금 더 굴러가게
     hold: 110,     // 이 시간(ms) 넘게 손가락이 멈춰 있었으면 관성 없음
     win: 120,      // 속도를 재는 최근 표본 구간(ms)
+    moveEps: 0.004, // 이보다 작은 표본 변화는 '정체 프레임'으로 보고 속도에서 건너뜀
+    maxSkip: 3,    // 건너뛸 수 있는 마지막 정체 표본 수
     minMove: 0.02, // 이보다 작은 속도는 '던진 것'으로 보지 않음
-    maxT: 1600     // 안전 상한(ms) — 어떤 경우에도 이 시간 안에 끝납니다
+    maxT: 2800     // 안전 상한(ms) — 어떤 경우에도 이 시간 안에 끝납니다
   };
   const inertia = { on: false, raf: null, vAz: 0, vAlt: 0, t: 0, last: 0, moved: 0 };
 
@@ -2478,8 +2484,9 @@
     let a = Number(vAz) || 0, b = Number(vAlt) || 0;
     if (!isFinite(a) || !isFinite(b)) return false;
     a *= inertAzGain(live.alt);
+    if (Math.hypot(a, b) < INERT.minMove) return false;   // 살짝 끌었다 놓은 것은 관성 없음
+    a *= INERT.boost; b *= INERT.boost;                   // 밀었다는 손맛 — 가볍게 가속
     const sp = Math.hypot(a, b);
-    if (sp < INERT.minMove) return false;
     if (sp > INERT.vMax) { const k = INERT.vMax / sp; a *= k; b *= k; }
     inertia.on = true; inertia.vAz = a; inertia.vAlt = b;
     inertia.t = 0; inertia.moved = 0; inertia.last = performance.now();
@@ -2522,12 +2529,20 @@
     const last = s[s.length - 1];
     if (now - last.t > INERT.hold) return { az: 0, alt: 0, stale: true };
     if (s.length < 2) return { az: 0, alt: 0, stale: false };
-    let i = s.length - 1;
-    while (i > 0 && last.t - s[i - 1].t <= INERT.win) i--;
+    /* 손을 떼기 직전 표본이 같은 자리로 한두 번 들어오는 일이 흔합니다(iOS 터치의 합쳐진
+       이동, 떼는 순간의 미세 정체). 그 정체 프레임까지 120ms 창에 넣으면 속도가 뚝
+       떨어져 관성이 죽으므로, 실제로 움직인 마지막 표본을 기준으로 창을 잽니다. */
+    let end = s.length - 1;
+    const floor = Math.max(1, s.length - 1 - INERT.maxSkip);
+    while (end > floor &&
+           Math.abs(shortestDelta(s[end - 1].az, s[end].az)) + Math.abs(s[end].alt - s[end - 1].alt) < INERT.moveEps) end--;
+    const tEnd = s[end].t;   // 전부 같은 자리면 변화량 0 → 속도 0(던진 게 아님)
+    let i = end;
+    while (i > 0 && tEnd - s[i - 1].t <= INERT.win) i--;
     const first = s[i];
-    const dt = last.t - first.t;
+    const dt = tEnd - first.t;
     if (dt < 4) return { az: 0, alt: 0, stale: false };
-    return { az: shortestDelta(first.az, last.az) / dt, alt: (last.alt - first.alt) / dt, stale: false };
+    return { az: shortestDelta(first.az, s[end].az) / dt, alt: (s[end].alt - first.alt) / dt, stale: false };
   }
 
   /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다 — 방위는 그대로 두고 고도만 바꿉니다.
