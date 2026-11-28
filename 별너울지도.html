@@ -17493,11 +17493,11 @@ window.Astro = (function () {
   function deepMagLimit(fovDeg) { return Math.min(deepMagCurve(fovDeg), DeepSky.tileMag); }
   /** 한계 등급에 가까운 별일수록 흐리게 — 스텔라리움처럼 **확대할수록 서서히 진해집니다**.
       2026-11-29 (.21) 남현님 "확대할수록 별의 투명도를 점점 진하게" — 선형 클램프를
-      smoothstep 으로 바꾸고 페이드 폭을 1.45등으로 넉넉히 잡았습니다(예전 1.0~2.0등 선형은
-      한계 근처에서도 알파가 계단처럼 올라 툭 튀어나왔습니다). */
+      smoothstep 으로 바꾸고 페이드 폭을 **1.45등**으로 넉넉히 잡았습니다(로컬 확장 5~12등,
+      예전 1.0~2.0등 선형은 한계 근처에서도 알파가 계단처럼 올라 툭 튀어나왔습니다). */
   function smoothstep(t) { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); }
   function deepFade(limit, mag, span) {
-    const s = span == null ? (mag <= 9 ? 1.0 : 1.45) : span;
+    const s = span == null ? 1.45 : span;
     return smoothstep((limit - mag) / s);
   }
   /* -------------------------------------------- 별빛 색 (실제 B−V·BP−RP)
