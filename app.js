@@ -6172,6 +6172,7 @@
 
   window.OneulBam = {
     openObject: openObject,
+    openConstellation: openConstellation,
     computeNight: computeNight,
     aimAt: aimAt,
     aimRaDec: aimRaDec,
