@@ -16250,7 +16250,7 @@ window.Astro = (function () {
      · 이 별들은 D.catalog · SPACE_CATALOG 에 들어가지 않으므로 퀴즈·기본 도감과 분리됩니다.
      ====================================================================== */
   const DEEP = {
-    liveLocalFov: 60, liveGaiaFov: 6,
+    liveLocalFov: 60, liveGaiaFov: 10,
     hitPool: [], panel: { mode: 'region', idx: 0, q: '' }, timer: null, lastPaint: 0
   };
 
@@ -16307,11 +16307,15 @@ window.Astro = (function () {
 
   /* -------------------------------------------------- 라이브 뷰 확장 그리기 */
   /* 시야각(도) → 보이는 확장 성도의 한계 등급 — 배율(2배) 곡선.
-     65°에서 6.4등(기본 성도와 자연스럽게 이어짐), 시야가 절반이 될 때마다 +1.45등.
+     65°에서 6.4등(기본 성도와 자연스럽게 이어짐), 시야가 절반이 될 때마다 +2.05등.
+     · 왜 2.05인가: 시야가 절반이 되면 하늘 면적은 1/4 — 별 밀도가 유지·증가하려면
+       한계 등급이 2등 안팎(=별 수 약 6배) 올라가야 합니다. 1.45로 두면 40°→17°에서
+       면적이 5.5배 줄어 화면에 30여 개만 남아 텅 비어 보였습니다.
+       65° 6.4 → 32° 8.5 → 17° 10.4 → 10° 12.0(로컬 포화) → 3° 15.6 → 1° 18.8 → 1′ 20.8.
      각도 선형 보간으로 두면 60→55°에서만 1.7등이 뛰어 별이 우수수 쏟아지고
      좁은 시야에서는 변화가 둔했습니다 — 로그 곡선은 어느 배율에서나 같은 손맛입니다.
      로컬 타일은 12.0등까지, 그 아래(더 좁은 시야)는 Gaia DR3(20.7등)가 이어받습니다. */
-  const DEEP_MAG_BASE = 6.4, DEEP_MAG_SLOPE = 1.45, DEEP_MAG_BASE_FOV = 65;
+  const DEEP_MAG_BASE = 6.4, DEEP_MAG_SLOPE = 2.05, DEEP_MAG_BASE_FOV = 65;
   function deepMagCurve(fovDeg) {
     const f = clamp(fovDeg, LIVE_FOV_MIN, DEEP_MAG_BASE_FOV);
     return DEEP_MAG_BASE + DEEP_MAG_SLOPE * Math.log2(DEEP_MAG_BASE_FOV / f);
@@ -16343,7 +16347,9 @@ window.Astro = (function () {
     /* 1단계 — 로컬 타일 (한계 등급은 시야에 따라 단계적으로 깊어짐) */
     let shownN = 0, shownLim = 0;
     if (fovDeg <= DEEP.liveLocalFov) {
-      const rad = clamp(fovDeg * 0.9, Math.max(0.05, fovDeg * 1.2), 45);
+      /* 세로로 긴 폰 화면은 세로 화각이 가로의 H/W(≈2배)까지 벌어집니다 —
+         시야 반경을 넉넉히 잡아 화면 위아래 끝의 별까지 담습니다. */
+      const rad = clamp(fovDeg * 1.35, 0.25, 48);
       DeepSky.ensure(ctr.raDeg, ctr.dec, rad);
       const lim = Math.min(deepMagLimit(fovDeg), DeepSky.tileMag);
       shownLim = lim;
