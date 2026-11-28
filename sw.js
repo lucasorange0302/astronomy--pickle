@@ -9,7 +9,7 @@
    배포할 때마다 아래 VERSION 을 올리세요. 올리면 install 에서 코어 캐시를 새로 받습니다.
    ========================================================================= */
 
-var VERSION = '2026-11-28.4';
+var VERSION = '2026-11-28.5';
 var CORE_CACHE = 'byeolneoul-core-' + VERSION;
 var ASSET_CACHE = 'byeolneoul-assets-v1';
 var DATA_CACHE = 'byeolneoul-data-' + VERSION;   // 도감·쿠키 JSON 청크(지연 로딩)
@@ -43,6 +43,7 @@ var CORE = [
   './learn-figs.js',
   './learn-plus.js',
   './learn.js',
+  './quiz.js',
   './news.js',
   './feedback.js',
   './views.js',

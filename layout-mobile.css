@@ -232,11 +232,11 @@ html[data-layout="mobile"] .live-help { font-size: .7rem; line-height: 1.55; }
 html[data-layout="mobile"] .live-inview .iv-item { font-size: .7rem; padding: 5px 9px; }
 
 /* ------------------------------------------------------------ 도감 */
-html[data-layout="mobile"] .cat-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+html[data-layout="mobile"] .cat-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-bottom: 12px; }
 html[data-layout="mobile"] .cat-tab {
-  justify-content: center; padding: 11px 6px; font-size: .84rem; min-height: 44px; text-align: center;
+  justify-content: center; padding: 11px 4px; font-size: .8rem; min-height: 44px; text-align: center; gap: 4px;
 }
-html[data-layout="mobile"] .cat-tab-num { font-size: .66rem; }
+html[data-layout="mobile"] .cat-tab-num { display: none; }
 html[data-layout="mobile"] .filter-bar { gap: 8px; margin-bottom: 10px; }
 html[data-layout="mobile"] .search-box { max-width: none; padding: 11px 12px; }
 html[data-layout="mobile"] .search-box input { font-size: .86rem; }

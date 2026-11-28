@@ -159,6 +159,13 @@
               <span class="pwa-badge" id="pwaInstallBadge" hidden>실행 중</span>
             </button>
           </div>
+          <div class="more-group" role="group" aria-label="밤 관측">
+            <p class="more-title"><span aria-hidden="true">🌙</span> 밤 관측</p>
+            <button type="button" class="more-item" id="btnRedMenu" role="menuitemcheckbox" aria-checked="false">
+              <span class="mi-ico" aria-hidden="true">🔴</span>
+              <span class="mi-txt"><b id="btnRedMenuLabel">레드라이트 모드 켜기</b><small>암순응을 지키는 붉은 화면</small></span>
+            </button>
+          </div>
           <div class="more-group" role="group" aria-label="관측 계획과 현장">
             <p class="more-title"><span aria-hidden="true">🗓️</span> 관측 계획 · 현장</p>
             <a href="#calendar" class="more-item" role="menuitem">
@@ -654,12 +661,13 @@
     <div class="section-head">
       <p class="eyebrow">천체 · 별자리 도감</p>
       <h2>오늘 밤 볼 수 있는 것들, <span class="grad">전부</span> 여기 있습니다</h2>
-      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2만 3천여 종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>와 <b>별자리</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
+      <p class="section-sub">대표 천체 40여 종과 하늘 전체 도감 2만 3천여 종, IAU 별자리 88종을 한 섹션으로 모았습니다. 위 탭으로 <b>천체</b>·<b>별자리</b>·<b>하늘 탐험 퀴즈</b>를 바꿔 보세요. 카드를 누르면 허블·제임스웹 사진과 실제 하늘 탐사 사진, 상세 정보, 조준 버튼이 함께 열립니다.</p>
     </div>
 
     <div class="cat-tabs" role="tablist" aria-label="도감 보기 전환">
       <button class="cat-tab is-active" type="button" id="tabObjects" role="tab" aria-selected="true" aria-controls="panelObjects" data-cat-tab="objects">🌌 천체 도감 <span class="cat-tab-num">2,571종</span></button>
       <button class="cat-tab" type="button" id="tabConst" role="tab" aria-selected="false" aria-controls="panelConstellations" data-cat-tab="const" tabindex="-1">✨ 별자리 88 <span class="cat-tab-num">IAU 전체</span></button>
+      <button class="cat-tab" type="button" id="tabQuiz" role="tab" aria-selected="false" aria-controls="panelQuiz" data-cat-tab="quiz" tabindex="-1">🎯 하늘 탐험 <span class="cat-tab-num">퀴즈 8문제</span></button>
     </div>
 
     <div class="cat-panel" id="panelObjects" role="tabpanel" aria-labelledby="tabObjects">
@@ -703,8 +711,12 @@
         </div>
       </div>
     </div>
+
+    <div class="cat-panel" id="panelQuiz" role="tabpanel" aria-labelledby="tabQuiz" hidden>
+      <div class="quiz-shell" id="quizShell"></div>
+    </div>
   </div>
-</section>
+</section> 
 
 <!-- ===================== 3. 촬영 · 계산기 ===================== -->
 <section class="section section-alt" id="lab" data-view="lab">
@@ -1303,6 +1315,7 @@
 <script src="learn-figs.js"></script>
 <script src="learn-plus.js"></script>
 <script src="learn.js"></script>
+<script src="quiz.js"></script>
 <script src="news.js"></script>
 <script src="feedback.js"></script>
 <script src="views.js"></script>
