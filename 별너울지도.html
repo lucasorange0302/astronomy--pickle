@@ -11895,6 +11895,12 @@ window.Astro = (function () {
         return;
       }
       // 달·행성·딥스카이는 기존대로 우선하되, 별 점 위를 5px 이내로 정확히 짚었으면 그 별.
+      if (kind === 'wide') {
+        if (star && starD <= 5 * scale) { showInspector('star', star.name); return; }
+        const it = wideInfo(key);
+        if (it) showInspector('wide', key);
+        return;
+      }
       if (star && starD <= 5 * scale) { showInspector('star', star.name); return; }
       showInspector(kind, key);
       return;
@@ -11912,7 +11918,7 @@ window.Astro = (function () {
   const SKYMAP_ZOOM_MAX = 3.5;
   const smz = {
     s: 1, applied: 1, tx: 0, ty: 0, ptrs: new Map(), on: false, d0: 0, s0: 1,
-    pan: null, B: null, u: { x: 0, y: 0 }, suppressUntil: 0
+    pan: null, B: null, u: { x: 0, y: 0 }, suppressUntil: 0, layer: 0, ready: false
   };
 
   function skyMapEl() { return $('#skyMap'); }
@@ -11939,6 +11945,12 @@ window.Astro = (function () {
     el.style.transform = (smz.s === 1 && !smz.tx && !smz.ty) ? ''
       : 'translate(' + smz.tx.toFixed(1) + 'px,' + smz.ty.toFixed(1) + 'px) scale(' + smz.s.toFixed(3) + ')';
     smz.applied = smz.s;
+    /* 확대 단계가 바뀌면 딥스카이를 더 그려야 합니다 — 단계가 바뀔 때만 다시 그립니다. */
+    const lv = smz.s >= 3.2 ? 3 : smz.s >= 2.4 ? 2 : smz.s >= 1.5 ? 1 : 0;
+    if (lv !== smz.layer) {
+      smz.layer = lv;
+      if (smz.ready && state.last) setTimeout(function () { renderSkyMap(state.last); }, 0);
+    }
     const wrap = el.parentNode;
     if (wrap && wrap.classList) wrap.classList.toggle('is-zoomed', smz.s > 1.001);
     el.style.touchAction = smz.s > 1.001 ? 'none' : 'pan-y';
@@ -11970,6 +11982,14 @@ window.Astro = (function () {
     skyMapClampT();
     skyMapApply();
   }
+  /* 검증용 — 전천 지도 확대를 코드로 (핀치·휠과 같은 경로) */
+  window.__skyZoom = function (newS, x, y) {
+    if (!smz.B) smz.B = skyMapBaseCenter();
+    skyMapZoomTo(newS, (x == null || y == null) ? null : { x: x, y: y });
+    return smz.s;
+  };
+  window.__skyLayer = function () { return { s: smz.s, layer: smz.layer, ready: !!smz.ready }; };
+
   function skyMapZoomAtPoint(cx, cy, newS) {
     smz.B = skyMapBaseCenter();
     smz.u = { x: (cx - smz.B.x - smz.tx) / smz.s, y: (cy - smz.B.y - smz.ty) / smz.s };
@@ -12191,6 +12211,31 @@ window.Astro = (function () {
       s += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.2" fill="none" stroke="' + (red ? RC.dso : 'rgba(126,224,192,.75)') + '" stroke-width="1" stroke-dasharray="1.5 1.5"/>';
     });
 
+    /* 🔭 확대할수록 더 어두운 딥스카이 — 라이브 뷰와 같은 단계(1.5× / 2.4× / 3.2×). */
+    const zoomS = (smz && smz.s) || 1;
+    const smLayer = zoomS >= 3.2 ? 3 : zoomS >= 2.4 ? 2 : zoomS >= 1.5 ? 1 : 0;
+    if (smLayer > 0) {
+      const lim = smLayer === 3 ? 12.5 : smLayer === 2 ? 10.5 : 8.5;
+      const seenN = {};
+      D.catalog.forEach(function (o) { if (o.name) seenN[o.name] = 1; });
+      const col = red ? RC.dso : 'rgba(126,224,192,.72)';
+      dsoIndex().forEach(function (it) {
+        if (it.m > lim || seenN[it.name]) return;
+        const h = A.equatorialToHorizontal(it.raH, it.dec, lat, lon, jd);
+        if (h.alt < 3) return;
+        const p = proj(h.alt, h.az);
+        const x = p.x.toFixed(1), y = p.y.toFixed(1);
+        let sym;
+        if (it.k === 'gal') sym = '<ellipse cx="' + x + '" cy="' + y + '" rx="3.4" ry="2" fill="none" stroke="' + col + '" stroke-width=".9"/>';
+        else if (it.k === 'ocl') sym = '<circle cx="' + x + '" cy="' + y + '" r="2.6" fill="none" stroke="' + col + '" stroke-width=".9" stroke-dasharray="1.2 1.4"/>';
+        else if (it.k === 'gcl') sym = '<circle cx="' + x + '" cy="' + y + '" r="2.6" fill="none" stroke="' + col + '" stroke-width=".9"/><path d="M' + x + ' ' + (p.y - 3.6).toFixed(1) + 'L' + x + ' ' + (p.y + 3.6).toFixed(1) + '" stroke="' + col + '" stroke-width=".8"/>';
+        else sym = '<rect x="' + (p.x - 2.4).toFixed(1) + '" y="' + (p.y - 2.4).toFixed(1) + '" width="4.8" height="4.8" fill="none" stroke="' + col + '" stroke-width=".9" stroke-dasharray="1.2 1.4"/>';
+        s += '<g data-sky="wide:' + esc(it.id) + '" style="cursor:pointer">' + sym +
+          '<circle cx="' + x + '" cy="' + y + '" r="' + (smLayer >= 2 ? 7 : 5) + '" fill="transparent"/></g>';
+        if (smLayer >= 2) dsoPts.push({ o: { name: it.name, mag: it.m }, p: p, alt: h.alt });
+      });
+    }
+
     // ── 이름표 배치: 밝은 별 → 딥스카이 → 별자리. 겹치면 뒤 순위는 포기한다.
     ['시리우스', '베텔게우스', '리겔', '베가', '데네브', '알타이르', '카펠라', '폴룩스', '아르크투루스', '안타레스',
       '스피카', '레굴루스', '폴라리스', '알데바란', '프로키온', '포말하우트', '카노푸스', '아케르나르'].forEach(function (nm) {
@@ -12266,6 +12311,8 @@ window.Astro = (function () {
       s += '<circle cx="' + q.x.toFixed(1) + '" cy="' + q.y.toFixed(1) + '" r="14" fill="transparent" data-sky="moon:" style="cursor:pointer"/>';
     }
     svg.innerHTML = s;
+    smz.ready = true;
+    smz.layer = smLayer;
     // 그려진 별 전체를 터치 판정 대상으로 넘긴다(위임 리스너는 한 번만 붙인다).
     svg._skyHits = hitPool;
     svg._skyHitCount = hitN;
@@ -13379,7 +13426,7 @@ window.Astro = (function () {
     const box = $('#skyInspector');
     if (!box) return;
     const c = state.last || computeNight();
-    const info = skyInfo(kind, key, c.jd);
+    const info = kind === 'wide' ? wideInfo(key) : skyInfo(kind, key, c.jd);
     if (!info) return;
     inspectorRef = { kind: kind, key: key };
     inspectorTs = Date.now();
@@ -13402,6 +13449,7 @@ window.Astro = (function () {
       '<div class="si-actions">' +
       '<button class="aim-btn" type="button" data-si-aim="1">🎯 라이브 뷰로 조준</button>' +
       (info.objId ? '<button class="mini-btn" type="button" data-si-obj="' + esc(info.objId) + '">도감 상세 보기</button>' : '') +
+      (info.wideId ? '<button class="mini-btn" type="button" data-si-wide="' + esc(info.wideId) + '">도감 상세 보기</button>' : '') +
       (info.conAbbr ? '<button class="mini-btn" type="button" data-si-con="' + esc(info.conAbbr) + '">📷 사진 · 상세</button>' : '') +
       '<button class="mini-btn" type="button" data-si-close="1">닫기</button></div>';
   }
@@ -15003,6 +15051,53 @@ window.Astro = (function () {
       });
     }
 
+    /* 🔭 확대할수록 더 어두운 딥스카이 — 스텔라리움처럼 단계적으로 나타납니다.
+       기본 시야(65°)는 대표 도감만, 확대할수록 전체 도감(2,571종)의 은하·성운·성단이 더해집니다.
+       · fov ≤ 48° → 8.5등급까지 / ≤ 28° → 10.5등급 / ≤ 14° → 12.5등급 */
+    const dsoLayer = fovDeg <= 14 ? 3 : fovDeg <= 28 ? 2 : fovDeg <= 48 ? 1 : 0;
+    if (dsoLayer > 0) {
+      const lim = dsoLayer === 3 ? 12.5 : dsoLayer === 2 ? 10.5 : 8.5;
+      const seen = {};
+      D.catalog.forEach(function (o) { if (o.name) seen[o.name] = 1; });
+      const col = isRed() ? 'rgba(255,150,120,.85)' : 'rgba(126,224,192,.78)';
+      dsoIndex().forEach(function (it) {
+        if (it.m > lim) return;
+        if (seen[it.name]) return;                      // 대표 도감과 같은 천체는 라벨 중복 방지
+        const h = A.equatorialToHorizontal(it.raH, it.dec, lat, lon, jd);
+        if (h.alt < 0) return;
+        const p = project(h.alt, h.az);
+        if (!p || p.x < 3 || p.x > W - 3 || p.y < 3 || p.y > H - 3) return;
+        const r = dsoLayer === 3 ? 3.2 : 2.6;
+        ctx.save();
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.1;
+        if (it.k === 'gal') {
+          ctx.beginPath(); ctx.ellipse(p.x, p.y, r * 1.25, r * 0.7, -0.5, 0, Math.PI * 2); ctx.stroke();
+        } else if (it.k === 'ocl') {
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
+        } else if (it.k === 'gcl') {
+          ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(p.x - r - 1, p.y); ctx.lineTo(p.x + r + 1, p.y);
+          ctx.moveTo(p.x, p.y - r - 1); ctx.lineTo(p.x, p.y + r + 1);
+          ctx.stroke();
+        } else {
+          ctx.setLineDash([2, 2]);
+          ctx.strokeRect(p.x - r, p.y - r, r * 2, r * 2);
+        }
+        ctx.restore();
+        if (live.labels && fovDeg <= 62) {
+          ctx.globalAlpha = 0.88;
+          drawLabel(it.name, p.x + 6, p.y + 4, col, '600 10px system-ui, sans-serif');
+          ctx.globalAlpha = 1;
+        }
+        live.hits.push({ x: p.x, y: p.y, kind: 'wide', key: it.id, name: it.name, mag: it.m });
+        inView.push({ kind: 'wide', key: it.id, name: it.name, alt: h.alt, az: h.az, d: Math.hypot(p.x - cx, p.y - cy) });
+      });
+    }
+
     /* 🎯 조준 목표 마커 — 기본 캔버스에 없는 어두운 천체(전체 도감 2,571종·성도에 없는 별)일 때
        그 자리에 다이아몬드 마커와 이름·등급을 직접 그립니다. 눌러서 정보 창도 열립니다. */
     if (aim.on && aim.raH != null && !aimTargetOnCanvas()) {
@@ -15286,11 +15381,62 @@ window.Astro = (function () {
     return '<div class="li-fact"><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>';
   }
 
+  /** 확대용 딥스카이 목록 — 전체 도감 2,571종에서 은하·성운·성단만 한 번 추려 둡니다. */
+  let dsoIdxCache = null;
+  function dsoIndex() {
+    if (dsoIdxCache) return dsoIdxCache;
+    const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
+    const out = [];
+    items.forEach(function (it) {
+      if (it.k !== 'd') return;
+      if (typeof it.ra !== 'number' || typeof it.dec !== 'number') return;
+      if (typeof it.m !== 'number' || it.m > 12.5) return;
+      if (it.dec < -28) return;                       // 한국에서 뜨지 않는 남쪽 하늘은 빠짐
+      const t = String(it.t || '');
+      const k = /^GCl/.test(t) ? 'gcl' : /^OCl|^\*Ass/.test(t) ? 'ocl'
+        : /^G(Group|Pair|Trpl|Cluster)?$/.test(t) ? 'gal'
+          : /Neb|HII|PN|SNR|RfN|EmN|DrkN|Cl\+N/.test(t) ? 'neb' : '';
+      if (!k) return;
+      const ko = String(it.ko || '');
+      const name = /[가-힣]/.test(ko) ? ko : (it.M || it.i);
+      out.push({ id: String(it.i), name: name, k: k, raH: A.mod(it.ra, 360) / 15, dec: it.dec, m: it.m });
+    });
+    out.sort(function (a, b) { return a.m - b.m; });
+    dsoIdxCache = out;
+    return out;
+  }
+
+  /** 전체 도감 항목 하나를 라이브 정보 창·상세 카드용으로 변환합니다. */
+  function wideInfo(key) {
+    const items = (window.SPACE_CATALOG && window.SPACE_CATALOG.items) || [];
+    const it = items.find(function (x) { return String(x.i) === String(key); });
+    if (!it || typeof it.ra !== 'number' || typeof it.dec !== 'number') return null;
+    const c = state.last || computeNight();
+    const raH = A.mod(it.ra, 360) / 15;
+    const hor = A.equatorialToHorizontal(raH, it.dec, state.site.lat, state.site.lon, c.jd);
+    const ni = A.objectNight(raH, it.dec, state.site.lat, state.site.lon, state.dateStr);
+    const con = it.c ? (D.constellations.find(function (x) { return x.abbr === it.c; }) || null) : null;
+    const ko = String(it.ko || '');
+    const nm = /[가-힣]/.test(ko) ? ko : (it.M || it.i);
+    const bits = [it.i];
+    if (it.M && it.M !== it.i) bits.push(it.M);
+    if (it.en && it.en !== it.i) bits.push(it.en);
+    return {
+      kind: 'wide', key: key, name: nm,
+      sub: '전체 도감 · ' + bits.join(' / ') + (con ? ' · ' + con.name : '') + (typeof it.m === 'number' ? ' · ' + nf(it.m, 1) + '등' : ''),
+      note: (it.x ? it.x + ' ' : '') + '전체 도감(2,571종) 항목입니다. 확대할수록 라이브 하늘에 이 천체가 보입니다.',
+      objId: null, wideId: it.i, mag: typeof it.m === 'number' ? it.m : null,
+      raH: raH, decD: it.dec, alt: hor.alt, az: hor.az, ni: ni
+    };
+  }
+
   function openLiveInfo(hit) {
     const box = $('#liveInfo');
     if (!box) return;
     const jd = (state.last || computeNight()).jd;
-    const info = hit.kind === 'aim' ? aimCardInfo() : skyInfo(hit.kind, hit.key, jd);
+    const info = hit.kind === 'aim' ? aimCardInfo()
+      : hit.kind === 'wide' ? wideInfo(hit.key)
+        : skyInfo(hit.kind, hit.key, jd);
     if (!info) return;
     live.selected = { kind: hit.kind, key: hit.key };
     liveDirty = true; kickLive();
@@ -16314,7 +16460,17 @@ window.Astro = (function () {
           return;
         }
         if (t.getAttribute('data-si-aim') && inspectorRef) {
-          aimAt(inspectorRef.kind, inspectorRef.key);
+          if (inspectorRef.kind === 'wide') {
+            const wi = wideInfo(inspectorRef.key);
+            if (wi) aimRaDec(wi.raH * 15, wi.decD, wi.name);
+          } else {
+            aimAt(inspectorRef.kind, inspectorRef.key);
+          }
+          return;
+        }
+        if (t.getAttribute('data-si-wide')) {
+          const wid = t.getAttribute('data-si-wide');
+          if (window.SpaceUI && SpaceUI.openCatalogObject) SpaceUI.openCatalogObject(wid);
           return;
         }
         if (t.getAttribute('data-si-con')) {
