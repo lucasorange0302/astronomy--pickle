@@ -541,8 +541,6 @@
           <button class="lq-btn" id="liveCalBtnQ" type="button" aria-label="지금 보는 방향으로 나침반 맞추기">🎯 <span class="lq-wide">방향 맞추기</span><span class="lq-narrow">조준</span></button>
           <!-- 실시간 트래킹 바로 켜기/끄기 — ⚙ 조작 안의 센서 버튼과 같은 상태를 씁니다 -->
           <button class="lq-btn lq-track" id="liveTrackBtnQ" type="button" aria-pressed="false" aria-label="실시간 트래킹 켜기" title="실시간 트래킹(센서)을 켜고 끕니다">🧭 추적</button>
-          <!-- 낮에 열었을 때 밤하늘로 넘길 길을 화면 안에 둡니다 (모바일은 아래 안내 줄이 숨겨져 있음) -->
-          <button class="lq-btn lq-night" id="liveNightBtnQ" type="button" hidden>🌙 밤 22시</button>
         </div>
         <div class="live-time-card" id="liveTimeCard" hidden>
           <div class="ltc-head">
@@ -633,7 +631,7 @@
       </div>
 
       <div class="live-foot">
-        <div class="live-day-hint" id="liveDayHint" hidden>지금은 낮입니다 — 별은 밤에 보입니다. <button class="mini-btn" id="liveNightBtn" type="button">🌙 밤 22시 하늘 보기</button></div>
+        <div class="live-day-hint" id="liveDayHint" hidden>지금은 낮입니다 — 별은 밤에 보입니다. <b class="ldh-key">🕒 시각</b>에서 밤으로 바꿔 보세요.</div>
         <div class="live-inview" id="liveInView"></div>
         <p class="live-help" id="liveHelp">드래그·터치로 둘러보고, <b>북/동/남/서/천정</b> 버튼으로 한 번에 회전할 수 있습니다. 센서 연동은 보안 연결에서만 동작하며(iOS는 권한 허용 필요) 통신이 막힌 환경에서는 드래그·버튼으로 둘러보세요.</p>
       </div>

@@ -2323,6 +2323,7 @@
   }
 
   function aimAt(kind, key) {
+    inertCancel();            // 조준이 시선의 주인이 되면 관성은 즉시 멈춥니다
     const c = state.last || computeNight();
     const info = skyInfo(kind, key, c.jd);
     if (!info) return;
@@ -2431,6 +2432,102 @@
   function azTol(altDeg) {
     const c = Math.max(0.0174, Math.cos(clamp(Math.abs(altDeg), 0, 89.5) * RAD));
     return clamp(0.25 / c, 0.25, 14);
+  }
+
+  /* ── 스텔라리움식 관성 드래그 회전 ────────────────────────────────────────
+     실시간 트래킹(센서)이 꺼져 있을 때, 손으로 하늘을 밀고 뗀 힘(속도)만큼
+     조금 더 부드럽게 감속하며 돌아갑니다. 스텔라리움에서 하늘을 끌어 던진 느낌.
+
+     · 속도는 드래그 중 최근 120ms 표본의 방위·고도 변화량으로 잽니다(도/ms).
+       방위는 드래그가 이미 쓰는 degPerPx(live.fov ÷ 화면 높이)로 계산된 값이라
+       시작 감도가 손가락과 정확히 같습니다.
+     · 손을 뗀 뒤 110ms 넘게 멈춰 있었으면(단순 탭·대고 있다가 뗌) 관성이 생기지 않습니다.
+     · 감쇠는 지수 — 시간상수 110ms 면 빠른 스와이프가 0.5~0.8초에 자연히 멈춥니다.
+     · 고도는 ALT_MIN~ALT_MAX 를 지키고, 경계에 닿으면 고도 속도만 0으로 둡니다.
+     · 트래킹 켜짐 · 핀치 · 방위 버튼·슬라이더 · 조준 · 화면 이동 · 새 터치에서 즉시 취소합니다. */
+  const INERT = {
+    tau: 120,      // 감쇠 시간상수(ms) — 클수록 오래 미끄러집니다
+    stop: 0.004,   // 이 속도(도/ms = 4°/s) 아래로 줄면 멈춤
+    vMax: 0.9,     // 시작 속도 상한(도/ms = 900°/s) — 손이 튀어도 화면이 감당할 만큼
+    hold: 110,     // 이 시간(ms) 넘게 손가락이 멈춰 있었으면 관성 없음
+    win: 120,      // 속도를 재는 최근 표본 구간(ms)
+    minMove: 0.02, // 이보다 작은 속도는 '던진 것'으로 보지 않음
+    maxT: 1600     // 안전 상한(ms) — 어떤 경우에도 이 시간 안에 끝납니다
+  };
+  const inertia = { on: false, raf: null, vAz: 0, vAlt: 0, t: 0, last: 0, moved: 0 };
+
+  /* 천정에 가까울수록 방위 회전은 화면에서 '돌기'로 보입니다 — 관성의 방위 성분만
+     68° 위에서 부드럽게 줄여(90°에서 40%) 과하게 튕기지 않게 합니다. */
+  function inertAzGain(altDeg) {
+    const a = Math.abs(altDeg || 0);
+    if (a <= POLAR_SOFT) return 1;
+    return clamp(1 - ((a - POLAR_SOFT) / (90 - POLAR_SOFT)) * 0.6, 0.4, 1);
+  }
+
+  function inertCancel() {
+    const was = inertia.on;
+    inertia.on = false;
+    inertia.vAz = 0; inertia.vAlt = 0; inertia.t = 0; inertia.moved = 0;
+    if (inertia.raf) { cancelAnimationFrame(inertia.raf); inertia.raf = null; }
+    return was;
+  }
+
+  function inertStart(vAz, vAlt) {
+    inertCancel();
+    if (live.sensor) return false;              // 실시간 트래킹 중 — 폰이 시선의 주인
+    let a = Number(vAz) || 0, b = Number(vAlt) || 0;
+    if (!isFinite(a) || !isFinite(b)) return false;
+    a *= inertAzGain(live.alt);
+    const sp = Math.hypot(a, b);
+    if (sp < INERT.minMove) return false;
+    if (sp > INERT.vMax) { const k = INERT.vMax / sp; a *= k; b *= k; }
+    inertia.on = true; inertia.vAz = a; inertia.vAlt = b;
+    inertia.t = 0; inertia.moved = 0; inertia.last = performance.now();
+    const step = function (ts) {
+      inertia.raf = null;
+      if (!inertia.on) return;
+      if (live.sensor) { inertCancel(); return; }          // 트래킹이 켜지면 즉시 양보
+      let dt = ts - inertia.last;
+      inertia.last = ts;
+      if (!(dt > 0)) dt = 16;
+      if (dt > 64) dt = 64;                                // 탭 전환 등 큰 틈은 건너뜀
+      inertia.t += dt;
+      const prevAz = live.az, prevAlt = live.alt;
+      const gz = inertAzGain(live.alt);
+      let alt = live.alt + inertia.vAlt * dt;
+      if (alt <= ALT_MIN) { alt = ALT_MIN; inertia.vAlt = 0; }
+      else if (alt >= ALT_MAX) { alt = ALT_MAX; inertia.vAlt = 0; }
+      const az = A.mod(live.az + inertia.vAz * gz * dt, 360);
+      live.az = live.targetAz = az;
+      live.alt = live.targetAlt = alt;
+      state.follow = null;
+      inertia.moved += Math.hypot(shortestDelta(prevAz, az), alt - prevAlt);
+      const k = Math.exp(-dt / INERT.tau);
+      inertia.vAz *= k; inertia.vAlt *= k;
+      liveDirty = true;
+      kickLive();                                          // 하늘·유도등이 같은 프레임에 그려집니다
+      if (Math.hypot(inertia.vAz, inertia.vAlt) < INERT.stop || inertia.t > INERT.maxT) { inertCancel(); return; }
+      inertia.raf = requestAnimationFrame(step);
+    };
+    inertia.raf = requestAnimationFrame(step);
+    return true;
+  }
+
+  /* 드래그 표본에서 손을 떼는 순간의 속도(도/ms).
+     마지막 표본이 110ms 넘게 낡았으면 = 손가락을 멈춘 채 뗀 것 → stale(관성 없음). */
+  function dragVel(d) {
+    const s = (d && d.samples) || [];
+    if (s.length < 1) return { az: 0, alt: 0, stale: true };
+    const now = performance.now();
+    const last = s[s.length - 1];
+    if (now - last.t > INERT.hold) return { az: 0, alt: 0, stale: true };
+    if (s.length < 2) return { az: 0, alt: 0, stale: false };
+    let i = s.length - 1;
+    while (i > 0 && last.t - s[i - 1].t <= INERT.win) i--;
+    const first = s[i];
+    const dt = last.t - first.t;
+    if (dt < 4) return { az: 0, alt: 0, stale: false };
+    return { az: shortestDelta(first.az, last.az) / dt, alt: (last.alt - first.alt) / dt, stale: false };
   }
 
   /* 시선(q)의 고도를 원하는 값으로 정확히 돌려놓습니다 — 방위는 그대로 두고 고도만 바꿉니다.
@@ -3823,14 +3920,6 @@
     }
     const hint = $('#liveDayHint');
     if (hint) hint.hidden = !(dayF > 0.02);
-    const hintQ = $('#liveNightBtnQ');
-    if (hintQ) {
-      /* 낮에는 '밤 22시'로 넘기는 칩, 시뮬레이션(밤) 중에는 '지금'으로 돌아오는 칩 */
-      const sim = state.simJd != null;
-      hintQ.hidden = !(sim || dayF > 0.02);
-      const lbl = sim ? '☀️ 지금' : '🌙 밤 22시';
-      if (hintQ.textContent !== lbl) hintQ.textContent = lbl;
-    }
     const now = Date.now();
     if (now - live.lastIv > 350) {
       live.lastIv = now;
@@ -4307,6 +4396,7 @@
   }
 
   function enableSensor() {
+    inertCancel();            // 실시간 트래킹이 켜지면 관성은 즉시 양보합니다
     const DOE = window.DeviceOrientationEvent;
     if (!DOE) { sensorFail('이 기기에서는 방향 센서를 쓸 수 없습니다'); return; }
     const DME = window.DeviceMotionEvent;
@@ -4366,7 +4456,7 @@
         moving: sNow() < track.movingUntil, gate: track.gate, angVel: track.angVel
       };
     },
-    pause: function () { if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
+    pause: function () { inertCancel(); if (track.raf) trackStop(); if (live.raf) { cancelAnimationFrame(live.raf); live.raf = null; } liveDirty = true; },
     resume: function () { liveResize(); liveDirty = true; kickLive(); },
     /* 창 복귀 정렬을 직접 부릅니다(검증·외부 재개용). 실기기에서는 visibilitychange·pageshow·focus 가 부릅니다. */
     realign: function (reason) { trackRealign(reason || 'manual'); },
@@ -4397,6 +4487,11 @@
       return aimUpdate();
     },
     sensorOn: function () { return live.sensor; },
+    /* -- 검증용 — 관성 드래그 회전의 지금 상태(진행 중·방위/고도 속도 도/ms·경과 ms). */
+    inertia: function () {
+      return { on: inertia.on, vAz: inertia.vAz, vAlt: inertia.vAlt, t: inertia.t, moved: inertia.moved };
+    },
+    cancelInertia: function () { return inertCancel(); },
     grid: function () { return { on: live.grid, a: live.gridA, last: live.gridLast }; },
     fov: function () { return live.fov; },
     /* -- 검증용 — 화면을 그릴 때 쓰는 기준틀(fwd·right·up)을 그대로 돌려줍니다.
@@ -4722,6 +4817,7 @@
     }
     stage.addEventListener('pointerdown', function (ev) {
       if (ev.button != null && ev.button !== 0) return;
+      inertCancel();          // 새로 잡는 순간 진행 중인 관성을 멈춥니다(스텔라리움과 같은 '손이 이김')
       // 확대/축소·HUD 등 스테이지 위 버튼은 드래그 캡처에서 제외 (클릭이 죽지 않게)
       if (ev.target && ev.target.closest && ev.target.closest('button, a, input, .live-zoom, .live-hud-top, .live-center-card, .live-time-card, .live-guide')) return;
       ptrs.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
@@ -4736,7 +4832,12 @@
         return;
       }
       if (ptrs.size > 2) return;
-      drag = { x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false, t: performance.now() };
+      drag = {
+        x: ev.clientX, y: ev.clientY, az: live.az, alt: live.alt, moved: false, t: performance.now(),
+        vAz: 0, vAlt: 0,
+        // 관성용 속도 표본 — 시작 위치도 넣어 두어 아주 짧은 플릭도 속도를 잡습니다
+        samples: [{ t: performance.now(), az: live.az, alt: live.alt }]
+      };
       stage.classList.add('is-dragging');
     });
     stage.addEventListener('pointermove', function (ev) {
@@ -4766,6 +4867,14 @@
       state.follow = null;
       liveDirty = true;
       kickLive();
+      /* 관성용 속도 — 최근 120ms 표본만 남기고 그 변화량으로 속도를 잽니다.
+         손을 멈추면 새 표본이 같은 자리에 쌓여 속도가 자연히 0 으로 줄어듭니다. */
+      const tnow = performance.now();
+      drag.samples.push({ t: tnow, az: az, alt: alt });
+      while (drag.samples.length > 2 && tnow - drag.samples[0].t > INERT.win) drag.samples.shift();
+      const v = dragVel(drag);
+      drag.vAz += (v.az - drag.vAz) * 0.6;
+      drag.vAlt += (v.alt - drag.vAlt) * 0.6;
     });
     const end = function (ev) {
       if (ev && ev.pointerId != null) ptrs.delete(ev.pointerId);
@@ -4778,9 +4887,20 @@
       }
       if (!drag) return;
       const moved = drag.moved;
+      /* 손을 뗀 순간의 속도 — 방금 표본(0.7)과 이동 평균(0.3)을 섞어 손떨림을 덜어냅니다.
+         멈춘 채 뗐거나 단순 탭이면 dragVel 이 0 을 주어 관성이 생기지 않습니다. */
+      let vAz = 0, vAlt = 0;
+      if (moved) {
+        const v = dragVel(drag);
+        if (!v.stale) {
+          vAz = v.az * 0.7 + drag.vAz * 0.3;
+          vAlt = v.alt * 0.7 + drag.vAlt * 0.3;
+        }
+      }
       drag = null;
       stage.classList.remove('is-dragging');
-      if (!moved) liveHandleClick(ev);
+      if (!moved) { liveHandleClick(ev); return; }
+      inertStart(vAz, vAlt);
     };
     stage.addEventListener('pointerup', end);
     stage.addEventListener('pointercancel', function (ev) {
@@ -4797,6 +4917,7 @@
 
     $$('.pad-btn').forEach(function (b) {
       b.addEventListener('click', function () {
+        inertCancel();
         disableSensor(true);
         state.follow = null;
         live.targetAz = Number(b.getAttribute('data-az'));
@@ -4809,6 +4930,7 @@
       const el = $(sel);
       if (!el) return;
       el.addEventListener('input', function () {
+        inertCancel();
         disableSensor(true);
         state.follow = null;
         fn(Number(el.value));
@@ -4820,10 +4942,12 @@
     bindRange('#liveAlt', function (v) { live.alt = v; live.targetAlt = v; });
     bindRange('#liveFov', function (v) { live.fov = v; });
     $('#liveZoomIn').addEventListener('click', function () {
+      inertCancel();
       live.fov = clamp(live.fov - 10, LIVE_FOV_MIN, LIVE_FOV_MAX);
       liveDirty = true; kickLive();
     });
     $('#liveZoomOut').addEventListener('click', function () {
+      inertCancel();
       live.fov = clamp(live.fov + 10, LIVE_FOV_MIN, LIVE_FOV_MAX);
       liveDirty = true; kickLive();
     });
@@ -4853,23 +4977,8 @@
         toast(b.textContent + ' 모드 — ' + (track.sens < 1 ? '빠르게 따라옵니다.' : track.sens > 1.2 ? '나침반 보정을 천천히 합니다.' : '기본 추적입니다.'));
       });
     });
-    function goNightSky() {
-      const w = nightWindow();
-      const jd22 = A.jdFromDate(A.localToDate(state.dateStr, '22:00'));
-      const frac = (jd22 > w.start && jd22 < w.end) ? (jd22 - w.start) / (w.end - w.start) : 0.55;
-      stopPlay();
-      setSimFrac(frac);
-      toast(document.documentElement.getAttribute('data-layout') === 'mobile'
-        ? '밤 22시 하늘로 이동했습니다. ⚙ 조작에서 방위를 돌려 보세요.'
-        : '밤 22시 하늘로 이동했습니다. ▶ 재생으로 밤새 움직임을 볼 수 있습니다.');
-    }
-    const nightBtn = $('#liveNightBtn');
-    if (nightBtn) nightBtn.addEventListener('click', goNightSky);
-    const nightBtnQ = $('#liveNightBtnQ');
-    if (nightBtnQ) nightBtnQ.addEventListener('click', function () {
-      if (state.simJd != null) { clearSim(); setViewDate(todayKST(), ''); toast('지금 시각 하늘로 돌아왔습니다.'); }
-      else goNightSky();
-    });
+    /* 「🌙 밤 22시」 빠른 버튼은 뺐습니다 — 원하는 시각은 🕒 시각 카드(지금·일몰·20시·22시·자정·새벽 2시)에서
+       고르고, 지금 시각으로 돌아오는 길도 그 카드의 「지금」이 맡습니다. */
     $('#liveSensorBtn').addEventListener('click', function () {
       if (live.sensor) disableSensor(false);
       else enableSensor();
@@ -6507,6 +6616,7 @@
 
   function jumpTo(id) {
     if (!id) return;
+    inertCancel();            // 화면을 옮기면 관성 회전도 끝냅니다
     if (window.__VIEWS_MODE__ && window.__views) { window.__views.go(id); return; }
     if (id === 'constellations') activateCatTab('const', false);
     else if (id === 'catalog') activateCatTab('objects', false);
@@ -6663,6 +6773,7 @@
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) {
         // 창을 내리는 순간 — 돌아왔을 때 이전 각도에서 이어 적분하지 않도록 정렬 표시만 해 둡니다.
+        inertCancel();          // 관성 회전도 함께 멈춥니다(안 보이는 동안 돌지 않게)
         trackRealign('hidden');
         return;
       }
@@ -6689,6 +6800,7 @@
   // 임의 좌표(적경·적위)로 라이브 하늘 뷰를 조준한다 — 확장 도감·관측 자료관에서 사용
   function aimRaDec(raDeg, decDeg, name) {
     if (raDeg == null || decDeg == null || !isFinite(raDeg) || !isFinite(decDeg)) return false;
+    inertCancel();
     const c = state.last || computeNight();
     const h = A.equatorialToHorizontal(A.mod(raDeg, 360) / 15, decDeg, state.site.lat, state.site.lon, c.jd);
     state.follow = null;

@@ -423,13 +423,13 @@ html[data-layout="mobile"] body.red #live .live-panel.is-controls-open .live-con
   background: linear-gradient(180deg, #1b0503, #0b0100 70%);
 }
 html[data-layout="mobile"] #live .live-quick .lq-btn { min-height: 38px; padding: 6px 9px; font-size: .7rem; }
-/* 320px 처럼 좁은 화면 — 「⚙ 조작 · 🕒 시각 · 🎯 방향 맞추기 · 🧭 추적」이 한 줄에 앉도록 */
+/* 320px 처럼 좁은 화면 — 「⚙ 조작 · 🕒 시각 · 🎯 방향 맞추기 · 🧭 추적」 네 개가 여유있게 한 줄에 앉도록 */
 @media (max-width: 400px) {
-  html[data-layout="mobile"] #live .live-quick { gap: 5px; max-width: calc(100% - 46px); }
-  html[data-layout="mobile"] #live .live-quick .lq-btn { min-height: 32px; padding: 5px 8px; font-size: .64rem; gap: 3px; }
+  html[data-layout="mobile"] #live .live-quick { gap: 6px; max-width: calc(100% - 46px); }
+  html[data-layout="mobile"] #live .live-quick .lq-btn { min-height: 32px; padding: 5px 9px; font-size: .66rem; gap: 3px; }
 }
 @media (max-width: 360px) {
-html[data-layout="mobile"] #live .live-quick .lq-btn { padding: 5px 6px; font-size: .6rem; }
+html[data-layout="mobile"] #live .live-quick .lq-btn { padding: 5px 7px; font-size: .62rem; }
 }
 html[data-layout="mobile"] #live .live-hud-top { top: 10px; left: 10px; right: 10px; }
 /* 시야 중앙 카드 — ⚙ 조작·🎯 방향 맞추기 버튼 줄 바로 위, 확대/축소 열과는 옆으로 비켜 놓습니다 */

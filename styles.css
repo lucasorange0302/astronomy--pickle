@@ -1474,6 +1474,8 @@ body.red .tm-slider::-webkit-slider-thumb { background: #ff6a3d; box-shadow: 0 0
   padding: 4px 6px 4px 12px; backdrop-filter: blur(6px); white-space: nowrap;
 }
 .live-day-hint .mini-btn { min-height: 28px; padding: 4px 10px; font-size: .7rem; }
+/* 낮 안내 줄 안의 버튼 대신 '🕒 시각'을 가리키는 강조 글자 */
+.live-day-hint .ldh-key { color: var(--accent); font-weight: 800; }
 @media (max-width: 560px) {
   .live-day-hint { top: 46px; font-size: .68rem; }
   .fov-bar-row { grid-template-columns: 74px 1fr 46px; }
@@ -2270,8 +2272,8 @@ html.has-views { scroll-padding-top: 84px; }
 /* 하단 탭 바 기본(데스크톱 자동판에서는 숨김) */
 .tabbar { display: none; }
 
-/* 라이브 하늘 위 최소 오버레이 버튼 */
-.live-quick { position: absolute; left: 10px; bottom: 12px; display: flex; gap: 6px; z-index: 3; }
+/* 라이브 하늘 위 최소 오버레이 버튼 — 「⚙ 조작 · 🕒 시각 · 🎯 조준 · 🧭 추적」 네 개만 */
+.live-quick { position: absolute; left: 10px; bottom: 12px; display: flex; gap: 8px; z-index: 3; }
 .live-quick .lq-btn {
   display: inline-flex; align-items: center; gap: 4px;
   min-height: 36px; padding: 6px 12px; border-radius: 99px; cursor: pointer;
@@ -2280,10 +2282,6 @@ html.has-views { scroll-padding-top: 84px; }
   font: 700 .74rem var(--font); white-space: nowrap;
 }
 .live-quick .lq-btn:hover { border-color: var(--accent); color: var(--accent); }
-/* 낮에만 뜨는 '밤 22시' 칩 — 지금 하늘이 밤이 아니어도 밤하늘을 볼 수 있게 */
-.live-quick .lq-night { color: var(--accent); border-color: rgba(255, 212, 121, .45); background: rgba(255, 212, 121, .1); }
-.live-quick .lq-night[hidden] { display: none; }
-html[data-layout="desktop"] .live-quick .lq-night { display: none; }
 #liveSensorChip { cursor: pointer; pointer-events: auto; }
 #liveSensorChip:hover { border-color: var(--accent-2); color: var(--accent-2); }
 
@@ -2644,9 +2642,9 @@ body.red .live-quick .lq-track.is-on {
   border-color: rgba(255, 138, 92, .6); background: rgba(255, 106, 61, .16); color: #ffb59a;
 }
 @media (max-width: 400px) {
-  /* 320px 한 줄에 「⚙ 조작 · 🕒 시각 · 🎯 조준 · 🧭 추적」이 모두 앉도록 살짝 조입니다. */
-  .live-quick { gap: 5px; max-width: calc(100% - 48px); }
-  .live-quick .lq-btn { padding: 5px 8px; font-size: .64rem; min-height: 32px; gap: 3px; }
+  /* 320px 한 줄에 「⚙ 조작 · 🕒 시각 · 🎯 조준 · 🧭 추적」이 여유있게 앉도록 — 「밤 22시」가 빠져 숨통이 탔습니다. */
+  .live-quick { gap: 6px; max-width: calc(100% - 48px); }
+  .live-quick .lq-btn { padding: 5px 9px; font-size: .66rem; min-height: 32px; gap: 3px; }
 }
 @media (max-width: 360px) {
   /* 아주 즐은 화면에서는 긴 이름을 「조준」으로 */
